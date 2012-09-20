@@ -1,0 +1,953 @@
+@charset "euc-jp";
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #334;
+  background: #000;
+  text-align: center;
+  font-family:arial, sans-sarif;
+}
+
+form {
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  border: none;
+}
+
+a {
+  color: #334;
+}
+
+a:visited {
+  color: #778;
+}
+
+textarea, input {
+  padding: 3px;
+}
+
+input {
+ *padding: 0;
+ _padding: 0;
+  line-height: 1;
+}
+
+input[type="button"], input[type="submit"] {
+  padding: 1px;
+}
+
+div.adminmenu {
+  margin: 0 auto;
+  line-height: 200%;
+  height: 28px;
+  width: 100%;
+  background: #000;
+  font-size: 80%;
+  text-align: right;
+}
+
+div.adminmenu a {
+  color: #7b838b;
+  text-decoration: none;
+  margin-right: 5px;
+}
+
+div.adminmenu a:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  color: #fff;
+  margin: 0px auto;
+  padding:50px 0 65px 0;
+  background: #000 url(20071103005830.gif) bottom right no-repeat;
+  text-align: left;
+  font-size: 150%;
+  text-indent: 20px;
+  font-family:arial, sans-sarif;
+  padding-right:50px;
+  padding-left:50px;
+  min-width:760px;
+}
+
+h1 a, h1 a:visited {
+  color: #fff;
+  text-decoration: none;
+}
+
+h1 a:hover {
+  text-decoration: underline;
+}
+
+.hatena-body {
+  margin: 0 auto;
+  padding-right:50px;
+  padding-left:50px;
+  background: #fff;
+  text-align: left;
+  zoom:1;
+  line-height: 1.5;
+  min-width:760px;
+}
+
+.hatena-body:after {
+  display: block;
+  content: "";
+  clear: both;
+}
+
+.main {
+  text-align: left;
+  background: #fff;
+  float: left;
+  width: 100%;
+  font-size:92%;
+}
+
+.sidebar {
+  line-height: 1.5;
+  width: 219px;
+  float: right;
+  margin-left: -221px;
+ _margin-left: -220px;
+ *margin-left: -220px;
+  border-left: 1px solid #d2d6de;
+  border-right: 1px solid #d2d6de;
+  border-bottom: 1px solid #d2d6de;
+  overflow: hidden;
+  background:#efefef;
+  font-size:92%;
+}
+
+a.keyword {
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px solid #dedede;
+}
+
+a.okeyword {
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px dotted #dedede;
+}
+
+.main div.calendar, .main div.day{
+  margin-right: 235px;
+} 
+
+.main textarea {
+  font-size:92%;
+}
+
+div.calendar {
+  padding: 15px 20px 0 20px;
+  font-size: 90%;
+  line-height: 150%;
+  text-align: right;
+}
+
+#pager-bottom {
+  padding-bottom:20px;
+}
+
+
+.day {
+  padding: 0 15px 2em 20px;
+  clear: both;
+}
+
+.day h2 {
+  margin: 0px 0 5px 0;
+  font-size: 90%;
+  padding: 25px 0.5em 0 0;
+  line-height: 100%;
+  color: #be0c0c;
+  font-family:verdana, arial, times new roman;
+}
+
+.day h2 a {
+  color: #be0c0c;
+  text-decoration: none;
+}
+
+.day h2 .edit {
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+.day h2 .title {
+  margin-left: 0.5em;
+}
+
+.day h2 span.title input , .day h2 span.date input {
+  border: 1px solid #ccc;
+}
+
+.day .photo {
+  float: right;
+  margin: 0.8em 0 1em 1em;
+}
+
+.body {
+  padding-bottom: 0.3em;
+  width: 100%;
+  overflow: hidden;
+}
+
+.body h3 {
+  font-size: 110%;
+  margin: 0.5em 0 ;
+}
+
+.body h3 .timestamp {
+  font-weight: normal;
+  font-size: 80%;
+  margin-right: 2px;
+  color:#445
+}
+
+.body h3 a,.body h3 a:visited {
+  text-decoration: none;
+  color:#334;
+}
+
+.body h3 a .sanchor {
+  color: #445;
+  /* padding-right: 0.3em; */
+}
+
+.body h3 a.sectioncategory {
+  color: #333;
+  text-decoration: underline;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.body h3 img {
+  vertical-align: middle;
+  margin-bottom: 2px !important;
+}
+
+
+.body h4 {
+  border-bottom: 1px dotted #889;
+  padding: 3px 3px 3px 0;
+  margin:1em 0 0.2em 0;
+  font-size:100%;
+}
+
+.body h5 {
+  margin: 0.5em 0;
+  font-size:100%;
+}
+
+.body .section {
+  margin: 0;
+  padding-bottom: 1.3em;
+}
+
+.body .section p {
+  margin:0.6em 0 0.8em 0;
+}
+
+.body .section ul, .body .section ol {
+}
+
+.body .section ul li, .body .section ol li {
+}
+
+.body .section pre {
+  font-size: 90%;
+  background: #f9f9f9;
+  border: 1px solid #E7E9EE;
+  padding: 5px;
+ _padding-bottom:25px;
+ *padding-bottom:25px;
+  color: #555;
+ _width: 100%;
+ *width: 100%;
+  overflow: auto;
+ _overflow-y: hidden;
+}
+
+.body .section blockquote {
+  border: 1px solid #d4d8e0;
+  margin: 1em 0;
+  padding: 0.5em;
+}
+
+.body .section blockquote p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.body .section blockquote cite {
+  margin-top: 0.5em;
+  margin-bottom: -0.3em;
+  display: block;
+  font-size: 90%;
+}
+
+.body .section table {
+  border-collapse: collapse;
+  font-size: 90%;
+  margin: 1em 0;
+}
+
+.body .section table td, .body .section table th {
+  padding: 5px;
+}
+
+.body .section table th {
+  background: #f9f9f9;
+  border: 1px solid #E7E9EE;
+}
+
+.body .section table td {
+  border: 1px solid #E7E9EE;
+}
+
+.body .section table.hatena-question-detail {
+  margin-top: 0;
+  width:100%;
+}
+
+.body .section table.hatena-question-detail td.hatena-question-detail-label {
+  width:50%;
+}
+
+.body .section table.hatena-question-detail td.hatena-question-detail-value {
+  white-space:nowrap;
+   width:50%;
+}
+
+.body .section .hatena-asin-detail {
+  margin: 1em 0;
+  font-size: 90%;
+  padding: 0.8em 0.6em;
+  border: 1px solid #d4d8e0;
+}
+
+.body .section .hatena-asin-detail .hatena-asin-detail-image {
+  float: left;
+  margin-right: 15px;
+}
+
+.body .section .hatena-asin-detail .hatena-asin-detail-title {
+  margin-top: 0;
+  font-weight: bold;
+}
+
+.body .section .hatena-asin-detail p {
+  text-indent: 0;
+}
+
+.body .section .hatena-asin-detail ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.body .section .hatena-asin-detail .hatena-asin-detail-foot {
+  clear: left;
+}
+
+.body .section dl {
+  margin: 1em 0;
+}
+
+.body .section dt {
+  font-weight: bold;
+  padding-bottom: 3px;
+}
+
+.body .section dd {
+  padding-bottom: 6px;
+  margin-left: 1em;
+}
+
+.ad {
+  padding: 15px;
+}
+
+.body .ad {
+  padding: 0;
+}
+
+.highlight {
+  background: #FFDEDE;
+  padding: 0 0.1em;
+}
+
+.body p.footnote {
+  font-size: 90%;
+  margin: 1em 0;
+}
+
+.body .sectionfooter {
+  text-align: right;
+  clear: both;
+  padding-top: 0;
+  margin-top: 0;
+} 
+
+.body .sectionfooter img{
+  vertical-align:middle;
+}
+
+.body textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  height: 28em;
+}
+
+.body input, .body select {
+}
+
+.keywordcloud {
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar table.calendar {
+  font-size: 90%;
+  width: 198px;
+  border-collapse: collapse;
+  margin-top: 7px;
+  margin-left: 5px;
+  margin-bottom: 5px;
+}
+
+.sidebar table.calendar td {
+  text-align: center;
+  padding: 2px;
+  background: #efefef;
+}
+
+.sidebar table.calendar td a {
+  text-decoration: none;
+}
+
+.sidebar table.calendar td a:hover {
+}
+
+.sidebar table.calendar td img {
+  width: 15px;
+  height: 15px;
+}
+
+.sidebar table.calendar td.calendar-prev-month, .sidebar table.calendar td.calendar-next-month, .sidebar table.calendar td.calendar-current-month {
+  padding: 4px 0;
+  background: transparent;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+.sidebar table.calendar td.calendar-prev-month a, .sidebar table.calendar td.calendar-next-month a, .sidebar table.calendar td.calendar-current-month a {
+}
+
+.sidebar table.calendar td.calendar-prev-month {
+  text-align: right;
+}
+
+.sidebar table.calendar td.calendar-next-month {
+  text-align: left;
+}
+
+.sidebar table.calendar td.calendar-weekday {
+  background:;
+}
+
+.sidebar table.calendar td.calendar-sunday {
+  background:;
+}
+
+.sidebar table.calendar td.calendar-saturday {
+  background:;
+}
+
+.sidebar table.calendar td.calendar-day a {
+  display: block;
+}
+
+.sidebar table.calendar td.day-today {
+  background:;
+}
+
+.sidebar table.calendar td.day-selected {
+  font-weight: bold;
+}
+
+
+.hatena-module {
+}
+
+.hatena-module .hatena-moduletitle {
+  padding: 3px 5px 3px 5px;
+  font-family: verdana, arial, times new roman;
+  color: #be0c0c;
+  font-weight: bold;
+  font-size: 90%;  
+  margin:10px 5px 3px 5px;
+  border-bottom: 1px solid #d6d7de;
+}
+
+.hatena-module .hatena-moduletitle a {
+  color: #be0c0c;
+}
+
+
+.hatena-module .hatena-modulebody {
+  padding: 7px;
+  zoom:1;
+}
+
+.hatena-modulebody:after {
+  clear: both;
+  content: "";
+  display: block;
+}
+
+.hatena-module ul, .sidebar .hatena-module ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 90%;
+}
+
+.hatena-module ul.keywordcloud {
+  margin-left: 0;
+}
+
+.hatena-module ul li, .hatena-module ol li{
+  padding-bottom: 5px;
+  padding-left: 4px;
+  border-bottom: 1px solid #edf0f4;
+  line-height: 1.3;
+}
+
+.hatena-module ul li a,.hatena-module ol li a {
+  text-decoration: none;
+}
+
+.hatena-module ul.hatena-photo {
+  margin: 0;
+  padding: 0;
+}
+
+.hatena-module ul.hatena-photo li {
+  display: inline;
+  border-bottom: 0;
+  padding-left:3px;;
+}
+
+.hatena-module ul.hatena-photo li img {
+  margin: 2px 0px 4px 0px;
+  vertical-align: middle;
+  border:1px solid #d2d6de;
+}
+
+.hatena-module dl {
+  margin: 0;
+  padding: 0;
+  font-size: 90%;
+  line-height: 1.3;
+}
+
+.hatena-module dl a {
+  text-decoration: none;
+}
+
+.hatena-module dt {
+  padding-left: 3px;
+}
+
+.hatena-module dd {
+  margin-left: 0;
+  margin-bottom: 5px;
+  padding-bottom: 6px;
+  padding-left: 3px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.hatena-module p {
+  margin: 0;
+}
+
+.hatena-module .hatena-profile {
+  font-size: 90%;
+  line-height: 135%;
+}
+
+.hatena-module .hatena-profile .hatena-profile-id {
+  padding-bottom: 0.2em;
+  font-weight: bold;
+}
+
+.hatena-module .hatena-profile .hatena-profile-id a {
+  font-family: "times new roman", "geogia", serif;
+  text-decoration: none;
+}
+
+.hatena-module .hatena-profile-image img {
+  float: left;
+  margin: 5px 10px 5px 5px;
+}
+
+.sidebar .hatena-module form {
+  font-size: 90%;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar .hatena-module form input, .sidebar .hatena-module form select {
+  border: 1px solid #ccc;
+  margin: 5px 5px 5px 0;
+  vertical-align: middle;
+  background: #fff;
+}
+
+.sidebar .hatena-module form select {
+  margin-right: 0;
+}
+
+.recentitem {
+  padding: 3px 0.5em 3px 0.7em;
+  font-family: "times new roman", "geogia", serif;
+  color: #8c929c;
+  font-weight: bold;
+  background: #fff;
+  text-align: center;
+  margin-top: 0;
+  border-bottom: 1px solid #d6d7de;
+}
+
+.recentitem a {
+  color: #8c929c;
+}
+
+.recentsubtitles {
+  padding: 0 0 10px 10px;
+  margin: 0;
+  font-size: 90%;
+  border-bottom: 1px solid #d6d7de;
+}
+
+.recentitem_diary {
+  padding: 10px 20px;
+}
+
+.recentsubtitles img {
+  vertical-align: middle;
+}
+
+div.comment, div.refererlist {
+  margin: 0;
+  clear: both;
+  border: 1px solid #e7e9ee;
+}
+
+.comment .caption, .refererlist .caption {
+  margin: 0 0px 7px 0px;
+  padding: 6px 15px 6px 15px;
+  background: #f9f9f9;
+  color: #333;
+  border-bottom: 1px solid #e7e9ee;
+}
+
+.comment .caption a, .refererlist .caption a {
+  color: #333;
+}
+
+.comment .commentshort {
+  padding: 0 7px 7px 7px;
+}
+
+.comment .commentshort p {
+  margin: 0 0 4px 0;
+  padding-bottom: 3px;
+  padding-left: 3px;
+  font-size: 90%;
+  line-height: 1.3;
+  position:relative;
+}
+
+.commentshort p .timestamp {
+  position:absolute;
+  right:0;
+ _right:255px;
+ *right:255px;
+  top:0;
+}
+
+.comment .commentshort p a {
+  text-decoration: none;
+}
+
+.comment .commentshort p .canchor a {
+  color: #333;
+}
+
+.comment textarea {
+  border: 1px solid #ccc;
+  margin: 0.5em 0;
+  width: 100%;
+}
+
+.comment input.field {
+  background: #fff;
+  border: 1px solid #ccc;
+}
+
+.comment input#comment-username {
+  background: #fff;
+  border: 1px solid #ccc;
+}
+
+div.refererlist {
+  border-top: 0;
+}
+
+.refererlist ul {
+  list-style: circle;
+  margin: 0 0 0 30px;
+  padding: 0 7px 7px 0;
+  font-size: 90%;
+}
+
+.refererlist ul li {
+  padding-bottom: 5px;
+  padding-left: 0;
+  line-height: 1.3;
+}
+
+.refererlist ul li a {
+  text-decoration: none;
+}
+
+.refererlist ul li input {
+  vertical-align: middle;
+  margin-left: 0;
+}
+
+.refererlist input {
+  margin-left: 10px;
+  margin-bottom: 6px;
+}
+
+#hatena-about {
+}
+
+#hatena-about h2 {
+  margin-top: 0;
+  padding-top: 1em;
+}
+
+#hatena-about h2 a {
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+#hatena-about h3 {
+  padding-top: 0.5em;
+}
+
+#hatena-about ul {
+  margin: 1em;
+  padding: 0;
+}
+
+#hatena-about .hatena-profile-list {
+  margin: 1em 0;
+  padding: 0;
+}
+
+#hatena-about .hatena-profile-list li {
+  display: inline;
+}
+
+.sidebar .hatena-clock {
+  text-align: center;
+  padding: 0.5em;
+}
+
+.footer {
+  padding: 1em;
+  clear: both;
+  font-size:80%;
+}
+
+div.contents {
+  border: 1px solid #DDD;
+  margin-top: 1em;
+  margin-left: 1em;
+  color: #333;
+}
+
+div.contents ul {
+  list-style: circle;
+  margin-bottom: 0.5em;
+}
+
+p.message {
+  margin: 0;
+  padding: 1em;
+}
+
+a.file {
+  padding-left: 17px;
+  margin-left: 2px;
+  margin-right: 2px;
+  background: url("http://www.hatena.ne.jp/images/common/icon-download.gif") 0 50% no-repeat;
+}
+
+#simple-header {
+  margin: 0px auto 0 auto;
+  width: 100%;
+}
+
+#simple-header ul li a,#simple-header ul li a:visited {
+  color:#7b838b;
+}
+
+/* Hatena-Star */        
+
+.hatena-star-star-image {
+  background-image: url("20071015163030.gif");
+}
+
+.hatena-star-comment-button-image {
+  background-image: url("http://s.hatena.ne.jp/images/comment_dg.gif");
+}
+
+.hatena-star-comment-button-image-active {
+  background-image: url("20071015115828.gif");
+}
+
+.hatena-star-add-button-image {
+  background-image: url("http://s.hatena.ne.jp/images/add_dg.gif");
+}
+
+.hatena-star-inner-count{
+  color:#ff8aa3;
+  font-size:10px;
+  padding-right:3px;
+  padding-left:3px;
+}
+
+.hatena-star-comment-button {
+  margin-right:0 !important;
+  margin-left:10px !important;
+}
+
+/* H3.title */
+
+h3.title {
+  padding-left:7px;
+  border-left:5px solid #333;
+  z-index:5;
+  position:relative;
+  background:transparent !important;
+  padding-top:4px;
+}
+
+h3.hover{
+  cursor:url("edit2.gif") ,text;
+  _cursor:url("edit2.cur");
+  *cursor:url("edit2.cur");
+  border-left:5px solid #be0c0c;
+}
+
+h3.title img {
+  vertical-align:bottom;
+}
+
+p.sectionheader {
+  margin-top:-32px !important;
+  margin-bottom:23px !important;
+  position:relative;
+  z-index:100;
+}
+
+.calendar #edit-in-place-add img{
+  opacity:0;
+}
+
+.calendar #edit-in-place-add {
+ background:url("20071016120157.gif") top right no-repeat;
+ _background:transparent;
+ *background:transparent;
+}
+
+#days .section input {
+  border:1px solid #ccc;
+  margin:5px 0;
+  background:#fff;
+}
+
+textarea[readonly] {
+  background:#efefef !important;
+  color:#666;
+}
+
+/* adsense */        
+
+.google_color_text { color:#333344; }
+.google_color_link { color:#333344; }
+.google_color_url { color:#be0c0c; }
+.google_color_bg { color:#ffffff; }
+.google_color_border { color:#ffffff; }
+
+
+.captcha-image{
+  margin-bottom:5px;
+}
+
+h3 img {
+  vertical-align:middle !important;
+  margin-bottom:5px !important;
+  margin-right:5px !important;
+}
+
+h3 img.hatena-star-star {
+  margin-right:0 !important;
+}
+
+p.sectionheader img{
+  margin-bottom:3px;
+}
+
+h3.hover {
+  background:transparent;
+  cursor:url("edit2.gif") ,text;
+  cursor:url("edit2.cur");
+}
+
+div.message {
+  margin-right:250px !important;
+}
+
+p.sectionheader {
+  z-index:0;
+}
+
+h3.title {
+  z-index:1;
+  width:85% !important;
+}
+
+/* fotolife */        
+/* 1column */
+div.section img.hatena-fotolife{
+  max-width: 100%;
+}
+
+/* 2column */
+div.main div.section img.hatena-fotolife{
+  max-width: 100%;
+}

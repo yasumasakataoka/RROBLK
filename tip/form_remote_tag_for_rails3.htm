@@ -1,0 +1,473 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:og="http://ogp.me/ns#"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>Rails3でAjaxでformのcallbackを指定するには - ryopekoの日記</title>
+<link rel="start" href="http://d.hatena.ne.jp/" title="ryopekoの日記">
+<link rel="help" href="http://d.hatena.ne.jp/help" title="ヘルプ">
+<link rel="prev" href="http://d.hatena.ne.jp/ryopeko/20101005/1286262922" title="[MongoDB]MongoDBのReplica Sets...">
+<link rel="next" href="http://d.hatena.ne.jp/ryopeko/20101126/1290755735" title="[Javascript][jQueryMobile]iPho...">
+
+<link rel="stylesheet" href="form_remote_tag_for_rails3_files/base.css" type="text/css" media="all">
+<link rel="stylesheet" href="form_remote_tag_for_rails3_files/headerstyle_wh.css" type="text/css" media="all">
+<link rel="stylesheet" href="form_remote_tag_for_rails3_files/breeze.css" type="text/css" media="all">
+
+
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://d.hatena.ne.jp/ryopeko/rss">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://d.hatena.ne.jp/ryopeko/rss2">
+
+<link rel="meta" type="application/rdf+xml" title="FOAF" href="http://d.hatena.ne.jp/ryopeko/foaf">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/ryopeko/opensearch/diary.xml" title="ryopekoの日記内日記検索">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/ryopeko/opensearch/archive.xml" title="ryopekoの日記内一覧検索">
+
+
+
+<link rel="shortcut icon" href="http://d.hatena.ne.jp/images/wh_favicon.ico">
+
+
+
+
+<style type="text/css">
+<!-- 
+
+-->
+</style>
+
+
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rails3でAjaxでformのcallbackを指定するには - ryopekoの日記">
+<meta property="og:url" content="http://d.hatena.ne.jp/ryopeko/20101117/1289991194">
+<meta property="og:description" content="Rails3からの変更点でハマったのでメモ。 Rails2ではformをAjaxで送信するにはform_remote_tagを利用してい..">
+<meta property="og:site_name" content="はてなダイアリー">
+
+
+<!--
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<rdf:Description rdf:about="http://d.hatena.ne.jp/ryopeko/20101117/1289991194">
+   <foaf:maker rdf:parseType="Resource">
+     <foaf:holdsAccount>
+       <foaf:OnlineAccount foaf:accountName="ryopeko">
+         <foaf:accountServiceHomepage rdf:resource="http://www.hatena.ne.jp/" />
+       </foaf:OnlineAccount>
+     </foaf:holdsAccount>
+   </foaf:maker>
+</rdf:Description>
+</rdf:RDF>
+-->
+
+<link rel="alternate" media="handheld" type="text/html" href="http://d.hatena.ne.jp/ryopeko/mobile?date=20101117&amp;section=1289991194">
+<!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+  rdf:about="http://d.hatena.ne.jp/ryopeko/20101117/1289991194"
+  trackback:ping="http://d.hatena.ne.jp/ryopeko/20101117/1289991194"
+  dc:title="[Rails]Rails3でAjaxでformのcallbackを指定するには"
+  dc:identifier="http://d.hatena.ne.jp/ryopeko/20101117/1289991194" />
+</rdf:RDF>
+-->
+
+
+
+
+
+
+<script src="form_remote_tag_for_rails3_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript" src="form_remote_tag_for_rails3_files/HatenaStar.js"></script>
+<script type="text/javascript">
+Hatena.Star.SiteConfig = {
+  entryNodes: {
+    'div.section': {
+      uri: 'h3 a',
+      title: 'h3',
+      container: 'h3'
+    }
+  }
+};
+Hatena.Author  = new Hatena.User('ryopeko');
+Hatena.DiaryName  = new Hatena.User('ryopeko');
+
+</script>
+
+
+
+
+
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/adcolor.js"></script>
+
+
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/quick_pager.js"></script>
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/diary_utils.js"></script>
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/max_width_fotolife.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/jquery-1.js"></script>
+<script type="text/javascript">
+  jQuery.noConflict()(function($){
+    var j$ = jQuery;
+  });
+</script>
+
+
+
+
+<script type="text/javascript" src="form_remote_tag_for_rails3_files/entries.json"></script></head><body>
+
+<div id="simple-header">
+
+  <a href="http://www.hatena.ne.jp/"><img src="form_remote_tag_for_rails3_files/hatena-simple_wh.gif" alt="Hatena::" title="Hatena::" id="logo-hatena" width="65" height="17"></a><a href="http://d.hatena.ne.jp/"><img src="form_remote_tag_for_rails3_files/diary-simple_wh.gif" alt="ブログ(Diary)" title="Diary" id="logo-diary" width="43" height="17"></a>
+  <form method="get" action="/search" class="search-form">
+    <input class="search-word" name="word" value="rails3 form_remote_tag jquery" type="text"><input name="name" value="ryopeko" type="hidden"><input name="diary" value="日記" class="search-button" type="submit"><input name="submit" value="検索" class="search-button" type="submit">
+  </form>
+  <ul class="menu">
+    <li><a href="http://d.hatena.ne.jp/ryopeko/">ブログトップ</a></li>
+    <li><a href="http://d.hatena.ne.jp/ryopeko/archive">記事一覧</a></li>
+
+
+
+    <li><a href="https://www.hatena.ne.jp/login?backurl=http%3A%2F%2Fd.hatena.ne.jp%2Fryopeko%2F20101117%2F1289991194&amp;add_timestamp=1">ログイン</a></li>
+    <li><a href="https://www.hatena.ne.jp/register?location=http://d.hatena.ne.jp/">無料ブログ開設</a></li>
+
+  </ul>
+</div>
+
+
+
+<h1><a href="http://d.hatena.ne.jp/ryopeko/">ryopekoの日記</a> <a href="http://a.hatena.ne.jp/append?http://d.hatena.ne.jp/ryopeko/"><img src="form_remote_tag_for_rails3_files/a_append_wh.gif" title="このページをアンテナに追加" alt="このページをアンテナに追加" class="icon" border="0" width="16" height="12"></a> <a href="http://d.hatena.ne.jp/ryopeko/rss"><img src="form_remote_tag_for_rails3_files/rss_wh.gif" alt="RSSフィード" title="RSSフィード" class="icon" border="0" width="24" height="12"></a></h1>
+<div class="hatena-body">
+<div class="main">
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="calendar" id="pager-top">
+  <a rel="prev" href="http://d.hatena.ne.jp/ryopeko/20101005/1286262922" class="prev">&lt;[MongoDB]MongoDBのReplica Sets...</a>&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/ryopeko/20101126/1290755735" class="next">[Javascript][jQueryMobile]iPho...&gt;</a><span id="edit-in-place-add"></span>
+</div>
+<div id="days">
+
+<div class="day">
+<h2><a href="http://d.hatena.ne.jp/ryopeko/20101117"><span class="date">2010-11-17</span></a></h2>
+
+<div class="body">
+
+<!-- google_ad_section_start -->
+
+		<div class="section">
+			<h3 class="title"><a href="http://d.hatena.ne.jp/ryopeko/20101117/1289991194" name="1289991194"><span class="highlight">Rails3</span>でAjaxでformのcallbackを指定するには</a><span class="hatena-star-comment-container"><img class="hatena-star-comment-button" style="cursor: pointer; margin: 0pt; padding: 0pt; border: medium none; vertical-align: middle; display: none;" title="Comments" alt="Comments" tabindex="0" src="form_remote_tag_for_rails3_files/comment_dg.gif"></span><span class="hatena-star-star-container"><img class="hatena-star-add-button" style="cursor: pointer; margin: 0pt 3px; padding: 0pt; border: medium none; vertical-align: middle;" title="Add Star" alt="Add Star" tabindex="0" src="form_remote_tag_for_rails3_files/add_dg.gif"></span></h3>
+			<p class="sectionheader"><span class="sectioncategory"><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRails%5D" class="sectioncategory">Rails</a></span> |  <span class="timestamp">19:53</span> | <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/ryopeko/20101117/1289991194" class="bookmark-icon"><img src="form_remote_tag_for_rails3_files/b_entry_wh.gif" title="Rails3でAjaxでformのcallbackを指定するにはを含むブックマーク" alt="Rails3でAjaxでformのcallbackを指定するにはを含むブックマーク" class="icon" border="0" width="16" height="12"></a> <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/ryopeko/20101117/1289991194" class="bookmark-count"><img src="form_remote_tag_for_rails3_files/1289991194.gif" title="はてなブックマーク - Rails3でAjaxでformのcallbackを指定するには" alt=""></a></p>
+			<p><span class="highlight">Rails3</span>からの変更点でハマったのでメモ。</p>
+			<p>Rails2ではformを<a class="keyword" href="http://d.hatena.ne.jp/keyword/Ajax">Ajax</a>で送信するには<span class="highlight">form_remote_tag</span>を利用していた。</p>
+			<p>これが<span class="highlight">Rails3</span>では以下のように:remote =&gt; trueを指定することで実現する。</p>
+<pre class="syntax-highlight">&lt;%= form_tag(url_for(<span class="synIdentifier">:action</span> =&gt; <span class="synSpecial">'</span><span class="synConstant">create</span><span class="synSpecial">'</span>), <span class="synIdentifier">:remote</span> =&gt; <span class="synConstant">true</span>, <span class="synIdentifier">:id</span> =&gt; <span class="synSpecial">"</span><span class="synConstant">result_form</span><span class="synSpecial">"</span>) <span class="synStatement">do</span> %&gt;
+&lt;% <span class="synStatement">end</span> %&gt;
+</pre>
+
+			<p>今は主に<a class="keyword" href="http://d.hatena.ne.jp/keyword/jQuery"><span class="highlight">jQuery</span></a>を使って開発している為、<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%C7%A5%D5%A5%A9%A5%EB%A5%C8">デフォルト</a>で扱う<a class="keyword" href="http://d.hatena.ne.jp/keyword/javascript">javascript</a>を<a class="keyword" href="http://d.hatena.ne.jp/keyword/jQuery"><span class="highlight">jQuery</span></a>に変更する。</p>
+			<p>Gemfileに以下記述</p>
+<pre class="syntax-highlight">gem <span class="synSpecial">'</span><span class="synConstant"><span class="highlight">jquery</span>-rails</span><span class="synSpecial">'</span>
+</pre>
+
+			<p>bundle installして関連ファイルをgenerate</p>
+<pre>$ bundle install
+$ rails g <span class="highlight">jquery</span>:install
+</pre>
+
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/jquery"><span class="highlight">jquery</span></a>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/js">js</a>と<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/js">js</a>を読み込むように設定</p>
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/jquery"><span class="highlight">jquery</span></a>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/js">js</a>は<a class="keyword" href="http://d.hatena.ne.jp/keyword/google">google</a>から読み込み</p>
+<pre class="syntax-highlight"><span class="synComment">#app/views/layouts/application.html.erb等に記述</span>
+  &lt;script type=<span class="synSpecial">"</span><span class="synConstant">text/javascript</span><span class="synSpecial">"</span> src=<span class="synSpecial">"</span><span class="synConstant">http://ajax.googleapis.com/ajax/libs/<span class="highlight">jquery</span>/1.4.4/<span class="highlight">jquery</span>.min.js</span><span class="synSpecial">"</span>&gt;&lt;/script&gt;
+  &lt;%= javascript_include_tag <span class="synSpecial">'</span><span class="synConstant">rails</span><span class="synSpecial">'</span> %&gt;
+</pre>
+
+			<p>formからのリクエストを受け取るcallbackを<a class="keyword" href="http://d.hatena.ne.jp/keyword/Javascript">Javascript</a>ファイルに設定</p>
+<pre class="syntax-highlight">$(<span class="synIdentifier">function</span>($)<span class="synIdentifier">{</span>
+    $(<span class="synConstant">'#result_form'</span>)
+        .bind(<span class="synConstant">"ajax:complete"</span>, <span class="synIdentifier">function</span>()<span class="synIdentifier">{</span>
+           <span class="synComment">//ここに具体的な処理を記述</span>
+        <span class="synIdentifier">}</span>);
+<span class="synIdentifier">}</span>);
+</pre>
+
+			<p>他のステータスについても記述可能</p>
+			<p>それぞれ<a class="keyword" href="http://d.hatena.ne.jp/keyword/%B0%FA%BF%F4">引数</a>を受け取ることもできる。</p>
+<pre class="syntax-highlight">$(<span class="synIdentifier">function</span>($)<span class="synIdentifier">{</span>
+    $(<span class="synConstant">'#result_form'</span>)
+        .bind(<span class="synConstant">"ajax:loading"</span>, <span class="synIdentifier">function</span>(xhr)<span class="synIdentifier">{</span>
+           <span class="synComment">//ここに具体的な処理を記述</span>
+        <span class="synIdentifier">}</span>)
+        .bind(<span class="synConstant">"ajax:success"</span>, <span class="synIdentifier">function</span>(data, <span class="synStatement">status</span>, xhr)<span class="synIdentifier">{</span>
+           <span class="synComment">//ここに具体的な処理を記述</span>
+        <span class="synIdentifier">}</span>)
+        .bind(<span class="synConstant">"ajax:complete"</span>, <span class="synIdentifier">function</span>(xhr)<span class="synIdentifier">{</span>
+           <span class="synComment">//ここに具体的な処理を記述</span>
+        <span class="synIdentifier">}</span>)
+        .bind(<span class="synConstant">"ajax:failure"</span>, <span class="synIdentifier">function</span>(data, <span class="synStatement">status</span>, xhr)<span class="synIdentifier">{</span>
+           <span class="synComment">//ここに具体的な処理を記述</span>
+        <span class="synIdentifier">}</span>);
+<span class="synIdentifier">}</span>);
+</pre>
+
+			<p>処理を<a class="keyword" href="http://d.hatena.ne.jp/keyword/%CC%B5%CC%BE%B4%D8%BF%F4">無名関数</a>に記述できるのでRails2でのようにviewにゴチャっと書く必要がなくなり、より明確になったと思う。</p>
+		</div>
+
+<!-- google_ad_section_end -->
+
+</div>
+
+
+
+  <div class="comment">
+    <div class="caption">
+      <a name="c" href="http://d.hatena.ne.jp/ryopeko/comment?date=20101117&amp;section=1289991194#c">コメントを書く</a>
+      
+    </div>
+
+    
+
+
+    
+  </div>
+
+
+
+
+
+
+  
+  <div class="refererlist">
+    <div class="caption">
+      <a name="tb">トラックバック</a> - http://d.hatena.ne.jp/ryopeko/20101117/1289991194
+    </div>
+    
+      
+      <ul>
+        
+          <li>
+            <a href="http://d.hatena.ne.jp/koda_hd28v/20110328/1301327951" title=" Rails3の form_for で Ajax をやってみた 一番シンプルっぽいパターンをメモ。とりあえず Ajax通信できた、というレベル。 通常の Ajax通信ではコールバックを html か js ファイルに書くと思っていたが、Rails3ではコントローラ側で js を生成してレスポンスを返すイメージ" rel="nofollow">KodaNote - Rails3の form_for で Ajax をやってみた</a></li>
+        
+      </ul>
+    
+  </div>
+  
+  
+
+
+
+
+
+    <div class="refererlist">
+      <div class="caption">リンク元</div>
+      <ul>
+          <li>5 <a href="http://reader.livedoor.com/reader/" rel="nofollow">http://reader.livedoor.com/reader/</a></li>
+          <li>4 <a href="http://www.google.co.jp/search?q=Google+Chart+Tools&amp;num=100&amp;hl=ja&amp;safe=off&amp;client=firefox-a&amp;hs=XZo&amp;rls=org.mozilla:ja:official&amp;prmd=v&amp;source=lnt&amp;tbs=lr:lang_1ja&amp;lr=lang_ja&amp;sa=X&amp;ei=EwjpTMSZJouuuQPih5XCCA&amp;ved=0CAoQpwU" rel="nofollow">http://www.google.co.jp/search?q=Google+Chart+Tools&amp;num=100&amp;hl=ja&amp;safe=off&amp;client=firefox-a&amp;hs=XZo&amp;rls=org.mozilla:ja:official&amp;prmd=v&amp;source=lnt&amp;tbs=lr:lang_1ja&amp;lr=lang_ja&amp;sa=X&amp;ei=EwjpTMSZJouuuQPih5XCCA&amp;ved=0CAoQpwU</a></li>
+          <li>3 <a href="http://www.google.co.jp/search?q=google.load%28%22visualization%22,+%221%22,+%7Bpackages:%5B%22linechart%22%5D%7D%29%3B&amp;hl=ja&amp;client=firefox-a&amp;hs=UCM&amp;rls=org.mozilla:ja:official&amp;prmd=fd&amp;source=lnt&amp;tbs=lr:lang_1ja&amp;lr=lang_ja&amp;sa=X&amp;ei=r8rpTLz9DoKcvgOVztTCCA&amp;ved=" rel="nofollow">http://www.google.co.jp/search?q=google.load("visualization",+"1",+{packages:["linechart"]});&amp;hl=ja&amp;client=firefox-a&amp;hs=UCM&amp;rls=org.mozilla:ja:official&amp;prmd=fd&amp;source=lnt&amp;tbs=lr:lang_1ja&amp;lr=lang_ja&amp;sa=X&amp;ei=r8rpTLz9DoKcvgOVztTCCA&amp;ved=</a></li>
+          <li>2 <a href="http://hootsuite.com/dashboard" rel="nofollow">http://hootsuite.com/dashboard</a></li>
+          <li>2 <a href="http://twitter.com/" rel="nofollow">http://twitter.com/</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?as_q=google+visualization+api+%E3%82%B0%E3%83%A9%E3%83%95&amp;hl=ja&amp;biw=1008&amp;bih=540&amp;rlz=1W1ADFA_ja&amp;num=10&amp;btnG=Google+%E6%A4%9C%E7%B4%A2&amp;as_epq=&amp;as_oq=&amp;as_eq=&amp;lr=lang_ja&amp;cr=countryJP&amp;as_ft=i&amp;as_filetype=&amp;as_qdr=all&amp;as_occt=any&amp;" rel="nofollow">http://www.google.co.jp
+/search?as_q=google+visualization+api+グラフ&amp;hl=ja&amp;biw=1008&amp;
+bih=540&amp;rlz=1W1ADFA_ja&amp;num=10&amp;btnG=Google+検索&amp;as_epq=&
+amp;as_oq=&amp;as_eq=&amp;lr=lang_ja&amp;cr=countryJP&amp;as_ft=i&amp;as_filetype=&amp;as_qdr=all&amp;as_occt=any&amp;</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?hl=ja&amp;biw=1366&amp;bih=547&amp;q=replica+sets+MongoDB&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=" rel="nofollow">http://www.google.co.jp/search?hl=ja&amp;biw=1366&amp;bih=547&amp;q=replica+sets+MongoDB&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?hl=ja&amp;q=rails+3+script%2Fserver&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=" rel="nofollow">http://www.google.co.jp/search?hl=ja&amp;q=rails+3+script/server&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?hl=ja&amp;source=hp&amp;biw=1366&amp;bih=542&amp;q=replica+sets+MongoDB&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=" rel="nofollow">http://www.google.co.jp/search?hl=ja&amp;source=hp&amp;biw=1366&amp;bih=542&amp;q=replica+sets+MongoDB&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?num=50&amp;hl=ja&amp;lr=lang_ja&amp;client=firefox-a&amp;hs=CJ6&amp;rls=org.mozilla%3Aja%3Aofficial&amp;tbs=lr%3Alang_1ja&amp;q=ajax++rails3&amp;btnG=%E6%A4%9C%E7%B4%A2" rel="nofollow">http://www.google.co.jp
+/search?num=50&amp;hl=ja&amp;lr=lang_ja&amp;client=firefox-a&amp;hs=CJ6&
+amp;rls=org.mozilla:ja:official&amp;tbs=lr:lang_1ja&amp;q=ajax++rails3&
+amp;btnG=検索</a></li>
+      </ul>
+      
+    </div>
+
+
+
+
+</div>
+
+
+
+</div>
+<div class="calendar" id="pager-bottom">
+  <a rel="prev" href="http://d.hatena.ne.jp/ryopeko/20101005/1286262922" class="prev">&lt;[MongoDB]MongoDBのReplica Sets...</a><img src="form_remote_tag_for_rails3_files/icon-quickpager.gif" style="vertical-align: middle; margin-left: 3px; cursor: pointer;">&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/ryopeko/20101126/1290755735" class="next">[Javascript][jQueryMobile]iPho...&gt;</a>
+</div>
+</div>
+<div class="sidebar">
+	<div class="hatena-module hatena-module-sectioncategory">
+<div class="hatena-moduletitle">カテゴリー</div>
+<div class="hatena-modulebody">
+<ul class="hatena-sectioncategory">
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRuby%5D">Ruby</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRails%5D">Rails</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRSpec%5D">RSpec</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BPlugin%5D">Plugin</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BJavascript%5D">Javascript</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BGoogle%20Visualization%20API%5D">Google Visualization API</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BGoogle%20Chart%20Tools%5D">Google Chart Tools</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRSpec2%5D">RSpec2</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BRails3%5D">Rails3</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BMongoDB%5D">MongoDB</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/searchdiary?word=%2A%5BjQueryMobile%5D">jQueryMobile</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-section">
+<div class="hatena-moduletitle"><a href="http://d.hatena.ne.jp/ryopeko/archive">最新タイトル</a></div>
+<div class="hatena-modulebody">
+<ul class="hatena-section">
+<li><a href="http://d.hatena.ne.jp/ryopeko/20110430/1304180833">ガローア会議に参加してきました</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101215/1292373612">[Ruby][Rails]Arelで色んなSQLを組み立ててみる</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101126/1290755735">[Javascript][jQueryMobile]iPhone等のスマホ向けレイアウトを簡単に作れるjQueryMobileを試してみた</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101117/1289991194">[Rails]Rails3でAjaxでformのcallbackを指定するには</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101005/1286262922">[MongoDB]MongoDBのReplica Setsについての概要</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101002/1286023670">高専カンファレンスのLTで発表しました</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20100922/1285118577">第6回ジオメディアサミットで発表しました</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20100917/1284688094">[Ruby][Rails]Rails MySQLでintegerカラムに潜む罠</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20100609/1276093935">[RSpec2][Rails3]Rails3のinstallからRSpec2のgenerateまで</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20100508/1273335210">[Javascript][Google Visualization API][Google Chart Tools]グラフ表示を行うGoogleのAPI、Google Chart Toolsについて。</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-trackback">
+<div class="hatena-moduletitle">最近のトラックバック</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101117#tb">2010-11-17</a>&nbsp;<a href="http://d.hatena.ne.jp/koda_hd28v/20110328/1301327951">KodaNote - Rails3の form_for で Ajax をやってみた</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20100409#tb">2010-04-09</a>&nbsp;<a href="http://d.hatena.ne.jp/yuum3/20110315/1300174228">@yuumi3のお仕事日記 -  Ruby on Rails 2.x と 3.x 両方で rspec-ra...</a></li>
+<li><a href="http://d.hatena.ne.jp/ryopeko/20101002#tb">2010-10-02</a>&nbsp;<a href="http://d.hatena.ne.jp/y___u/20101003/1286111322">＞ sudo -u diary - 高専カンファレンス2010秋in東京 アンカンファ...</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-profile">
+  <div class="hatena-moduletitle">プロフィール</div>
+  <div class="hatena-modulebody">
+    <div class="hatena-profile">
+      <p class="hatena-profile-image"><a href="http://d.hatena.ne.jp/ryopeko/about"><img src="form_remote_tag_for_rails3_files/user_p.gif" alt="ryopeko"></a></p>
+      <p class="hatena-profile-id"><a href="http://d.hatena.ne.jp/ryopeko/about">ryopeko</a></p>
+      <p class="hatena-profile-body">主にRuby系のエントリーです</p>
+    </div>
+  </div>
+</div>
+
+	<div class="hatena-module hatena-module-calendar2">
+<div class="hatena-moduletitle">カレンダー</div>
+<div class="hatena-modulebody">
+<table class="calendar" summary="calendar">
+<tbody><tr>
+<td class="calendar-prev-month" colspan="2"><a href="http://d.hatena.ne.jp/ryopeko/201010" title="201010" rel="nofollow">&lt;&lt;</a></td>
+<td class="calendar-current-month" colspan="3"><a href="http://d.hatena.ne.jp/ryopeko/archive/201011" rel="nofollow">2010/11</a></td>
+<td class="calendar-next-month" colspan="2"><a href="http://d.hatena.ne.jp/ryopeko/201012" title="201012" rel="nofollow">&gt;&gt;</a></td>
+</tr>
+<tr>
+<td class="calendar-sunday">日</td>
+<td class="calendar-weekday">月</td>
+<td class="calendar-weekday">火</td>
+<td class="calendar-weekday">水</td>
+<td class="calendar-weekday">木</td>
+<td class="calendar-weekday">金</td>
+<td class="calendar-saturday">土</td>
+</tr>
+	<tr>
+		<td class="calendar-day"></td>
+		<td class="calendar-day">1</td>
+		<td class="calendar-day">2</td>
+		<td class="calendar-day">3</td>
+		<td class="calendar-day">4</td>
+		<td class="calendar-day">5</td>
+		<td class="calendar-day">6</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">7</td>
+		<td class="calendar-day">8</td>
+		<td class="calendar-day">9</td>
+		<td class="calendar-day">10</td>
+		<td class="calendar-day">11</td>
+		<td class="calendar-day">12</td>
+		<td class="calendar-day">13</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">14</td>
+		<td class="calendar-day">15</td>
+		<td class="calendar-day">16</td>
+		<td class="calendar-day day-selected"><a href="http://d.hatena.ne.jp/ryopeko/20101117" title="17">17</a></td>
+		<td class="calendar-day">18</td>
+		<td class="calendar-day">19</td>
+		<td class="calendar-day">20</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">21</td>
+		<td class="calendar-day">22</td>
+		<td class="calendar-day">23</td>
+		<td class="calendar-day">24</td>
+		<td class="calendar-day">25</td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/ryopeko/20101126" title="26">26</a></td>
+		<td class="calendar-day">27</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">28</td>
+		<td class="calendar-day">29</td>
+		<td class="calendar-day">30</td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+	</tr>
+</tbody></table>
+	</div>
+</div>
+
+</div>
+</div>
+
+
+
+
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(
+  ['_setAccount', 'UA-441387-31'],
+  ['_trackPageview'],
+  ['b._setAccount', 'UA-7855606-1'],
+  ['b._setDomainName', '.hatena.ne.jp'],
+  ['b._trackPageview']
+  ,['c._setAccount', 'UA-15750874-1'],
+  ['c._trackPageview']
+  );
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- CG:1,CH:0,ICG:3,ICH:1 -->
+</body></html>

@@ -1,0 +1,53 @@
+{
+
+var google_ads = new Array();
+var google_ad;
+var google_radlinks = new Array();
+var google_radlink;
+var google_info = new Object();
+google_ad = new Object(); 
+google_ad.n = 1; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=ByxQq84W-TatPh-mQBbCG0WL0iuaBAoy9-ZYewI23AcDBwBQQARgBIKa2kgUoAzgAUIP-ub4EYImj0oSoFKAB3Mie7AOyAQ5kLmhhdGVuYS5uZS5qcMgBAdoBMGh0dHA6Ly9kLmhhdGVuYS5uZS5qcC9uZWRhdGUvMjAxMDEwMjgvMTI4ODIzMDIxNIACAakCf_nC89pSSj7IArSYmhmoAwHoAyvoAw31AwAAAMQ&amp;num=1&amp;sig=AGiWqtwJgMfz9ztDHGHdrNX0AeCKOzfUpQ&amp;client=ca-hatena_js&amp;adurl=http://vafs.vector.co.jp/clicker.php%3FC%3D8%26E%3D5%26D%3D1%26U%3D%252Fcatalogue%252Famivoice%252F"; 
+google_ad.visible_url = "shop.vector.co.jp"; 
+google_ad.line1 = "\x26#38899;\x26#22768;\x26#35469;\x26#35672;\x26#12477;\x26#12501;\x26#12488;GW\x26#29305;\x26#20385;"; 
+google_ad.line2 = "\x26#38899;\x26#22768;\x26#35469;\x26#35672;\x26#12477;\x26#12501;\x26#12488; \x26#22768;\x26#12364;\x26#25991;\x26#23383;\x26#12395;\x26#12394;\x26#12427;"; 
+google_ad.line3 = "\x26#12461;\x26#12540;\x26#12508;\x26#12540;\x26#12489;\x26#20837;\x26#21147;\x26#12424;\x26#12426;\x26#39640;\x26#36895;5/12\x26#36804;12600\x26#20870;"; 
+google_ad.regionname = ""; 
+google_ads[0] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 2; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=BeDLH84W-TatPh-mQBbCG0WK4pLPSAbj05JYUwI23AdDZERACGAIgpraSBSgDOABQz6SByPv_____AWCJo9KEqBSgAZDe5f4DsgEOZC5oYXRlbmEubmUuanDIAQHaATBodHRwOi8vZC5oYXRlbmEubmUuanAvbmVkYXRlLzIwMTAxMDI4LzEyODgyMzAyMTSAAgHIAsCOlAuoAwHoAyvoAw31AwAAAMQ&amp;num=2&amp;sig=AGiWqtxizBMJr3NOIPps7HSc2ZdWOkpZCA&amp;client=ca-hatena_js&amp;adurl=http://www.spamfighter.com/SLOW-PCfighter/Lang_JA/%3Fcid%3Dadwja"; 
+google_ad.visible_url = "www.spamfighter.com/SLOW-PCfighter"; 
+google_ad.line1 = "\x26#12524;\x26#12472;\x26#12473;\x26#12488;\x26#12522; \x26#12463;\x26#12522;\x26#12540;\x26#12490;\x26#12540;"; 
+google_ad.line2 = "\x26#28961;\x26#26009;\x26#12473;\x26#12461;\x26#12515;\x26#12531;\x26#12399;\x26#12371;\x26#12385;\x26#12425;\x26#12363;\x26#12425;"; 
+google_ad.line3 = "\x26#36933;\x26#12356; PC \x26#12395;\x26#12362;\x26#24745;\x26#12415;\x26#12391;\x26#12377;\x26#12363;\x26#65311;"; 
+google_ad.regionname = ""; 
+google_ads[1] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 3; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=L&amp;ai=BVeOx84W-TatPh-mQBbCG0WKx4veqApnQvqwiwI23AYDb8j8QAxgDIKa2kgUoAzgAUMKJ8IIHYImj0oSoFLIBDmQuaGF0ZW5hLm5lLmpwyAEB2gEwaHR0cDovL2QuaGF0ZW5hLm5lLmpwL25lZGF0ZS8yMDEwMTAyOC8xMjg4MjMwMjE0qQJ_-cLz2lJKPsgCoa-8HKgDAegDK-gDDfUDAAAAxA&amp;num=3&amp;sig=AGiWqtx39YPNqXGhzbI1YjxLfslY_ZXGbQ&amp;client=ca-hatena_js&amp;adurl=http://jp.norton.com/theme.jsp%3Fthemeid%3Dgalaxy-store%26om_ext_cid%3Dhho_ad_jp_FY11Q4_GDN_GALAXY_text_3_000855"; 
+google_ad.visible_url = "jp.norton.com"; 
+google_ad.line1 = "Norton\x26#12461;\x26#12515;\x26#12531;\x26#12506;\x26#12540;\x26#12531;\x26#23455;\x26#26045;\x26#20013;"; 
+google_ad.line2 = "5/31\x26#12414;\x26#12391;\x26#12395;\x26#23550;\x26#35937;\x26#35069;\x26#21697;\x26#12434;\x26#36092;\x26#20837;\x26#12377;\x26#12428;\x26#12400;\x26#12289;"; 
+google_ad.line3 = "\x26#35441;\x26#38988;\x26#12398;\x26#8220;GALAXY Tab\x26#8221;\x26#12364;\x26#24403;\x26#12383;\x26#12427;\x26#65281;"; 
+google_ad.regionname = ""; 
+google_ads[2] = google_ad; 
+google_info.feedback_url = "http://www.google.com/url?ct\x3dabg\x26q\x3dhttps://www.google.com/adsense/support/bin/request.py%3Fcontact%3Dabg_afc%26url%3Dhttp://d.hatena.ne.jp/nedate/20101028/1288230214%26hl%3Dja%26client%3Dca-hatena_js%26adU%3Dshop.vector.co.jp%26adT%3D%25E9%259F%25B3%25E5%25A3%25B0%25E8%25AA%258D%25E8%25AD%2598%25E3%2582%25BD%25E3%2583%2595%25E3%2583%2588GW%25E7%2589%25B9%25E4%25BE%25A1%26adU%3Dwww.spamfighter.com/SLOW-PCfighter%26adT%3D%25E3%2583%25AC%25E3%2582%25B8%25E3%2582%25B9%25E3%2583%2588%25E3%2583%25AA%2B%25E3%2582%25AF%25E3%2583%25AA%25E3%2583%25BC%25E3%2583%258A%25E3%2583%25BC%26adU%3Djp.norton.com%26adT%3DNorton%25E3%2582%25AD%25E3%2583%25A3%25E3%2583%25B3%25E3%2583%259A%25E3%2583%25BC%25E3%2583%25B3%25E5%25AE%259F%25E6%2596%25BD%25E4%25B8%25AD%26gl%3DJP%26hideleadgen%3D1\x26usg\x3dAFQjCNHNzemWh01VneydI4ynFBylCxJVmA";
+var google_attribution_text = "Ads by Google";
+var google_is_rtl = false;
+if (window.google_ad_request_done) {
+google_ad_request_done(google_ads);
+}
+if (window.google_radlink_request_done) {
+google_radlink_request_done(google_radlinks);
+}
+}

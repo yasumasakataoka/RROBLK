@@ -1,0 +1,53 @@
+
+
+rem if need ,install rails 3.yyy.zzz 
+gem install rails --version=3.yyy.zzz
+
+rem  xxx rails app create folder  
+
+cd  xxxx_parent_folder
+rails new xxx
+
+rem from v3.1 no need  "rails g jquery:install"
+
+rem modify gemfile. modfiy rails version and add   plsql,etc・・・・
+
+bundle install 
+
+rails plugin install git://github.com/doabit/jqgrid-rails3.git  ###  うまくいかない
+rake jqgrid:install
+
+rem  xxx\config\initializers\oracle.rb  and rinda.rb  add
+
+
+
+
+$ rails g devise user 　　　　　　　 # Userモデルを生成
+$ rake db:migrate 　　　　　　　　　 # マイグレーションを実行
+
+
+Deviseの設定
+
+1. メールの設定
+
+config/environments/development.rb
+
+Hoge::Application.configure do
+ (省略)
+ config.action_mailer.default_url_options = { :host => 'localhost:3000' }
+end
+
+2. ルーティングの設定
+
+config/routes.rb
+
+Todo::Application.routes.draw do
+ (省略)
+
+ # You can have the root of your site routed with "root"
+ # just remember to delete public/index.html.
+ root :to => "welcome#index" 　　　　　　　　　　　　　# トップページ
+
+ devise_for :users 　　　　　　　　　　　　　　　　　　# ユーザ登録、ログインなど
+ get 'tasks', :to => 'tasks#index', :as => :user_root  # ユーザー認証後のリダイレクト先
+end

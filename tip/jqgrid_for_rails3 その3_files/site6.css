@@ -1,0 +1,645 @@
+/* font and global ---------------------------------------------------*/
+body, input, button, textarea, select {
+	font-family: verdana,geneva,helvetica,arial,sans-serif;
+}
+body, table .nabble {
+	font-size: .84em;
+	margin: .8em;
+}
+code {
+	font-size: 1.1em;
+}
+.small {
+	font-size: 0.9em;
+}
+
+/* color scheme ------------------------------------------------------*/
+
+/* text and link (foreground) colors -----------------*/
+.nabble,
+.nabble table,
+.nabble .info-message th {
+	color: #000000; /* black */
+}
+.nabble h1,
+.nabble .light-black {
+	color: #333333; /* black (light) */
+}
+.nabble .important {
+	color: #cc0000; /* red (dark) */
+}
+.nabble th,
+.nabble .form-label,
+.nabble .weak-color {
+	color: #666666; /* gray */
+}
+
+.nabble .separator {
+	color: #dadada; /* gray (ultra light) */
+}
+
+/* background colors --------------------*/
+.nabble,
+.nabble .no-bg-color {
+	background: #ffffff; /* white */
+}
+.nabble .shaded-bg-color {
+	background: #eeeeee; /* gray (light) */
+}
+.nabble th,
+.nabble .dark-bg-color {
+	background: #dddddd; /* gray (medium) */
+}
+.nabble .highlight {
+	background: #ffff66; /* yellow */
+}
+.nabble .error-message,
+.nabble .info-message,
+.nabble .light-highlight {
+	background: #ffffcc; /* yellow (light) */
+}
+.nabble .info-message th,
+.nabble .dark-highlight {
+	background: #ffcc66; /* yellow (dark) */
+}
+
+.nabble .top-shadow{
+	background-image: url(images/topShadow.png);
+	background-repeat: repeat-x;
+}
+
+/* border colors ------------------------*/
+.nabble table,
+.nabble li,
+.nabble div,
+.nabble .medium-border-color  {
+	border-color: #cccccc; /* gray (medium) */
+}
+.nabble td,
+.nabble .light-border-color {
+	border-color: #eeeeee; /* gray (light) */
+}
+.nabble .dark-border-color {
+	border-color: #666666; /* gray */
+}
+.nabble .error-message {
+	border-color: #cc3300; /* red (dark) */
+}
+.nabble .info-message {
+	border-color: #ffcc33; /* yellow (dark) */
+}
+
+/* generic -----------------------------------------------------------*/
+.nabble p.first-para {
+	margin-top: 0;
+}
+
+.nabble a,
+.nabble table,
+.nabble input,
+.nabble textarea,
+.nabble select {
+	font-size: 1em;
+}
+.nabble option {
+	white-space: pre;
+}
+.nabble h1 {
+	font-size: 1.8em;
+	font-weight: normal;
+	margin-top: .4em;
+	margin-bottom: 0.5em;
+}
+.nabble h1 a:link, .nabble h1 a:visited {
+	text-decoration: none;
+	font-weight: bold;
+}
+.nabble h2 {
+	font-size: 1.3em;
+/*	xmargin: 0 0 .6em 1.6em; */
+	padding: .3em 0;
+}
+.nabble .smaller {
+	font-size: .9em;
+	font-weight: normal;
+}
+
+
+/*  HEADER ------------------------------------------------------------------- */
+	.nabble .top-bar {
+		vertical-align: top;
+		font-size: .9em;
+		padding-bottom: .4em;
+		height:1.6em;
+	}
+
+	.nabble .header {
+		padding-bottom: .5em;
+	}
+
+	.nabble .header h1 {
+		float: left;
+		margin-top: .3em;
+	}
+	.nabble .search-box {
+		text-align: right;
+		padding-top: 1em;
+	}
+
+	.nabble a.top-right-link:link,
+	.nabble a.top-right-link:hover,		
+	.nabble a.top-right-link:visited {
+		color:#CC0000;
+		font-weight:bold;
+	}
+
+/*  FOOTER  */
+	.nabble .footer-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 2.4em;
+	}
+	.nabble .footer-table td {
+		font-size: .9em;
+		line-height: 2.0em;
+		padding-left: 0.5em;
+		padding-right: 0.5em;
+	}
+	.nabble .footer-right {
+		text-align: right;
+	}
+
+
+/* table col types -------------------------------------------------------- */
+	.nabble td.priority,
+	.nabble td.rating,
+	.nabble td.count,
+	.nabble td.frequency,
+	.nabble th.rating,
+	.nabble th.count,
+	.nabble th.frequency {
+		text-align: center;
+	}
+	.nabble td.text {
+		/* padding-left: .4em; */
+	}
+	.nabble td.numeric {
+		text-align: right;
+	}
+	.nabble td.flag {
+		width: 11px;
+	}
+	.nabble td.date-time {
+		white-space: nowrap;
+	}
+	.nabble td.actions {
+		white-space: nowrap;
+		font-size: .9em;
+		text-align: center;
+	}
+
+/*  VIEW MESSAGES ------------------------------------------------------ */
+	.nabble .message-actions {
+		font-size: .9em;
+		margin-top: .45em;
+		margin-bottom: 1.8em;
+	}
+	.nabble .message-actions1 {
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+	.nabble .message-actions2 {
+		margin-top: 0.5em;
+		margin-bottom: 0;
+	}
+	.nabble .return-link {
+		width: 25em;
+		border-top-width: 1px;
+		border-top-style: solid;
+		padding: .4em;
+		margin-top: 2em;
+	}
+
+	.nabble .separator {
+		margin: 0 .2em 0 .2em;
+		display:inline;
+	}
+
+
+/* EDITOR TABLE ------------------------------------------------------*/
+	.nabble .editor-table {
+		border-width: 1px;
+		border-style: solid;
+		border-spacing: 0;
+	}
+	.nabble .editor-table td {
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		padding: .42em;
+	}
+
+	.nabble .edit-profile-table {
+		margin: .4em 2em;
+		border: 0;
+		border-spacing: 0;
+	}
+	.nabble .edit-profile-table td {
+		padding: .4em;
+	}
+	.nabble .instructional-message {
+		padding: 0.58em;
+	}
+
+
+
+/*  FORMS ---------------------------------------------------------------------- */
+	.nabble form {
+		margin: 0;
+	}
+	.nabble .form-label {
+		font-weight: bold;
+		text-align: right;
+		font-size: .9em;
+	}
+	.nabble .reqd-info {
+		font-size: .9em;
+	}
+	.nabble .form-label .reqd-info {
+		font-size: 1em;
+	}
+
+/*  TOOLBAR ----------------------------------------------------- */
+	.nabble td.toolbar {
+		border-bottom: 0;
+		padding-bottom: 0;
+	}
+	.nabble td.toolbar input,
+	.nabble td.toolbar button {
+		font-size: .9em;
+	}
+	.nabble .html-buttons input,
+	.nabble .html-buttons button {
+		height: 2.18em;
+		padding: 0;
+		overflow: visible;
+	}
+	.nabble .smileys table {
+		border-collapse: collapse;
+		border-width: 1px;
+		border-style: solid;
+	}
+	.nabble .smileys caption {
+		text-align: left;
+		padding: 0.5em;
+		font-weight: bold;
+		font-size: .9em;
+	}
+	.nabble .smileys td {
+		border-width: 1px;
+		border-style: solid;
+		text-align: center;
+	}
+
+
+
+/*  DESCRIPTIVE PAGES  */
+	.nabble .content-description {
+		margin: 1em;
+	}
+	.nabble .content-description p,
+	.nabble .content-description li {
+		line-height: 1.67em;
+	}
+	.nabble .content-description h2 {
+		font-weight: bold;
+		font-size: 1.17em;
+		margin: 1.1em 0 0 0;
+	}
+
+
+/* message quoting -------------------------------------------------------------------------- */
+	.nabble blockquote.quote {
+		border-left-width: 2px;
+		border-left-style: solid;
+		margin: 1.4em 1.8em;
+		font-size: .9em;
+	}
+	.nabble blockquote.quote blockquote.quote {
+		font-size: 1em;
+	}
+	.nabble div.quote {
+		border-top-width: 1px;
+		border-top-style: solid;
+		display: inline-block;
+		padding: 0 1em;
+	}
+	.nabble blockquote.quote div.quote-author {
+		padding: .5em 0;
+	}
+	.nabble blockquote.quote div.quote-message {
+		margin: .5em 0;
+	}
+
+	/*Opera fix*/
+	div.shrinkable-quote {
+		overflow: hidden;
+	}
+
+	div.shrink-quote a {
+		font-size: 80%;
+		text-decoration: none;
+	}
+
+	div.quote div.shrink-quote a {
+		cursor: pointer;
+		font-size: 90%;
+	}
+
+
+/*  MY ACCOUNT - Flagged Posts -------------------------------------------------------- */
+.nabble .list-table {
+	border-collapse: collapse;
+	width: 100%;
+	border-width: 1px;
+	border-style: solid;
+}
+.nabble .list-table th {
+	padding: .4em;
+	text-align: left;
+	border-bottom-width: 2px;
+	border-bottom-style: solid;
+ 	font-weight: bold;
+}
+.nabble .list-table th.frequency,
+.list-table th.count {
+	text-align: center;
+}
+.nabble .list-table td {
+	padding: .3em .4em;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+.nabble .list-table table td {
+	border:none;
+	padding:0;	
+}
+
+/* message tables */
+
+.nabble .message-table {
+	width: 42em;
+	border-width: 2px;
+	border-style: solid;
+	margin: .8em 0;
+}
+.nabble .message-row {
+	border-width: 2px;
+	border-style: solid;
+	padding: 5px;
+}
+.nabble div.error-message {
+	border-width: 1px;
+	border-style: solid;
+	text-align: center;
+	padding: .1em;
+	margin: .1em;
+}
+
+
+/* top tabs */
+
+.nabble ul.toptab {
+	list-style-type: none;
+	padding-left: 0;
+	padding-bottom: 0;
+	margin-left: 0;
+	margin-bottom: 0.4em;
+	white-space: nowrap;
+}
+.nabble ul.toptab li {
+	border-width: 1px;
+	border-style: solid;
+	padding: .4em 1.25em;
+	margin-right: 0.5em;
+	display: inline;
+}
+.nabble ul.toptab li.selected {
+	border-top-width: 3px;
+}
+.nabble ul.toptab li a {
+	text-decoration: none;
+}
+.nabble div.top-border {
+	border-width: 1px;
+	border-style: solid;
+}
+
+/* SEARCH RESULTS (by pv090406) ----------------------------------------------*/
+.nabble .matching-forums-table {
+	width: 20em;
+	border-collapse: collapse;
+}
+.nabble .matching-forums-table td {
+	border-width: 1px;
+	border-style: solid;
+	padding: 0.3em;
+}
+.nabble .matching-forums-table td.heading {
+	border-width: 0;
+	border-bottom-width: 1px;
+	font-weight: bold;
+}
+.nabble .matching-forums-table td ul.level0 {
+	padding-left: 2em;
+	margin-left: 0;
+}
+.nabble .search-result-line1 {
+	font-size: 1.25em;
+}
+.nabble .search-result-line3 {
+	font-size: .75em;
+}
+
+/* noscript */
+.nabble noscript table {
+	width: 100%;
+}
+.nabble noscript td {
+	border-width: 1px;
+	border-style: solid;
+	text-align: center;
+}
+
+/* Others */
+.inline {display:inline}
+
+.nabble .ad {
+	margin-top: 2em;
+}
+
+.nabble .border1 {
+	border-width: 1px;
+	border-style: solid;
+}
+
+.nabble .signature {
+	border-top-width: 1px;
+	border-top-style: solid;
+	margin-top: 2em;
+}
+
+.black-overlay{
+	display: none;
+	position: absolute;
+	top:0;
+	left:0;
+	width: 100%;
+	height: 200%;
+	background-color: black;
+	z-index:1001;
+	-moz-opacity: 0.8;
+	opacity:.80;
+	filter: alpha(opacity=80);
+}
+
+.window-content {
+	display: none;
+	position: absolute;
+	top: 25%;
+	left: 25%;
+	width: 50%;
+	padding: 16px;
+	border-width: 5px;
+	border-style:solid;
+	background-color: white;
+	z-index:1002;
+	overflow: auto;
+}
+
+/*------------------- drop-down -----------------------*/
+span.dropdown {
+	cursor: pointer;
+	padding-right:.5em;
+}
+
+span.dropdown-item {
+	color: #0000EE;
+}
+
+span.dropdown table {
+	position:absolute;
+	display:none;
+	background:#eeeeee;
+	border:1px solid #cccccc;
+	padding:.1em .2em .1em .2em;
+	z-index:1000;
+	border-collapse:collapse;
+}
+
+span.dropdown table td {
+	font-size:90%;
+	white-space: nowrap;
+	padding:.2em;
+}
+
+span.dropdown table td a {
+	text-decoration:none;
+}
+
+tr.dropdown-hover {
+	cursor: pointer;
+	background: #dddddd;
+}
+
+
+/*------------------- threads & posts ---------------------*/
+.post-hover {
+	background: #eeeeee;
+}
+
+span.post-date {
+	font-size:85%;
+	color:#6a6a6a;
+}
+
+span.post-author {
+	color: #116611;
+	white-space: nowrap;
+	margin:0 .2em 0 .3em;
+	font-size:100%;
+}
+
+span.post-subject {
+	font-size:90%;
+	color: #111166;
+	overflow: hidden;
+	white-space: nowrap;
+	padding-right: .5em;
+}
+
+span.post-snippet, a.post-unindent {
+	color:#909090;
+}
+
+.post-border, td.post-border {
+	border-color: #D9D9D9;
+}
+
+td.post-row {
+	background-image: url("images/post-row.gif");
+	background-repeat: repeat-x;
+}
+
+td.post-top-left {
+	width: 12px;
+	background-image: url("images/post-top-left.gif");
+	background-repeat: no-repeat;
+}
+
+td.post-bottom-mid {
+	width:100%;
+	height:10px;
+	background: url("images/post-bottom.gif") repeat-x;
+}
+
+td.post-bottom-left {
+	background: url("images/post-bottom-left.gif") no-repeat;
+}
+
+td.post-bottom-right {
+	background: url("images/post-bottom-right.gif") no-repeat;
+}
+
+span.connect-line {
+	background-image:url("images/connect-line.gif");
+	background-repeat: repeat-y;
+}
+
+span.connect-end {
+	background-image:url("images/connect-line.gif");
+	background-repeat: no-repeat;
+}
+
+td.connect-end {
+	background-image:url("images/connect-end.gif");
+	background-repeat: no-repeat;
+}
+
+td.connect-node {
+	cursor:pointer;
+	background-image:url("images/connect-node.gif");
+	background-repeat: no-repeat;
+}
+
+td.connect-node-closed {
+	background-image:url("images/connect-node-closed.gif");
+	background-repeat: no-repeat;
+}
+
+/*----- MISC ----*/
+img.avatar {
+	vertical-align:bottom;
+	border-width:2px;
+	border-style:solid;
+}

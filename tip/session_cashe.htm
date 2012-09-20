@@ -1,0 +1,514 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:og="http://ogp.me/ns#"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>Rails3 で Session を Memcache に入れる - nedateの日記</title>
+<link rel="start" href="http://d.hatena.ne.jp/" title="nedateの日記">
+<link rel="help" href="http://d.hatena.ne.jp/help" title="ヘルプ">
+<link rel="prev" href="http://d.hatena.ne.jp/nedate/20101006/1286341476" title="Rails3 で Ajax （link_to_remot...">
+<link rel="next" href="http://d.hatena.ne.jp/nedate/20101110/1289356213" title="Rails3 で RDoc ドキュメント生...">
+
+<link rel="stylesheet" href="session_cashe_files/base.css" type="text/css" media="all">
+<link rel="stylesheet" href="session_cashe_files/headerstyle_gr.css" type="text/css" media="all">
+<link rel="stylesheet" href="session_cashe_files/hatena2-green.css" type="text/css" media="all">
+
+
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://d.hatena.ne.jp/nedate/rss">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://d.hatena.ne.jp/nedate/rss2">
+
+<link rel="meta" type="application/rdf+xml" title="FOAF" href="http://d.hatena.ne.jp/nedate/foaf">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/nedate/opensearch/diary.xml" title="nedateの日記内日記検索">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/nedate/opensearch/archive.xml" title="nedateの日記内一覧検索">
+
+
+
+<link rel="shortcut icon" href="http://d.hatena.ne.jp/images/gr_favicon.ico">
+
+
+
+
+<style type="text/css">
+<!-- 
+
+-->
+</style>
+
+
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rails3 で Session を Memcache に入れる - nedateの日記">
+<meta property="og:url" content="http://d.hatena.ne.jp/nedate/20101028/1288230214">
+<meta property="og:description" content="Rails3 で Session を Memcache に入れるための手順です。 まずは、memcache-client をインストールするた..">
+<meta property="og:site_name" content="はてなダイアリー">
+
+
+<!--
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<rdf:Description rdf:about="http://d.hatena.ne.jp/nedate/20101028/1288230214">
+   <foaf:maker rdf:parseType="Resource">
+     <foaf:holdsAccount>
+       <foaf:OnlineAccount foaf:accountName="nedate">
+         <foaf:accountServiceHomepage rdf:resource="http://www.hatena.ne.jp/" />
+       </foaf:OnlineAccount>
+     </foaf:holdsAccount>
+   </foaf:maker>
+</rdf:Description>
+</rdf:RDF>
+-->
+
+<link rel="alternate" media="handheld" type="text/html" href="http://d.hatena.ne.jp/nedate/mobile?date=20101028&amp;section=1288230214">
+<!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+  rdf:about="http://d.hatena.ne.jp/nedate/20101028/1288230214"
+  trackback:ping="http://d.hatena.ne.jp/nedate/20101028/1288230214"
+  dc:title="Rails3 で Session を Memcache に入れる"
+  dc:identifier="http://d.hatena.ne.jp/nedate/20101028/1288230214" />
+</rdf:RDF>
+-->
+
+<script src="session_cashe_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript" src="session_cashe_files/Base.js"></script>
+<script type="text/javascript" src="session_cashe_files/Iter.js"></script>
+<script type="text/javascript" src="session_cashe_files/DOM.js"></script>
+<script type="text/javascript" src="session_cashe_files/Style.js"></script>
+<script type="text/javascript" src="session_cashe_files/Signal.js"></script>
+<script type="text/javascript" src="session_cashe_files/Async.js"></script>
+<script type="text/javascript" src="session_cashe_files/Logging.js"></script>
+<script type="text/javascript" src="session_cashe_files/BookmarkCommentViewer.js" charset="utf-8"></script>
+
+
+
+
+
+
+<script type="text/javascript" src="session_cashe_files/HatenaStar.js"></script>
+<script type="text/javascript">
+Hatena.Star.SiteConfig = {
+  entryNodes: {
+    'div.section': {
+      uri: 'h3 a',
+      title: 'h3',
+      container: 'h3'
+    }
+  }
+};
+Hatena.Author  = new Hatena.User('nedate');
+Hatena.DiaryName  = new Hatena.User('nedate');
+
+</script>
+
+
+
+<script type="text/javascript" src="session_cashe_files/twitter_entry_icon.js"></script>
+
+
+
+<script type="text/javascript" src="session_cashe_files/adcolor.js"></script>
+
+
+<script type="text/javascript" src="session_cashe_files/quick_pager.js"></script>
+<script type="text/javascript" src="session_cashe_files/diary_utils.js"></script>
+<script type="text/javascript" src="session_cashe_files/max_width_fotolife.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="session_cashe_files/jquery-1.js"></script>
+<script type="text/javascript">
+  jQuery.noConflict()(function($){
+    var j$ = jQuery;
+  });
+</script>
+
+
+
+
+<link href="session_cashe_files/google_afc.css" type="text/css" rel="stylesheet"><script type="text/javascript" src="session_cashe_files/entries.json"></script></head><body>
+
+<div id="simple-header">
+
+  <a href="http://www.hatena.ne.jp/"><img src="session_cashe_files/hatena-simple_gr.gif" alt="Hatena::" title="Hatena::" id="logo-hatena" width="65" height="17"></a><a href="http://d.hatena.ne.jp/"><img src="session_cashe_files/diary-simple_gr.gif" alt="ブログ(Diary)" title="Diary" id="logo-diary" width="43" height="17"></a>
+  <form method="get" action="/search" class="search-form">
+    <input class="search-word" name="word" value="session rails3" type="text"><input name="name" value="nedate" type="hidden"><input name="diary" value="日記" class="search-button" type="submit"><input name="submit" value="検索" class="search-button" type="submit">
+  </form>
+  <ul class="menu">
+    <li><a href="http://d.hatena.ne.jp/nedate/">ブログトップ</a></li>
+    <li><a href="http://d.hatena.ne.jp/nedate/archive">記事一覧</a></li>
+
+
+
+    <li><a href="https://www.hatena.ne.jp/login?backurl=http%3A%2F%2Fd.hatena.ne.jp%2Fnedate%2F20101028%2F1288230214&amp;add_timestamp=1">ログイン</a></li>
+    <li><a href="https://www.hatena.ne.jp/register?location=http://d.hatena.ne.jp/">無料ブログ開設</a></li>
+
+  </ul>
+</div>
+
+
+
+<h1><a href="http://d.hatena.ne.jp/nedate/">nedateの日記</a> <a id="twitter-header-icon" href="http://twitter.com/nedate"><img src="session_cashe_files/icon-twitter.png" alt="Twitter" title="このページ作者のTwitterへ" class="icon" border="0" width="16" height="16"></a></h1>
+<div class="hatena-body">
+<div class="main">
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="calendar" id="pager-top">
+  <a rel="prev" href="http://d.hatena.ne.jp/nedate/20101006/1286341476" class="prev">&lt;Rails3 で Ajax （link_to_remot...</a>&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/nedate/20101110/1289356213" class="next">Rails3 で RDoc ドキュメント生...&gt;</a><span id="edit-in-place-add"></span>
+</div>
+<div id="days">
+
+<div class="day">
+<h2><a href="http://d.hatena.ne.jp/nedate/20101028"><span class="date">2010-10-28</span></a></h2>
+
+<div class="body">
+
+<!-- google_ad_section_start -->
+
+		<div class="section">
+			<h3 class="title"><a href="http://d.hatena.ne.jp/nedate/20101028/1288230214" name="1288230214"><span class="highlight">Rails3</span> で <span class="highlight">Session</span> を Memcache に入れる</a><span class="hatena-star-comment-container"><img class="hatena-star-comment-button" style="cursor: pointer; margin: 0pt; padding: 0pt; border: medium none; vertical-align: middle; display: none;" title="Comments" alt="Comments" tabindex="0" src="session_cashe_files/comment_gr.gif"></span><span class="hatena-star-star-container"><img class="hatena-star-add-button" style="cursor: pointer; margin: 0pt 3px; padding: 0pt; border: medium none; vertical-align: middle;" title="Add Star" alt="Add Star" tabindex="0" src="session_cashe_files/add_gr.gif"></span></h3>
+			<p class="sectionheader"></p>
+			<p><span class="highlight">Rails3</span> で <span class="highlight">Session</span> を Memcache に入れるための手順です。</p>
+			<p>まずは、memcache-<a class="keyword" href="http://d.hatena.ne.jp/keyword/client">client</a> を<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a>するために Gemfile に下記の行を追加します。</p>
+<pre class="syntax-highlight">gem <span class="synSpecial">'</span><span class="synConstant">memcache-client</span><span class="synSpecial">'</span>
+</pre>
+
+			<p>次に bundle install を実行して memcache-<a class="keyword" href="http://d.hatena.ne.jp/keyword/client">client</a> を<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a>します。</p>
+<pre class="syntax-highlight">$ sudo bundle install
+Fetching <span class="synStatement">source</span> index <span class="synStatement">for</span> http://rubygems.org/
+   :
+Installing memcache-client <span class="synStatement">(</span><span class="synConstant">1</span>.<span class="synConstant">8</span>.<span class="synConstant">5</span><span class="synStatement">)</span>
+   :
+Your bundle is complete! Use <span class="synStatement">`bundle show [gemname]`</span> to see where a bundled gem is installed.
+</pre>
+
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%C7%A5%D5%A5%A9%A5%EB%A5%C8">デフォルト</a>では <span class="highlight">Session</span> は <a class="keyword" href="http://d.hatena.ne.jp/keyword/Cookie">Cookie</a> に保存するようになっているので、config/initializers/<span class="highlight">session</span>_store.rb を下記のように修正して Memcache に <span class="highlight">Session</span> を保存するように修正します。</p>
+			<p>(memcache_server にて指定している Memcache <a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%B5%A1%BC%A5%D0">サーバ</a>は、開発環境・本番環境と切り替えたほうが良いと思いますので、config/environments/development.rb 等に適宜逃がしてください。)</p>
+<pre class="syntax-highlight"><span class="synIdentifier">Project</span>::<span class="synIdentifier">Application</span>.config.<span class="highlight">session</span>_store <span class="synIdentifier">:mem_cache_store</span>
+<span class="synIdentifier">Project</span>::<span class="synIdentifier">Application</span>.config.<span class="highlight">session</span>_options = {
+  <span class="synIdentifier">:cookie_only</span> =&gt; <span class="synConstant">false</span>,
+  <span class="synIdentifier">:key</span> =&gt; <span class="synSpecial">'</span><span class="synConstant">_<span class="highlight">session</span></span><span class="synSpecial">'</span>,
+  <span class="synIdentifier">:memcache_server</span> =&gt; <span class="synSpecial">'</span><span class="synConstant">localhost:11211</span><span class="synSpecial">'</span>
+}
+</pre>
+
+			<p>これで <span class="highlight">Session</span> は Memcache に保存されるようになります。</p>
+			<p>ですが、<span class="highlight">Session</span> ID はまだ <a class="keyword" href="http://d.hatena.ne.jp/keyword/Cookie">Cookie</a> 上に保存されます。</p>
+			<p>これを <a class="keyword" href="http://d.hatena.ne.jp/keyword/URL">URL</a> <a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%D1%A5%E9%A5%E1%A1%BC%A5%BF">パラメータ</a>として引き回す場合は <a class="keyword" href="http://d.hatena.ne.jp/keyword/jpmobile">jpmobile</a> を使用します。</p>
+			<p>これも memcache-<a class="keyword" href="http://d.hatena.ne.jp/keyword/client">client</a> と同様に Gemfile に <a class="keyword" href="http://d.hatena.ne.jp/keyword/jpmobile">jpmobile</a> の設定を追加して bundle install を実行します。</p>
+<pre class="syntax-highlight">gem <span class="synSpecial">'</span><span class="synConstant">memcache-client</span><span class="synSpecial">'</span>
+gem <span class="synSpecial">'</span><span class="synConstant">jpmobile</span><span class="synSpecial">'</span>
+</pre>
+
+<pre class="syntax-highlight">$ sudo bundle install
+Fetching <span class="synStatement">source</span> index <span class="synStatement">for</span> http://rubygems.org/
+   :
+Using memcache-client <span class="synStatement">(</span><span class="synConstant">1</span>.<span class="synConstant">8</span>.<span class="synConstant">5</span><span class="synStatement">)</span>
+Installing jpmobile <span class="synStatement">(</span><span class="synConstant">0</span>.<span class="synConstant">1</span>.<span class="synConstant">2</span><span class="synStatement">)</span>
+   :
+Your bundle is complete! Use <span class="synStatement">`bundle show [gemname]`</span> to see where a bundled gem is installed.
+</pre>
+
+			<p>あとは app/controllers/application_controller.rb に trans_sid :always を追記すれば <a class="keyword" href="http://d.hatena.ne.jp/keyword/Cookie">Cookie</a> を使用しないで <span class="highlight">Session</span> を Memcache に保存できます。</p>
+<pre class="syntax-highlight"><span class="synPreProc">class </span><span class="synType">ApplicationController</span> &lt; <span class="synIdentifier">ActionController</span>::<span class="synIdentifier">Base</span>
+  trans_sid <span class="synIdentifier">:always</span>
+  protect_from_forgery
+<span class="synPreProc">end</span>
+</pre>
+
+			<p class="share-button sectionfooter"><iframe title="WEBサイト向けTwitter: ツイートボタン" style="width: 80px; height: 20px;" src="session_cashe_files/tweet_button.htm" allowtransparency="true" tabindex="0" class="twitter-share-button twitter-count-none" frameborder="0" scrolling="no"></iframe><script type="text/javascript" src="session_cashe_files/widgets.js" charset="utf-8"></script></p>
+
+			<p class="sectionfooter"><a href="http://d.hatena.ne.jp/nedate/20101028/1288230214">Permalink</a> | <a href="http://d.hatena.ne.jp/nedate/20101028/1288230214#c">コメント(0)</a> | <a href="http://d.hatena.ne.jp/nedate/20101028/1288230214#tb">トラックバック(0)</a> | 10:43 <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/nedate/20101028/1288230214" class="bookmark-icon"><img src="session_cashe_files/b_entry_gr.gif" title="Rails3 で Session を Memcache に入れるを含むブックマーク" alt="Rails3 で Session を Memcache に入れるを含むブックマーク" class="icon" border="0" width="16" height="12"></a> <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/nedate/20101028/1288230214" class="bookmark-count"><img src="session_cashe_files/1288230214.gif" title="はてなブックマーク - Rails3 で Session を Memcache に入れる" alt=""></a> <img class="hatena-bcomment-view-icon" src="session_cashe_files/popup.gif" onclick="javascript:BookmarkCommentViewer.iconImageClickHandler(this, 'http://d.hatena.ne.jp/nedate/20101028/1288230214', event);" title="Rails3 で Session を Memcache に入れるのブックマークコメント" alt="Rails3 で Session を Memcache に入れるのブックマークコメント" width="13" height="13"></p>
+
+		</div>
+<div id="google_afc_inactive_user" class="section">
+<div id="google_afc_inactive_user_container" class="google_afc_blocklink_5 google_afc_boder"><div class="google_afc_blocklink"><div class="google_ads_by"><a href="https://www.google.com/adsense/support/bin/request.py?contact=abg_afc">Ads by Google</a></div><ul><li class="odd"><span class="title"><a href="http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=ByxQq84W-TatPh-mQBbCG0WL0iuaBAoy9-ZYewI23AcDBwBQQARgBIKa2kgUoAzgAUIP-ub4EYImj0oSoFKAB3Mie7AOyAQ5kLmhhdGVuYS5uZS5qcMgBAdoBMGh0dHA6Ly9kLmhhdGVuYS5uZS5qcC9uZWRhdGUvMjAxMDEwMjgvMTI4ODIzMDIxNIACAakCf_nC89pSSj7IArSYmhmoAwHoAyvoAw31AwAAAMQ&amp;num=1&amp;sig=AGiWqtwJgMfz9ztDHGHdrNX0AeCKOzfUpQ&amp;client=ca-hatena_js&amp;adurl=http://vafs.vector.co.jp/clicker.php%3FC%3D8%26E%3D5%26D%3D1%26U%3D%252Fcatalogue%252Famivoice%252F">音声認識ソフトGW特価</a></span><span class="visible_url"><a href="http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=ByxQq84W-TatPh-mQBbCG0WL0iuaBAoy9-ZYewI23AcDBwBQQARgBIKa2kgUoAzgAUIP-ub4EYImj0oSoFKAB3Mie7AOyAQ5kLmhhdGVuYS5uZS5qcMgBAdoBMGh0dHA6Ly9kLmhhdGVuYS5uZS5qcC9uZWRhdGUvMjAxMDEwMjgvMTI4ODIzMDIxNIACAakCf_nC89pSSj7IArSYmhmoAwHoAyvoAw31AwAAAMQ&amp;num=1&amp;sig=AGiWqtwJgMfz9ztDHGHdrNX0AeCKOzfUpQ&amp;client=ca-hatena_js&amp;adurl=http://vafs.vector.co.jp/clicker.php%3FC%3D8%26E%3D5%26D%3D1%26U%3D%252Fcatalogue%252Famivoice%252F">shop.vector.co.jp</a></span><span class="summary">音声認識ソフト 声が文字になる&nbsp;キーボード入力より高速5/12迄12600円</span></li><li><span class="title"><a href="http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=BeDLH84W-TatPh-mQBbCG0WK4pLPSAbj05JYUwI23AdDZERACGAIgpraSBSgDOABQz6SByPv_____AWCJo9KEqBSgAZDe5f4DsgEOZC5oYXRlbmEubmUuanDIAQHaATBodHRwOi8vZC5oYXRlbmEubmUuanAvbmVkYXRlLzIwMTAxMDI4LzEyODgyMzAyMTSAAgHIAsCOlAuoAwHoAyvoAw31AwAAAMQ&amp;num=2&amp;sig=AGiWqtxizBMJr3NOIPps7HSc2ZdWOkpZCA&amp;client=ca-hatena_js&amp;adurl=http://www.spamfighter.com/SLOW-PCfighter/Lang_JA/%3Fcid%3Dadwja">レジストリ クリーナー</a></span><span class="visible_url"><a href="http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=BeDLH84W-TatPh-mQBbCG0WK4pLPSAbj05JYUwI23AdDZERACGAIgpraSBSgDOABQz6SByPv_____AWCJo9KEqBSgAZDe5f4DsgEOZC5oYXRlbmEubmUuanDIAQHaATBodHRwOi8vZC5oYXRlbmEubmUuanAvbmVkYXRlLzIwMTAxMDI4LzEyODgyMzAyMTSAAgHIAsCOlAuoAwHoAyvoAw31AwAAAMQ&amp;num=2&amp;sig=AGiWqtxizBMJr3NOIPps7HSc2ZdWOkpZCA&amp;client=ca-hatena_js&amp;adurl=http://www.spamfighter.com/SLOW-PCfighter/Lang_JA/%3Fcid%3Dadwja">www.spamfighter.com/SLOW-PCfighter</a></span><span class="summary">無料スキャンはこちらから&nbsp;遅い PC にお悩みですか？</span></li><li class="odd"><span class="title"><a href="http://googleads.g.doubleclick.net/aclk?sa=L&amp;ai=BVeOx84W-TatPh-mQBbCG0WKx4veqApnQvqwiwI23AYDb8j8QAxgDIKa2kgUoAzgAUMKJ8IIHYImj0oSoFLIBDmQuaGF0ZW5hLm5lLmpwyAEB2gEwaHR0cDovL2QuaGF0ZW5hLm5lLmpwL25lZGF0ZS8yMDEwMTAyOC8xMjg4MjMwMjE0qQJ_-cLz2lJKPsgCoa-8HKgDAegDK-gDDfUDAAAAxA&amp;num=3&amp;sig=AGiWqtx39YPNqXGhzbI1YjxLfslY_ZXGbQ&amp;client=ca-hatena_js&amp;adurl=http://jp.norton.com/theme.jsp%3Fthemeid%3Dgalaxy-store%26om_ext_cid%3Dhho_ad_jp_FY11Q4_GDN_GALAXY_text_3_000855">Nortonキャンペーン実施中</a></span><span class="visible_url"><a href="http://googleads.g.doubleclick.net/aclk?sa=L&amp;ai=BVeOx84W-TatPh-mQBbCG0WKx4veqApnQvqwiwI23AYDb8j8QAxgDIKa2kgUoAzgAUMKJ8IIHYImj0oSoFLIBDmQuaGF0ZW5hLm5lLmpwyAEB2gEwaHR0cDovL2QuaGF0ZW5hLm5lLmpwL25lZGF0ZS8yMDEwMTAyOC8xMjg4MjMwMjE0qQJ_-cLz2lJKPsgCoa-8HKgDAegDK-gDDfUDAAAAxA&amp;num=3&amp;sig=AGiWqtx39YPNqXGhzbI1YjxLfslY_ZXGbQ&amp;client=ca-hatena_js&amp;adurl=http://jp.norton.com/theme.jsp%3Fthemeid%3Dgalaxy-store%26om_ext_cid%3Dhho_ad_jp_FY11Q4_GDN_GALAXY_text_3_000855">jp.norton.com</a></span><span class="summary">5/31までに対象製品を購入すれば、&nbsp;話題の“GALAXY Tab”が当たる！</span></li></ul></div></div>
+
+</div>
+
+<!-- google_ad_section_end -->
+
+</div>
+
+<form id="comment-form" method="post" action="/nedate/comment#c" class="comment">
+<input name="mode" value="enter" type="hidden">
+<input name="rkm" value="" type="hidden">
+<input name="date" value="2010-10-28" type="hidden">
+<div class="comment">
+  <div class="caption"><a name="c">コメントを書く</a></div>
+  <div class="commentshort">
+    
+    
+
+    <a name="error-message"></a>
+    <p class="message" style="display: none; padding: 3px;"></p>
+
+    
+
+    
+            
+    <p class="commentform">
+      <span class="commentator">
+        <span class="usermailconfirm"><input name="usermail" size="1"><input name="userurl" size="1">スパム対策のためのダミーです。もし見えても何も入力しないでください<br></span>
+        <span class="username">
+        <img src="session_cashe_files/guest_icon.gif" class="hatena-id-icon" alt="ゲスト" title="ゲスト" width="16" height="16">
+        <input name="section" value="1288230214" type="hidden">
+        
+          <input value="なまえ" style="color: rgb(170, 170, 170);" id="comment-username" name="username" size="15">
+        
+        </span>
+        
+          <span class="usermail"><img src="session_cashe_files/icon-usermail.gif" style="vertical-align: middle; margin-right: 3px;"><input style="color: rgb(170, 170, 170);" id="comment-usermail" name="useremail" size="15" value="メール(非公開)"></span>
+          <span class="userurl"><img src="session_cashe_files/icon-userurl.gif" style="vertical-align: middle; margin-right: 3px;"><input style="color: rgb(170, 170, 170);" id="comment-userurl" name="useruri" size="15" value="URL"></span>
+        
+      </span>
+<br>
+      <!-- NOT_VERIFIED_COMMENT_AUTH -->
+      <textarea style="color: rgb(170, 170, 170);" id="comment-textarea" name="body" value="" cols="60" rows="3"></textarea><br>
+      
+          </p><div class="captcha">
+            <img src="session_cashe_files/captcha.gif" class="captcha-image">
+            <span class="captcha-message">画像認証</span><br>
+            <input value="画像内の文字列を入力して下さい" style="color: rgb(170, 170, 170);" name="captcha_code" size="10" class="captcha-string" id="comment-captcha" type="text">
+          </div>
+      
+      <span class="comment-submit"><input id="comment-form-button" value="投稿" type="submit"></span>
+    <p></p>
+
+      <script type="text/javascript" src="session_cashe_files/diary_comment_edit_form.js"></script>
+    
+
+  </div>
+</div>
+
+</form>
+
+
+
+
+
+  
+  <div class="refererlist">
+    <div class="caption">
+      <a name="tb">トラックバック</a> - http://d.hatena.ne.jp/nedate/20101028/1288230214
+    </div>
+    
+  </div>
+  
+  
+
+
+
+
+
+    <div class="refererlist">
+      <div class="caption">リンク元</div>
+      <ul>
+          <li>76 <a href="http://pipes.yahoo.com/pipes/pipe.info?_id=tDfBdGWF3RGl9XNm1L3fcQ" rel="nofollow">http://pipes.yahoo.com/pipes/pipe.info?_id=tDfBdGWF3RGl9XNm1L3fcQ</a></li>
+          <li>11 <a href="http://pipes.yahoo.com/pipes/pipe.info?_id=12e453e301454b799b3ac6642aa089b5" rel="nofollow">http://pipes.yahoo.com/pipes/pipe.info?_id=12e453e301454b799b3ac6642aa089b5</a></li>
+          <li>3 <a href="http://www.google.co.jp/search?hl=ja&amp;q=rails3+%E6%97%A5%E6%9C%AC%E8%AA%9E&amp;aq=f&amp;aqi=g1&amp;aql=&amp;oq=&amp;gs_rfai=" rel="nofollow">http://www.google.co.jp/search?hl=ja&amp;q=rails3+日本語&amp;aq=f&amp;aqi=g1&amp;aql=&amp;oq=&amp;gs_rfai=</a></li>
+          <li>2 <a href="http://d.hatena.ne.jp/akm/20101106" rel="nofollow">http://d.hatena.ne.jp/akm/20101106</a></li>
+          <li>2 <a href="http://ezsch.ezweb.ne.jp/search/?query=nedate&amp;ct=0001&amp;pd=1&amp;sr=0000" rel="nofollow">http://ezsch.ezweb.ne.jp/search/?query=nedate&amp;ct=0001&amp;pd=1&amp;sr=0000</a></li>
+          <li>2 <a href="http://reader.livedoor.com/reader/" rel="nofollow">http://reader.livedoor.com/reader/</a></li>
+          <li>2 <a href="http://search.hatena.ne.jp/websearch?word=rails%A3%B3+ajax+&amp;site=d.hatena.ne.jp&amp;from=" rel="nofollow">http://search.hatena.ne.jp/websearch?word=rails３+ajax+&amp;site=d.hatena.ne.jp&amp;from=</a></li>
+          <li>2 <a href="http://webcache.googleusercontent.com/search?q=cache:L66-ve4dXrsJ:d.hatena.ne.jp/nedate/20101004/1286183882+rspec+describe+rails3&amp;cd=4&amp;hl=ja&amp;ct=clnk&amp;gl=jp&amp;client=firefox-a" rel="nofollow">http://webcache.googleusercontent.com/search?q=cache:L66-ve4dXrsJ:d.hatena.ne.jp/nedate/20101004/1286183882+rspec+describe+rails3&amp;cd=4&amp;hl=ja&amp;ct=clnk&amp;gl=jp&amp;client=firefox-a</a></li>
+          <li>2 <a href="http://webcache.googleusercontent.com/search?q=cache:bhLcu0pzvcYJ:d.hatena.ne.jp/nedate/20101006/1286341476+will_paginate+rails3&amp;cd=1&amp;hl=ja&amp;ct=clnk&amp;gl=jp&amp;lr=lang_ja&amp;client=firefox-a" rel="nofollow">http://webcache.googleusercontent.com/search?q=cache:bhLcu0pzvcYJ:d.hatena.ne.jp/nedate/20101006/1286341476+will_paginate+rails3&amp;cd=1&amp;hl=ja&amp;ct=clnk&amp;gl=jp&amp;lr=lang_ja&amp;client=firefox-a</a></li>
+          <li>2 <a href="http://www.google.co.jp/search?hl=ja&amp;client=firefox-a&amp;hs=Uoh&amp;rls=org.mozilla%3Aja%3Aofficial&amp;q=link_to_function+rails3&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=" rel="nofollow">http://www.google.co.jp/search?hl=ja&amp;client=firefox-a&amp;hs=Uoh&amp;rls=org.mozilla:ja:official&amp;q=link_to_function+rails3&amp;aq=f&amp;aqi=&amp;aql=&amp;oq=&amp;gs_rfai=</a></li>
+      </ul>
+      
+    </div>
+
+
+
+
+</div>
+
+
+
+</div>
+<div class="calendar" id="pager-bottom">
+  <a rel="prev" href="http://d.hatena.ne.jp/nedate/20101006/1286341476" class="prev">&lt;Rails3 で Ajax （link_to_remot...</a><img src="session_cashe_files/icon-quickpager.gif" style="vertical-align: middle; margin-left: 3px; cursor: pointer;">&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/nedate/20101110/1289356213" class="next">Rails3 で RDoc ドキュメント生...&gt;</a>
+</div>
+</div>
+<div class="sidebar">
+	<div class="hatena-module hatena-module-profile">
+  <div class="hatena-moduletitle">プロフィール</div>
+  <div class="hatena-modulebody">
+    <div class="hatena-profile">
+      <p class="hatena-profile-id"><a href="http://d.hatena.ne.jp/nedate/about">nedate</a></p>
+      <p class="hatena-profile-body">Rails3 で開発をする中で悩んだことを色々メモしていきます。</p>
+    </div>
+  </div>
+</div>
+
+	<div class="hatena-module hatena-module-calendar2">
+<div class="hatena-moduletitle">カレンダー</div>
+<div class="hatena-modulebody">
+<table class="calendar" summary="calendar">
+<tbody><tr>
+<td class="calendar-prev-month" colspan="2"><a href="http://d.hatena.ne.jp/nedate/201009" title="201009" rel="nofollow">&lt;&lt;</a></td>
+<td class="calendar-current-month" colspan="3"><a href="http://d.hatena.ne.jp/nedate/archive/201010" rel="nofollow">2010/10</a></td>
+<td class="calendar-next-month" colspan="2"><a href="http://d.hatena.ne.jp/nedate/201011" title="201011" rel="nofollow">&gt;&gt;</a></td>
+</tr>
+<tr>
+<td class="calendar-sunday">日</td>
+<td class="calendar-weekday">月</td>
+<td class="calendar-weekday">火</td>
+<td class="calendar-weekday">水</td>
+<td class="calendar-weekday">木</td>
+<td class="calendar-weekday">金</td>
+<td class="calendar-saturday">土</td>
+</tr>
+	<tr>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day">1</td>
+		<td class="calendar-day">2</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">3</td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/nedate/20101004" title="4">4</a></td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/nedate/20101005" title="5">5</a></td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/nedate/20101006" title="6">6</a></td>
+		<td class="calendar-day">7</td>
+		<td class="calendar-day">8</td>
+		<td class="calendar-day">9</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">10</td>
+		<td class="calendar-day">11</td>
+		<td class="calendar-day">12</td>
+		<td class="calendar-day">13</td>
+		<td class="calendar-day">14</td>
+		<td class="calendar-day">15</td>
+		<td class="calendar-day">16</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">17</td>
+		<td class="calendar-day">18</td>
+		<td class="calendar-day">19</td>
+		<td class="calendar-day">20</td>
+		<td class="calendar-day">21</td>
+		<td class="calendar-day">22</td>
+		<td class="calendar-day">23</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">24</td>
+		<td class="calendar-day">25</td>
+		<td class="calendar-day">26</td>
+		<td class="calendar-day">27</td>
+		<td class="calendar-day day-selected"><a href="http://d.hatena.ne.jp/nedate/20101028" title="28">28</a></td>
+		<td class="calendar-day">29</td>
+		<td class="calendar-day">30</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">31</td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+	</tr>
+</tbody></table>
+	</div>
+</div>
+
+	<div class="hatena-module hatena-module-section">
+<div class="hatena-moduletitle"><a href="http://d.hatena.ne.jp/nedate/archive">最新タイトル</a></div>
+<div class="hatena-modulebody">
+<ul class="hatena-section">
+<li><a href="http://d.hatena.ne.jp/nedate/20110106/1294300882">Rails3 で Ajax （will_paginate 2.3.15 対応)</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101110/1289356213">Rails3 で RDoc ドキュメント生成時に　invalid byte sequence in UTF-8　エラーが出た場合の対応</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101028/1288230214">Rails3 で Session を Memcache に入れる</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101006/1286341476">Rails3 で Ajax （link_to_remote + will_paginate 対応)</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101005/1286243852">Rails3 で ActiveRecord にて取得した UTF-8 の日本語を view に表示する</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101004/1286183882">Rails3 で RSpec + RCov 日本語対応</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-comment">
+<div class="hatena-moduletitle">最近のコメント</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-trackback">
+<div class="hatena-moduletitle">最近のトラックバック</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/nedate/20110106#tb">2011-01-06</a>&nbsp;<a href="http://twitter.com/kn_fujii/status/49114748389822465">Twitter / @kn_fujii</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101004/1286183882#tb">2010-10-04</a>&nbsp;<a href="http://d.hatena.ne.jp/NowTom/20110201/1296526086">NowTomの日記 - rcovを使う</a></li>
+<li><a href="http://d.hatena.ne.jp/nedate/20101004/1286183882#tb">2010-10-04</a>&nbsp;<a href="http://d.hatena.ne.jp/akm/20101106/1289033861">akimatter -  from jeweler to bundler</a></li>
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+
+
+
+
+
+<script type="text/javascript">
+<!--
+    google_ad_channel = 'd_user_nonactive';
+    google_max_num_ads = '3';
+    google_encoding = 'euc-jp';
+    hatena_afc_lazy_load = 1;
+    hatena_afc_lazy_load_id = 'google_afc_inactive_user_container';
+    document.write('<scri' + 'pt charset="utf-8" type="text/javascript" src="http://ad.hatena.ne.jp/js/google_afc_test2.js"></scri' + 'pt>');
+// -->
+</script><script charset="utf-8" type="text/javascript" src="session_cashe_files/google_afc_test2.js"></script><script language="JavaScript" src="session_cashe_files/show_ads.js"></script><script src="session_cashe_files/show_ads_impl.js"></script><script src="session_cashe_files/test_domain.js"></script><script>google_protectAndRun("ads_core.google_render_ad", google_handleError, google_render_ad);</script><script language="JavaScript1.1" src="session_cashe_files/ads"></script>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(
+  ['_setAccount', 'UA-441387-31'],
+  ['_trackPageview'],
+  ['b._setAccount', 'UA-7855606-1'],
+  ['b._setDomainName', '.hatena.ne.jp'],
+  ['b._trackPageview']
+  
+  );
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- CG:1,CH:0,ICG:26,ICH:14 -->
+<div style="color: rgb(0, 0, 0); position: absolute; display: none; z-index: 10002; left: 0pt; top: 0pt; background-color: rgb(255, 255, 255); border: 0px none; padding: 0px; text-align: center;"><div style="text-align: left; margin: 0pt; padding: 0pt;"></div></div></body></html>

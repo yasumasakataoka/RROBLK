@@ -1,0 +1,276 @@
+* {
+	margin: 0;
+	paddinng: 0;
+}
+
+body {
+margin: 0px;
+padding: 0px;
+color : #F5F5F5;
+background-image: url(./template/flaim/img/background.gif);
+}
+
+
+div {
+font-family: "Verdana", "Osaka","£Í£Ó ¥´¥·¥Ã¥¯","¥Ò¥é¥®¥Î³Ñ¥´ Pro W3";
+}
+
+
+h1 {
+margin: 0px;
+padding: 0px;
+}
+
+ul {
+list-style-image:url(./template/flaim/img/list.gif);
+margin: 0px 0px 0px 20px;
+padding: 0px;
+}
+
+a:link {color:#00CCFF; text-decoration:none;}
+a:visited {color:#509CAF; text-decoration:none;}
+a:active {color:#00CCFF;}
+a:hover {color:#99E9FF; text-decoration:underline;}
+
+.site_title a,
+.site_title a:link,
+.site_title a:visited,
+.site_title a:active,
+.site_title a:hover {
+color: #FBE756;
+text-decoration:none;
+}
+
+.title_bg {
+background-image: url(./template/flaim/img/header.gif);
+background-repeat: no-repeat;
+width: 770px;
+height: 114px;
+vertical-align : middle;
+}
+
+.site_title {
+font-size: 18px;
+font-weight: bolder;
+color: #FBE756;
+margin: 0px 0px 0px 20px;
+padding: 0px;
+}
+
+.description {
+font-size: 12px;
+font-weight: bolder;
+color: #FBE756;
+margin: 5px 0px 0px 20px;
+}
+
+.entrytable {
+margin: 9px 0px 20px 0px;
+}
+
+.entry_navi {
+margin:5px 0 0 0;
+font-size: 12px;
+text-align:center;
+}
+
+.entry {
+margin: 0px;
+padding: 5px 0px 0px 0px;
+}
+
+.entry_date {
+font-size: 10px;
+color: #F5F5F5;
+}
+
+.entry_author {
+font-size: 10px;
+color: #F5F5F5;
+margin: 0px 0px 5px 0px;
+padding-bottom: 5px;
+border-bottom: solid 1px #999999;
+}
+
+.entry_title {
+font-size: 12px;
+font-weight: bolder;
+color: #F7D763;
+padding-top: 3px;
+padding-left: 30px;
+}
+
+.entry_title_bg {
+margin: 0px 0px 10px 0px;
+width : 520px;
+height : 21px;
+background-image : url(./template/flaim/img/title.gif);
+}
+
+.entry_body {
+font-size: 12px;
+line-height: 150%;
+color: #F5F5F5;
+margin: 0px 0px 15px 10px;
+}
+
+.entry_more {
+font-size: 12px;
+line-height: 150%;
+color: #F5F5F5;
+margin: 0px 0px 5px 10px;
+}
+
+.entry_state {
+font-size: 10px;
+color: #F5F5F5;
+margin: 0px 0px 30px 10px;
+}
+
+.comment_title {
+font-size: 14px;
+font-weight: bolder;
+color: #666666;
+margin: 20px 0px 10px 0px;
+padding-bottom: 3px;
+border-bottom: 1px dotted #CCCCCC;
+}
+
+.trackback_title {
+font-size: 14px;
+font-weight: bolder;
+color: #666666;
+margin: 20px 0px 10px 0px;
+padding-bottom: 3px;
+border-bottom: 1px dotted #CCCCCC;
+}
+
+.sub_title {
+font-size: 12px;
+font-weight: bolder;
+color: #F7D763;
+padding-top: 3px;
+padding-left: 30px;
+}
+
+.sub_title_bg {
+margin: 0px 0px 10px 0px;
+width : 520px;
+height : 21px;
+background-image : url(./template/flaim/img/subtitle.gif);
+}
+
+blockquote {
+font-size: 11px;
+color: #006699;
+margin: 20px 10px 20px 10px;
+padding: 10px;
+border: 1px dotted #999999;
+}
+
+.pict {
+border-width: 1px;
+border-style: solid;
+border-color: #33CCFF;
+}
+
+.linktable {
+margin: 0px 0px 20px 0px;
+}
+
+.linktitle {
+font-weight: bolder;
+font-size: 12px;
+padding-left: 27px;
+padding-top: 11px;
+color: #FFFFFF;
+}
+
+.linktitle_bg{
+margin: 16px 0px 0px 0px;
+width:190px;
+height:30px;
+background: url(./template/flaim/img/area_head.gif) no-repeat;
+}
+
+
+.linktext {
+font-size: 10px;
+color: #F5F5F5;
+width: 180px;
+line-height: 170%;
+padding-top: 10px;
+padding-left: 5px;
+padding-bottom: 10px;
+}
+
+.linktext_bg{
+padding-left: 5px;
+padding-right: 5px;
+background: url(./template/flaim/img/area_center.gif) repeat-y;
+}
+
+.search {
+font-size: 10px;
+color: #F5F5F5;
+line-height: 170%;
+margin: 7px 0px 5px 10px;
+}
+
+.search_box {
+margin: 0px 0px 5px 10px;
+}
+
+.copyright {
+font-size: 10px;
+color: #F5F5F5;
+margin: 0px 0px 25px 0px;
+}
+
+.calendar {
+font-size: 10px;
+color: #666666;
+line-height: 180%;
+margin: 0px 0px 20px 0px;
+padding: 0px;
+}
+
+.today {
+color:#FFFFFF
+background: #4D4D4D;
+padding: 3px;
+}
+
+.cell {
+background: #000000;
+width:26px;
+height:22px;
+border: solid 1px #616161;
+padding: 0px;
+margin: 0px;
+}
+
+input,textarea,select{
+font-size :10px;
+color :#333333;
+background-color:#FFFFFF;
+}
+
+
+.jugem_bana{
+	margin: 10px 1px 10px 1px;
+}
+
+#ad .linktext  {
+margin:0;
+padding:0;
+}
+
+ul.navi {
+	margin: 10px 0px 10px 0px;
+	list-style: none;
+	text-align:center;}
+ul.navi  li{
+	display:inline;
+	margin:0px 2px;
+}

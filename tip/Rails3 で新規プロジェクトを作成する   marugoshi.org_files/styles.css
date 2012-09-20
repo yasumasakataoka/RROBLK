@@ -1,0 +1,59 @@
+@charset "utf-8";
+
+/* whole */
+* { margin: 0; padding: 0; }
+html { height: 100%; }
+body { background: #fff; font-family: 'Lucida Grande', 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', メイリオ, Verdana, 'ＭＳ Ｐゴシック', sans-serif; font-size: 12px; line-height: 1.65; height: 100%; color: #1a1a1a; letter-spacing: 0.05em; }
+h1, h2, h3, h4, h5, h6 { font-weight: normal; }
+.clear { clear:both; }
+.clearfix:after { content: ""; display: block; clear: both; }
+.clearfix { display:inline-block; }
+.clearfix { display:block; }
+a { text-decoration: none; cursor: pointer; outline: none; }
+a:link { color: #eb5b04; font-weight: bold; }
+a:visited { color: #eb5b04; font-weight: bold; }
+a:hover { text-decoration: none; font-weight: bold; }
+img { border: none; }
+ul, ol { list-style:none; }
+
+/* whole */
+#whole { padding-top: 65px; padding-left: 120px; width: 950px; }
+  
+/* header */
+#header { padding-right: 17px; padding-left: 17px; width:916px; }
+
+/* logo */
+#header h1 { width: 359px; }
+#header h1 a { display: block; width: 359px; height: 57px; background: url(../images/logo.png) left top no-repeat; text-indent: -9999px; }
+
+/* main */
+#main { width: 906px; padding-top: 74px; padding-right: 22px; padding-left :22px; }
+
+/* contents */
+#contents { float: left; width: 680px; padding-right: 30px; }
+
+/* archives */
+#archives { padding-bottom: 44px; }
+#archives h2 { font-size: 22px; color: #336699; }
+
+/* entry */
+.entry { padding-bottom: 44px; }
+.entry h2 { font-size: 16px; }
+.entry h3 { padding-bottom: 10px; font-size: 11px; color: #666; }
+.entry p { margin-bottom: 11px; }
+.entry ul { margin-bottom: 6px; border-bottom: 1px dotted #555; }
+.entry li { font-weight: bold; }
+.entry pre { overflow: auto;　margin-top: 10px; margin-bottom: 10px; padding: 7px; background-color: #333; font-family: 'Bitstream Vera Sans Mono', Courier, monospace; font-size: 12px; color: #fff; }
+
+/* paginate */
+.pagination { padding-bottom: 50px; text-align: center; }
+.pagination .disabled { display: none; }
+
+/* list */
+#list h3 { font-size: 12px; padding-top: 5px; }
+#list h4 { padding-bottom: 10px; font-size: 11px; color: #666; }
+
+/* navigation */
+#navigation { float: right; width: 186px; }
+#navigation li { margin-bottom: 3px; }
+#navigation li a { color: #cc0000; font-size: 11px; font-weight: bold; }

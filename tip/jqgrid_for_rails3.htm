@@ -1,0 +1,720 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:og="http://ogp.me/ns#"><head>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>rails3にjqGridを実装する - Issei’s Analysis 〜おとうさんの解析日記〜</title>
+<link rel="start" href="http://d.hatena.ne.jp/" title="Issei’s Analysis 〜おとうさんの解析日記〜">
+<link rel="help" href="http://d.hatena.ne.jp/help" title="ヘルプ">
+<link rel="prev" href="http://d.hatena.ne.jp/isseing333/20110416/1302948247" title="メモ（BCa法、ABC法、RMA）">
+<link rel="next" href="http://d.hatena.ne.jp/isseing333/20110425/1303731147" title="小技メモ（Rのコンソールをテキ...">
+
+<link rel="stylesheet" href="jqgrid_for_rails3_files/base.css" type="text/css" media="all">
+<link rel="stylesheet" href="jqgrid_for_rails3_files/headerstyle_bl.css" type="text/css" media="all">
+<link rel="stylesheet" href="jqgrid_for_rails3_files/monotone-flower.css" type="text/css" media="all">
+
+
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://d.hatena.ne.jp/isseing333/rss">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://d.hatena.ne.jp/isseing333/rss2">
+
+<link rel="meta" type="application/rdf+xml" title="FOAF" href="http://d.hatena.ne.jp/isseing333/foaf">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/isseing333/opensearch/diary.xml" title="Issei’s Analysis 〜おとうさんの解析日記〜内日記検索">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/isseing333/opensearch/archive.xml" title="Issei’s Analysis 〜おとうさんの解析日記〜内一覧検索">
+
+
+
+<link rel="shortcut icon" href="http://d.hatena.ne.jp/images/bl_favicon.ico">
+
+
+
+
+<style type="text/css">
+<!-- 
+
+-->
+</style>
+
+
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="rails3にjqGridを実装する - Issei’s Analysis 〜おとうさんの解析日記〜">
+<meta property="og:image" content="http://cdn-ak.f.st-hatena.com/images/fotolife/i/isseing333/20110419/20110419225723.png">
+<meta property="og:url" content="http://d.hatena.ne.jp/isseing333/20110419/1303221515">
+<meta property="og:description" content="jqGridはとても綺麗な表なのですが、もともとrails3用には作られていないようなのでうまく実装できず困って..">
+<meta property="og:site_name" content="はてなダイアリー">
+
+
+<!--
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<rdf:Description rdf:about="http://d.hatena.ne.jp/isseing333/20110419/1303221515">
+   <foaf:maker rdf:parseType="Resource">
+     <foaf:holdsAccount>
+       <foaf:OnlineAccount foaf:accountName="isseing333">
+         <foaf:accountServiceHomepage rdf:resource="http://www.hatena.ne.jp/" />
+       </foaf:OnlineAccount>
+     </foaf:holdsAccount>
+   </foaf:maker>
+</rdf:Description>
+</rdf:RDF>
+-->
+
+<link rel="alternate" media="handheld" type="text/html" href="http://d.hatena.ne.jp/isseing333/mobile?date=20110419&amp;section=1303221515">
+<!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+  rdf:about="http://d.hatena.ne.jp/isseing333/20110419/1303221515"
+  trackback:ping="http://d.hatena.ne.jp/isseing333/20110419/1303221515"
+  dc:title="rails3にjqGridを実装する"
+  dc:identifier="http://d.hatena.ne.jp/isseing333/20110419/1303221515" />
+</rdf:RDF>
+-->
+
+
+
+
+
+
+<script src="jqgrid_for_rails3_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript" src="jqgrid_for_rails3_files/HatenaStar.js"></script>
+<script type="text/javascript">
+Hatena.Star.SiteConfig = {
+  entryNodes: {
+    'div.section': {
+      uri: 'h3 a',
+      title: 'h3',
+      container: 'h3'
+    }
+  }
+};
+Hatena.Author  = new Hatena.User('isseing333');
+Hatena.DiaryName  = new Hatena.User('isseing333');
+
+</script>
+
+
+
+
+
+<script type="text/javascript" src="jqgrid_for_rails3_files/adcolor.js"></script>
+
+
+<script type="text/javascript" src="jqgrid_for_rails3_files/quick_pager.js"></script>
+<script type="text/javascript" src="jqgrid_for_rails3_files/diary_utils.js"></script>
+<script type="text/javascript" src="jqgrid_for_rails3_files/max_width_fotolife.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="jqgrid_for_rails3_files/jquery-1.js"></script>
+<script type="text/javascript">
+  jQuery.noConflict()(function($){
+    var j$ = jQuery;
+  });
+</script>
+
+
+
+
+<link type="text/css" rel="stylesheet" href="jqgrid_for_rails3_files/widget.css"><style type="text/css">#twtr-widget-1 .twtr-popular { display: inline-block; }</style><style type="text/css">#twtr-widget-1 .twtr-avatar, #twtr-widget-1 .twtr-user { display: none; } #twtr-widget-1 .twtr-tweet-text { margin-left: 0; }</style><style type="text/css">#twtr-widget-1 em { display: block; }</style><script type="text/javascript" src="jqgrid_for_rails3_files/entries.json"></script><style type="text/css">#twtr-widget-1 .twtr-doc, 
+                     #twtr-widget-1 .twtr-hd a, 
+                     #twtr-widget-1 h3, 
+                     #twtr-widget-1 h4, 
+                     #twtr-widget-1 .twtr-popular {
+            background-color: #333333 !important;
+            color: #ffffff !important;
+          }
+          #twtr-widget-1 .twtr-popular {
+            color: #ffffff !important;
+            background-color: rgba(51,51,51, .3) !important;
+          }
+          #twtr-widget-1 .twtr-tweet a {
+            color: #4aed05 !important;
+          }
+          #twtr-widget-1 .twtr-bd, #twtr-widget-1 .twtr-timeline i a, 
+          #twtr-widget-1 .twtr-bd p {
+            color: #ffffff !important;
+          }
+          #twtr-widget-1 .twtr-new-results, 
+          #twtr-widget-1 .twtr-results-inner, 
+          #twtr-widget-1 .twtr-timeline {
+            background: #000000 !important;
+          }</style></head><body>
+
+<div id="simple-header">
+
+  <a href="http://www.hatena.ne.jp/"><img src="jqgrid_for_rails3_files/hatena-simple_bl.gif" alt="Hatena::" title="Hatena::" id="logo-hatena" width="65" height="17"></a><a href="http://d.hatena.ne.jp/"><img src="jqgrid_for_rails3_files/diary-simple_bl.gif" alt="ブログ(Diary)" title="Diary" id="logo-diary" width="43" height="17"></a>
+  <form method="get" action="/search" class="search-form">
+    <input class="search-word" name="word" value="rails3 grid" type="text"><input name="name" value="isseing333" type="hidden"><input name="diary" value="日記" class="search-button" type="submit"><input name="submit" value="検索" class="search-button" type="submit">
+  </form>
+  <ul class="menu">
+    <li><a href="http://d.hatena.ne.jp/isseing333/">ブログトップ</a></li>
+    <li><a href="http://d.hatena.ne.jp/isseing333/archive">記事一覧</a></li>
+
+
+
+    <li><a href="https://www.hatena.ne.jp/login?backurl=http%3A%2F%2Fd.hatena.ne.jp%2Fisseing333%2F20110419%2F1303221515&amp;add_timestamp=1">ログイン</a></li>
+    <li><a href="https://www.hatena.ne.jp/register?location=http://d.hatena.ne.jp/">無料ブログ開設</a></li>
+
+  </ul>
+</div>
+
+
+
+<h1><a href="http://d.hatena.ne.jp/isseing333/">Issei’s Analysis 〜おとうさんの解析日記〜</a></h1>
+<div class="hatena-body">
+<div class="main">
+<div class="calendar">
+<span class="year">2009</span> <span class="delimiter">|</span> 01 <span class="delimiter">|</span> 02 <span class="delimiter">|</span> 03 <span class="delimiter">|</span> 04 <span class="delimiter">|</span> 05 <span class="delimiter">|</span> 06 <span class="delimiter">|</span> 07 <span class="delimiter">|</span> 08 <span class="delimiter">|</span> 09 <span class="delimiter">|</span> 10 <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/200911" rel="nofollow" class="month">11</a> <span class="delimiter">|</span> 12 <span class="delimiter">|</span> <br>
+<span class="year">2010</span> <span class="delimiter">|</span> 01 <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201002" rel="nofollow" class="month">02</a> <span class="delimiter">|</span> 03 <span class="delimiter">|</span> 04 <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201005" rel="nofollow" class="month">05</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201006" rel="nofollow" class="month">06</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201007" rel="nofollow" class="month">07</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201008" rel="nofollow" class="month">08</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201009" rel="nofollow" class="month">09</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201010" rel="nofollow" class="month">10</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201011" rel="nofollow" class="month">11</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201012" rel="nofollow" class="month">12</a> <span class="delimiter">|</span> <br>
+<span class="year">2011</span> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201101" rel="nofollow" class="month">01</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201102" rel="nofollow" class="month">02</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201103" rel="nofollow" class="month">03</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201104" rel="nofollow" class="month">04</a> <span class="delimiter">|</span> <a href="http://d.hatena.ne.jp/isseing333/201105" rel="nofollow" class="month">05</a> <span class="delimiter">|</span> 06 <span class="delimiter">|</span> 07 <span class="delimiter">|</span> 08 <span class="delimiter">|</span> 09 <span class="delimiter">|</span> 10 <span class="delimiter">|</span> 11 <span class="delimiter">|</span> 12 <span class="delimiter">|</span> <br>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="calendar" id="pager-top">
+  <a rel="prev" href="http://d.hatena.ne.jp/isseing333/20110416/1302948247" class="prev">&lt;メモ（BCa法、ABC法、RMA）</a>&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/isseing333/20110425/1303731147" class="next">小技メモ（Rのコンソールをテキ...&gt;</a><span id="edit-in-place-add"></span>
+</div>
+<div id="days">
+
+<div class="day">
+<h2><a href="http://d.hatena.ne.jp/isseing333/20110419"><span class="date">2011-04-19</span></a></h2>
+
+<div class="body">
+
+<!-- google_ad_section_start -->
+
+		<div class="section">
+			<h3 class="title"><a href="http://d.hatena.ne.jp/isseing333/20110419/1303221515" name="1303221515"><span class="highlight">rails3</span>にjq<span class="highlight">Grid</span>を実装する</a><span class="hatena-star-comment-container"><img class="hatena-star-comment-button" style="cursor: pointer; margin: 0pt; padding: 0pt; border: medium none; vertical-align: middle; display: none;" title="Comments" alt="Comments" tabindex="0" src="jqgrid_for_rails3_files/comment_dg.gif"></span><span class="hatena-star-star-container"><img class="hatena-star-add-button" style="cursor: pointer; margin: 0pt 3px; padding: 0pt; border: medium none; vertical-align: middle;" title="Add Star" alt="Add Star" tabindex="0" src="jqgrid_for_rails3_files/add_dg.gif"><a href="http://d.hatena.ne.jp/camelmasa/"><img title="" alt="camelmasa" style="padding: 0pt; border: medium none;" class="hatena-star-star" tabindex="0" src="jqgrid_for_rails3_files/20071015163030.gif"></a></span></h3>
+			<p class="sectionheader"></p>
+			<p>jq<span class="highlight">Grid</span>はとても綺麗な表なのですが、もともと<span class="highlight">rails3</span>用には作られていないようなのでうまく実装できず困っていました。</p>
+			<p><span class="highlight">rails3</span>用の<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%D7%A5%E9%A5%B0%A5%A4%A5%F3">プラグイン</a>であるjq<span class="highlight">grid</span>-<span class="highlight">rails3</span>は見つかったのですが、どうやったら動くのか良くわからなかったのです。</p>
+			<br>
+
+			<p>ですが、、、なんとか試行錯誤の末、実装に成功したのでその流れを書いておきます。</p>
+			<p>結論から言えば、jq<span class="highlight">Grid</span>（<a href="http://www.2dconcept.com/jquery-grid-rails-plugin" target="_blank">http://www.2dconcept.com/jquery-<span class="highlight">grid</span>-rails-plugin</a>）は<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a>せず、jq<span class="highlight">grid</span>-<span class="highlight">rails3</span>（<a href="https://github.com/doabit/jqgrid-rails3" target="_blank">https://github.com/doabit/jq<span class="highlight">grid</span>-<span class="highlight">rails3</span></a>）だけを<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a>します。</p>
+			<p>以下の手順でそのようになります。</p>
+			<br>
+
+			<p>cmd</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> new <span class="highlight">grid</span>
+cd <span class="highlight">grid</span>
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> plugin install <a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a>://<a class="keyword" href="http://d.hatena.ne.jp/keyword/github">github</a>.com/doabit/jq<span class="highlight">grid</span>-<span class="highlight">rails3</span>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a>
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> jqgr<a href="http://d.hatena.ne.jp/install/">id:install</a>
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> generate jq<span class="highlight">grid</span> user id pseudo email firstname
+
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/gem">gem</a> install <a class="keyword" href="http://d.hatena.ne.jp/keyword/jquery">jquery</a>-<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a>
+</pre>
+			<br>
+
+			<p>gemfileに追記</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/gem">gem</a> '<a class="keyword" href="http://d.hatena.ne.jp/keyword/jquery">jquery</a>-<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a>'
+</pre>
+			<br>
+
+			<p>cmd</p>
+<pre>bundle
+</pre>
+			<br>
+
+			<p>/config/environment.rbに追記</p>
+<pre>require 'openssl'
+OpenSSL::<a class="keyword" href="http://d.hatena.ne.jp/keyword/SSL">SSL</a>::VERIFY_PEER = OpenSSL::<a class="keyword" href="http://d.hatena.ne.jp/keyword/SSL">SSL</a>::VERIFY_NONE
+</pre>
+			<br>
+
+			<p>cmd</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> generate <a class="keyword" href="http://d.hatena.ne.jp/keyword/jquery">jquery</a>:install
+
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> generate <a class="keyword" href="http://d.hatena.ne.jp/keyword/scaffold">scaffold</a> userdata <a href="http://d.hatena.ne.jp/string/">id:string</a> pseudo:<a class="keyword" href="http://d.hatena.ne.jp/keyword/string">string</a> email:<a class="keyword" href="http://d.hatena.ne.jp/keyword/string">string</a> firstname:<a class="keyword" href="http://d.hatena.ne.jp/keyword/string">string</a>
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> <a class="keyword" href="http://d.hatena.ne.jp/keyword/db">db</a>:migrate
+</pre>
+			<br>
+
+			<p>views/layouts/application.<a class="keyword" href="http://d.hatena.ne.jp/keyword/html">html</a>.erbのヘッダーに追記</p>
+<pre>&lt;%=jq<span class="highlight">grid</span>_javascripts%&gt;
+&lt;%=jq<span class="highlight">grid</span>_stylesheets%&gt;
+</pre>
+			<br>
+
+			<p>views/userdata/index.heml.erbにviews/users/index.heml.erbの内容を<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%B3%A5%D4%A5%DA">コピペ</a></p>
+			<br>
+
+			<p>cmd</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/rails">rails</a> s
+</pre>
+			<br>
+
+			<p>これでめでたく<a href="http://localhost:3000/userdata" target="_blank">http://localhost:3000/userdata</a>にjq<span class="highlight">Grid</span>が表示されます！！</p>
+			<p><a href="http://f.hatena.ne.jp/isseing333/20110419225723" class="hatena-fotolife" target="_blank"><img src="jqgrid_for_rails3_files/20110419225723.png" alt="f:id:isseing333:20110419225723p:image" title="f:id:isseing333:20110419225723p:image" class="hatena-fotolife"></a></p>
+			<br>
+
+			<p>あとは<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%C7%A1%BC%A5%BF%A5%D9%A1%BC%A5%B9">データベース</a>にいろいろ入れるだけです！</p>
+			<p>ちなみに以上の手順は、railsinstallerで<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a>した直後でも実行できます。</p>
+			<p class="sectionfooter"><a href="http://d.hatena.ne.jp/isseing333/20110419/1303221515">Permalink</a> | <a href="http://d.hatena.ne.jp/isseing333/20110419/1303221515#c">コメント(0)</a> | <a href="http://d.hatena.ne.jp/isseing333/20110419/1303221515#tb">トラックバック(0)</a> | 22:58</p>
+
+		</div>
+
+<!-- google_ad_section_end -->
+
+</div>
+
+<form id="comment-form" method="post" action="/isseing333/comment#c" class="comment">
+<input name="mode" value="enter" type="hidden">
+<input name="rkm" value="" type="hidden">
+<input name="date" value="2011-04-19" type="hidden">
+<div class="comment">
+  <div class="caption"><a name="c">コメントを書く</a></div>
+  <div class="commentshort">
+    
+    
+
+    <a name="error-message"></a>
+    <p class="message" style="display: none; padding: 3px;"></p>
+
+    
+
+    
+            
+    <p class="commentform">
+      <span class="commentator">
+        <span class="usermailconfirm"><input name="usermail" size="1"><input name="userurl" size="1">スパム対策のためのダミーです。もし見えても何も入力しないでください<br></span>
+        <span class="username">
+        <img src="jqgrid_for_rails3_files/guest_icon.gif" class="hatena-id-icon" alt="ゲスト" title="ゲスト" width="16" height="16">
+        <input name="section" value="1303221515" type="hidden">
+        
+          <input value="なまえ" style="color: rgb(170, 170, 170);" id="comment-username" name="username" size="15">
+        
+        </span>
+        
+          <span class="usermail"><img src="jqgrid_for_rails3_files/icon-usermail.gif" style="vertical-align: middle; margin-right: 3px;"><input style="color: rgb(170, 170, 170);" id="comment-usermail" name="useremail" size="15" value="メール(非公開)"></span>
+          <span class="userurl"><img src="jqgrid_for_rails3_files/icon-userurl.gif" style="vertical-align: middle; margin-right: 3px;"><input style="color: rgb(170, 170, 170);" id="comment-userurl" name="useruri" size="15" value="URL"></span>
+        
+      </span>
+<br>
+      <!-- NOT_VERIFIED_COMMENT_AUTH -->
+      <textarea style="color: rgb(170, 170, 170);" id="comment-textarea" name="body" value="" cols="60" rows="3"></textarea><br>
+      
+          </p><div class="captcha">
+            <img src="jqgrid_for_rails3_files/captcha.gif" class="captcha-image">
+            <span class="captcha-message">画像認証</span><br>
+            <input value="画像内の文字列を入力して下さい" style="color: rgb(170, 170, 170);" name="captcha_code" size="10" class="captcha-string" id="comment-captcha" type="text">
+          </div>
+      
+      <span class="comment-submit"><input id="comment-form-button" value="投稿" type="submit"></span>
+    <p></p>
+
+      <script type="text/javascript" src="jqgrid_for_rails3_files/diary_comment_edit_form.js"></script>
+    
+
+  </div>
+</div>
+
+</form>
+
+
+
+
+
+  
+  <div class="refererlist">
+    <div class="caption">
+      <a name="tb">トラックバック</a> - http://d.hatena.ne.jp/isseing333/20110419/1303221515
+    </div>
+    
+  </div>
+  
+  
+
+
+
+
+
+    <div class="refererlist">
+      <div class="caption">リンク元</div>
+      <ul>
+          <li>138 <a href="http://www.ustream.tv/socialstream/7986129" rel="nofollow">http://www.ustream.tv/socialstream/7986129</a></li>
+          <li>27 <a href="http://reader.livedoor.com/reader/" rel="nofollow">http://reader.livedoor.com/reader/</a></li>
+          <li>13 <a href="http://twitter.com/" rel="nofollow">http://twitter.com/</a></li>
+          <li>12 <a href="http://www.google.co.jp/search?sourceid=navclient&amp;hl=ja&amp;ie=UTF-8&amp;rlz=1T4DAJP_jaJP314&amp;q=%ef%bc%91%e6%97%a5%e3%81%ab%e8%b5%b7%e3%81%8d%e3%82%8b%e5%9c%b0%e9%9c%87%e5%9b%9e%e6%95%b0" rel="nofollow">http://www.google.co.jp/search?sourceid=navclient&amp;hl=ja&amp;ie=UTF-8&amp;rlz=1T4DAJP_jaJP314&amp;q=１日に起きる地震回数</a></li>
+          <li>8 <a href="http://search.yahoo.co.jp/search?p=%E9%99%BD%E6%80%A7%E7%9A%84%E4%B8%AD%E7%8E%87&amp;aq=-1&amp;oq=&amp;ei=UTF-8&amp;fr=top_ga1_sa&amp;x=wrt" rel="nofollow">http://search.yahoo.co.jp/search?p=陽性的中率&amp;aq=-1&amp;oq=&amp;ei=UTF-8&amp;fr=top_ga1_sa&amp;x=wrt</a></li>
+          <li>7 <a href="http://search.yahoo.co.jp/search?p=%E5%9C%B0%E9%9C%87%E3%80%80%E9%A0%BB%E5%BA%A6&amp;search.x=1&amp;fr=top_ga1_sa&amp;tid=top_ga1_sa&amp;ei=UTF-8&amp;aq=&amp;oq=" rel="nofollow">http://search.yahoo.co.jp/search?p=地震　頻度&amp;search.x=1&amp;fr=top_ga1_sa&amp;tid=top_ga1_sa&amp;ei=UTF-8&amp;aq=&amp;oq=</a></li>
+          <li>7 <a href="http://search.yahoo.co.jp/search?p=%E6%84%9F%E5%BA%A6+%E7%89%B9%E7%95%B0%E5%BA%A6&amp;aq=0&amp;oq=%E6%84%9F%E5%BA%A6&amp;ei=UTF-8&amp;fr=top_ga1_sa&amp;x=wrt" rel="nofollow">http://search.yahoo.co.jp/search?p=感度+特異度&amp;aq=0&amp;oq=感度&amp;ei=UTF-8&amp;fr=top_ga1_sa&amp;x=wrt</a></li>
+          <li>7 <a href="http://twitter.com/tetsuroito" rel="nofollow">http://twitter.com/tetsuroito</a></li>
+          <li>7 <a href="http://www.google.co.jp/search?q=roc+%E3%83%AD%E3%82%B8%E3%82%B9%E3%83%86%E3%82%A3%E3%83%83%E3%82%AF%E3%80%80SAS&amp;hl=ja&amp;prmd=ivns&amp;ei=dME3TduPCYbCvQP847HSCg&amp;start=20&amp;sa=N" rel="nofollow">http://www.google.co.jp/search?q=roc+ロジスティック　SAS&amp;hl=ja&amp;prmd=ivns&amp;ei=dME3TduPCYbCvQP847HSCg&amp;start=20&amp;sa=N</a></li>
+          <li>6 <a href="http://www.google.co.jp/url?sa=t&amp;source=web&amp;cd=1&amp;ved=0CBwQFjAA&amp;url=http%3A%2F%2Fd.hatena.ne.jp%2Fisseing333%2F20100730%2F1280457519&amp;rct=j&amp;q=tex%20replace&amp;ei=O5GxTdzrPIWevgO4kpyaBw&amp;usg=AFQjCNGSRK3cjc8AcJh9ftJVGIivtg_ZNQ" rel="nofollow">http://www.google.co.jp/url?sa=t&amp;source=web&amp;cd=1&amp;ved=0CBwQFjAA&amp;url=http://d.hatena.ne.jp/isseing333/20100730/1280457519&amp;rct=j&amp;q=tex
+ 
+replace&amp;ei=O5GxTdzrPIWevgO4kpyaBw&amp;usg=AFQjCNGSRK3cjc8AcJh9ftJVGIivtg_ZNQ</a></li>
+      </ul>
+      
+    </div>
+
+
+
+
+</div>
+
+
+
+</div>
+<div class="calendar" id="pager-bottom">
+  <a rel="prev" href="http://d.hatena.ne.jp/isseing333/20110416/1302948247" class="prev">&lt;メモ（BCa法、ABC法、RMA）</a><img src="jqgrid_for_rails3_files/icon-quickpager.gif" style="vertical-align: middle; margin-left: 3px; cursor: pointer;">&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/isseing333/20110425/1303731147" class="next">小技メモ（Rのコンソールをテキ...&gt;</a>
+</div>
+</div>
+<div class="sidebar">
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,0,0" id="movie" align="" width="144" height="116">
+	<param name="movie" value="/tools/movie.swf">
+	<param name="FlashVars" value="pThumbnailWidth=18&amp;pThumbnailHeight=16&amp;pThumbnailSparse=0&amp;pThumbnailZoomRatio=600&amp;pBorderLineColor=0x000000&amp;pBackgroundColor=0x000000&amp;pXoffset=100&amp;pYoffset=100&amp;pScaleUpStep=2&amp;pScaleDownStep=5&amp;pShadowDistance=2&amp;pPhotos=&amp;pTexts=%3CA%20HREF%3D%27%2Fisseing333%2F201103%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3EPrev%3C%2Ffont%3E%3C%2FA%3E%2C26%2C10%3B%3CA%20HREF%3D%27%2Fisseing333%2Farchive%2F201104%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E2011%2F04%3C%2Ffont%3E%3C%2FA%3E%2C73%2C10%3B%3CA%20HREF%3D%27%2Fisseing333%2F201105%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3ENext%3C%2Ffont%3E%3C%2FA%3E%2C119%2C10%3B%3Cfont%20color%3D%27%23FF0000%27%20size%20%3D%20%2718%27%3E%3Cb%3ES%3C%2Fb%3E%3C%2Ffont%3E%2C20%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EM%3C%2Fb%3E%3C%2Ffont%3E%2C38%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3ET%3C%2Fb%3E%3C%2Ffont%3E%2C56%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EW%3C%2Fb%3E%3C%2Ffont%3E%2C74%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3ET%3C%2Fb%3E%3C%2Ffont%3E%2C92%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EF%3C%2Fb%3E%3C%2Ffont%3E%2C110%2C24%3B%3Cfont%20color%3D%27%230000FF%27%20size%20%3D%20%2718%27%3E%3Cb%3ES%3C%2Fb%3E%3C%2Ffont%3E%2C128%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%201%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C40%3B%3Ca%20href%3D%27%2Fisseing333%2F20110402%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E%202%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C40%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%203%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%204%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C56%3B%3Ca%20href%3D%27%2Fisseing333%2F20110405%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E%205%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%206%3C%2Fb%3E%3C%2Ffont%3E%2C72%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%207%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%208%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%209%3C%2Fb%3E%3C%2Ffont%3E%2C126%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E10%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E11%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110412%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E12%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110413%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E13%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C72%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E14%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E15%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110416%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E16%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E17%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E18%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C88%3B%3Ca%20href%3D%27%2Fisseing333%2F20110419%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E19%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E20%3C%2Fb%3E%3C%2Ffont%3E%2C72%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E21%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E22%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E23%3C%2Fb%3E%3C%2Ffont%3E%2C126%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E24%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110425%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E25%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C36%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E26%3C%2Fb%3E%3C%2Ffont%3E%2C54%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110427%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E27%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C72%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E28%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E29%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110430%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E30%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C104">
+	<param name="loop" value="false">
+	<param name="menu" value="false">
+	<param name="quality" value="high">
+	<param name="bgcolor" value="#000000">
+	<embed src="jqgrid_for_rails3_files/movie.swf" flashvars="pThumbnailWidth=18&amp;pThumbnailHeight=16&amp;pThumbnailSparse=0&amp;pThumbnailZoomRatio=600&amp;pBorderLineColor=0x000000&amp;pBackgroundColor=0x000000&amp;pXoffset=100&amp;pYoffset=100&amp;pScaleUpStep=2&amp;pScaleDownStep=5&amp;pShadowDistance=2&amp;pPhotos=&amp;pTexts=%3CA%20HREF%3D%27%2Fisseing333%2F201103%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3EPrev%3C%2Ffont%3E%3C%2FA%3E%2C26%2C10%3B%3CA%20HREF%3D%27%2Fisseing333%2Farchive%2F201104%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E2011%2F04%3C%2Ffont%3E%3C%2FA%3E%2C73%2C10%3B%3CA%20HREF%3D%27%2Fisseing333%2F201105%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3ENext%3C%2Ffont%3E%3C%2FA%3E%2C119%2C10%3B%3Cfont%20color%3D%27%23FF0000%27%20size%20%3D%20%2718%27%3E%3Cb%3ES%3C%2Fb%3E%3C%2Ffont%3E%2C20%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EM%3C%2Fb%3E%3C%2Ffont%3E%2C38%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3ET%3C%2Fb%3E%3C%2Ffont%3E%2C56%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EW%3C%2Fb%3E%3C%2Ffont%3E%2C74%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3ET%3C%2Fb%3E%3C%2Ffont%3E%2C92%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3EF%3C%2Fb%3E%3C%2Ffont%3E%2C110%2C24%3B%3Cfont%20color%3D%27%230000FF%27%20size%20%3D%20%2718%27%3E%3Cb%3ES%3C%2Fb%3E%3C%2Ffont%3E%2C128%2C24%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%201%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C40%3B%3Ca%20href%3D%27%2Fisseing333%2F20110402%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E%202%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C40%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%203%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%204%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C56%3B%3Ca%20href%3D%27%2Fisseing333%2F20110405%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E%205%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%206%3C%2Fb%3E%3C%2Ffont%3E%2C72%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%207%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%208%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E%209%3C%2Fb%3E%3C%2Ffont%3E%2C126%2C56%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E10%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E11%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110412%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E12%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110413%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E13%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C72%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E14%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E15%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C72%3B%3Ca%20href%3D%27%2Fisseing333%2F20110416%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E16%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C72%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E17%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E18%3C%2Fb%3E%3C%2Ffont%3E%2C36%2C88%3B%3Ca%20href%3D%27%2Fisseing333%2F20110419%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E19%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C54%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E20%3C%2Fb%3E%3C%2Ffont%3E%2C72%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E21%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E22%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E23%3C%2Fb%3E%3C%2Ffont%3E%2C126%2C88%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E24%3C%2Fb%3E%3C%2Ffont%3E%2C18%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110425%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E25%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C36%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E26%3C%2Fb%3E%3C%2Ffont%3E%2C54%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110427%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E27%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C72%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E28%3C%2Fb%3E%3C%2Ffont%3E%2C90%2C104%3B%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cb%3E29%3C%2Fb%3E%3C%2Ffont%3E%2C108%2C104%3B%3Ca%20href%3D%27%2Fisseing333%2F20110430%27%3E%3Cfont%20color%3D%27%23FFFFFF%27%20size%20%3D%20%2718%27%3E%3Cu%3E%3Cb%3E30%3C%2Fb%3E%3C%2Fu%3E%3C%2Ffont%3E%3C%2Fa%3E%2C126%2C104" loop="false" menu="false" quality="high" bgcolor="#FFFFFF" name="movie" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" align="" width="144" height="116">
+</object>
+
+	<div class="hatena-module hatena-module-sectioncategory">
+<div class="hatena-moduletitle">カテゴリー</div>
+<div class="hatena-modulebody">
+<ul class="hatena-sectioncategory">
+<li><a href="http://d.hatena.ne.jp/isseing333/searchdiary?word=%2A%5BR%20program%5D">R program</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/searchdiary?word=%2A%5B%CA%D9%B6%AF%5D">勉強</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/searchdiary?word=%2A%5B%A5%C7%A1%BC%A5%BF%B2%F2%C0%CF%5D">データ解析</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/searchdiary?word=%2A%5BR%A5%E9%A5%A4%A5%D6%A5%E9%A5%EA%C3%B5%BA%F7%5D">Rライブラリ探索</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/searchdiary?word=%2A%5B%A4%BD%A4%CE%C2%BE%A1%A2%A5%BD%A5%D5%A5%C8%5D">その他、ソフト</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-searchform">
+<div class="hatena-moduletitle">日記の検索</div>
+<div class="hatena-modulebody">
+<form method="GET" action="/isseing333/searchdiary" class="hatena-searchform"><input name="word" class="hatena-searchform searchform-word" value="rails3 grid" type="text"><input name=".submit" value="検索" class="hatena-searchform searchform-button" type="submit"><br><label class="searchform-label-detail"><input name="type" value="detail" checked="checked" class="searchform-radio" type="radio">詳細</label> <label class="searchform-label-list"><input name="type" value="list" class="searchform-radio" type="radio">一覧</label></form>
+
+</div>
+</div>
+<br>
+	<a href="http://ianalysis.jimdo.com/">【iAnalysis LLC】</a><br>
+	<a>（アイアナリシス合同会社）</a><br>
+	<a>統計コンサルから実解析、モデル作成、システム構築まで幅広く行います。業種を問わ		ずお気軽にご連絡・御相談下さい。</a><br>
+	<a>iAnalysisLLC[at]gmail.com</a><br><br>
+	<a>当ブログに関する資料はiAnalysisの</a>
+	<a href="http://ianalysis.jimdo.com/downloads/">ダウンロード</a>
+	<a>にあります。</a>
+	<br><br>
+	<div class="hatena-module hatena-module-profile">
+  <div class="hatena-moduletitle">プロフィール</div>
+  <div class="hatena-modulebody">
+    <div class="hatena-profile">
+      <p class="hatena-profile-image"><a href="http://d.hatena.ne.jp/isseing333/about"><img src="jqgrid_for_rails3_files/profile.gif" alt="isseing333"></a></p>
+      <p class="hatena-profile-id"><a href="http://d.hatena.ne.jp/isseing333/about">isseing333</a></p>
+      <p class="hatena-profile-body">統計解析会社【iAnalysis LLC】の統計家です。徒然なる統計解析日記を書いています。使用ソフトはSASとR。最近子供が騒いでいても解析できるようになってきましたが、妻に言わせればまだまだのようです。。</p>
+    </div>
+  </div>
+</div>
+
+
+<script src="jqgrid_for_rails3_files/widget.js"></script>
+<script>
+new TWTR.Widget({
+  version: 2,
+  type: 'profile',
+  rpp: 10,
+  interval: 6000,
+  width: 220,
+  height: 300,
+  theme: {
+    shell: {
+      background: '#333333',
+      color: '#ffffff'
+    },
+    tweets: {
+      background: '#000000',
+      color: '#ffffff',
+      links: '#4aed05'
+    }
+  },
+  features: {
+    scrollbar: false,
+    loop: false,
+    live: false,
+    hashtags: true,
+    timestamp: true,
+    avatars: false,
+    behavior: 'all'
+  }
+}).render().setUser('isseing333').start();
+</script><div class="twtr-widget twtr-widget-profile" id="twtr-widget-1"><div class="twtr-doc" style="width: 220px;">
+            <div class="twtr-hd"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-profile-img-anchor"><img alt="profile" class="twtr-profile-img" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a>
+                      <h3>統計家 iAnalysis</h3>
+                      <h4><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333">isseing333</a></h4> 
+            </div>
+            <div class="twtr-bd">
+              <div class="twtr-timeline" style="height: auto;">
+                <div class="twtr-tweets">
+                  <div class="twtr-reference-tweet"></div><div class="twtr-tweet" id="tweet-id-10"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> ですねあっという間でした。とても充実した勉強会ができて良かったです！また場所が取れたら連絡しますね。宜しくお願いします&#8252;先ずはサマリーから読んでその後議論ってのも良いかもしれませんね。 @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=dichika">dichika</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=doryokujin">doryokujin</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=she_knows_a_key">she_knows_a_key</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=wakuteka">wakuteka</a> 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 07:43:49 +0000 2011" href="http://twitter.com/isseing333/status/66045419876134912">56 minutes ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=66045419876134912">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=66045419876134912">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=66045419876134912">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-9"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=doryokujin">doryokujin</a> 了解！ 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 05:01:08 +0000 2011" href="http://twitter.com/isseing333/status/66004479744557057">3 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=66004479744557057">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=66004479744557057">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=66004479744557057">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-8"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=dichika">dichika</a> 俺も新宿到着〜 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:47:41 +0000 2011" href="http://twitter.com/isseing333/status/66001092470775809">3 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=66001092470775809">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=66001092470775809">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=66001092470775809">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-7"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> 国の本音が見え隠れしますね。。 RT @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=Otus2547">Otus2547</a>: いま話題になっている20mSVの意味がようやく分かった。校庭の汚染土を即刻除去すべき。菅さんも、専門家が決めたなどと他人事のように言わずに、これくらい国会で説明できないでどうする。 <a class="twtr-hyperlink" target="_blank" href="http://j.mp/lzlmDG">http://j.mp/lzlmDG</a> 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:37:43 +0000 2011" href="http://twitter.com/isseing333/status/65998585598197760">4 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65998585598197760">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65998585598197760">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65998585598197760">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-6"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=ayanotkuc">ayanotkuc</a> すごい！お値段は？？ 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:27:58 +0000 2011" href="http://twitter.com/isseing333/status/65996131720642560">4 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65996131720642560">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65996131720642560">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65996131720642560">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-5"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> 全部スキャンRT @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=dichika">dichika</a>: PCと教科書両方はさすがに重いので今日は教科書だけ 次までには全部スキャンしとくかなー 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:25:50 +0000 2011" href="http://twitter.com/isseing333/status/65995595692773376">4 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65995595692773376">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65995595692773376">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65995595692773376">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-4"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=doryokujin">doryokujin</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=dichika">dichika</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=she_knows_a_key">she_knows_a_key</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=wakuteka">wakuteka</a> 今日の場所です。新宿区役所の横にある区役所通りを少し入った所のルノアールになります。 <a class="twtr-hyperlink" target="_blank" href="http://bit.ly/9eqTnq">http://bit.ly/9eqTnq</a> 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:22:44 +0000 2011" href="http://twitter.com/isseing333/status/65994816072327168">4 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65994816072327168">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65994816072327168">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65994816072327168">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-3"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=doryokujin">doryokujin</a> 頑張って〜！遅れても気にしないで^^ 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 04:15:52 +0000 2011" href="http://twitter.com/isseing333/status/65993084839788544">4 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65993084839788544">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65993084839788544">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65993084839788544">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-2"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=holidayworking">holidayworking</a> なるほど、悩ましいですね。。 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 03:11:17 +0000 2011" href="http://twitter.com/isseing333/status/65976832427700224">5 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65976832427700224">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65976832427700224">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65976832427700224">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div><div class="twtr-tweet" id="tweet-id-1"><div class="twtr-tweet-wrap"> 
+        <div class="twtr-avatar"> 
+          <div class="twtr-img"><a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333"><img alt="isseing333 profile" src="jqgrid_for_rails3_files/isseing333_normal.jpg"></a></div> 
+        </div> 
+        <div class="twtr-tweet-text"> 
+          <p> 
+            <a target="_blank" href="http://twitter.com/intent/user?screen_name=isseing333" class="twtr-user">isseing333</a> @<a target="_blank" class="twtr-atreply" href="http://twitter.com/intent/user?screen_name=Nikoriks">Nikoriks</a> あ、ごめんなさい。ついプロログに反応してしまって。。プロログ実装例があるのかなと思ったのです。 
+            <em>
+            <a target="_blank" class="twtr-timestamp" time="Thu May 05 03:10:39 +0000 2011" href="http://twitter.com/isseing333/status/65976673304199168">5 hours ago</a> &#183;
+            <a target="_blank" class="twtr-reply" href="http://twitter.com/intent/tweet?in_reply_to=65976673304199168">reply</a> &#183; 
+            <a target="_blank" class="twtr-rt" href="http://twitter.com/intent/retweet?tweet_id=65976673304199168">retweet</a> &#183; 
+            <a target="_blank" class="twtr-fav" href="http://twitter.com/intent/favorite?tweet_id=65976673304199168">favorite</a> 
+            </em>  
+          </p> 
+        </div> 
+      </div></div>
+                  <!-- tweets show here -->
+                </div>
+              </div>
+            </div>
+            <div class="twtr-ft">
+              <div><a target="_blank" href="http://twitter.com/"><img alt="" src="jqgrid_for_rails3_files/widget-logo.png"></a>
+                <span><a target="_blank" class="twtr-join-conv" style="color: rgb(255, 255, 255);" href="http://twitter.com/isseing333">Join the conversation</a></span>
+              </div>
+            </div>
+          </div></div>
+
+	
+	<div class="hatena-module hatena-module-section">
+<div class="hatena-moduletitle"><a href="http://d.hatena.ne.jp/isseing333/archive">最新タイトル</a></div>
+<div class="hatena-modulebody">
+<ul class="hatena-section">
+<li><a href="http://d.hatena.ne.jp/isseing333/20110502/1304297054">小技メモ（Rで日本語の扱い）</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110501/1304213255">小技メモ（macで日本語データを読み込む）</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110430/1304175476">関数クラスタリングのMFclust関数の内部構造</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110427/1303913879">関数データ解析（Functional data analysis）について</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110427/1303871870">小技メモ（家系図、連鎖解析など）</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110425/1303731147">小技メモ（Rのコンソールをテキストファイルに記録する）</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110419/1303221515">rails3にjqGridを実装する</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110416/1302948247">メモ（BCa法、ABC法、RMA）</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110413/1302695785">混合効果モデル（変量効果モデル、mixed effect model）について</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110412/1302619320">EM algorithm（EMアルゴリズム、Expectation Maximization algorithm）について</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-comment">
+<div class="hatena-moduletitle">最近のコメント</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/isseing333/20110331/1301575593#c">2011-03-31</a>&nbsp;isseing333</li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110331/1301575593#c">2011-03-31</a>&nbsp;Tomoki_Kitawaki</li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110330/1301495128#c">2011-03-30</a>&nbsp;isseing333</li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110330/1301495128#c">2011-03-30</a>&nbsp;tomoki_kitawaki</li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110313/1299988671#c">2011-03-13</a>&nbsp;isseing333</li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-trackback">
+<div class="hatena-moduletitle">最近のトラックバック</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/isseing333/20110502#tb">2011-05-02</a>&nbsp;<a href="http://d.hatena.ne.jp/hiratake55/20110503/1304388390">hiratake55 の開発メモ -  統計分析環境 R ユーザ向け検索エンジン ...</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20100702/1278054877#tb">2010-07-02</a>&nbsp;<a href="http://d.hatena.ne.jp/yokkuns/20110430/1304171576">yokkunsの日記 -  [R]R言語で生存時間分析</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110416#tb">2011-04-16</a>&nbsp;<a href="http://d.hatena.ne.jp/matsuou1/20110417/1303049883">matsuou1の日記 - 第2回 さくさくテキストマイニング勉強会に行って...</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110416#tb">2011-04-16</a>&nbsp;<a href="http://d.hatena.ne.jp/nokuno/20110416/1302965520">nokunoの日記 -  第2回さくさくテキストマイニング勉強会に参加しま...</a></li>
+<li><a href="http://d.hatena.ne.jp/isseing333/20110416#tb">2011-04-16</a>&nbsp;<a href="http://d.hatena.ne.jp/nokuno/20110416/1302965124">nokunoの日記 -  第2回さくさくテキストマイニング勉強会に参加しま...</a></li>
+</ul>
+</div>
+</div>
+
+	        <div class="hatena-module hatena-module-pv">
+                <div class="hatena-moduletitle">ページビュー</div>
+                <div class="hatena-modulebody">
+                        <span class="hatena-counter">50630</span>
+                </div>
+        </div>
+
+</div>
+</div>
+
+
+
+
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(
+  ['_setAccount', 'UA-441387-31'],
+  ['_trackPageview'],
+  ['b._setAccount', 'UA-7855606-1'],
+  ['b._setDomainName', '.hatena.ne.jp'],
+  ['b._trackPageview']
+  ,['c._setAccount', 'UA-21417381-1'],
+  ['c._trackPageview']
+  );
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<!-- CG:1,CH:0,ICG:32,ICH:20 -->
+</body></html>

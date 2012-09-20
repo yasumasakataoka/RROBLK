@@ -1,0 +1,50 @@
+
+.title{
+	font-size:150%;
+	font-weight:bold;
+	background-color:#f5f5f5;
+	border-bottom:#CCCCCC 1px solid;
+	border-top: #003399 5px solid;
+	margin:20px 15px;
+	padding:5px 15px;
+	}
+.midasi{
+	font-weight:bold;
+	font-size:120%;
+	border-bottom:#cccccc solid 1px;
+	padding:3px;
+	margin:15px 25px;
+	}
+.read{
+	margin:5px 15px;
+	}	
+.honbun{
+	margin:5px 25px;
+	}
+.hyo00,.hyo01,.hyo02{
+	padding:3px 10px;
+	}
+.hyo01{
+	background-color:#F8F8FF;
+	border:#CCCCCC solid 1px;
+	}
+.hyo02{
+	background-color:#F5F5F5;
+	border:#CCCCCC solid 1px;
+	}
+.m_hyo01{
+	background-color:#FBF3E6;
+	padding:1px;
+	}
+.m_hyo02{
+	background-color:#FFFFFF;
+	padding:2px;
+	}	
+.font_s{
+	font-size:85%;
+	line-height:130%;
+	}
+.ico{
+	list-style-image:url(/images/ico_blue.gif);
+	list-style-position: inside;
+	}			

@@ -1,0 +1,67 @@
+@charset "utf-8";
+
+/*
+
+* Auther and Copyright
+  KBMJ inc. (http://www.kbmj.com/)
+*/
+
+/* inquiry
+----------------------------------------------------*/
+div#inquiry h2{
+    font-size:20px;
+    font-weight  :bold;
+    color:#8E8E8E;
+    border-bottom:solid 2px #ABDCFC;
+    margin-bottom:8px;
+    padding-bottom:2px;
+    padding-left:2px;}
+
+div#inquiry h2.error{
+    font-size:12px;
+    font-weight:nomal;
+    border:none;
+    color:#F51D1D;
+    }
+
+div#inquiry p.p15{
+    margin-bottom:15px;}
+
+div#inquiry table{
+    width:1000px;
+    padding: 0 8px;
+    margin-bottom:10px;}
+
+
+div#inquiry table th{
+    width:200px;
+    padding:8px 5px; 
+    margin-left:5px;
+    background-color:#EFEFEF;
+    }
+
+div#inquiry table td{
+    padding:8px 5px;
+     }
+
+.fieldWithErrors{
+  display: inline;}
+
+div#inquiry div.kanri{
+    text-align:center;
+    margin-bottom:15px;}
+
+div#inquiry p.gray{
+    padding: 0 8px;
+    color:#8E8E8E;
+    line-height:1.3em;}
+
+/* form
+----------------------------------------------------*/
+
+/* confirm
+----------------------------------------------------*/
+
+/* end
+----------------------------------------------------*/
+
