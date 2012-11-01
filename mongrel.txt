@@ -1,3 +1,7 @@
+
+rails3 Ç≈ëÅÇ≠Ç»Ç¡ÇΩÇÃÇ≈ïsóv? 
+
+
 = Mongrel:  Simple Fast Mostly Ruby Web Server
 
 * http://mongrel.rubyforge.org/

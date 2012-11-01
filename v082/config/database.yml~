@@ -3,7 +3,7 @@ development:
   adapter: oracle_enhanced
   database: xe
   username: rails
-  password: rails
+  password: tq6t7rjx
 
 
 # Warning: The database defined as "test" will be erased and

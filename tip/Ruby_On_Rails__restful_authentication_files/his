@@ -1,4 +1,0 @@
-var div = document.createElement('div');
-div.innerHTML = '         <!--<h3><img src="/images/img1/history_t.gif" alt="閲覧履歴" width="210" height="20"></h3>-->     <div class="side_main">              <ul id="side_list">        <li><a href="http://doruby.kbmj.com/rick_blog/20090417/Ruby_On_Rails__restful_authentication" onclick="apiSetCtr(\'374\',\'3\',this,\'6QKekR7Hpbv1U\');return false;">Ruby On Rails ログインのプラグイン　restful_authentication</a></li>       </ul>         </div> ';
-var target = document.getElementById("reco_his1");
-target.appendChild(div);

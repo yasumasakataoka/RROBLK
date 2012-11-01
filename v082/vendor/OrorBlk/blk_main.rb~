@@ -1,6 +1,6 @@
   require "rubygems"
   require "ruby-plsql"
-  plsql.connection = OCI8.new("rails","rails","xe")
+  plsql.connection = OCI8.new("rails","tq6t7rjx","xe")
   require File.dirname(__FILE__) +  "/blk_class.rb"
   require 'drb/drb'
 

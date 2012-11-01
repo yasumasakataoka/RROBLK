@@ -1,246 +1,0 @@
-<!DOCTYPE HTML>
-<html xmlns:mixi="http://mixi-platform.com/ns#" xmlns:og="http://ogp.me/ns#" xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="ja"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-
-
-<meta charset="UTF-8">
-<title>Rails3からmemcachedを利用する | Banana Systems 株式会社</title>
-<link rel="profile" href="http://gmpg.org/xfn/11">
-<link rel="stylesheet" type="text/css" media="all" href="session_cashe%EF%BC%92_files/style.css">
-<link rel="pingback" href="http://www.banana-systems.com/wordpress/xmlrpc.php">
-<link rel="alternate" type="application/rss+xml" title="Banana Systems 株式会社 » フィード" href="http://www.banana-systems.com/feed/">
-<link rel="alternate" type="application/rss+xml" title="Banana Systems 株式会社 » コメントフィード" href="http://www.banana-systems.com/comments/feed/">
-				
-	<script src="session_cashe%EF%BC%92_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
-	// Google Analytics for WordPress by Yoast v4.06 | http://yoast.com/wordpress/google-analytics/
-	var _gaq = _gaq || [];
-	_gaq.push(['_setAccount','UA-50664-6']);
-	_gaq.push(['_trackPageview']);
-	(function() {
-		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-	})();
-	// End of Google Analytics for WordPress by Yoast v4.0
-	//]]></script>
-<link rel="stylesheet" id="contact-form-7-css" href="session_cashe%EF%BC%92_files/styles.css" type="text/css" media="all">
-<script type="text/javascript" src="session_cashe%EF%BC%92_files/jquery_003.js"></script>
-<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.banana-systems.com/wordpress/xmlrpc.php?rsd">
-<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.banana-systems.com/wordpress/wp-includes/wlwmanifest.xml"> 
-<link rel="index" title="Banana Systems 株式会社" href="http://www.banana-systems.com/">
-<link rel="start" title="携帯Flash向け大量画像閲覧ソリューション “パンフニコフ” を提供開始" href="http://www.banana-systems.com/2009/06/launched_pamphnikov/">
-<link rel="prev" title="ニフティクラウドlarge16 VMとEC2 Cluster Compute VMとでLINPACK Benchmark" href="http://www.banana-systems.com/2010/09/linpack_benchmark_on_niftycloud_vs_ec2/">
-<meta name="generator" content="WordPress 3.0.1">
-<link rel="shortlink" href="http://www.banana-systems.com/?p=222">
-
-<!-- All in One SEO Pack 1.6.12.1 by Michael Torbert of Semper Fi Web Design[188,261] -->
-<meta name="keywords" content="rails,ruby">
-<link rel="canonical" href="http://www.banana-systems.com/2010/09/rails3_memcached/">
-<!-- /all in one seo pack -->
-<meta name="google-site-verification" content="K4A8xsb19XkY1p-BZwVRq4GyKXVD7HatyKgQEfhRyFI"> 
-<meta name="y_key" content="458b143bd3af1dd4">
-<meta property="mixi:title" content="Rails3からmemcachedを利用する - Banana Systems 株式会社">
-<meta property="mixi:description" content="Rails3では、構成要素のモジュール化が進み、標準のライブラリ以外は個別にインストールする方針になりました。memcachedクライアントの実装も、インストール直後の状態では含まれていないので、自分でインストールする必要があります。一方で、ライブラリの選択がとても容易にできることは、モジュール化の恩恵と言えるでしょう。今回は、Rails3で利用できるmemcachedクライアントとして、memcache-client と Dalli を紹介します。両者の違いは設定手順だけで、利用方法は同じです。memcache-clientを使うhttp://github.com/mperham/memcache-clientRails2時代と同様、memcache-client を利用することができます。Gemfileに以下の行を追加して、bundle install すればインストール完了です。[ruby]gem 'memcache-client'[/ruby]■キャッシュストアに設定production環境で使用する場合は、config/environments/production.rb に次の行を追加します。接続先を指定しなければ、localhost:11211のmemcachedに接続します。[ruby]config.cache_store = :mem_cache_store[/ruby]次のように、複数の接続先やオプションを指定することもできます。[ruby]config.cache_store = :mem_cache_store, 'cache-1.example.com', 'cache-2.example.com', {:namespace =&amp;amp;gt; NAME_OF_RAILS_APP}[/ruby]■セッションストアに設定セッションストアをデフォルトのCookieStoreから変更することもできます(あまり機会はないかもしれませんが..)。変更するには、config/initializers/session_store.rb に以下の行を追加します.[ruby]Railsアプリ名::Application.config.session_store :mem_cache_storeRailsアプリ名::Application.config.session_options = {:cookie_only =&amp;amp;gt; false}[/ruby]こちらもキャッシュストアと同様、細かく設定することができます。Dalliを使うhttp://github.com/mperham/dalliDalli は、高速なpure Rubyのmemcachedクライアントです。memcached 1.4+に対応していて、バイナリプロトコルを使用しています。開発者は、memcache-clientのメンテナンスもしている Mike Perham さんです。「記憶の固執(The Persistence of Memory)」を描いたサルバトール・ダリにちなんだ名前だとのことです。Dalli – memcached for RubyDalli には以下の特徴があります。	memcache-client と互換性があるので、そのまま入れ替えできる	Ruby 1.9.2 では約20%高速	モニタリングツール用にフックを提供	Railsに対応	memcache-clientの1250行から、700行にまでダイエット	SASLサポートこちらもインストールは簡単です。Gemfile に下記の行を追加して、bundle install してください。[ruby]gem 'dalli'[/ruby]■キャッシュストアに設定production環境で使用する場合は、config/environments/production.rb に次の行を追加します。何も指定しなければ、localhost:11211 のmemcachedに接続します。[ruby]config.cache_store = :dalli_store[/ruby]以下のように、こってりした設定をすることも可能です。[ruby]config.cache_store = :dalli_store, 'cache-1.example.com', 'cache-2.example.com', {:namespace =&amp;amp;gt; NAME_OF_RAILS_APP, :expires_in =&amp;amp;gt; 3600, :compress =&amp;amp;gt; true, :compress_threshold =&amp;amp;gt; 64*1024}[/ruby]Passenger で使う場合は、config/environment.rb に設定を追加する必要があるようです。詳しくは、http://github.com/mperham/dalli を参照してください。■セッションストアに設定config/initializers/session_store.rb に以下の行を追加します.[ruby]require 'action_dispatch/middleware/session/dalli_store'Railsアプリ名::Application.config.session_store :dalli_storeRailsアプリ名::Application.config.session_options = {:cookie_only =&amp;amp;gt; false}[/ruby]試してみるコンソールから実験してみましょう。ここからは、memcache-client でも Dalli でも大きな違いはないので、Dalli を使った場合の結果で説明します。[ruby]$ RAILS_ENV=production rails server&amp;gt; Rails.cache =&amp;gt; #&amp;lt;ActiveSupport::Cache::DalliStore:0x000001020ce600 @options={}, @data=#&amp;lt;Dalli::Client:0x000001020ce0b0 @servers=[&amp;quot;localhost:11211&amp;quot;], @options={}&amp;gt;, @thread_local_key=:active_support_cache_dalli_store_local_cache_2164683520, @middleware=ActiveSupport::Cache::Strategy::LocalCache&amp;gt;[/ruby]キャッシュストアが DalliStore になっていることがわかりますね。[ruby]&amp;gt; Rails.cache.write(&amp;quot;test&amp;quot;, {:message =&amp;gt; 'Hello', :time =&amp;gt; Time.now}) =&amp;gt; true&amp;gt; Rails.cache.read(&amp;quot;test&amp;quot;) =&amp;gt; {:message=&amp;gt;&amp;quot;Hello&amp;quot;, :time=&amp;gt;2010-09-15 13:26:09 +0900}[/ruby]無事データをmemcacheにキャッシュし、その後取り出すことができました！終わりにmemcached のアスキープロトコルには、memcached injection による攻撃を受けやすいという弱点があります。memcached injection への対策の一つは、memcached のバイナリプロトコルを使用することです。Dalli はバイナリプロトコルを使用しているので、セキュリティの面でも優れています。Rails で memcached を使用する場合、クライアントライブラリとして Dalli を選択するのがよさそうですね。"><script type="text/javascript" src="session_cashe%EF%BC%92_files/jsapi"></script>
-<script type="text/javascript">
-google.load("jquery", "1.4.2");
-</script><script src="session_cashe%EF%BC%92_files/jquery_002.js" type="text/javascript"></script><link href="session_cashe%EF%BC%92_files/shCore.css" type="text/css" rel="stylesheet"><link href="session_cashe%EF%BC%92_files/shThemeDefault.css" type="text/css" rel="stylesheet"></head><body class="single single-post postid-222">
-<div id="wrapper" class="hfeed">
-	<div id="header">
-		<div id="masthead">
-			<div id="branding" role="banner">
-								<div id="site-title">
-					<span>
-						<a href="http://www.banana-systems.com/" title="Banana Systems 株式会社" rel="home">Banana Systems 株式会社</a>
-					</span>
-				</div>
-				<div id="site-description"></div>
-
-										<img src="session_cashe%EF%BC%92_files/Sunrise_Illustration_Background.png" alt="" width="940" height="198">
-								</div><!-- #branding -->
-
-			<div id="access" role="navigation">
-			  				<div class="skip-link screen-reader-text"><a href="#content" title="コンテンツへ移動">コンテンツへ移動</a></div>
-								<div class="menu-header"><ul id="menu-main" class="menu"><li id="menu-item-75" class="home menu-item menu-item-type-post_type menu-item-75"><a href="http://www.banana-systems.com/">ホーム</a></li>
-<li id="menu-item-76" class="press menu-item menu-item-type-taxonomy menu-item-76"><a href="http://www.banana-systems.com/category/press/">プレスリリース</a></li>
-<li id="menu-item-77" class="lab menu-item menu-item-type-taxonomy current-post-ancestor current-menu-parent current-post-parent menu-item-77"><a href="http://www.banana-systems.com/category/lab/">バナナ研究所</a></li>
-<li id="menu-item-74" class="about menu-item menu-item-type-post_type menu-item-74"><a href="http://www.banana-systems.com/about/">企業情報</a></li>
-<li id="menu-item-73" class="contact menu-item menu-item-type-post_type menu-item-73"><a href="http://www.banana-systems.com/contact/">お問い合わせ</a></li>
-</ul></div>			</div><!-- #access -->
-		</div><!-- #masthead -->
-	</div><!-- #header -->
-
-	<div id="main">
-
-		<div id="container">
-			<div id="content" role="main">
-
-
-				<div id="nav-above" class="navigation">
-					<div class="nav-previous"><a href="http://www.banana-systems.com/2010/09/linpack_benchmark_on_niftycloud_vs_ec2/" rel="prev"><span class="meta-nav">←</span> ニフティクラウドlarge16 VMとEC2 Cluster Compute VMとでLINPACK Benchmark</a></div>
-					<div class="nav-next"></div>
-				</div><!-- #nav-above -->
-
-				<div id="post-222" class="post-222 post type-post hentry category-lab tag-rails tag-ruby">
-					<h1 class="entry-title">Rails3からmemcachedを利用する</h1>
-
-					<div class="entry-meta">
-						<span class="meta-prep meta-prep-author">投稿日:</span> <a href="http://www.banana-systems.com/2010/09/rails3_memcached/" title="3:38 PM" rel="bookmark"><span class="entry-date">2010年9月15日</span></a> <span class="meta-sep">作成者:</span> <span class="author vcard"><a class="url fn n" href="http://www.banana-systems.com/author/kusanagi/" title="kusanagi の投稿をすべて表示">kusanagi</a></span>                                                <span style="float: right;"><a target="_blank" href="http://mixi.jp/share.pl?u=http%3A%2F%2Fwww.banana-systems.com%2F2010%2F09%2Frails3_memcached%2F&amp;k=0159547d50b28f205fd33804bc3686363bfca50b" class="mixi-check-button" data-key="0159547d50b28f205fd33804bc3686363bfca50b" data-button="button-3" data-url="http://www.banana-systems.com/2010/09/rails3_memcached/"><img style="border: 0pt none;" src="session_cashe%EF%BC%92_files/bt_check_3.png"></a><script type="text/javascript" src="session_cashe%EF%BC%92_files/share.js"></script></span><span style="clear: both;"></span>
-					</div><!-- .entry-meta -->
-
-					<div class="entry-content">
-						<p>Rails3では、構成要素のモジュール化が進み、標準のライブラリ以外は個別にインストールする方針になりました。memcachedクライアントの実装も、インストール直後の状態では含まれていないので、自分でインストールする必要があります。</p>
-<p>一方で、ライブラリの選択がとても容易にできることは、モジュール化の恩恵と言えるでしょう。<br>
-今回は、Rails3で利用できるmemcachedクライアントとして、memcache-client と Dalli を紹介します。両者の違いは設定手順だけで、利用方法は同じです。</p>
-<h3>memcache-clientを使う</h3>
-<p><a href="http://github.com/mperham/memcache-client" onclick="javascript:_gaq.push(['_trackEvent','outbound-article','github.com']);">http://github.com/mperham/memcache-client</a></p>
-<p>Rails2時代と同様、memcache-client を利用することができます。Gemfileに以下の行を追加して、bundle install すればインストール完了です。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_352685"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_352685_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_352685" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">gem </code><code class="ruby string">'memcache-client'</code></td></tr></tbody></table></div></div></div>
-<h4>■キャッシュストアに設定</h4>
-<p>production環境で使用する場合は、config/environments/production.rb に次の行を追加します。接続先を指定しなければ、localhost:11211のmemcachedに接続します。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_996579"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_996579_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_996579" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">config.cache_store = </code><code class="ruby color2">:mem_cache_store</code></td></tr></tbody></table></div></div></div>
-<p>次のように、複数の接続先やオプションを指定することもできます。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_256614"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_256614_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_256614" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">config.cache_store = </code><code class="ruby color2">:mem_cache_store</code><code class="ruby plain">, </code><code class="ruby string">'cache-1.example.com'</code><code class="ruby plain">, </code><code class="ruby string">'cache-2.example.com'</code><code class="ruby plain">, {</code><code class="ruby color2">:namespace</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby constants">NAME_OF_RAILS_APP</code><code class="ruby plain">}</code></td></tr></tbody></table></div></div></div>
-<h4>■セッションストアに設定</h4>
-<p>セッションストアをデフォルトのCookieStoreから変更することもできます(あまり機会はないかもしれませんが..)。変更するには、config/initializers/session_store.rb に以下の行を追加します.</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_347151"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_347151_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_347151" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">Railsアプリ名::Application.config.session_store </code><code class="ruby color2">:mem_cache_store</code></td></tr></tbody></table></div><div class="line alt2"><table><tbody><tr><td class="number"><code>2</code></td><td class="content"><code class="ruby plain">Railsアプリ名::Application.config.session_options = {</code><code class="ruby color2">:cookie_only</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby keyword">false</code><code class="ruby plain">}</code></td></tr></tbody></table></div></div></div>
-<p>こちらもキャッシュストアと同様、細かく設定することができます。</p>
-<h3>Dalliを使う</h3>
-<p><a href="http://github.com/mperham/dalli" onclick="javascript:_gaq.push(['_trackEvent','outbound-article','github.com']);">http://github.com/mperham/dalli</a></p>
-<p>Dalli は、高速なpure Rubyのmemcachedクライアントです。memcached 1.4+に対応していて、バイナリプロトコルを使用しています。<br>
-開発者は、memcache-clientのメンテナンスもしている Mike Perham さんです。「記憶の固執(The Persistence of Memory)」を描いたサルバトール・ダリにちなんだ名前だとのことです。</p>
-<p><a href="http://www.mikeperham.com/2010/08/30/dalli-memcached-for-ruby/" onclick="javascript:_gaq.push(['_trackEvent','outbound-article','www.mikeperham.com']);">Dalli – memcached for Ruby</a></p>
-<p>Dalli には以下の特徴があります。</p>
-<ul>
-<li>memcache-client と互換性があるので、そのまま入れ替えできる</li>
-<li>Ruby 1.9.2 では約20%高速</li>
-<li>モニタリングツール用にフックを提供</li>
-<li>Railsに対応</li>
-<li>memcache-clientの1250行から、700行にまでダイエット</li>
-<li>SASLサポート</li>
-</ul>
-<p>こちらもインストールは簡単です。Gemfile に下記の行を追加して、bundle install してください。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_9391"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_9391_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_9391" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">gem </code><code class="ruby string">'dalli'</code></td></tr></tbody></table></div></div></div>
-<h4>■キャッシュストアに設定</h4>
-<p>production環境で使用する場合は、config/environments/production.rb に次の行を追加します。何も指定しなければ、localhost:11211 のmemcachedに接続します。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_768672"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_768672_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_768672" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">config.cache_store = </code><code class="ruby color2">:dalli_store</code></td></tr></tbody></table></div></div></div>
-<p>以下のように、こってりした設定をすることも可能です。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_264097"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_264097_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_264097" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">config.cache_store = </code><code class="ruby color2">:dalli_store</code><code class="ruby plain">, </code><code class="ruby string">'cache-1.example.com'</code><code class="ruby plain">, </code><code class="ruby string">'cache-2.example.com'</code><code class="ruby plain">, {</code><code class="ruby color2">:namespace</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby constants">NAME_OF_RAILS_APP</code><code class="ruby plain">, </code><code class="ruby color2">:expires_in</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby constants">3600</code><code class="ruby plain">, </code><code class="ruby color2">:compress</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby keyword">true</code><code class="ruby plain">, </code><code class="ruby color2">:compress_threshold</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby constants">64</code><code class="ruby plain">*</code><code class="ruby constants">1024</code><code class="ruby plain">}</code></td></tr></tbody></table></div></div></div>
-<p>Passenger で使う場合は、config/environment.rb に設定を追加する必要があるようです。詳しくは、<a href="http://github.com/mperham/dalli" onclick="javascript:_gaq.push(['_trackEvent','outbound-article','github.com']);">http://github.com/mperham/dalli</a> を参照してください。</p>
-<h4>■セッションストアに設定</h4>
-<p>config/initializers/session_store.rb に以下の行を追加します.</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_526573"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_526573_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_526573" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">require </code><code class="ruby string">'action_dispatch/middleware/session/dalli_store'</code></td></tr></tbody></table></div><div class="line alt2"><table><tbody><tr><td class="number"><code>2</code></td><td class="content"><code class="ruby plain">Railsアプリ名::Application.config.session_store </code><code class="ruby color2">:dalli_store</code></td></tr></tbody></table></div><div class="line alt1"><table><tbody><tr><td class="number"><code>3</code></td><td class="content"><code class="ruby plain">Railsアプリ名::Application.config.session_options = {</code><code class="ruby color2">:cookie_only</code> <code class="ruby plain">=&amp;gt; </code><code class="ruby keyword">false</code><code class="ruby plain">}</code></td></tr></tbody></table></div></div></div>
-<h3>試してみる</h3>
-<p>コンソールから実験してみましょう。<br>
-ここからは、memcache-client でも Dalli でも大きな違いはないので、Dalli を使った場合の結果で説明します。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_988234"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_988234_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_988234" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">$ </code><code class="ruby constants">RAILS_ENV</code><code class="ruby plain">=production rails server</code></td></tr></tbody></table></div><div class="line alt2"><table><tbody><tr><td class="number"><code>2</code></td><td class="content"><code class="ruby plain">&gt; Rails.cache</code></td></tr></tbody></table></div><div class="line alt1"><table><tbody><tr><td class="number"><code>3</code></td><td class="content"><code class="spaces">&nbsp;</code><code class="ruby plain">=&gt; </code><code class="ruby comments">#&lt;ActiveSupport::Cache::DalliStore:0x000001020ce600
- @options={}, @data=#&lt;Dalli::Client:0x000001020ce0b0 
-@servers=["localhost:11211"], @options={}&gt;, 
-@thread_local_key=:active_support_cache_dalli_store_local_cache_2164683520,
- @middleware=ActiveSupport::Cache::Strategy::LocalCache&gt;</code></td></tr></tbody></table></div></div></div>
-<p>キャッシュストアが DalliStore になっていることがわかりますね。</p>
-<div class="syntaxhighlighter  ruby" id="highlighter_68056"><div class="bar"><div class="toolbar"><a class="item viewSource" style="width: 16px; height: 16px;" title="view source" href="#viewSource">view source</a><div class="item copyToClipboard"><embed id="highlighter_68056_clipboard" type="application/x-shockwave-flash" title="copy to clipboard" allowscriptaccess="always" wmode="transparent" flashvars="highlighterId=highlighter_68056" menu="false" src="session_cashe%EF%BC%92_files/clipboard.swf" width="16" height="16"></div><a class="item printSource" style="width: 16px; height: 16px;" title="print" href="#printSource">print</a><a class="item about" style="width: 16px; height: 16px;" title="?" href="#about">?</a></div></div><div class="lines"><div class="line alt1"><table><tbody><tr><td class="number"><code>1</code></td><td class="content"><code class="ruby plain">&gt; Rails.cache.write(</code><code class="ruby string">"test"</code><code class="ruby plain">, {</code><code class="ruby color2">:message</code> <code class="ruby plain">=&gt; </code><code class="ruby string">'Hello'</code><code class="ruby plain">, </code><code class="ruby color2">:time</code> <code class="ruby plain">=&gt; </code><code class="ruby color1">Time</code><code class="ruby plain">.now})</code></td></tr></tbody></table></div><div class="line alt2"><table><tbody><tr><td class="number"><code>2</code></td><td class="content"><code class="spaces">&nbsp;</code><code class="ruby plain">=&gt; </code><code class="ruby keyword">true</code></td></tr></tbody></table></div><div class="line alt1"><table><tbody><tr><td class="number"><code>3</code></td><td class="content"><code class="ruby plain">&gt; Rails.cache.read(</code><code class="ruby string">"test"</code><code class="ruby plain">)</code></td></tr></tbody></table></div><div class="line alt2"><table><tbody><tr><td class="number"><code>4</code></td><td class="content"><code class="spaces">&nbsp;</code><code class="ruby plain">=&gt; {</code><code class="ruby color2">:message</code><code class="ruby plain">=&gt;</code><code class="ruby string">"Hello"</code><code class="ruby plain">, </code><code class="ruby color2">:time</code><code class="ruby plain">=&gt;</code><code class="ruby constants">2010</code><code class="ruby plain">-</code><code class="ruby constants">09</code><code class="ruby plain">-</code><code class="ruby constants">15</code> <code class="ruby constants">13</code><code class="ruby plain">:</code><code class="ruby constants">26</code><code class="ruby plain">:</code><code class="ruby constants">09</code> <code class="ruby plain">+</code><code class="ruby constants">0900</code><code class="ruby plain">}</code></td></tr></tbody></table></div></div></div>
-<p>無事データをmemcacheにキャッシュし、その後取り出すことができました！</p>
-<h3>終わりに</h3>
-<p>memcached のアスキープロトコルには、<a href="http://gihyo.jp/dev/feature/01/memcached_advanced/0002" onclick="javascript:_gaq.push(['_trackEvent','outbound-article','gihyo.jp']);">memcached injection</a> による攻撃を受けやすいという弱点があります。memcached injection への対策の一つは、memcached のバイナリプロトコルを使用することです。<br>
-Dalli はバイナリプロトコルを使用しているので、セキュリティの面でも優れています。Rails で memcached を使用する場合、クライアントライブラリとして Dalli を選択するのがよさそうですね。</p>
-						                                                <a target="_blank" href="http://mixi.jp/share.pl?u=http%3A%2F%2Fwww.banana-systems.com%2F2010%2F09%2Frails3_memcached%2F&amp;k=0159547d50b28f205fd33804bc3686363bfca50b" class="mixi-check-button" data-key="0159547d50b28f205fd33804bc3686363bfca50b" data-button="button-3" data-url="http://www.banana-systems.com/2010/09/rails3_memcached/"><img style="border: 0pt none;" src="session_cashe%EF%BC%92_files/bt_check_3.png"></a><script type="text/javascript" src="session_cashe%EF%BC%92_files/share.js"></script>					</div><!-- .entry-content -->
-
-
-					<div class="entry-utility">
-						カテゴリー: <a href="http://www.banana-systems.com/category/lab/" title="バナナ研究所 の投稿をすべて表示" rel="category tag">バナナ研究所</a> &nbsp; タグ: <a href="http://www.banana-systems.com/tag/rails/" rel="tag">Rails</a>, <a href="http://www.banana-systems.com/tag/ruby/" rel="tag">Ruby</a> &nbsp; <a href="http://www.banana-systems.com/2010/09/rails3_memcached/" title="Rails3からmemcachedを利用する へのパーマリンク" rel="bookmark">この投稿のパーマリンク</a>											</div><!-- .entry-utility -->
-				</div><!-- #post-## -->
-
-				<div id="nav-below" class="navigation">
-					<div class="nav-previous"><a href="http://www.banana-systems.com/2010/09/linpack_benchmark_on_niftycloud_vs_ec2/" rel="prev"><span class="meta-nav">←</span> ニフティクラウドlarge16 VMとEC2 Cluster Compute VMとでLINPACK Benchmark</a></div>
-					<div class="nav-next"></div>
-				</div><!-- #nav-below -->
-
-				
-			<div id="comments">
-
-
-	<p class="nocomments">コメントは受け付けていません。</p>
-
-
-								
-</div><!-- #comments -->
-
-
-			</div><!-- #content -->
-		</div><!-- #container -->
-
-
-		<div id="primary" class="widget-area" role="complementary">
-			<ul class="xoxo">
-
-<li id="search-3" class="widget-container widget_search"><form role="search" method="get" id="searchform" action="http://www.banana-systems.com/">
-	<div><label class="screen-reader-text" for="s">検索:</label>
-	<input name="s" id="s" type="text">
-	<input id="searchsubmit" value="検索" type="submit">
-	</div>
-	</form></li>			</ul>
-		</div><!-- #primary .widget-area -->
-
-	</div><!-- #main -->
-
-	<div id="footer" role="contentinfo">
-		<div id="colophon">
-
-
-
-			<div id="site-info">
-			  Copyright © 2010  		
-				<a href="http://www.banana-systems.com/" title="Banana Systems 株式会社" rel="home">
-					Banana Systems, Inc.
-				</a>
-				All rights reserved. 
-			</div><!-- #site-info -->
-
-		</div><!-- #colophon -->
-	</div><!-- #footer -->
-
-</div><!-- #wrapper -->
-
-<script type="text/javascript" src="session_cashe%EF%BC%92_files/jquery.js"></script>
-<script type="text/javascript" src="session_cashe%EF%BC%92_files/scripts.js"></script>
-<div style="text-align: center; font-size: 10px;">
-		<small>Blog WebMastered by <a href="http://arpitshah.com/plugins/all-in-one-webmaster/" target="_blank">All in One Webmaster</a>.</small></div><script type="text/javascript" src="session_cashe%EF%BC%92_files/shCore.js"></script>
-<script type="text/javascript" src="session_cashe%EF%BC%92_files/shBrushRuby.js"></script>
-<script type="text/javascript">
-	(function(){
-		var corecss = document.createElement('link');
-		var themecss = document.createElement('link');
-		var corecssurl = "http://www.banana-systems.com/wordpress/wp-content/plugins/syntaxhighlighter/syntaxhighlighter/styles/shCore.css?ver=2.1.364b";
-		if ( corecss.setAttribute ) {
-				corecss.setAttribute( "rel", "stylesheet" );
-				corecss.setAttribute( "type", "text/css" );
-				corecss.setAttribute( "href", corecssurl );
-		} else {
-				corecss.rel = "stylesheet";
-				corecss.href = corecssurl;
-		}
-		document.getElementsByTagName("head")[0].appendChild(corecss);
-		var themecssurl = "http://www.banana-systems.com/wordpress/wp-content/plugins/syntaxhighlighter/syntaxhighlighter/styles/shThemeDefault.css?ver=2.1.364b";
-		if ( themecss.setAttribute ) {
-				themecss.setAttribute( "rel", "stylesheet" );
-				themecss.setAttribute( "type", "text/css" );
-				themecss.setAttribute( "href", themecssurl );
-		} else {
-				themecss.rel = "stylesheet";
-				themecss.href = themecssurl;
-		}
-		document.getElementsByTagName("head")[0].appendChild(themecss);
-	})();
-	SyntaxHighlighter.config.clipboardSwf = 'http://www.banana-systems.com/wordpress/wp-content/plugins/syntaxhighlighter/syntaxhighlighter/scripts/clipboard.swf';
-	SyntaxHighlighter.config.strings.expandSource = 'show source';
-	SyntaxHighlighter.config.strings.viewSource = 'view source';
-	SyntaxHighlighter.config.strings.copyToClipboard = 'copy to clipboard';
-	SyntaxHighlighter.config.strings.copyToClipboardConfirmation = 'The code is in your clipboard now';
-	SyntaxHighlighter.config.strings.print = 'print';
-	SyntaxHighlighter.config.strings.help = '?';
-	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
-	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
-	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
-	SyntaxHighlighter.all();
-</script>
-</body></html>
