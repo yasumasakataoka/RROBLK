@@ -1,0 +1,104 @@
+pre {
+  background-color: #eee;
+  padding: 10px;
+  font-size: 11px;
+}
+
+a { color: #000; }
+a:visited { color: #666; }
+a:hover { color: #fff; background-color:#000; }
+
+
+#ganttChart {
+      font-family: tahoma, verdana, helvetica;
+      font-size: 0.8em;
+      padding: 10px;
+    }
+
+
+.fieldWithErrors {
+  padding: 2px;
+  background-color: red;
+  display: table;
+}
+
+#errorExplanation {
+  width: 400px;
+  border: 2px solid red;
+  padding: 7px;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  background-color: #f0f0f0;
+}
+
+#errorExplanation h2 {
+  text-align: left;
+  font-weight: bold;
+  padding: 5px 5px 5px 15px;
+  font-size: 12px;
+  margin: -7px;
+  background-color: #c00;
+  color: #fff;
+}
+
+#errorExplanation p {
+  color: #333;
+  margin-bottom: 0;
+  padding: 5px;
+}
+
+#errorExplanation ul li {
+  font-size: 12px;
+  list-style: square;
+}
+.headleft {
+    color: #000000;
+    background-color: #A5C2F4;
+    float: left;
+}
+.headright {
+    color: #000000;
+    background-color: #A5C2F4;
+	margin-top: 15px;
+	margin-left: 30px;
+    float: right;
+}
+.hidden {
+    color: #000000;
+    background-color: #888888;
+	margin-top: 1px;
+	margin-left: 1px;
+    float: right;
+}
+#detail {
+    padding: 0px 0px;
+    background-color: #bbbbbb;
+	margin-top: 10px;
+}
+#detail2 {
+    padding: 0px 0px;
+	margin-top: 1px;
+}
+#detail3 {
+    padding: 0px 0px;
+    background-color: #000000;
+	margin-top: 1px;
+}
+#myArea {
+background-color:yellow;
+width:240px;
+height:160px;
+}
+.ui-wrapper { border: 1px solid #50A029; }
+.ui-wrapper input, .ui-wrapper textarea { border: 0; }
+
+
+#radio  {  padding: 5px 10px 5px 5px;  float: left;  }
+
+
+.ui-wrapper { border: 1px solid #50A029; }
+.ui-wrapper input, .ui-wrapper textarea { border: 0; }
+
+#button-toolbar  {  padding: 5px 10px 5px 5px;  float: left;  }
+
+

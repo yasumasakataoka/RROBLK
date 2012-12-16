@@ -1,0 +1,7 @@
+<h1> <一覧表　　グループ毎のタイトル  0.72> </h1>
+<% @vlist.each_key do |i | %>
+<p>
+<%=  button_to   "#{@vlist[i]}",{:controller  =>  'screen', :id => i.to_s},
+     :method => 'get'   %>
+</p>
+<% end %>
