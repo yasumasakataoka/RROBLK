@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<!-- saved from url=(0068)http://railscasts.com/episodes/271-resque?language=ja&view=asciicast -->
+<html id="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+    <title>#271 Resque - RailsCasts</title>
+    <meta name="description" content="Short Ruby on Rails screencasts containing tips, tricks and tutorials. Great for both novice and experienced web developers.">
+    <meta name="keywords" content="rails, ruby on rails, screencasts, railscast, railscasts, tips, tricks, tutorials, training, podcasts, programming">
+    <link rel="alternate" type="application/rss+xml" title="Episodes RSS" href="http://feeds.feedburner.com/railscasts">
+    <link href="./#271 Resque - RailsCasts_files/application-54471fdecb1d2fe9e273e58b03f0c90e.css" media="screen" rel="stylesheet" type="text/css">
+    <script type="text/javascript" async="" src="./#271 Resque - RailsCasts_files/ga.js"></script><script src="./#271 Resque - RailsCasts_files/3s7oes9q.js" type="text/javascript"></script>
+    <script src="./#271 Resque - RailsCasts_files/application-01e0c20b94539b729328ce57b3999402.js" type="text/javascript"></script>
+    <meta content="authenticity_token" name="csrf-param">
+<meta content="c/ecYJBY+EItkwbOq7Mnu26vm6hLOluKOcxHUu1qUNk=" name="csrf-token">
+    
+  <script type="text/javascript" src="./#271 Resque - RailsCasts_files/sublime.js.jgz"></script></head>
+  <body data-twttr-rendered="true">
+    <div id="top">
+      <div class="logo"><a href="http://railscasts.com/"><img alt="RailsCasts - Ruby on Rails Screencasts" height="56" src="./#271 Resque - RailsCasts_files/railscasts_logo-1eeafbafc2154fc5340c0a9800f402fd.png" width="423"></a></div>
+      <div class="user_nav">
+          <a href="http://railscasts.com/login">Sign in through GitHub</a>
+      </div>
+      <ul class="subscribe horizontal">
+        <li>
+          <a href="http://phobos.apple.com/WebObjects/MZStore.woa/wa/viewPodcast?id=218282043"><img alt="Itunes" height="34" src="./#271 Resque - RailsCasts_files/itunes-ef71b73d72d4058704c696cb380a4748.png" width="34"></a>
+          <span class="name">watch on iTunes</span>
+        </li>
+        <li>
+          <a href="http://twitter.com/railscasts"><img alt="Twitter" height="34" src="./#271 Resque - RailsCasts_files/twitter-4f826eafef2e2eb45e551a01de2c99da.png" width="34"></a>
+          <span class="name">follow on Twitter</span>
+        </li>
+        <li>
+          <a href="http://www.facebook.com/pages/railscasts/197415140659"><img alt="Facebook" height="34" src="./#271 Resque - RailsCasts_files/facebook-908bce1aba280b31a02b45cd2b411038.png" width="34"></a>
+          <span class="name">follow on Facebook</span>
+        </li>
+        <li>
+          <a href="http://feeds.feedburner.com/railscasts"><img alt="Rss" height="34" src="./#271 Resque - RailsCasts_files/rss-3188609a3d271a8245d75cfb3472a237.png" width="34"></a>
+          <span class="name">subscribe to RSS feed</span>
+        </li>
+      </ul>
+    </div>
+
+    <div id="nav_bar">
+      <ul class="nav horizontal">
+        <li><a href="http://railscasts.com/">Browse Episodes</a></li>
+        <li><a href="http://railscasts.com/pro">RailsCasts Pro</a></li>
+        <li><a href="http://railscasts.com/about">About</a></li>
+        <li><a href="http://railscasts.com/feedback">Feedback</a></li>
+      </ul>
+      <form accept-charset="UTF-8" action="http://railscasts.com/episodes" method="get"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="✓"></div>
+        <input id="search" name="search" size="35" type="text">
+        <input type="submit" value="Search Episodes">
+</form>    </div>
+
+    
+
+
+    <div id="main">
+
+      
+  <div id="episode">
+    <script id="video_template" type="text/html"><video width="960" height="600" poster="/static/episodes/posters/loading.png" controls="controls" preload="none" class="sv_force_fullscreen sv_force_flash"><source src="http://media.railscasts.com/assets/episodes/videos/271-resque.mp4" type="video/mp4"/><source src="http://media.railscasts.com/assets/episodes/videos/271-resque.m4v" type="video/mp4"/><source src="http://media.railscasts.com/assets/episodes/videos/271-resque.webm" type="video/webm"/><source src="http://media.railscasts.com/assets/episodes/videos/271-resque.ogv" type="video/ogg"/></video></script>
+    <div class="info">
+      <div class="screenshot"><a href="http://railscasts.com/episodes/271-resque?autoplay=true" class="play_video"><img alt="Resque" height="125" src="./#271 Resque - RailsCasts_files/271-resque.png" width="200"></a></div>
+      <h1><span class="position">#271</span> Resque</h1>
+      <div class="details">Jun 20, 2011 | 12 minutes | <a href="http://railscasts.com/?tag_id=13">Plugins</a>, <a href="http://railscasts.com/?tag_id=32">Background Jobs</a></div>
+      <div class="description">Resque creates background jobs using Redis. It supports multiple queue and comes with an administration interface for monitoring and managing the queues.</div>
+      <div class="watch"><a href="http://railscasts.com/episodes/271-resque?autoplay=true" class="play_video pretty_button">Click to Play Video ▶</a></div>
+      <div class="social"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="./#271 Resque - RailsCasts_files/tweet_button.1355514129.htm" class="twitter-share-button twitter-count-horizontal" style="width: 110px; height: 20px;" title="Twitter Tweet Button" data-twttr-rendered="true"></iframe><script src="./#271 Resque - RailsCasts_files/widgets.js" type="text/javascript"></script></div>
+        <ul class="downloads horizontal">
+          <li>Download:</li>
+          <li><a href="http://media.railscasts.com/assets/episodes/sources/271-resque.zip">source code</a><span class="overlay">Project Files in Zip (206 KB)</span></li><li><a href="http://media.railscasts.com/assets/episodes/videos/271-resque.mp4">mp4</a><span class="overlay">Full Size H.264 Video (18.8 MB)</span></li><li><a href="http://media.railscasts.com/assets/episodes/videos/271-resque.m4v">m4v</a><span class="overlay">Smaller H.264 Video (12.1 MB)</span></li><li><a href="http://media.railscasts.com/assets/episodes/videos/271-resque.webm">webm</a><span class="overlay">Full Size VP8 Video (13.8 MB)</span></li><li><a href="http://media.railscasts.com/assets/episodes/videos/271-resque.ogv">ogv</a><span class="overlay">Full Size Theora Video (28 MB)</span></li>
+        </ul>
+      <div class="clear"></div>
+</div>    <ul class="nav horizontal"><li class="selected"><a href="http://railscasts.com/episodes/271-resque" class="tab">Show Notes</a></li><li><a href="http://railscasts.com/episodes/271-resque?view=asciicast" class="selected tab">ASCIIcast</a></li><li><a href="http://railscasts.com/episodes/271-resque?view=comments" class="tab">50 Comments</a></li><li><a href="http://railscasts.com/episodes/271-resque?view=similar" class="tab">Similar Episodes</a></li><li class="next"><a href="http://railscasts.com/episodes/272-markdown-with-redcarpet">Next Episode &gt;</a></li><li class="previous"><a href="http://railscasts.com/episodes/270-authentication-in-rails-3-1">&lt; Previous Episode</a></li></ul>
+    <div class="nav_section">
+      <div class="inner">  <div class="asciicast">
+      <div class="languages">
+          <a href="http://railscasts.com/episodes/271-resque?language=es&view=asciicast"><img alt="Es" height="32" src="./#271 Resque - RailsCasts_files/es.png" width="32"></a>
+          <a href="http://railscasts.com/episodes/271-resque?language=fr&view=asciicast"><img alt="Fr" height="32" src="./#271 Resque - RailsCasts_files/fr.png" width="32"></a>
+          <a href="http://railscasts.com/episodes/271-resque?language=en&view=asciicast"><img alt="En" height="32" src="./#271 Resque - RailsCasts_files/en.png" width="32"></a>
+      </div>
+    <p>今回のエピソードではRails 3.1の新機能シリーズはひと休みして、Railsアプリケーションでバックグラウンドジョブを処理する優れた方法であるResqueを紹介します。今までのエピソードでもバックグラウンド処理を取り扱う方法をいくつか紹介しました。それぞれ微妙に違うニーズに対応しており、Resqueも例外ではありません。エピソードの最後で、異なるニーズに合った正しいツールを選択するチップを紹介しますが、とりあえずはResqueを詳しく見ていき、アプリケーションに追加してみましょう。</p>
+
+<p>使用するアプリケーションは、Pastieに少し似ている簡単なスニペット(コード片)共有サイトです。このサイトでは、コードのサンプルを入力して名称と使用言語を設定します。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I01.png" width="800" height="558" alt="コード共有サイト">
+</div>
+
+<p>スニペットを投稿すると、選択した言語の文法でシンタックスハイライトされて表示されます。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I02.png" width="800" height="558" alt="ハイライト表示された新規スニペット">
+</div>
+
+<p>シンタックスハイライトは外部ウェブサービスで処理されるので、この部分をバックグラウンドジョブで扱うことにします。現在は<code>SnippetController</code>の<code>create</code>アクションの一部として、インラインで実行されています。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /app/controller/snippets_controller.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="r">def</span> <span class="fu">create</span>
+  <span class="iv">@snippet</span> = <span class="co">Snippet</span>.new(params[<span class="sy">:snippet</span>])
+  <span class="r">if</span> <span class="iv">@snippet</span>.save
+    uri = <span class="co">URI</span>.parse(<span class="s"><span class="dl">'</span><span class="k">http://pygments.appspot.com/</span><span class="dl">'</span></span>)
+    request = <span class="co">Net</span>::<span class="co">HTTP</span>.post_form(uri, {<span class="s"><span class="dl">'</span><span class="k">lang</span><span class="dl">'</span></span> =&gt; <span class="er">↵</span>
+      <span class="iv">@snippet</span>.language, <span class="s"><span class="dl">'</span><span class="k">code</span><span class="dl">'</span></span> =&gt; <span class="iv">@snippet</span>.plain_code})
+    <span class="iv">@snippet</span>.update_attribute(<span class="sy">:highlighted_code</span>, request.body)
+    redirect_to <span class="iv">@snippet</span>, <span class="sy">:notice</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">Successfully created ↵
+      snippet.</span><span class="dl">"</span></span>
+  <span class="r">else</span>
+    render <span class="s"><span class="dl">'</span><span class="k">new</span><span class="dl">'</span></span>
+  <span class="r">end</span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>シンタックスハイライトは、スニペットが保存されるときに実行されます。これには、<a href="http://pygments.appspot.com/">http://pygments.appspot.com/</a>で公開されている、ローカルな環境に依存せずにハイライト機能を提供する、Trevor Turk開発によるサービスを利用しています。このコードが、サービスに対してPOSTリクエストで素のコード片と言語の種類を送信し、そのリクエストの応答をスニペットの<code>highlighted_code</code>属性に保存します。</p>
+
+<p>一般的にRailsリクエストを介して外部サービスと通信することは推奨されません。これは、応答が遅くなってRailsプロセス全体とそれに接続しようとしている他のリクエストを待たせる可能性があるからです。外部リクエストは外部プロセスとして外に出すのがより良い方法でしょう。そこでResqueを設定し、リクエストをResque workerに移し替えていきます。</p>
+
+<h3>Resqueを動かす</h3>
+
+<p>Resqueは、永続的キーバリューストアの<a href="http://redis.io/">Redis</a>に依存しています。Redis自体もとても優れていて、それだけで一つのエピソードにする価値があるのですが、今回はResqueと一緒に使用します。</p> 
+
+<p>OS Xを使っている場合、Redisをインストールする一番簡単な方法は<a href="http://mxcl.github.com/homebrew/">Homebrew</a>を利用する方法で、次のコマンドを実行します。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          terminal
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>$ brew install redis</pre></div>
+</div>
+
+      </div>
+
+<p>インストールされたら、次のコマンドでサーバを起動します。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          terminal
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>$ redis-server /usr/local/etc/redis.conf</pre></div>
+</div>
+
+      </div>
+
+<p>Redisが起動したら、アプリケーションの<code>Gemfile</code>にResqueを追加し、bundleを実行してインストールします。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /Gemfile
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>source <span class="s"><span class="dl">'</span><span class="k">http://rubygems.org</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">rails</span><span class="dl">'</span></span>, <span class="s"><span class="dl">'</span><span class="k">3.0.9</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">sqlite3</span><span class="dl">'</span></span>
+gem <span class="s"><span class="dl">'</span><span class="k">nifty-generators</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">resque</span><span class="dl">'</span></span></pre></div>
+</div>
+
+      </div>
+
+<p>次にResque Rakeタスクを追加します。このためにアプリケーションの<code>/lib/tasks</code>ディレクトリに<code>resque.rake</code>ファイルを追加します。このファイルに<code>require "resque/tasks"</code>と指定し、gemのカスタムタスクがロードされるようにします。workerが起動したときにRails環境もロードします。</p> 
+
+      <div class="code_block">
+        <div class="code_header">
+          /lib/tasks/resque.rake
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>require <span class="s"><span class="dl">"</span><span class="k">resque/tasks</span><span class="dl">"</span></span>
+
+task <span class="s"><span class="dl">"</span><span class="k">resque:setup</span><span class="dl">"</span></span> =&gt; <span class="sy">:environment</span></pre></div>
+</div>
+
+      </div>
+
+<p>これによって、workerからアプリケーションのモデルにアクセスできるようになります。しかしworkerを軽くしたければ、Rails環境の全体をロードしないようカスタマイズするのもいいでしょう。</p>
+
+<p>Resque workerを起動するのに使用するRakeタスクができました。実行時には、引数QUEUEを指定する必要があります。対象となる具体的なキューの名称を指定するか、どのキューでもいい場合は'*'と指定します。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          terminal
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>$ rake resque:work QUEUE='*'</pre></div>
+</div>
+
+      </div>
+
+<p>このスクリプトは何も出力を返しませんがちゃんと動作しています。</p> 
+
+<h3>Webサービスのコードを移動する</h3>
+
+<p>これでResqueが設定できたので、ここからはWebサービスを呼び出すコードをバックグラウンド処理に移してworkerを通じて処理させることに集中します。workがResque workerに処理されるようジョブをキューに追加します。ここで再度<code>create</code>アクションを見てみます。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /app/controller/snippets_controller.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="r">def</span> <span class="fu">create</span>
+  <span class="iv">@snippet</span> = <span class="co">Snippet</span>.new(params[<span class="sy">:snippet</span>])
+  <span class="r">if</span> <span class="iv">@snippet</span>.save
+    uri = <span class="co">URI</span>.parse(<span class="s"><span class="dl">'</span><span class="k">http://pygments.appspot.com/</span><span class="dl">'</span></span>)
+    request = <span class="co">Net</span>::<span class="co">HTTP</span>.post_form(uri, {<span class="s"><span class="dl">'</span><span class="k">lang</span><span class="dl">'</span></span> =&gt; <span class="er">↵</span>
+      <span class="iv">@snippet</span>.language, <span class="s"><span class="dl">'</span><span class="k">code</span><span class="dl">'</span></span> =&gt; <span class="iv">@snippet</span>.plain_code})
+    <span class="iv">@snippet</span>.update_attribute(<span class="sy">:highlighted_code</span>, request.body)
+    redirect_to <span class="iv">@snippet</span>, <span class="sy">:notice</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">Successfully created ↵
+      snippet.</span><span class="dl">"</span></span>
+  <span class="r">else</span>
+    render <span class="s"><span class="dl">'</span><span class="k">new</span><span class="dl">'</span></span>
+  <span class="r">end</span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p><code>Resque.enqueue</code>を呼び出してジョブをキューに追加します。このメソッドはいくつかの引数をとります。一つ目は、ジョブを処理するために使うworkerのクラスです。まだworkerを作成していませんが、このあと<code>SnippetHighlighter</code>という名前で作成します。その他にworkerに渡したい追加の引数を指定します。今回は、スニペットを渡しますが、<code>enqueue</code>に渡されたものはすべてRedisデータベースに格納するためにJSONに変換されます。これはつまり、ActiveRecordモデルのような複雑なオブジェクトを渡すべきではなく、 スニペット全体を渡す代わりにその<code>id</code>を渡して、worker内でスニペットを取得し直すようにします。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /app/controllers/snippets_controller.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="r">def</span> <span class="fu">create</span>
+  <span class="iv">@snippet</span> = <span class="co">Snippet</span>.new(params[<span class="sy">:snippet</span>])
+  <span class="r">if</span> <span class="iv">@snippet</span>.save
+    <span class="co">Resque</span>.enqueue(<span class="co">SnippetHighlighter</span>, <span class="iv">@snippet</span>.id)
+    redirect_to <span class="iv">@snippet</span>, <span class="sy">:notice</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">Successfully created ↵
+      snippet.</span><span class="dl">"</span></span>
+  <span class="r">else</span>
+    render <span class="s"><span class="dl">'</span><span class="k">new</span><span class="dl">'</span></span>
+  <span class="r">end</span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>次にworkerを作成して、コントローラから取り出したコードを移します。workerは<code>/app</code>の下に新規作成したworkersディレクトリに入れます。このクラスを<code>/lib</code>ディレクトリに入れることもできますが、<code>/app</code>内に持つことでRailsのロードパスにあるので自動的にロードされます。</p>
+
+<p>workerとは、2つの機能を持つだけのクラスです。最初にインスタンス変数<code>@queue</code>でキューの名前を保持します。これによってworkerが扱うキューを制限します。次に<code>perform</code>というクラスメソッドが必要です。これは<code>enqueue</code>に渡された引数（今回の場合はスニペットの<code>id</code>）を受け取ります。このメソッドに、<code>create</code>アクションから抽出されたコード(リモートサーバを呼び出してハイライトされたコードを戻す)を加えて、<code>@snippet_id</code>インスタンス変数の呼び出しを同じ名前のローカル変数に置き換えます。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /app/workers/snippet_highlighter.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="r">class</span> <span class="cl">SnippetHighlighter</span>
+  <span class="iv">@queue</span> = <span class="sy">:snippets_queue</span>
+  <span class="r">def</span> <span class="pc">self</span>.<span class="fu">perform</span>(snippet_id)
+    snippet = <span class="co">Snippet</span>.find(snippet_id)
+    uri = <span class="co">URI</span>.parse(<span class="s"><span class="dl">'</span><span class="k">http://pygments.appspot.com/</span><span class="dl">'</span></span>)
+    request = <span class="co">Net</span>::<span class="co">HTTP</span>.post_form(uri, {<span class="s"><span class="dl">'</span><span class="k">lang</span><span class="dl">'</span></span> =&gt; <span class="er">↵</span>
+      snippet.language, <span class="s"><span class="dl">'</span><span class="k">code</span><span class="dl">'</span></span> =&gt; snippet.plain_code})
+    snippet.update_attribute(<span class="sy">:highlighted_code</span>, request.body)
+  <span class="r">end</span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>正しく動くかどうか見てみましょう。新しいスニペットを作って登録します。しかしスニペットはハイライトさせていません。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I03.png" width="818" height="547" alt="新しいスニペットが作成されるがハイライトされていない">
+</div>
+
+<p>ハイライトは現在バックグラウンドで処理中のため、すぐに見ることはできません。数秒待ってからページを再読み込みしてもまだ適用されていないようなので、コードをデバッグして何がうまくいっていないか見てみましょう。ResqueはSinatraで書かれたWeb画面を持っています。これを使って、ジョブのモニタリングや管理を簡単に行うことができます。次のコマンドを実行して起動します。</p> 
+
+      <div class="code_block">
+        <div class="code_header">
+          terminal
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>$ resque-web</pre></div>
+</div>
+
+      </div>
+
+<p>これを実行すると管理画面が表示され、ジョブが失敗していることがわかります。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I04.png" width="820" height="600" alt="Resqueの失敗したジョブのリスト">
+</div>
+
+<p>失敗したジョブをクリックすると、エラーの詳細を見ることができ、<code>uninitialized constant SnippetHighlighter</code>とあります。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I05.png" width="820" height="391" alt="失敗したジョブの詳細">
+</div>
+
+<p><code>SnippetHighlighter</code>クラスが見つからない状態ですが、これはクラスを実際に書く前にRakeタスクを起動したのが原因です。再起動して問題が解決するか見てみます。</p>
+
+<p>rakeタスクを再起動したら、「Retry」をクリックしてジョブを再実行します。Overview(概要)ページを見てみると、失敗したタスクは一つのまま増えていないので、今回はジョブは正しく実行されたようです。これを確認するために最後にアップロードしたスニペットを読み込み直します。今度はコードがハイライトされているので、バックグラウンドジョブはうまく実行されたようです。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I06.png" width="800" height="499" alt="スニペットはハイライト付きで表示される">
+</div>
+
+<p>新しいスニペットをアップロードするとシンタックスハイライトされますが、ハイライトが表示されるまでに数秒の遅れがあります。</p>
+
+<h3>ResqueのWebインターフェイスを組み込む</h3>
+
+<p>Resqueの設定はすべて終わり、与えたジョブを処理できるようになりました。ResqueのWeb画面を、作成しているRailsアプリケーションに組み込むことができたら、別のプロセスをもう一つ立ち上げる手間がかからず便利でしょう。</p>
+
+<p>Rails 3はRackアプリケーションとの相性がよく、SinatraもRackアプリケーションの一つなので、routesファイルでアプリケーションをマウントするだけで簡単に設定できます。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /config/routes.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="co">Coderbits</span>::<span class="co">Application</span>.routes.draw <span class="r">do</span>
+  resources <span class="sy">:snippets</span>
+  root <span class="sy">:to</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">snippets#new</span><span class="dl">"</span></span>
+  mount <span class="co">Resque</span>::<span class="co">Server</span>, <span class="sy">:at</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">/resque</span><span class="dl">"</span></span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>これでResqueのWeb管理画面が<code><a href="http://localhost:3000/resque">http://localhost:3000/resque</a></code>でRailsアプリケーションにマウントされました。この機能正しく動作する形でResqueサーバがロードされるよう、 <code>Gemfile</code>で<code>resque</code> gemの行にrequireオプションを追加します。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /Gemfile
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre>source <span class="s"><span class="dl">'</span><span class="k">http://rubygems.org</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">rails</span><span class="dl">'</span></span>, <span class="s"><span class="dl">'</span><span class="k">3.0.9</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">sqlite3</span><span class="dl">'</span></span>
+gem <span class="s"><span class="dl">'</span><span class="k">nifty-generators</span><span class="dl">'</span></span>
+
+gem <span class="s"><span class="dl">'</span><span class="k">resque</span><span class="dl">'</span></span>, <span class="sy">:require</span> =&gt; <span class="s"><span class="dl">'</span><span class="k">resque/server</span><span class="dl">'</span></span></pre></div>
+</div>
+
+      </div>
+
+<p>アプリケーションのサーバを起動して<code><a href="http://localhost:3000/resque">http://localhost:3000/resque</a></code>にアクセスすると、ResqueのWeb画面が表示されます。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I07.png" width="800" height="499" alt="embedされたResqueページは誰にも見える">
+</div>
+
+<p>このページが誰にでも見える状態なのは好ましくありません。詮索好きな目から守るために認証機能を追加するにはどうすればいいのでしょうか? アプリケーションでDeviseなどを使っているのであれば、ルートを<code>authenticate</code>の呼び出しでラップすることでこのページをセキュアにできます。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /config/routes.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="co">Coderbits</span>::<span class="co">Application</span>.routes.draw <span class="r">do</span>
+  resources <span class="sy">:snippets</span>
+  root <span class="sy">:to</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">snippets#new</span><span class="dl">"</span></span>
+  authenticate <span class="sy">:admin</span> <span class="r">do</span>
+    mount <span class="co">Resque</span>::<span class="co">Server</span>, <span class="sy">:at</span> =&gt; <span class="s"><span class="dl">"</span><span class="k">/resque</span><span class="dl">"</span></span>
+  <span class="r">end</span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>このアプリケーションではDeviseなどの認証システムを使っていないので、代わりにHTTPベーシック認証を使用しましょう。そのために、<code>config/initializers</code>ディレクトリに<code>resque_auth.rb</code>という初期設定ファイルを作成します。</p>
+
+      <div class="code_block">
+        <div class="code_header">
+          /config/initializers/resque_auth.rb
+        </div>
+        <div class="CodeRay">
+  <div class="code"><pre><span class="co">Resque</span>::<span class="co">Server</span>.use(<span class="co">Rack</span>::<span class="co">Auth</span>::<span class="co">Basic</span>) <span class="r">do</span> |user, password|
+  password == <span class="s"><span class="dl">"</span><span class="k">secret</span><span class="dl">"</span></span>
+<span class="r">end</span></pre></div>
+</div>
+
+      </div>
+
+<p>このファイルで、Rackアプリケーションである<code>Resque::Server</code>の<code>use</code>を呼び出して、ベーシック認証を追加します。ブロックでパスワードが一致するかチェックします。もちろんこのコードをカスタマイズして、ユーザ名とパスワードを設定したりその他のロジックを追加することができます。サーバを再起動してページを再度読み込むと、ログイン画面が出てきて初期設定ファイルで指定したパスワードの入力を求められます。</p>
+
+<div class="imageWrapper">
+  <img src="./#271 Resque - RailsCasts_files/E271I08.png" width="802" height="500" alt="認証が求められる">
+</div>
+
+<h3>Resque以外の選択肢</h3>
+
+<p>Resqueの紹介は以上です。それでは、Resqueとその他のバックグラウンド処理ツールからどれを選べばいいのでしょうか? Resqueの利点の一つは、管理画面からキューをモニターしたり失敗したジョブを再実行できる点です。もう一つResqueを勧める理由は、Githubで使われているからです。Githubで大量のデータを処理しているので、およそどのようなものを投げても処理できるでしょう。</p> 
+
+<p>Redisに依存していることが問題であれば、<a href="http://devcenter.heroku.com/articles/delayed-job">Delayed Job</a>も優れた選択肢でしょう。これについてはエピソード171 [<a href="http://railscasts.com/episodes/171-delayed-job">動画を見る</a>, <a href="http://asciicasts.com/episodes/171-delayed-job">読む</a>]で紹介しましたが、操作が簡単でジョブキューをアプリケーションのデータベースで管理します。しかし、アプリケーションのRails環境をすべてのworkerにロードします。workerを軽くしたいのであれば、ベストの方法ではないかも知れません。</p>
+
+<p>ResqueとDelayed Jobはともにキューに対してpoll(先頭を取得および削除)するので、ジョブがキューに追加されてからそれが処理され始めるまでに少し遅れが発生します。キューが空の時が多く、ジョブがすぐに処理されてほしい場合には、エピソード243[<a href="http://railscasts.com/episodes/243-beanstalkd-and-stalker">動画を見る</a>, <a href="http://asciicasts.com/episodes/243-beanstalkd-and-stalker">読む</a>]で取り上げた<a href="http://kr.github.com/beanstalkd/">Beanstalkd</a>がより良い選択肢になるでしょう。Beanstalkdはpushイベントを介してジョブを処理するので、キューにジョブが追加されたらただちに処理を開始することができます。</p>
+  </div>
+</div>
+      <div class="progress" style="display: none"><img alt="loading" src="./#271 Resque - RailsCasts_files/progress_large-0325281c1bdeaa0c2b86f8a23aeb3210.gif"></div>
+    </div>
+</div>
+    </div>
+    <div id="footer">
+      <div class="inner">
+        ©2013 RailsCasts - <a href="http://railscasts.com/privacy">Privacy Policy</a> - Hosted by <a href="http://www.linode.com/?utm_source=railscasts.com&utm_medium=Badge&utm_campaign=Railscasts">Linode</a>
+      </div>
+    </div>
+
+      <!-- Google Analytics -->
+      <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-7696481-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+          var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+          ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+          var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+      </script>
+  
+
+<style>#sv #sublime_videos{position:static!important}#sv #sublime_videos,#sv #sublime_zoom{padding:0!important;margin:0!important;overflow:visible!important}#sv .sublime_video_wrapper{display:block;position:relative!important;line-height:0!important;background:#000!important;overflow:hidden!important;direction:ltr!important;padding:0!important;text-align:center!important;-webkit-user-select:none!important;-moz-user-select:none!important}#sv .sublime_video_wrapper *,#sv #sz_content_wrapper,#sv #sv_contextual_menu *{padding:0!important;margin:0!important;border:none!important;overflow:visible!important;position:static!important;background:none!important;float:none!important;z-index:auto!important}#sv #sublime_videos,#sv #sublime_zoom,#sv .sublime_video_wrapper,#sv .sublime_video_wrapper *,#sv_contextual_menu,#sv_contextual_menu *{-moz-box-sizing:content-box!important;-webkit-box-sizing:content-box!important;-ms-box-sizing:content-box!important;box-sizing:content-box!important}#sv .sublime_video_content{height:100%!important}#sv .sublime_video_wrapper img{position:absolute!important;top:0!important;left:0!important;bottom:auto!important;right:auto!important;max-width:none!important;-moz-border-radius:0!important;-webkit-border-radius:0!important;border-radius:0!important}#sv .sublime_video_wrapper span.sv_play_button{display:block;position:absolute!important;width:auto!important;height:auto!important;top:0!important;bottom:0!important;left:0!important;right:0!important;cursor:pointer!important;opacity:1!important;background-color:rgba(0,0,0,0.3)!important;background-position:50%!important;background-repeat:no-repeat!important;-webkit-transition:.5s background-color!important;-moz-transition:.5s background-color!important;-o-transition:.5s background-color!important}#sv .sublime_video_wrapper span.sv_play_button:hover{background-color:rgba(0,0,0,0)!important}#sv .sublime_video_wrapper span.sv_play_button.ie{width:100%!important;height:100%!important;line-height:0!important;background:url(http://cdn.sublimevideo.net/p/beta/ie/transparent_pixel.gif)!important;cursor:pointer!important;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#4C000000,endColorstr=#4C000000)!important;zoom:1!important}#sv .sublime_video_wrapper span.sv_play_button.ie:hover{filter:none!important}#sv .sublime_video_wrapper span.sv_play_button.ie span{display:block;width:78px!important;height:78px!important;margin:-39px auto 0!important;position:relative!important;top:50%!important;cursor:pointer!important}#sv .sublime_video_wrapper .sv_error_messages{-webkit-user-select:auto;-moz-user-select:auto;user-select:auto}#sv .sublime_video_wrapper .sv_error_messages .sv_content td p a{color:#ccc!important;text-shadow:none!important;display:inline!important;padding:0!important;margin:0!important}#sv #sv_contextual_menu{margin:0!important;padding:6px 0 0 9px!important;border:none!important;background:url("data:image/png;charset=utf-8;base64,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") no-repeat!important;*background:none!important;width:126px!important;height:70px!important;position:absolute!important;bottom:auto!important;right:auto!important;z-index:999999!important}#sv #sv_contextual_menu_ie_bg{width:126px!important;height:70px!important;position:absolute!important;top:0!important;left:0!important;background:none!important;filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src="http://cdn.sublimevideo.net/p/beta/ie/contextual_background.png")!important}#sv #sv_contextual_menu.no_brand{height:50px!important;background:url("data:image/png;charset=utf-8;base64,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") no-repeat!important}#sv #sv_contextual_menu_ie_bg.no_brand{height:50px!important;filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src="http://cdn.sublimevideo.net/p/beta/ie/contextual_background_no_brand.png")!important}#sv #sv_contextual_menu span.logo{width:108px!important;height:24px!important;display:block!important;background:none!important;border:none!important;outline:none!important;padding:0!important;margin:0!important;position:static!important;cursor:pointer!important}#sv #sv_contextual_menu_transparent_layer{position:fixed!important;background:transparent!important;top:0!important;left:0!important;z-index:999998!important;width:100%!important;height:100%!important}#sv #sv_mode_switch{width:94px!important;height:18px!important;background:none!important;position:absolute!important;bottom:25px!important;left:16px!important;overflow:hidden!important}#sv #sv_mode_switch_handle_track{width:188px!important;height:18px!important;position:absolute!important;top:0!important;left:-47px!important}#sv #sv_mode_switch_handle{width:141px!important;height:18px!important;background:url("data:image/png;charset=utf-8;base64,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") no-repeat!important;position:absolute!important;top:0!important}*+html #sv_mode_switch_handle{background:url(http://cdn.sublimevideo.net/p/beta/ie/handle_and_labels.png) no-repeat!important}* html #sv_mode_switch_handle{background:none!important;filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src="http://cdn.sublimevideo.net/p/beta/ie/handle_and_labels.png")!important}#sv #sublime_zoom{position:absolute!important;top:0!important;left:0!important;width:auto!important;height:auto!important;z-index:999998!important}#sv #sz_close_button{padding:0!important;margin:0!important;border:none!important;width:45px!important;height:45px!important;position:absolute!important;cursor:pointer!important;z-index:4!important;opacity:0!important;-webkit-transition:opacity .4s!important;-moz-transition:opacity .4s!important;-o-transition:opacity .4s!important;transition:opacity .4s!important;display:none\9!important}* html #sz_close_button{display:block!important}#sv #sz_content_wrapper:hover #sz_close_button{opacity:1!important;display:block\9!important}</style></body></html>

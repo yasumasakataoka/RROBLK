@@ -20,11 +20,6 @@ begin
     subtask.__send__(subtask.command_r[:sio_classname]) 
     plsql.commit
     p " subtask.command_r[:sio_classname]  : #{subtask.command_r[:sio_classname]}"
-    case subtask.command_r[:sio_classname]
-         when "plsql_blk_paging"
-              $ts.write(["R",cmd_ts[1],cmd_ts[2],cmd_ts[3],cmd_ts[4]])
-              p "cmd_ts = #{cmd_ts}"
-    end
   end   ### while cmd_ts[1] != "E"
 
 rescue Exception => e #例外を取得

@@ -35,8 +35,8 @@ class ScreenController < ApplicationController
      strsql = nil if strsql == ""
      set_detail strsql,screen_code  ## set @gridcolumns 
      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
-     p " index  @disp_screenname_name  : #{  @disp_screenname_name }"
-     p " index  @gridcolumns : #{ @gridcolumns}"
+    fprnt " class #{self} : LINE #{__LINE__}  index  @disp_screenname_name  : #{  @disp_screenname_name }"
+    fprnt " class #{self} : LINE #{__LINE__}  index  @gridcolumns : #{ @gridcolumns}"
 
      ##   debugger ## 詳細項目の確認
    end  ##index
@@ -94,7 +94,7 @@ class ScreenController < ApplicationController
                                         :editrules => tmp_editrules ,
                                         :width => i[:detailfield_width],
                                         :search => if i[:detailfield_paragraph]  == 0 and  @nst_screenname_id =~ /^H\d_/   then false else true end,
-                                          :editable =>  if i[:detailfield_editable] == 1 then true else false end,
+                                        :editable =>  if i[:detailfield_editable] == 1 then true else false end,
                                        :editoptions => {:size => i[:detailfield_inputsize],:maxlength => i[:detailfield_maxlength] }  }
                     tmp_columns[:formoptions] =  {:rowpos=>i[:detailfield_rowpos] ,:colpos=>i[:detailfield_colpos] } if i[:detailfield_rowpos] <= 99  
                    @gridcolumns << tmp_columns 
@@ -132,8 +132,8 @@ class ScreenController < ApplicationController
                  buttonopt << tmp_buttonopt
              end 
              @scriptopt[:addbutton] = buttonopt
-             p " @scriptopt[:addbutton] :#{ @scriptopt[:addbutton] }"
-             p " add_button :#{ add_button }"
+             fprnt "class #{self} : LINE #{__LINE__}  @scriptopt[:addbutton] :#{ @scriptopt[:addbutton] }"
+             fprnt "class #{self} : LINE #{__LINE__}  add_button :#{ add_button }"
         end
   end   ### set_addbutton pare_screen 
   def set_radiobutton pare_screen     ### 子画面用のラジオボ タンセット
@@ -173,7 +173,7 @@ class ScreenController < ApplicationController
   end    ## set_radiobutton pare_screen  
  ################
   def disp   ##  jqgrid返り
-   ##  debugger ## 詳細項目セット
+   ## debugger ## 詳細項目セット
    params[:page] ||= 1 
    params[:rows] ||= 10 
    ## get from cache
@@ -182,71 +182,34 @@ class ScreenController < ApplicationController
    subpaging            ## subpaging 
    ##  p " @tbldata  :  #{@tbldata}"
    ##  p " @session_show_data  :  #{@session_show_data}"
-     p "@record_count :  #{@record_count}"
-   ## debugger
+    fprnt  " class #{self} : LINE #{__LINE__} @record_count :  #{@record_count}"
+   ### debugger
    respond_with @tbldata.to_jqgrid_json( @session_show_data[:allfields] ,params[:page], params[:rows],@record_count)
   end  ##disp
 
-  def subinsertsio parename,tblfields
-      strsql =  if parename == "subpaging" then @session_show_data[:strsql] else nil end
+  def subinsertsio 
       ## debugger
-      tmp_viewname = @session_show_data[:screen_viewname].downcase
-      command_r = Hash.new 
-      command_r[:id] =  plsql.__send__("SIO_#{tmp_viewname}_SEQ").nextval
+      command_r[:sio_viewname] = @session_show_data[:screen_viewname].downcase
+      command_r[:id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
       command_r[:sio_term_id] =  request.remote_ip
       command_r[:sio_session_id] = params[:q]
       command_r[:sio_command_response] = "C"
       command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
-      command_r[:sio_viewname] = tmp_viewname 
       command_r[:sio_add_time] = Time.now
-      case parename
-       when  "subpaging" then
-           command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
-           command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
-           command_r[:sio_sord] = params[:sord]
-           command_r[:sio_search] = params[:_search] 
-           command_r =  sub_params_set( tmp_viewname,command_r) if params[:_search]  == "true" 
-           command_r[:sio_sidx]  = params[:sidx]
-           command_r[:sio_strsql]  = strsql
-           command_r[:sio_classname] = "plsql_blk_paging"
-       when "add","copy" then
-           command_r[:sio_classname] = "plsql_blk_insert"
-            command_r = sub_add_upd_del_setsio( tblfields,command_r)
-           command_r[:id_tbl] = nil
-       when "edit" then
-           command_r[:sio_classname] = "plsql_blk_update"
-           command_r = sub_add_upd_del_setsio( tblfields,command_r)
-           command_r[:id_tbl] = tblfields[:id_tbl].to_i
-           ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
-       when "del" then
-           command_r[:sio_classname] = "plsql_blk_delete"
-           command_r = sub_add_upd_del_setsio( tblfields,command_r)
-           command_r[:id_tbl] = tblfields[:id_tbl].to_i
-           ##削除でも項目を渡すのは、fieldのチェックが有るかもしれないから
-       when "proc_add_button" then
-           command_r[:sio_classname]  = params[:button_proc]
-           command_r[:id_tbl] = tblfields[:id_tbl].to_i
-           rowdata = {}
-           ####  なぜ　iはsymでないの?
-           params[:rowdata].except("msg_ok_ng","id").each_key do |i|
-             rowdata[i.to_sym] =  params[:rowdata][i] 
-           end  
-           command_r = sub_add_upd_del_setsio(rowdata ,command_r)  
-           ### screenの時は画面が変わるので
-           ### 保持しているデータは削除
-           ##  Rails.cache.clear if tmp_viewname == "r_screens"       
-      end   ## case
+      command_r.merge! sub_set_fields_from_allfields
+      command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
+      yield
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
-      p "sio_\#{tmp_viewname} :sio_#{tmp_viewname}"
-      p "command_r #{command_r}"
+      fprnt " class #{self} : LINE #{__LINE__} sio_\#{ command_r[:sio_viewname] } :sio_#{command_r[:sio_viewname]}"
+      fprnt " class #{self} : LINE #{__LINE__} command_r #{command_r}"
       ## debugger
-      plsql.__send__("SIO_#{tmp_viewname}").insert command_r
+      plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       plsql.commit 
 ##    p Time.now
-      $ts.write(["C",request.remote_ip,params[:q],command_r[:sio_session_counter],"SIO_#{tmp_viewname}"])
-       return command_r[:sio_session_counter] 
+##      $ts.write(["C",request.remote_ip,params[:q],command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}"])
+       return  command_r[:sio_session_counter]
   end   ## subinsertsio 
-  def sub_params_set view_name, command_r
+  def sub_params_set view_name
   #######  blk_class実施している where はこちらでstrsqlにセットして行う
   ###   日付と数字で<>の比較ができてない
       @session_show_data[:allfields].each do |i|
@@ -261,9 +224,9 @@ class ScreenController < ApplicationController
            end  ## unless
       end
       return command_r
-  end ## def sub_params_set view_name, command_r
-  def sub_add_upd_del_setsio tblfields,command_r
-      tblfields.each_key do |ii|     ### tblfields  paramsをsio用に変換したもの
+  end ## def sub_params_set view_name
+  def sub_add_upd_del_setsio tblfields
+	   tblfields.each_key do |ii|     ### tblfields  paramsをsio用に変換したもの
            if !tblfields[ii].nil?   and ii.to_s != "id_tbl"   ###   sub_set_fields_from_allfields参照 
               tmp_type = plsql.DETAILFIELDS.first(" where code = '#{ii.to_s.upcase}' and Expiredate > sysdate order by expiredate ") 
           ##  debugger
@@ -280,45 +243,9 @@ class ScreenController < ApplicationController
            end   ## do |ii|
            render :nothing => true
       command_r[:sio_user_code] =   @session_show_data[:person_id] 
-      return  command_r
+      return
   end
-  def subpaging   
-      tmp_session_counter = subinsertsio("subpaging",nil)
-      tmp_viewname = @session_show_data[:screen_viewname].downcase
-
-      ### debugger # breakpoint   
-      $ts.take(["R",request.remote_ip,params[:q],tmp_session_counter,"SIO_#{tmp_viewname}"])
-###      $ts.take(["R",request.remote_ip,params[:q],command_r[:session_counter],"sio_#{tmp_viewname}"],10)
-      const = "R"
-      
-      ####   debugger # breakpoint
-      rcd =  plsql.__send__("SIO_#{tmp_viewname}").all("where sio_term_id = :1 and sio_session_id = :2
-                                                        and sio_session_counter = :3
-                                                        and sio_command_response = :4",
-                                                        request.remote_ip,params[:q],
-                                                        tmp_session_counter,const)
-      @tbldata = []
-      
-###     なぜか　eachが使用できない ?
-##      rcd.each do |j|
-##       @tbldata << j[inf_sym]
-##      end 
-      ## debugger
-      
-      for j in 0..rcd.size - 1
-          tmp_data = {}
-          @session_show_data[:allfields].each do |k|
-           k_to_s =  k.to_s 
-           tmp_data[k] = rcd[j][k] if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-           tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
-           tmp_data[k] = rcd[j][k].strftime("%Y-%m-%d") if k_to_s =~ /expiredate/ and  !rcd[j][k].nil?
-          end 
-          @tbldata << tmp_data
-      end ## for
-      @record_count = 0
-      @record_count = rcd[0][:sio_totalcount] unless rcd.empty?
-   end  ##subpaging
-   def nst  ###子画面　link
+  def nst  ###子画面　link
      rcd_id  =  params[:id]  ### 親画面テーブル内の子画面へのkeyとなるid
      pare_view =  params[:nst_tbl_val].split(";")[0]   ### 親のview
      chil_view =  params[:nst_tbl_val].split(";")[1]   ### 子のview
@@ -359,7 +286,7 @@ class ScreenController < ApplicationController
           unless dispfields.nil? then
              dispfields.each do |i|
                 if i[:detailfield_code] =~ /CODE/ then
-                   p " i[:detailfield_code] : #{i[:detailfield_code] } " 
+                  fprnt "class #{self} : LINE #{__LINE__}  i[:detailfield_code] : #{i[:detailfield_code] } " 
                    @scriptopt[:pare_contents] << pare_data[i[:detailfield_code].downcase.to_sym] 
                    tname =i[:detailfield_code].gsub(/CODE/,"NAME").downcase.to_sym
                    @scriptopt[:pare_contents] << " (" + pare_data[tname]  + ")     "
@@ -373,37 +300,56 @@ class ScreenController < ApplicationController
              end
           end  ### unless dispfields.nil? then
      end  ### if   @scriptopt[:pare_contents].empty?
-  p " nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
+  fprnt " class #{self} : LINE #{__LINE__}  nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
  end    ### def set_pare_contents pare_view,rcd_id
- ####
- ### スペースキイでsubmitを押すとline画面に移動しない。
  ### formで矢印がきかない
  def add_upd_del    ##  add update delete
      get_session_showdata
      params[:oper] = "add" if  params[:copy] == "yes"   ### copy and add
+     tblfields = sub_set_fields_from_allfields
      case params[:oper] 
        when "add"
           rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s +  params[:q]  ### :q -->@nst_screenname_id
           hash_rcd = Rails.cache.read(rcd_id_cache_key)  
-          tmp_isnr =  sub_set_fields_from_allfields
-          p " hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
-          p " hash_rcd  nil nil"  if hash_rcd.nil?
+          tmp_isnr =  tblfields
+          fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
+          fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
           tmp_isnr.merge! hash_rcd unless hash_rcd.nil?
-          subinsertsio "add", tmp_isnr
+          subinsertsio  do
+             command_r[:sio_classname] = "plsql_blk_insert"
+             sub_add_upd_del_setsio(tmp_isnr)
+             command_r[:id_tbl] = nil
+          end
        when "del"
-         subinsertsio "del",sub_set_fields_from_allfields
+          subinsertsio  do
+             command_r[:sio_classname] = "plsql_blk_delete"
+             sub_add_upd_del_setsio( tblfields)
+             command_r[:id_tbl] = tblfields[:id_tbl].to_i
+          end
        when "edit"
-         subinsertsio "edit",sub_set_fields_from_allfields 
+	 ## debugger
+         subinsertsio  do
+           command_r[:sio_classname] = "plsql_blk_update"
+           sub_add_upd_del_setsio( tblfields)
+           command_r[:id_tbl] = tblfields[:id_tbl].to_i
+           ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
+         end
        else     
-       ###   debugger ## textは表示できないのでメッセージの変更要
-      render :text => "return to menu because session loss params:#{params[:oper]} "
+       ###debugger ## textは表示できないのでメッセージの変更要
+       render :text => "return to menu because session loss params:#{params[:oper]} "
      end ## case parems[:oper]
+     ## debugger
+ ##    $ts.write(["C",request.remote_ip,params[:q],command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}"])
+ ##    Resque.enqueue(DbCud, command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
+    dbcud = DbCud.new
+    dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
  end  ## add_upd_del
  def get_session_showdata 
    ### debugger  
-   show_cache_key = "show " + current_user[:id].to_s  +  params[:q]
+      show_cache_key = "show " + current_user[:id].to_s  +  params[:q]
       @session_show_data  = {}
       @session_show_data = Rails.cache.read(show_cache_key)
+   ### debugger
   end
   def sub_set_fields_from_allfields 
       ### debugger  
@@ -417,6 +363,19 @@ class ScreenController < ApplicationController
  #####
  def proc_add_button    ### 
      get_session_showdata 
-     subinsertsio "proc_add_button",sub_set_fields_from_allfields
- end 
+     subinsertsio  do
+           command_r[:sio_classname]  = params[:button_proc]
+           command_r[:id_tbl] = sub_set_fields_from_allfields[:id_tbl].to_i
+           rowdata = {}
+           ####  なぜ　iはsymでないの?
+           params[:rowdata].except("msg_ok_ng","id").each_key do |i|
+             rowdata[i.to_sym] =  params[:rowdata][i] 
+           end  
+           sub_add_upd_del_setsio(rowdata)  
+           ### screenの時は画面が変わるので
+           ### 保持しているデータは削除
+           ##  Rails.cache.clear if  command_r[:sio_viewname]  == "r_screens"       
+
+     end   ###proc_add_button  
+ end   ## proc_add_button  
 end ## ScreenController

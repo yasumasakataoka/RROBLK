@@ -1,0 +1,25 @@
+(function(){
+  var __zz = function() {
+    var __o = jp.atlantis.mashiron.ads['ads0'];
+    if (typeof __o == 'undefined') {
+      setTimeout(__zz, 99);
+    } else {
+      try {
+        __o.setVars({
+
+    "type": "img",
+    "src": "http://b4.i.adimg.net/banner_ads/0073/3219/fd156e3e722abad229b66617842834c891d9d520.jpg",
+    "href": "http://click.adlantis.jp/ad/click?aid=NzMzMjE5%250A&at=2&cid=MA%253D%253D%250A&conv_id=MA%253D%253D%250A&url=http%253A%252F%252Fjugem.jp%252Fservice%252Fplus%252F&zid=6UJ1BPG74DeCj0gVuCWgww%3D%3D",
+    "target": "_blank",
+    "alt": "%E3%83%96%E3%83%AD%E3%82%B0%E3%82%84%E3%82%8B%E3%81%AA%E3%82%89JUGEM",
+    "width": 120,
+    "height": 240
+});
+      } catch(e) {
+        setTimeout(__zz, 99);
+      }
+      return true;
+    }
+  };
+  __zz.apply();
+})();

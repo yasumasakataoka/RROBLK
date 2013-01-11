@@ -1,0 +1,690 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- saved from url=(0051)http://d.hatena.ne.jp/sakagami5/20110728/1311831906 -->
+<html xmlns:og="http://ogp.me/ns#"><head><meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>rails 3 で Resque を使ってみた手順 - sakagami メモ</title>
+<link rel="start" href="http://d.hatena.ne.jp/" title="sakagami メモ">
+<link rel="help" href="http://d.hatena.ne.jp/help" title="ヘルプ">
+<link rel="prev" href="http://d.hatena.ne.jp/sakagami5/20110728/1311830470" title="[メモ]rails 3 で Amazon SQS を...">
+<link rel="next" href="http://d.hatena.ne.jp/sakagami5/20110809/1312865754" title="[メモ]Rails の We&#39;re sorry, bu...">
+
+<link rel="stylesheet" href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/base.css" type="text/css" media="all">
+<link rel="stylesheet" href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/headerstyle_wh.css" type="text/css" media="all">
+<link rel="stylesheet" href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/chameleon.css" type="text/css" media="all">
+
+
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://d.hatena.ne.jp/sakagami5/rss">
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://d.hatena.ne.jp/sakagami5/rss2">
+
+<link rel="meta" type="application/rdf+xml" title="FOAF" href="http://d.hatena.ne.jp/sakagami5/foaf">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/sakagami5/opensearch/diary.xml" title="sakagami メモ内日記検索">
+<link rel="search" type="application/opensearchdescription+xml" href="http://d.hatena.ne.jp/sakagami5/opensearch/archive.xml" title="sakagami メモ内一覧検索">
+
+
+
+<link rel="shortcut icon" href="http://d.hatena.ne.jp/images/wh_favicon.ico">
+
+
+
+
+<style type="text/css">
+<!-- 
+
+-->
+</style>
+
+
+<script type="text/javascript" async="" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/ga.js"></script><script type="text/javascript">if(/[\x3c\x3e\x22]/.test(location.hash))location.hash=location.hash.replace(/[\x3c\x3e\x22]/g,'');if(/[\x3c\x3e]/.test(document.referrer))location.href=location.href;</script>
+
+
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="rails 3 で Resque を使ってみた手順 - sakagami メモ">
+<meta property="og:url" content="http://d.hatena.ne.jp/sakagami5/20110728/1311831906">
+<meta property="og:description" content="Redis のインストール https://github.com/defunkt/resque を参照。 git clone git://github.com/defunkt/r..">
+<meta property="og:site_name" content="はてなダイアリー">
+
+
+<!--
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<rdf:Description rdf:about="http://d.hatena.ne.jp/sakagami5/20110728/1311831906">
+   <foaf:maker rdf:parseType="Resource">
+     <foaf:holdsAccount>
+       <foaf:OnlineAccount foaf:accountName="sakagami5">
+         <foaf:accountServiceHomepage rdf:resource="http://www.hatena.ne.jp/" />
+       </foaf:OnlineAccount>
+     </foaf:holdsAccount>
+   </foaf:maker>
+</rdf:Description>
+</rdf:RDF>
+-->
+
+<link rel="alternate" media="handheld" type="text/html" href="http://d.hatena.ne.jp/sakagami5/mobile?date=20110728&section=1311831906">
+<!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+  rdf:about="http://d.hatena.ne.jp/sakagami5/20110728/1311831906"
+  trackback:ping="http://d.hatena.ne.jp/sakagami5/20110728/1311831906"
+  dc:title="[メモ]rails 3 で Resque を使ってみた手順"
+  dc:identifier="http://d.hatena.ne.jp/sakagami5/20110728/1311831906" />
+</rdf:RDF>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+  rdf:about="http://d.hatena.ne.jp/sakagami5/20110728/1311830470"
+  trackback:ping="http://d.hatena.ne.jp/sakagami5/20110728/1311830470"
+  dc:title="[メモ]rails 3 で Amazon SQS を使ってみた手順"
+  dc:identifier="http://d.hatena.ne.jp/sakagami5/20110728/1311830470" />
+</rdf:RDF>
+-->
+
+
+
+<link rel="canonical" href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/rails 3 で Resque を使ってみた手順 - sakagami メモ.htm">
+
+
+
+
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/HatenaStar.js"></script>
+<script type="text/javascript">
+Hatena.Star.SiteConfig = {
+  entryNodes: {
+    'div.section': {
+      uri: 'h3 a',
+      title: 'h3',
+      container: 'h3'
+    }
+  }
+};
+Hatena.Author  = new Hatena.User('sakagami5');
+Hatena.DiaryName  = new Hatena.User('sakagami5');
+
+</script>
+
+
+
+
+
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/adcolor.js"></script>
+
+
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/quick_pager.js"></script>
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/diary_utils.js"></script>
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/max_width_fotolife.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/jquery-1.4.2.min.js"></script>
+<script type="text/javascript">
+  jQuery.noConflict()(function($){
+    var j$ = jQuery;
+  });
+</script>
+
+
+
+
+<script src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/entries.json" type="text/javascript"></script></head>
+<body>
+
+<div id="simple-header">
+
+  <a href="http://www.hatena.ne.jp/"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/hatena-simple_wh.gif" alt="Hatena::" title="Hatena::" id="logo-hatena" width="65" height="17"></a><a href="http://d.hatena.ne.jp/"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/diary-simple_wh.gif" alt="ブログ(Diary)" title="Diary" id="logo-diary" width="43" height="17"></a>
+  <form method="get" action="http://d.hatena.ne.jp/search" class="search-form">
+    <input type="text" class="search-word" name="word" value="rails resque"><input name="name" value="sakagami5" type="hidden"><input type="submit" name="diary" value="日記" class="search-button"><input type="submit" name="submit" value="検索" class="search-button">
+  </form>
+  <ul class="menu">
+    <li><a href="http://d.hatena.ne.jp/sakagami5/">ブログトップ</a></li>
+    <li><a href="http://d.hatena.ne.jp/sakagami5/archive">記事一覧</a></li>
+
+
+
+    <li><a href="https://www.hatena.ne.jp/login?backurl=http%3A%2F%2Fd.hatena.ne.jp%2Fsakagami5%2F20110728%2F1311831906&add_timestamp=1">ログイン</a></li>
+    <li><a href="https://www.hatena.ne.jp/register?location=http://d.hatena.ne.jp/">無料ブログ開設</a></li>
+
+  </ul>
+</div>
+
+
+
+<h1><a href="http://d.hatena.ne.jp/sakagami5/">sakagami メモ</a> <a href="http://a.hatena.ne.jp/append?http://d.hatena.ne.jp/sakagami5/"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/a_append_wh.gif" title="このページをアンテナに追加" alt="このページをアンテナに追加" border="0" width="16" height="12" class="icon"></a> <a href="http://d.hatena.ne.jp/sakagami5/rss"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/rss_wh.gif" alt="RSSフィード" title="RSSフィード" border="0" width="24" height="12" class="icon"></a></h1>
+<div class="hatena-body">
+<div class="main">
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="calendar" id="pager-top">
+  <a rel="prev" href="http://d.hatena.ne.jp/sakagami5/20110728/1311830470" class="prev">&lt;[メモ]rails 3 で Amazon SQS を...</a>&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/sakagami5/20110809/1312865754" class="next">[メモ]Rails の We're sorry, bu...&gt;</a><span id="edit-in-place-add"></span>
+</div>
+<div id="days">
+
+<div class="day">
+<h2><a href="http://d.hatena.ne.jp/sakagami5/20110728" rel="nofollow"><span class="date">2011-07-28</span></a></h2>
+
+<div class="body">
+
+<!-- google_ad_section_start -->
+
+		<div class="section">
+			<h3 class="title"><a href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/rails 3 で Resque を使ってみた手順 - sakagami メモ.htm" name="1311831906"><span class="highlight">rails</span> 3 で <span class="highlight">Resque</span> を使ってみた手順</a><span class="hatena-star-comment-container"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/comment_dg.gif" tabindex="0" alt="Comments" title="Comments" style="cursor: pointer; margin: 0px; padding: 0px; border: none; vertical-align: middle; display: none;" class="hatena-star-comment-button"></span><span class="hatena-star-star-container"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/add_dg.gif" tabindex="0" alt="Add Star" title="Add Star" style="cursor: pointer; margin: 0px 3px; padding: 0px; border: none; vertical-align: middle;" class="hatena-star-add-button"></span></h3>
+			<p class="sectionheader"><span class="sectioncategory"><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%2A%5B%A5%E1%A5%E2%5D" class="sectioncategory">メモ</a></span></p>
+			<h4>Redis の<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a></h4>
+			<p><a href="https://github.com/defunkt/resque" target="_blank">https://github.com/defunkt/<span class="highlight">resque</span></a> を参照。</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a> clone <a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a>://<a class="keyword" href="http://d.hatena.ne.jp/keyword/github">github</a>.com/defunkt/<span class="highlight">resque</span>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a>
+cd <span class="highlight">resque</span>
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> redis:install dtach:install
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> redis:start
+<a class="keyword" href="http://d.hatena.ne.jp/keyword/gem">gem</a> install bundler
+bundle install
+</pre>
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%E2%A5%CB%A5%BF%A5%EA%A5%F3%A5%B0">モニタリング</a>用管理Web<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A2%A5%D7%A5%EA">アプリ</a></p>
+			<p><span class="highlight">resque</span>の<a class="keyword" href="http://d.hatena.ne.jp/keyword/git">git</a><a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%EC%A5%DD%A5%B8%A5%C8%A5%EA">レポジトリ</a>の中の管理<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A2%A5%D7%A5%EA%A5%B1%A1%BC%A5%B7%A5%E7%A5%F3">アプリケーション</a>を起動する。</p>
+<pre>cd <span class="highlight">resque</span>/examples/demo
+rackup config.ru
+</pre>
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%D6%A5%E9%A5%A6%A5%B6">ブラウザ</a>で</p>
+			<p><a href="http://localhost:9292/" target="_blank">http://localhost:9292/</a></p>
+			<p>のようにアクセスすることで<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A2%A5%D7%A5%EA%A5%B1%A1%BC%A5%B7%A5%E7%A5%F3">アプリケーション</a>が実行できる。</p>
+			<br>
+
+			<h4><a class="keyword" href="http://d.hatena.ne.jp/keyword/rails"><span class="highlight">rails</span></a> 3 で <span class="highlight">resque</span> を使う</h4>
+			<p>Gemfile を編集する</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/vi">vi</a> Gemfile
+</pre>
+			<p>以下の一行を追加</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/gem">gem</a> '<span class="highlight">resque</span>'
+</pre>
+			<p>Bundlerで<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB">インストール</a></p>
+<pre>bundle install
+</pre>
+			<p>ファイルを編集。</p>
+
+			<ul>
+				<li>config/initializers/<span class="highlight">resque</span>.rb を作成</li>
+			</ul>
+<pre class="syntax-highlight"><span class="synPreProc">require</span> <span class="synSpecial">'</span><span class="synConstant"><span class="highlight">resque</span></span><span class="synSpecial">'</span>
+<span class="synIdentifier"><span class="highlight">Resque</span></span>.redis = <span class="synSpecial">'</span><span class="synConstant">localhost:6379</span><span class="synSpecial">'</span>
+</pre>
+
+
+			<ul>
+				<li>app/controllers/queue_controller.rb を作成</li>
+			</ul>
+<pre class="syntax-highlight"><span class="synPreProc">class </span><span class="synType">QueueController</span> &lt; <span class="synIdentifier">ApplicationController</span>
+  <span class="synPreProc">def </span><span class="synIdentifier"><span class="highlight">resque</span>_push</span>
+    <span class="synIdentifier"><span class="highlight">Resque</span></span>.enqueue(<span class="synIdentifier">Echo</span>, params[<span class="synIdentifier">:data</span>])
+    render <span class="synIdentifier">:text</span> =&gt; params[<span class="synIdentifier">:data</span>]
+  <span class="synPreProc">end</span>
+
+  <span class="synPreProc">def </span><span class="synIdentifier"><span class="highlight">resque</span>_pop</span>
+    data = <span class="synIdentifier"><span class="highlight">Resque</span></span>.reserve(<span class="synIdentifier">:default</span>)
+  <span class="synPreProc">end</span>
+<span class="synPreProc">end</span>
+</pre>
+
+
+			<ul>
+				<li>app/workers/echo.rb を作成</li>
+			</ul>
+<pre class="syntax-highlight"><span class="synPreProc">class </span><span class="synType">Echo</span>
+  <span class="synIdentifier">@queue</span> = <span class="synIdentifier">:default</span>
+
+  <span class="synPreProc">def </span><span class="synIdentifier">self.perform</span>(text)
+    sleep <span class="synConstant">3</span>
+    path = <span class="synIdentifier">File</span>.expand_path(<span class="synSpecial">"</span><span class="synConstant">log/echo.log</span><span class="synSpecial">"</span>, <span class="synIdentifier"><span class="highlight">Rails</span></span>.root)
+    <span class="synIdentifier">File</span>.open(path, <span class="synSpecial">'</span><span class="synConstant">a</span><span class="synSpecial">'</span>) <span class="synStatement">do</span> |<span class="synIdentifier">f</span>|
+      f.puts <span class="synSpecial">"</span><span class="synConstant">Hello </span><span class="synSpecial">#{text}</span><span class="synConstant">!</span><span class="synSpecial">"</span> 
+    <span class="synStatement">end</span>
+  <span class="synPreProc">end</span>
+<span class="synPreProc">end</span>
+</pre>
+
+
+			<ul>
+				<li>lib/tasks/<span class="highlight">resque</span>.<a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> を作成</li>
+			</ul>
+<pre class="syntax-highlight"><span class="synPreProc">require</span> <span class="synSpecial">'</span><span class="synConstant"><span class="highlight">resque</span>/tasks</span><span class="synSpecial">'</span>
+</pre>
+
+			<p>空のログファイルを作成。</p>
+<pre>touch log/echo.log
+</pre>
+			<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails"><span class="highlight">Rails</span></a><a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%B5%A1%BC%A5%D0">サーバ</a>を起動</p>
+<pre><a class="keyword" href="http://d.hatena.ne.jp/keyword/rails"><span class="highlight">rails</span></a> server
+</pre>
+			<p><a href="http://localhost:3000/queue/resque_push?data=test" target="_blank">http://localhost:3000/queue/<span class="highlight">resque</span>_push?data=test</a></p>
+			<p>を呼び出すと、dataの値がキューに保存される。</p>
+			<p>また、</p>
+			<p><a href="http://localhost:3000/queue/resque_pop" target="_blank">http://localhost:3000/queue/<span class="highlight">resque</span>_pop</a></p>
+			<p>を呼び出すことで、キューからデータを取得する。</p>
+			<p>以下のようなコマンドでワーカーを起動すると、キューのジョブを処理する。</p>
+			<p>（ここでの例の場合、log/echo.log にキューの内容が記録される）</p>
+<pre>QUEUE=default <a class="keyword" href="http://d.hatena.ne.jp/keyword/rake">rake</a> environment <span class="highlight">resque</span>:work
+</pre>
+			<br>
+
+			<h4>参考<a class="keyword" href="http://d.hatena.ne.jp/keyword/URL">URL</a></h4>
+			<p><a href="https://github.com/defunkt/resque" target="_blank">https://github.com/defunkt/<span class="highlight">resque</span></a></p>
+			<p><a href="http://w.koshigoe.jp/study/?%5BBackgroundJob%5D%5BRuby%5D+Resque+%A4%CE+README+%A4%E8%A4%EA" target="_blank">http://w.koshigoe.jp/study/?%5BBackgroundJob%5D%5BRuby%5D+<span class="highlight">Resque</span>+%A4%CE+README+%A4%E8%A4%EA</a></p>
+			<p><a href="http://www.oiax.jp/rails/zakkan/resque.html" target="_blank">http://www.oiax.jp/<span class="highlight">rails</span>/zakkan/<span class="highlight">resque</span>.html</a></p>
+			<p><a href="http://www.slideshare.net/koshigoe/introduction-to-resque" target="_blank">http://www.slideshare.net/koshigoe/introduction-to-<span class="highlight">resque</span></a></p>
+			<p><a href="http://blog.madoro.org/mn/17" target="_blank">http://blog.madoro.org/mn/17</a></p>
+			<p><a href="http://blog.madoro.org/mn/18" target="_blank">http://blog.madoro.org/mn/18</a></p>
+			<p><a href="http://blog.madoro.org/mn/45" target="_blank">http://blog.madoro.org/mn/45</a></p>
+			<p><a href="http://blog.madoro.org/mn/56" target="_blank">http://blog.madoro.org/mn/56</a></p>
+			<p><a href="https://github.com/defunkt/resque/blob/master/lib/resque.rb" target="_blank">https://github.com/defunkt/<span class="highlight">resque</span>/blob/master/lib/<span class="highlight">resque</span>.rb</a></p>
+			<p class="sectionfooter"><a href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/rails 3 で Resque を使ってみた手順 - sakagami メモ.htm">Permalink</a> | <a href="http://d.hatena.ne.jp/sakagami5/20110728/1311831906#c">コメント(0)</a> | <a href="http://d.hatena.ne.jp/sakagami5/20110728/1311831906#tb">トラックバック(0)</a> | 14:45 <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/sakagami5/20110728/1311831906" class="bookmark-icon"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/b_entry_wh.gif" border="0" title="rails 3 で Resque を使ってみた手順を含むブックマーク" alt="rails 3 で Resque を使ってみた手順を含むブックマーク" width="16" height="12" class="icon"></a> <a href="http://b.hatena.ne.jp/entry/http://d.hatena.ne.jp/sakagami5/20110728/1311831906" class="bookmark-count"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/1311831906" title="はてなブックマーク - rails 3 で Resque を使ってみた手順" alt=""></a></p>
+
+		</div>
+
+<div id="google_afc_user" class="section">
+<div id="google_afc_user_container" class="google_afc_blocklink2_5 google_afc_boder">
+<script type="text/javascript">
+<!--
+    google_ad_client = 'ca-hatena_html';
+    google_ad_channel = 'd_user';
+    google_ad_type     = 'image';
+    google_ad_width = '300';
+    google_ad_height = '250';
+    google_image_size = '300x250';
+    google_ad_format = '300x250_pas_abgc';
+    document.write('<scri' + 'pt charset="utf-8" type="text/javascript" src="http://ad.hatena.ne.jp/js/hatena_afc-compiled.js"></scri' + 'pt>');
+// -->
+</script><script charset="utf-8" type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/hatena_afc-compiled.js"></script><script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/show_ads.js"></script><ins style="display:inline-table;border:none;height:250px;margin:0;padding:0;position:relative;visibility:visible;width:300px"><ins id="aswift_0_anchor" style="display:block;border:none;height:250px;margin:0;padding:0;position:relative;visibility:visible;width:300px"><iframe allowtransparency="true" frameborder="0" height="250" hspace="0" marginwidth="0" marginheight="0" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){setTimeout(h,0)}else if(h.match){w.location.replace(h)}}" scrolling="no" vspace="0" width="300" id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;"></iframe></ins></ins>
+</div>
+</div>
+
+
+<!-- google_ad_section_end -->
+
+</div>
+
+<form id="comment-form" method="post" action="http://d.hatena.ne.jp/sakagami5/comment#c" class="comment">
+<input type="hidden" name="mode" value="enter">
+<input type="hidden" name="rkm" value="">
+<input type="hidden" name="date" value="2011-07-28">
+<div class="comment">
+  <div class="caption"><a name="c">コメントを書く</a></div>
+  <div class="commentshort">
+    
+    
+
+    <a name="error-message"></a>
+    <p class="message" style="display: none; padding: 3px;"></p>
+
+    
+
+    
+            
+    <p class="commentform">
+      <span class="commentator">
+        <span class="usermailconfirm"><input name="usermail" size="1" value=""><input name="userurl" size="1" value="">スパム対策のためのダミーです。もし見えても何も入力しないでください<br></span>
+        <span class="username">
+        <img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/guest_icon.gif" class="hatena-id-icon" alt="ゲスト" title="ゲスト" height="16" width="16">
+        <input type="hidden" name="section" value="1311831906">
+        
+          <input id="comment-username" name="username" size="15" style="color: rgb(170, 170, 170);">
+        
+        </span>
+        
+          <span class="usermail"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/icon-usermail.gif" style="vertical-align:middle;margin-right:3px;"><input id="comment-usermail" name="useremail" size="15" value="" style="color: rgb(170, 170, 170);"></span>
+          <span class="userurl"><img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/icon-userurl.gif" style="vertical-align:middle;margin-right:3px;"><input id="comment-userurl" name="useruri" size="15" value="" style="color: rgb(170, 170, 170);"></span>
+        
+      </span>
+<br>
+      <!-- NOT_VERIFIED_COMMENT_AUTH -->
+      <textarea id="comment-textarea" name="body" value="" cols="60" rows="3" style="color: rgb(170, 170, 170);"></textarea><br>
+      
+          </p><div class="captcha">
+            <img src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/captcha" class="captcha-image">
+            <span class="captcha-message">画像認証</span><br>
+            <input type="text" name="captcha_code" size="10" class="captcha-string" id="comment-captcha" style="color: rgb(170, 170, 170);">
+          </div>
+      
+      <span class="comment-submit"><input type="submit" id="comment-form-button" value="投稿"></span>
+    <p></p>
+
+      <script type="text/javascript" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/diary_comment_edit_form.js"></script>
+    
+
+  </div>
+</div>
+
+</form>
+
+
+
+
+
+  
+  <div class="refererlist">
+    <div class="caption">
+      <a name="tb">トラックバック</a> - http://d.hatena.ne.jp/sakagami5/20110728/1311831906
+    </div>
+    
+  </div>
+  
+  
+
+
+
+
+
+    <div class="refererlist">
+      <div class="caption">リンク元</div>
+      <ul>
+          <li>117 <a href="http://mabo02.livedoor.biz/archives/2666764.html" rel="nofollow">http://mabo02.livedoor.biz/archives/2666764.html</a></li>
+          <li>85 <a href="http://tool-6.net/?SH0U" rel="nofollow">http://tool-6.net/?SH0U</a></li>
+          <li>31 <a href="http://search.yahoo.co.jp/search?p=%E6%97%A5%E6%9C%AC%E4%BA%BA%E3%81%AE%E8%AA%87%E3%82%8A%20%E5%9C%B0%E9%9C%87&rs=2&tid=top_ga1_sa&ei=UTF-8&aq=9&oq=%E6%97%A5%E6%9C%AC%E4%BA%BA&fr=top_ga1_sa" rel="nofollow">http://search.yahoo.co.jp/search?p=日本人の誇り 地震&amp;rs=2&amp;tid=top_ga1_sa&amp;ei=UTF-8&amp;aq=9&amp;oq=日本人&amp;fr=top_ga1_sa</a></li>
+          <li>25 <a href="http://news020.blog13.fc2.com/blog-entry-1354.html" rel="nofollow">http://news020.blog13.fc2.com/blog-entry-1354.html</a></li>
+          <li>14 <a href="http://newdiscovery.blog116.fc2.com/blog-entry-508.html" rel="nofollow">http://newdiscovery.blog116.fc2.com/blog-entry-508.html</a></li>
+          <li>10 <a href="http://ezsch.ezweb.ne.jp/search/?sr=0101&query=%93%FA%96%7B%82%B7%82%B0%82%A6" rel="nofollow">http://ezsch.ezweb.ne.jp/search/?sr=0101&amp;query=日本すげえ</a></li>
+          <li>10 <a href="http://matome.naver.jp/odai/2130008285448154801/2130084399555804303?guid=on&oPage=6" rel="nofollow">http://matome.naver.jp/odai/2130008285448154801/2130084399555804303?guid=on&amp;oPage=6</a></li>
+          <li>10 <a href="http://www.google.co.jp/url?sa=t&source=web&cd=1&ved=0CBgQFjAA&url=http%3A%2F%2Fd.hatena.ne.jp%2Fsakagami5%2F20110712%2F1310452458&rct=j&q=redmine%E3%80%80%E3%83%81%E3%82%B1%E3%83%83%E3%83%88%E3%80%80%E6%9B%B4%E6%96%B0%E3%80%80%E5%8C%BF%E5%90%8D%E3%83%A6%" rel="nofollow">http://www.google.co.jp/url?sa=t&amp;source=web&amp;cd=1&amp;ved=0CBgQFjAA&amp;url=http://d.hatena.ne.jp/sakagami5/20110712/1310452458&amp;rct=j&amp;q=redmine　チケット　更新　匿名ユ%</a></li>
+          <li>8 <a href="http://www.google.co.jp/url?sa=t&source=web&cd=2&ved=0CB4QFjAB&url=http%3A%2F%2Fd.hatena.ne.jp%2Fsakagami5%2F20110614%2F1308056795&rct=j&q=rails3%20%E8%A1%A8%E7%A4%BA%E3%80%80%E4%BD%9C%E6%88%90&ei=ghUxTu1bpc2xAtPKtfMK&usg=AFQjCNHFAInJdhGxmDapy2e9GLx-Qm4Lx" rel="nofollow">http://www.google.co.jp/url?sa=t&amp;source=web&amp;cd=2&amp;ved=0CB4QFjAB&amp;url=http://d.hatena.ne.jp/sakagami5/20110614/1308056795&amp;rct=j&amp;q=rails3 表示　作成&amp;ei=ghUxTu1bpc2xAtPKtfMK&amp;usg=AFQjCNHFAInJdhGxmDapy2e9GLx-Qm4Lx</a></li>
+          <li>7 <a href="http://search.yahoo.co.jp/search?p=%E6%97%A5%E6%9C%AC%E3%81%99%E3%81%92%E3%83%BC&search.x=1&fr=top_ga1_sa&tid=top_ga1_sa&ei=UTF-8&aq=&oq=" rel="nofollow">http://search.yahoo.co.jp/search?p=日本すげー&amp;search.x=1&amp;fr=top_ga1_sa&amp;tid=top_ga1_sa&amp;ei=UTF-8&amp;aq=&amp;oq=</a></li>
+      </ul>
+      
+    </div>
+
+
+
+
+</div>
+
+
+
+</div>
+<div class="calendar" id="pager-bottom">
+  <a rel="prev" href="http://d.hatena.ne.jp/sakagami5/20110728/1311830470" class="prev">&lt;[メモ]rails 3 で Amazon SQS を...</a><img style="vertical-align: middle; margin-left: 3px; cursor: pointer;" src="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/icon-quickpager.gif">&nbsp;<span class="delimiter">|</span>&nbsp;<a rel="next" href="http://d.hatena.ne.jp/sakagami5/20110809/1312865754" class="next">[メモ]Rails の We're sorry, bu...&gt;</a>
+</div>
+</div>
+<div class="sidebar">
+	<div class="hatena-module hatena-module-profile">
+  <div class="hatena-moduletitle">プロフィール</div>
+  <div class="hatena-modulebody">
+    <div class="hatena-profile">
+      <p class="hatena-profile-id"><a href="http://d.hatena.ne.jp/sakagami5/about">sakagami5</a></p>
+      <p class="hatena-profile-body">ウェブ、デジタル機器、その他いろいろ個人的メモ帳（にするつもり）。</p>
+    </div>
+  </div>
+</div>
+
+
+<div class="hatena-module">
+ <div class="hatena-moduletitle">Twitter</div>
+ <div class="hatena-modulebody">
+  <ul>
+   <li><a href="http://twitter.com/#!/sakagami3">http://twitter.com/#!/sakagami3</a></li>
+  </ul>
+ </div>
+</div>
+
+	<div class="hatena-module hatena-module-calendar2">
+<div class="hatena-moduletitle">カレンダー</div>
+<div class="hatena-modulebody">
+<table class="calendar" summary="calendar">
+<tbody><tr>
+<td class="calendar-prev-month" colspan="2"><a href="http://d.hatena.ne.jp/sakagami5/201106" title="201106" rel="nofollow">&lt;&lt;</a></td>
+<td class="calendar-current-month" colspan="3"><a href="http://d.hatena.ne.jp/sakagami5/archive/201107" rel="nofollow">2011/07</a></td>
+<td class="calendar-next-month" colspan="2"><a href="http://d.hatena.ne.jp/sakagami5/201108" title="201108" rel="nofollow">&gt;&gt;</a></td>
+</tr>
+<tr>
+<td class="calendar-sunday">日</td>
+<td class="calendar-weekday">月</td>
+<td class="calendar-weekday">火</td>
+<td class="calendar-weekday">水</td>
+<td class="calendar-weekday">木</td>
+<td class="calendar-weekday">金</td>
+<td class="calendar-saturday">土</td>
+</tr>
+	<tr>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day">1</td>
+		<td class="calendar-day">2</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">3</td>
+		<td class="calendar-day">4</td>
+		<td class="calendar-day">5</td>
+		<td class="calendar-day">6</td>
+		<td class="calendar-day">7</td>
+		<td class="calendar-day">8</td>
+		<td class="calendar-day">9</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">10</td>
+		<td class="calendar-day">11</td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/sakagami5/20110712" title="12">12</a></td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/sakagami5/20110713" title="13">13</a></td>
+		<td class="calendar-day"><a href="http://d.hatena.ne.jp/sakagami5/20110714" title="14">14</a></td>
+		<td class="calendar-day">15</td>
+		<td class="calendar-day">16</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">17</td>
+		<td class="calendar-day">18</td>
+		<td class="calendar-day">19</td>
+		<td class="calendar-day">20</td>
+		<td class="calendar-day">21</td>
+		<td class="calendar-day">22</td>
+		<td class="calendar-day">23</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">24</td>
+		<td class="calendar-day">25</td>
+		<td class="calendar-day">26</td>
+		<td class="calendar-day">27</td>
+		<td class="calendar-day day-selected"><a href="http://d.hatena.ne.jp/sakagami5/20110728" title="28">28</a></td>
+		<td class="calendar-day">29</td>
+		<td class="calendar-day">30</td>
+	</tr>
+	<tr>
+		<td class="calendar-day">31</td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+		<td class="calendar-day"></td>
+	</tr>
+</tbody></table>
+	</div>
+</div>
+
+	<div class="hatena-module hatena-module-section">
+<div class="hatena-moduletitle"><a href="http://d.hatena.ne.jp/sakagami5/archive">最新タイトル</a></div>
+<div class="hatena-modulebody">
+<ul class="hatena-section">
+<li><a href="http://d.hatena.ne.jp/sakagami5/20120603/1338711680">[サービス]宴会にブナンなお店を一発検索「宴会部長」をリリースしました！</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110825/1314239498">[メモ]rails 3 でデータベースの時間がずれている場合の設定</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110809/1312865754">[メモ]Rails の We’re sorry, but something went wrong. というエラーの対処</a></li>
+<li><a href="./rails 3 で Resque を使ってみた手順 - sakagami メモ_files/rails 3 で Resque を使ってみた手順 - sakagami メモ.htm">[メモ]rails 3 で Resque を使ってみた手順</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110728/1311830470">[メモ]rails 3 で Amazon SQS を使ってみた手順</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110714/1310625995">[メモ]Gitosisでリポジトリとメンバーを追加し、リポジトリを使ってみる手順</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110713/1310521305">[メモ]Redmine Code Review プラグインをインストールする手順</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110712/1310452458">Amazon EC2 にRedmine 1.2 をインストールする手順</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110614/1308056795">[メモ]Ruby on Rails 3 でアプリケーションを作成する（scaffold を使わずに）</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110423/1303534569">[サービス]素材配布サイトや素材イメージを検索できるサービス 「 素材ボックス ( SOZAI BOX ) 」を正式公開しました！</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-comment">
+<div class="hatena-moduletitle">最近のコメント</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#c">2011-03-14</a>&nbsp;マリス</li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#c">2011-03-14</a>&nbsp;xxzzxzz</li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#c">2011-03-14</a>&nbsp;山姥オバサン</li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#c">2011-03-14</a>&nbsp;Tomo</li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#c">2011-03-14</a>&nbsp;灯</li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-trackback">
+<div class="hatena-moduletitle">最近のトラックバック</div>
+<div class="hatena-modulebody">
+<ul class="hatena-recentcomment">
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#tb">2011-03-14</a>&nbsp;<a href="http://d.hatena.ne.jp/m-hiroya/20110320/p1">ヒロヤの独り言 - 嫌な空気が流れ気味。</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#tb">2011-03-14</a>&nbsp;<a href="http://fanblogs.jp/cubemanz/archive/44/0">１週間</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#tb">2011-03-14</a>&nbsp;<a href="http://urakony.blog25.fc2.com/blog-entry-125.html">日本へ救援物資</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#tb">2011-03-14</a>&nbsp;<a href="http://d.hatena.ne.jp/masu2/20110317">不屈の星のハートビート - こころにひびく</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/20110314/1300069849#tb">2011-03-14</a>&nbsp;<a href="http://d.hatena.ne.jp/hiro7/20110315/p2">電気犬の日常 - 地震や津波題材の映画、上映延期や中止　ほか</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-sectioncategory">
+<div class="hatena-moduletitle">カテゴリー</div>
+<div class="hatena-modulebody">
+<ul class="hatena-sectioncategory">
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%2A%5B%A5%E1%A5%E2%5D">メモ</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%2A%5Bdeguchi%2Ein%5D">deguchi.in</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%2A%5B%A5%B5%A1%BC%A5%D3%A5%B9%5D">サービス</a></li>
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%2A%5B%C6%FC%B5%AD%5D">日記</a></li>
+</ul>
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-searchform">
+<div class="hatena-moduletitle">日記の検索</div>
+<div class="hatena-modulebody">
+<form method="GET" action="http://d.hatena.ne.jp/sakagami5/searchdiary" class="hatena-searchform"><input type="text" name="word" class="hatena-searchform searchform-word" value="rails resque"><input type="submit" name=".submit" value="検索" class="hatena-searchform searchform-button"><br><label class="searchform-label-detail"><input type="radio" name="type" value="detail" checked="checked" class="searchform-radio">詳細</label> <label class="searchform-label-list"><input type="radio" name="type" value="list" class="searchform-radio">一覧</label></form>
+
+</div>
+</div>
+
+	<div class="hatena-module hatena-module-keywordcloud">
+
+<div class="hatena-moduletitle"><a href="http://d.hatena.ne.jp/sakagami5/keywordcloud">最近言及したキーワード</a></div>
+
+<div class="hatena-modulebody">
+<ul class="keywordcloud">
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=cache" class="keywordcloud0">cache</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=docs" class="keywordcloud0">docs</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=git" class="keywordcloud3">git</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=hoge" class="keywordcloud0">hoge</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=httpd" class="keywordcloud3">httpd</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=i18n" class="keywordcloud0">i18n</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=localhost" class="keywordcloud3">localhost</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=rake" class="keywordcloud10">rake</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=root" class="keywordcloud3">root</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=sudo" class="keywordcloud0">sudo</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=unzip" class="keywordcloud0">unzip</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=vi" class="keywordcloud6">vi</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=wget" class="keywordcloud3">wget</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=yum" class="keywordcloud0">yum</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%A2%A5%D7%A5%EA" class="keywordcloud0">アプリ</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%A2%A5%D7%A5%EA%A5%B1%A1%BC%A5%B7%A5%E7%A5%F3" class="keywordcloud0">アプリケーション</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB" class="keywordcloud10">インストール</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%B5%A1%BC%A5%D0" class="keywordcloud6">サーバ</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%C7%A1%BC%A5%BF%A5%D9%A1%BC%A5%B9" class="keywordcloud3">データベース</a></li>
+
+<li><a href="http://d.hatena.ne.jp/sakagami5/searchdiary?word=%A5%C7%A5%A3%A5%EC%A5%AF%A5%C8%A5%EA" class="keywordcloud3">ディレクトリ</a></li>
+
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+
+
+
+
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  var days = document.getElementById('days');
+  if (days && days.innerHTML.indexOf("今週のお題") != -1) {
+    _gaq.push(['_setCustomVar', 2, 'campaign', 'odai', 3]);
+  }
+
+  if (days && /\u6d77\u5916\u30c9\u30e9\u30de\u300e\u30e9\u30a4\u30fb\u30c8\u30a5\u30fb\u30df\u30fc \u5618\u306e\u77ac\u9593\u300f\u89b3\u305f\u3044\uff01|\u300e\u30e9\u30a4\u30fb\u30c8\u30a5\u30fb\u30df\u30fc \u5618\u306e\u77ac\u9593\u300f\u7b2c1\u8a71\u306e\u611f\u60f3\u3092\u6559\u3048\u3066\u304f\u3060\u3055\u3044|\u4eca\u3060\u304b\u3089\u8a00\u3048\u308b\u300c\u5618\u3092\u3064\u3044\u3066\u3057\u307e\u3063\u305f\u30a8\u30d4\u30bd\u30fc\u30c9\u300d\u3092\u6559\u3048\u3066\u304f\u3060\u3055\u3044|\u3060\u307e\u3055\u308c\u305f\u3051\u3069\u3001\u8a31\u305b\u3066\u3057\u307e\u3063\u305f\u5618\u3092\u6559\u3048\u3066\u304f\u3060\u3055\u3044/.test(days.innerHTML)) {
+    _gaq.push(['_setCustomVar', 2, 'campaign', 'lietome', 3]);
+  }
+
+  if (days && /Visa\u30d7\u30ea\u30da\u30a4\u30c9\u300cV\u30d7\u30ea\u30ab\u300d\u8a66\u3057\u305f\u3044\uff01|Visa\u30d7\u30ea\u30da\u30a4\u30c9\u300cV\u30d7\u30ea\u30ab\u300d\u3001\u81ea\u5206\u306a\u3089\u3053\u3046\u4f7f\u3046\uff01|V\u30d7\u30ea\u30ab\u304c1\u4e07\u5186\u5206\u3042\u3063\u305f\u3089\u3001\u30cd\u30c3\u30c8\u3067\u4f55\u3092\u8cb7\u3044\u307e\u3059\u304b\uff1f/.test(days.innerHTML)) {
+    _gaq.push(['_setCustomVar', 2, 'campaign', 'vpreca', 3]);
+  }
+
+  if (days && /\u30a2\u30a4\u30c7\u30e0 \u30a8\u30f3\u30b8\u30cb\u30a2\u30ad\u30e3\u30ea\u30a2Hacks\u5171\u6709\u30d7\u30ed\u30b8\u30a7\u30af\u30c8|\u30a8\u30f3\u30b8\u30cb\u30a2\u3068\u3057\u3066\u306e\u3001\u3068\u3063\u3066\u304a\u304d\u306e\u30ad\u30e3\u30ea\u30a2Hacks\u3092\u6559\u3048\u3066\u304f\u3060\u3055\u3044|\u3042\u306a\u305f\u304c\u30a8\u30f3\u30b8\u30cb\u30a2\u8ee2\u8077\u30b5\u30a4\u30c8\u3092\u4f5c\u308b\u306a\u3089\u3001\u3069\u3093\u306a\u30b5\u30a4\u30c8\u306b\u3057\u307e\u3059\u304b\uff1f|5\u5e74\u5f8c\u306e\u300c\u30a8\u30f3\u30b8\u30cb\u30a2\u306e\u50cd\u304d\u65b9\u300d\u306f\u3001\u3069\u3046\u5909\u308f\u3063\u3066\u3044\u3066\u307b\u3057\u3044\u3067\u3059\u304b\uff1f/.test(days.innerHTML)) {
+    _gaq.push(['_setCustomVar', 2, 'campaign', 'aidemcareer', 3]);
+  }
+
+  _gaq.push(
+  ['_setAccount', 'UA-441387-31'],
+  ['_setCustomVar', 1, 'afc_type', 'inactive', 3],
+  ['_setCustomVar', 3, 'theme', 'chameleon', 3],
+  ['_setCustomVar', 4, 'usertype', 'guest', 1],
+  ['_trackPageview'],
+  ['b._setAccount', 'UA-7855606-1'],
+  ['b._setDomainName', '.hatena.ne.jp'],
+  ['b._trackPageview']
+  
+  );
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<!-- CG:1,CH:0,ICG:5,ICH:0,T:b -->
+
+
+<div style="color: rgb(0, 0, 0); position: absolute; display: none; z-index: 10002; left: 0px; top: 0px; background-color: rgb(255, 255, 255); border: 0px; padding: 0px; text-align: center;"><div style="text-align: left; margin: 0px; padding: 0px;"></div></div></body></html>

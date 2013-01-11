@@ -1,16 +1,13 @@
-class Blklist
-def initialize filename
-#! ruby -Ks
-# -*- coding: sjis -*-
 require 'win32ole'
 require "rubygems"
 require 'time'
 require "ruby-plsql"
+class Blklist
+def initialize filename
 plsql.connection = OCI8.new("rails","rails","xe")
 app = WIN32OLE.new('Excel.Application')
 @book = app.Workbooks.Open(app.filename)
-@lists = {}
-@listcolums = {}
+@lists = {}   ##帳票名　使用view 縦横　上下左右のマージン
 @listruleskines = {}
 @listdrows = {}
 end  ##def initialize
@@ -28,9 +25,10 @@ def main_list
     rowheight = 0
     ersheet.UsedRange.Rows.each do |row|
         row.CoLumns.each do |cell|
+	@listcolums = {}
         #取り出した行から、セルを一つづつ取り出す
             unless  cell.Value.nil?
-                @listcolums[@lists[:code],:code] =  cell.Value
+                @listcolums[@lists[:code],:value] =  cell.Value
                 @listcolums[@lists[:code],:excelfontname] =  cell.Font.Name
                 @listcolums[@lists[:code],:fontsize] =  cell.Font.Size
                 @listcolums[@lists[:code],:fontBlod] =   if cell.Font.Bold == True   then 1 else 0 end

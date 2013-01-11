@@ -1,3 +1,4 @@
+## require 'resque/server' 
 V082::Application.routes.draw do
   devise_for :users
   get "login/index"
@@ -60,7 +61,14 @@ V082::Application.routes.draw do
      put :finish, :on => :member  
      put :unfinish, :on => :member  
      get :done, :on => :collection  
-   end 
+   end
+  ##  Resque https://github.com/defunkt/resque
+  ##  resque_constraint = lambda do |request|
+  ##  request.env['warden'].authenticate!({ :scope => :admin })
+  ## end
+  ## constraints resque_constraint do
+  ##   mount Resque::Server.new, :at => "/resque"
+  ## end 
   # See how all your routes lay out with "rake routes"
 
   # This is a legacy wild controller route that's not recommended for RESTful applications.

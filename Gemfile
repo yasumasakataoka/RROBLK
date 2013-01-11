@@ -6,7 +6,7 @@ gem 'rails', '3.2.6'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'sqlite3'
-
+gem 'rake','10.0.3'
 
 # Gems used only for assets and not required
 # in production environments by default.
@@ -42,4 +42,10 @@ gem 'activerecord-oracle_enhanced-adapter'
 # gem 'capistrano'
 
 # To use debugger
-# gem 'debugger'
+  gem 'debugger'
+# gem 'ruby-debug'
+##gem 'resque', :require => 'resque/server'
+ gem 'delayed_job_active_record'
+##gem 'daemon-spawn', :require => 'daemon_spawn'
+ gem "daemons"
+

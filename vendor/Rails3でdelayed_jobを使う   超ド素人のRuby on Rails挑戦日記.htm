@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0037)http://hajimete-ruby.jugem.jp/?eid=83 -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">
+<!-- template...http://murmur018.jugem.jp/ -->
+
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title>Rails3でdelayed_jobを使う | 超ド素人のRuby on Rails挑戦日記</title>
+<link rel="stylesheet" href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/jm_style.css" type="text/css">
+<link type="text/css" href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/style.css" rel="stylesheet" media="screen,print">
+<link rel="alternate" type="application/rss+xml" title="RSS" href="http://hajimete-ruby.jugem.jp/?mode=rss">
+<link rel="alternate" type="application/atom+xml" href="http://hajimete-ruby.jugem.jp/?mode=atom">
+<link rel="alternate" media="handheld" type="application/xhtml+xml" href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記.htm">
+<script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/menu.js" type="text/javascript"></script>
+<script type="text/javascript" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/cookie.js"></script>
+<script type="text/javascript">
+<!--
+function dd(id){
+if(document.all)OBJ = document.all(id).style; else if(document.getElementById)OBJ = document.getElementById(id).style; if(OBJ) OBJ.display=='none'?OBJ.display='':OBJ.display='none';
+}
+//--></script>
+<script type="text/javascript" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/osd.js"></script></head>
+
+
+<body onload="javascript:initval();" data-twttr-rendered="true">
+<table width="100%" height="100%" cellpadding="0" cellspacing="0" class="main"><tbody><tr>
+<td valign="top" align="left" width="70%" bgcolor="#ffffff">
+<div class="left">
+<a name="top"></a>
+
+
+<div class="site_title"><a href="http://hajimete-ruby.jugem.jp/">超ド素人のRuby on Rails挑戦日記</a></div>
+<div class="description">はじめてのRuby on Rails、トラブル記録</div>
+
+
+
+<div class="entry_navi">
+<a href="http://hajimete-ruby.jugem.jp/?eid=82">&lt;&lt; Windowsでruby1.9.xとrails3.xをインストールする(2012年1月版)</a> | <a href="http://hajimete-ruby.jugem.jp/">TOP</a> | <a href="http://hajimete-ruby.jugem.jp/?eid=84">Deviseでundefined local variable or method `resource_name' &gt;&gt;</a>
+</div>
+
+
+
+<div class="entry">
+<div class="entry_title">Rails3でdelayed_jobを使う</div>
+<div class="entry_date">2012.01.21 Saturday</div>
+<div class="entry_body"><div class="jgm_entry_desc_mark"><!-- google_ad_section_start(name=description) -->Herokuでも使える非同期処理プラグインのdelayed_job、Rails3で設定してみました。<br>
+<br>
+
+delayed_job: <a href="https://github.com/collectiveidea/delayed_job" target="_blank">https://github.com/collectiveidea/delayed_job</a><br>
+<br>
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_067.gif" alt="1" title="1" class="emoji" border="0" align="absmiddle"> インストール<br>
+Gemfileに以下を追加。<br>
+<div class="code">gem 'delayed_job_active_record'</div>
+mongoidを使ってる場合は以下。<br>
+<div class="code">gem 'delayed_job_mongoid'</div>
+<br>
+そして以下を次々と。<br>
+<div class="code">
+rails g delayed_job:active_record<br>
+rake db:migrate<br>
+</div>
+delayed_job:active_recordでdelayed_job用のマイグレーションファイルができるので、<br>
+それをマイグレーションする流れです。<br>
+<br>
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_068.gif" alt="2" title="2" class="emoji" border="0" align="absmiddle"> 設定ファイルを作る<br>
+config/initializerにdelayed_job.rbを作って以下の内容を入れる。
+<div class="code">
+Delayed::Worker.destroy_failed_jobs = false<br>
+<span class="comment"># 実行失敗したジョブを削除：falseだとfailed_atに時間が入ってDBに残る</span><br>
+Delayed::Worker.sleep_delay = 60   <span class="comment"># スリープタイム</span><br>
+Delayed::Worker.max_attempts = 3   <span class="comment"># 最大実行回数</span><br>
+Delayed::Worker.max_run_time = 5.minutes　  <span class="comment"># 最長実行時間</span><br>
+Delayed::Worker.delay_jobs = !Rails.env.test?   <span class="comment"># テスト環境ではdelayed_jobをうごかさない</span><br>
+</div>
+↓こちらのブログでこの辺の内容も詳しく説明しています。<br>
+<a href="http://namakesugi.blog42.fc2.com/blog-entry-80.html" target="_blank">[Rails][非同期処理]delayed_job設定方法まとめ</a><br>
+<br>
+<br>
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_087.gif" alt="爆弾" title="爆弾" class="emoji" border="0" align="absmiddle"> 出くわしたエラー集<br><br>
+
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_067.gif" alt="1" title="1" class="emoji" border="0" align="absmiddle"> マイグレーションファイルができなかった<br>
+実は最初はdelayed_job_active_recordじゃなくてgem 'delayed_job'でgemを入れたんです。Herokuのドキュメントにもこっちが書いてあったし。が、delayed_job用のマイグレーションファイルができませんでした。<br>
+それでこっちのdelayed_job_active_recordの方でやったらうまくいった次第です。<br><br>
+
+<a href="https://github.com/tobi/delayed_job" target="_blank">tobi/delayed_job</a>の方が本家のdelayed_jobなんですが、最近はcollective/delayed_jobの方がまめに更新されてて機能も豊富でちゃんと動くみたいです。<br>
+<br>
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_068.gif" alt="2" title="2" class="emoji" border="0" align="absmiddle"> 設定ファイル問題<br>
+delayed_jobを入れてプログラムを動かしてみたら、最初以下のようなエラーが出てしまいました。
+<div class="error">uninitialized constant Delayed::Job</div>
+<div class="error">`method_missing': undefined method `destroy_failed_jobs='</div>
+<br>
+原因は、config/initializer/delayed_job.rbの中に以下のように書いたから。
+<div class="error">
+Delayed::Job.destroy_failed_jobs = false<br>
+ silence_warnings do<br>
+ Delayed::Job.const_set("MAX_ATTEMPTS", 3)<br>
+ Delayed::Job.const_set("MAX_RUN_TIME", 5.minutes)<br>
+ end<br>
+</div>
+これも本家のdelayed_jobの方を見てこうしたんだけど。<br>
+上のエラーが出た人は設定ファイルの内容の方に書いたDelayed::Worker…の方で設定を書くと直るはず！<br>
+<br>
+<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/j_069.gif" alt="3" title="3" class="emoji" border="0" align="absmiddle"> MailerにdelayをつけたらHerokuで動かなかった(Rails3)<br>
+Rails3でメーラーアクションにdelayをつける場合、以下のようにすると公式のドキュメントに書いてあります。<br>
+<div class="code">
+# without delayed_job<br>
+Notifier.signup(@user).deliver<br>
+<br>
+# with delayed_job<br>
+Notifier.delay.signup(@user)<br>
+</div>
+<br>
+でも、この通りにしたのに動かない……<img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/a09.gif" alt="しょんぼり" title="しょんぼり" class="emoji" border="0" align="absmiddle"><br>
+DBのdelayed_jobテーブルに残されたエラーログを見ると、以下のようにありました。<br>
+<div class="error">Class#sendnews failed with NoMethodError: undefined method `sendnews' for Class:Class</div>
+<br>
+sendnewsのクラスはAdminMailerなのに、それが呼ばれてない風？<br>
+調べてみたら、バグっぽい…。<br>
+公式の方でもこの件で報告が上がってて、git上では解決されている模様。→↓<br>
+<a href="https://github.com/collectiveidea/delayed_job/issues/323" target="_blank">https://github.com/collectiveidea/delayed_job/issues/323</a><br>
+<br>
+ただ、まだ最近fixしたばかりでgemに反映されていないので、delayed_jobのバージョンを落とすと直るということでとりあえず一時的にその対応。<br>
+Gemfileのdelayed_jobを以下のようにバージョン固定しbundle install。<br>
+<div class="code">gem 'delayed_job', '2.1.4'</div>
+最初に入れたのはver 3.0.0です。3.0.xとかにアップデートされたらそれで大丈夫だと思われ。<div id="gEntryAdContainer" style="padding: 10px 0px; display: block;"><div class="jugem_blog_ad_by" style="text-align: left;"><a href="http://www.google.com/url?ct=abg&q=https://www.google.com/adsense/support/bin/request.py%3Fcontact%3Dabg_afc%26url%3Dhttp://hajimete-ruby.jugem.jp/%253Feid%253D83%26gl%3DJP%26hl%3Dja%26client%3Dca-paperboy-jugem_js%26ai0%3DCGpnbOZbnUJu9DYvKlAXv_oD4BYm8j4AD0Z-gpDXh1t-kmwEQASDNop0XULbe5-f-_____wFgibOLjvQToAG_9ZfhA8gBAakCcch7W01dSD6oAwGqBHpP0IRmHXeR7zkfRdmPQOd0IwC1dT0dNLt6LLAZJf7uLRwfvUUZULkKv7_jiTs89oDq271Z074xEWxRcfWFoPwbMYs8t_tZ7xFbRXx-4cVoB_DoOq936YV4tOjnV9vGqvmuxvguBkZ9Am7X93XQ17f3eqj0MGiUU5JMtogGAYAHqYroHg&usg=AFQjCNErF3lnff7JMNTshZ1Juy6b8UyrlA" target="_blank">Ads by Google</a></div><style type="text/css">.jg_ads_hover a {color:#0000FE;} </style><div style="margin: 2px 0pt 10px;" onmouseover="jg_ads_Hover(this,1);" onmouseout="jg_ads_Hover(this,0);"><div><a href="http://www.googleadservices.com/pagead/aclk?sa=L&ai=CGpnbOZbnUJu9DYvKlAXv_oD4BYm8j4AD0Z-gpDXh1t-kmwEQASDNop0XULbe5-f-_____wFgibOLjvQToAG_9ZfhA8gBAakCcch7W01dSD6oAwGqBHpP0IRmHXeR7zkfRdmPQOd0IwC1dT0dNLt6LLAZJf7uLRwfvUUZULkKv7_jiTs89oDq271Z074xEWxRcfWFoPwbMYs8t_tZ7xFbRXx-4cVoB_DoOq936YV4tOjnV9vGqvmuxvguBkZ9Am7X93XQ17f3eqj0MGiUU5JMtogGAYAHqYroHg&num=1&cid=5Gj35dI_S8QvP0pn0naS8ToG&sig=AOD64_1You-W-Ryivsxf7EW9Q3-Ml_qmVg&client=ca-paperboy-jugem_js&adurl=http://tr.webantenna.info/rd%3Fwaad%3DDD9Y3KLw%26ga%3DWAdeWz-1" style="text-decoration: underline;"><span style="font-size: 14px; font-weight:bold; line-height: 200%;">転職ならJAC</span></a><a href="http://www.googleadservices.com/pagead/aclk?sa=L&ai=CGpnbOZbnUJu9DYvKlAXv_oD4BYm8j4AD0Z-gpDXh1t-kmwEQASDNop0XULbe5-f-_____wFgibOLjvQToAG_9ZfhA8gBAakCcch7W01dSD6oAwGqBHpP0IRmHXeR7zkfRdmPQOd0IwC1dT0dNLt6LLAZJf7uLRwfvUUZULkKv7_jiTs89oDq271Z074xEWxRcfWFoPwbMYs8t_tZ7xFbRXx-4cVoB_DoOq936YV4tOjnV9vGqvmuxvguBkZ9Am7X93XQ17f3eqj0MGiUU5JMtogGAYAHqYroHg&num=1&cid=5Gj35dI_S8QvP0pn0naS8ToG&sig=AOD64_1You-W-Ryivsxf7EW9Q3-Ml_qmVg&client=ca-paperboy-jugem_js&adurl=http://tr.webantenna.info/rd%3Fwaad%3DDD9Y3KLw%26ga%3DWAdeWz-1" style="text-decoration: none;"><span style="margin-left: 10px; font-size: 12px; color:#33cc33; font-weight:bold;">www.jac-recruitment.jp</span></a></div><span style="font-size: 12px; font-weight: normal;">外資系、海外に強い転職エージェント高年収、専門職が選ぶ転職パートナーJAC</span></div></div><script type="text/javascript" charset="euc-jp">
+if(navigator.userAgent != 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' && 
+   document.referrer.match(/http:\/\/www.facebook.com\/plugins\/like.php/i) === null && 
+   (location.hostname.match(/jugem.jp/i) !== null ||
+   location.hostname.match(/jugem.cc/i) !== null)){
+	document.write('<script type="text/javascript" charset="euc-jp" src="http://imaging.jugem.jp/ad/jg_ads_init_display.js?20121004e"><\/script>');
+}
+</script><script type="text/javascript" charset="euc-jp" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/jg_ads_init_display.js"></script>
+
+<script type="text/javascript" charset="euc-jp">
+if(navigator.userAgent != 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' && 
+   document.referrer.match(/http:\/\/www.facebook.com\/plugins\/like.php/i) === null && 
+   (location.hostname.match(/jugem.jp/i) !== null ||
+   location.hostname.match(/jugem.cc/i) !== null)){
+	document.write('<script type="text/javascript" charset="euc-jp" src="http://imaging.jugem.jp/ad/jg_ads_display.js?20121004e"><\/script>');
+	document.write('<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"><\/script>');
+}
+</script><script type="text/javascript" charset="euc-jp" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/jg_ads_display.js"></script><script type="text/javascript" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/show_ads.js"></script><script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/show_ads_impl.js"></script><script>google_protectAndRun("ads_core.google_render_ad", google_handleError, google_render_ad);</script><script language="JavaScript1.1" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/ads"></script>
+<div class="service_button" style="margin:25px 0; padding:0px;">
+
+<script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/widgets.js" type="text/javascript" charset="UTF-8"></script>
+<iframe allowtransparency="true" frameborder="0" scrolling="no" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/tweet_button.1357323348.htm" class="twitter-share-button twitter-count-none" style="width: 69px; height: 20px;" title="Twitter Tweet Button" data-twttr-rendered="true"></iframe> <a href="http://mixi.jp/share.pl?u=http%3A%2F%2Fhajimete-ruby.jugem.jp%2F%3Feid%3D83&k=e866a68e69244e86b8b85cabb6baaed429956efb" class="mixi-check-button" data-button="button-1" data-key="e866a68e69244e86b8b85cabb6baaed429956efb" data-url="http://hajimete-ruby.jugem.jp/?eid=83" target="_blank"><img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/bt_check_1.png" style="border: 0px;"></a><script type="text/javascript" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/share.js"></script> <iframe src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/like.htm" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:110px; height:21px;" allowtransparency="true"></iframe> 
+
+</div><!-- google_ad_section_end(name=description) --></div></div>
+<div class="entry_more"><a name="sequel"></a><!-- google_ad_section_start(name=sequel) --><!-- google_ad_section_end(name=sequel) --></div>
+<div class="entry_state">
+<small>posted by <a href="http://hajimete-ruby.jugem.jp/?pid=1">トモト</a></small>
+ | <a href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記.htm"></a><a href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記.htm">22:41</a> | <a href="http://hajimete-ruby.jugem.jp/?cid=17">Rails3.x</a> | <a href="http://hajimete-ruby.jugem.jp/?eid=83#comments">comments(0)</a> | <a href="http://hajimete-ruby.jugem.jp/?eid=83#trackback">trackbacks(0)</a> |<a href="http://b.hatena.ne.jp/entry/http://hajimete-ruby.jugem.jp/?eid=83"><img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/saved_resource" alt="はてなブックマーク - Rails3でdelayed_jobを使う" title="はてなブックマーク - Rails3でdelayed_jobを使う"></a></div>
+<!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+   rdf:about="http://hajimete-ruby.jugem.jp/?eid=83"
+   dc:identifier="http://hajimete-ruby.jugem.jp/?eid=83"
+   dc:title="Rails3でdelayed_jobを使う"
+   dc:description="Herokuでも使える非同期処理プラグインのdelayed_job、Rails3で設定してみました。delayed_job: https:/..."
+   dc:creator="トモト"
+   dc:date="2012-01-21T22:41:00+09:00"
+   trackback:ping="http://hajimete-ruby.jugem.jp/trackback/83"
+ /></rdf:RDF>
+-->
+</div>
+
+
+
+
+<a name="comments"></a>
+<div class="sub_title">コメント</div>
+
+
+
+<div class="com_form">コメントする<br>
+<form name="comment_area" id="comment_area" action="http://hajimete-ruby.jugem.jp/?mode=comment" method="post">
+<input type="hidden" name="entry_id" value="83">
+<label for="name">name:</label><br>
+<input type="text" tabindex="1" name="name" id="name" value="" style="width:200px;"><br>
+<label for="email">email:</label><br>
+<input type="text" tabindex="2" name="email" id="email" value="" style="width:250px;"><br>
+<label for="url">url:</label><br>
+<input type="text" tabindex="3" name="url" id="url" value="" style="width:250px;"><br>
+<br>
+<label for="description">comments:</label><br>
+<textarea tabindex="4" id="description" name="description" rows="10" cols="20" style="width:400px;"></textarea>
+<br>
+<br>
+<input tabindex="5" type="submit" value="コメント送信" onclick="javascript:setval();">
+<input type="checkbox" name="set_cookie" value="1" id="set_cookie" checked="">
+<label for="set_cookie">Cookieに登録</label>
+</form>
+</div>
+
+
+
+
+<a name="trackback"></a>
+<div class="sub_title">この記事のトラックバックURL</div>
+<div class="tb_url">http://hajimete-ruby.jugem.jp/trackback/83</div>
+
+<div class="sub_title">トラックバック</div>
+
+
+
+
+
+
+
+<div class="ad"><div class="links"><div class="linktext"><div id="jgSideAdContainer"><script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/AdLantisLoader.js" type="text/javascript" charset="utf-8"></script>
+<!-- Begin: Adlantis, Zone: [ユーザーブログ120*240] --> 
+<div class="adlantiss_frame zid_6UJ1BPG74DeCj0gVuCWgww%3D%3D color_#0000FF-#000000-#F9F9F9-#999999-#008000 container_iframe loaded" id="adbox_0"><iframe frameborder="0" marginheight="0" marginwidth="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" style="width: 120px; height: 240px;"></iframe></div> 
+<!-- End: Adlantis --> 
+</div></div></div></div>
+
+
+<div class="copyright">
+
+
+
+Copyright (C) 2012 <a href="http://jugem.jp/" target="_blank" title="かわいいデザインテンプレートで無料ブログ！JUGEM">JUGEM</a> Some Rights Reserved. Design by <a href="http://mur018.jugem.jp/" target="_blank">murmur</a>　<a href="http://hajimete-ruby.jugem.jp/?eid=83#top">[PAGETOP]</a>
+</div>
+
+
+</div></td>
+
+<td valign="top" align="left" width="30%" class="right">
+
+<div class="amazon">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4797363827/storypedia-22/ref=nosim/" target="_blank">
+<img border="0" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/41Tnr3W6b0L._SL160_.jpg" alt="Rails3レシピブック 190の技" class="amazon_pict">
+</a>
+<div class="amazon_text">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4797363827/storypedia-22/ref=nosim/" target="_blank">
+<strong>Rails3レシピブック 190の技</strong>
+</a> 
+<br>
+ついにRails3対応版が出ました！！
+</div>
+</div>
+
+<div class="amazon">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4774143243/storypedia-22/ref=nosim/" target="_blank">
+<img border="0" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/51Zl31eqjML._SL160_.jpg" alt="WEB+DB PRESS Vol.58" class="amazon_pict">
+</a>
+<div class="amazon_text">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4774143243/storypedia-22/ref=nosim/" target="_blank">
+<strong>WEB+DB PRESS Vol.58</strong>
+</a> 
+<br>
+Rails2系から3への移行時に知りたいことがひとまとまりになっててよかった！色々ググるよりこれを読む方が早い。
+</div>
+</div>
+
+<div class="amazon">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4797359986/storypedia-22/ref=nosim/" target="_blank">
+<img border="0" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/413L9xSXxvL._SL160_.jpg" alt="Rubyレシピブック 第3版 303の技" class="amazon_pict">
+</a>
+<div class="amazon_text">
+<a href="http://www.amazon.co.jp/exec/obidos/ASIN/4797359986/storypedia-22/ref=nosim/" target="_blank">
+<strong>Rubyレシピブック 第3版 303の技</strong>
+</a> 
+<br>
+Rubyやるならこのリファレンスは必要。
+</div>
+</div>
+
+
+
+<div class="linktitle"><a href="javascript:void(0)" onclick="dd(&#39;fo03&#39;)">CATEGORIES</a></div>
+<div id="fo03"><div class="linktext"><ul><li><a href="http://hajimete-ruby.jugem.jp/?cid=1">はじめに</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=17">Rails3.x</a> (10)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=18">Rails2.x</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=2">インストール</a> (5)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=3">エラー</a> (10)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=4">Rubyでわからないこと</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=6">Rails1.2→2.xアップデート</a> (2)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=15">メール送信</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=14">RSpec</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=13">Rails小ネタ</a> (15)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=12">Heroku</a> (3)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=11">AmazonAPI</a> (2)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=9">ファイルアップロード(Paperclip)</a> (2)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=10">開発環境整備</a> (2)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=8">認証機能</a> (4)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=7">日本語化（i18n）</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=16">ページ切替（will_paginate）</a> (1)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?cid=19">Devise</a> (2)</li>
+</ul>
+</div></div>
+
+
+
+<div class="linktitle"><a href="javascript:void(0)" onclick="dd(&#39;fo02&#39;)">NEW ENTRIES</a></div>
+<div id="fo02"><div class="linktext"><ul><li><a href="http://hajimete-ruby.jugem.jp/?eid=86">Heroku postgresのデータをバックアップ・ローカルでリストア</a> (11/30)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?eid=85">Rails3.2でのuninitialized constant Rake::DSLの解決方法</a> (04/04)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?eid=84">Deviseでundefined local variable or method `resource_name'</a> (03/22)</li>
+<li><a href="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記.htm">Rails3でdelayed_jobを使う</a> (01/21)</li>
+<li><a href="http://hajimete-ruby.jugem.jp/?eid=82">Windowsでruby1.9.xとrails3.xをインストールする(2012年1月版)</a> (01/17)</li>
+</ul></div></div>
+
+
+
+
+
+<div class="linktitle"><a href="javascript:void(0)" onclick="dd(&#39;fo06&#39;)">PROFILE</a></div>
+<div id="fo06"><div class="linktext"><ul><li><a href="http://hajimete-ruby.jugem.jp/?pid=1">トモト</a></li>
+</ul></div>
+</div>
+
+
+<!-- powered -->
+<div class="linktitle"><a href="javascript:void(0)" onclick="dd(&#39;fo10&#39;)">OTHERS</a></div>
+<div id="fo10">
+<div class="linktext">
+<ul>
+<li><a href="http://hajimete-ruby.jugem.jp/admin/">管理者ページ</a></li>
+<li><a href="http://hajimete-ruby.jugem.jp/?mode=rss">RSS1.0</a></li>
+<li><a href="http://hajimete-ruby.jugem.jp/?mode=atom">Atom0.3</a></li>
+</ul>
+</div>
+<!-- /powered/ -->
+<div class="freespace">
+
+<div class="ft">Sponsered Link</div>
+<div class="fc"><a href="http://www.ling-en.com/"><img src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/ling_165_100.png" alt="オンライン英会話サービスLing.en"></a><br>
+<a href="http://www.babela.net/">人力翻訳BABELa</a><br>
+<a href="http://px.a8.net/svt/ejp?a8mat=1ZKTWZ+DUXAHM+50+2HCB1D" target="_blank">
+<img border="0" width="100" height="60" alt="" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/bgt"></a>
+<img border="0" width="1" height="1" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/0.gif" alt=""></div>
+
+
+
+
+
+
+
+
+
+</div></div>
+
+<!--search-->
+<div class="linktitle2">
+Search this site
+<form method="get" action="" class="search">
+<input id="search" name="search" size="20" style="width: 130px">
+<input type="submit" value="検索">
+</form>
+</div>
+<!-- /search/ -->
+
+</td></tr></tbody></table>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/ga.js" type="text/javascript"></script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6585077-2");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+<script src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/load_script" type="text/javascript" charset="UTF-8"></script></body><script type="text/javascript" charset="utf-8" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/adlantis.www.js"></script><script type="text/javascript" charset="utf-8" src="./Rails3でdelayed_jobを使う   超ド素人のRuby on Rails挑戦日記_files/swfobject.js"></script></html>

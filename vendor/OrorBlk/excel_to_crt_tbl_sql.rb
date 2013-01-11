@@ -1,3 +1,4 @@
+### 変更に対応すること。今は常にリフレッシュ
 require "rubygems"
 require "win32ole"
 foo = File.open("CREATETBL.SQL","w")
@@ -15,7 +16,7 @@ crtnst = []
 nstflg = []
 kakkoflg = []
 ### for j in 1..maxj
-for j in [1,6,11]
+1.step(maxj, j) {|j|
    for i in 1..maxi
       case   ersheet.cells(i,j).value
          when "<TABLE>"
@@ -112,7 +113,7 @@ for j in [1,6,11]
        else  
      end   # case
    end     # i
-end        # j
+}        # j
 end
 app.ActiveWorkbook.Close(0) if !app.ActiveWorkbook.nil?
 app.Quit()
