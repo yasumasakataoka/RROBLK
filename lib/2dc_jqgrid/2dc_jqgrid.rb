@@ -44,7 +44,7 @@ module Jqgrid
           :shrinkToFit          => 'false',
           :div_repl_id         => '',          ###別画面にリンクする時
           :grp_search_form     => 'false',          ###group seach_form
-          :max_width           =>  '1200',     ### resize 幅
+          :max_width           =>  '1500',     ### resize 幅
           :max_height          =>  '700',      ###  reize 高さ
           :text_indent         =>   '2',       ### footerの横位置
           :rownumbers          => 'false'                    
@@ -198,7 +198,7 @@ module Jqgrid
       end
       
       str_addbutton = ""
-      scriptopt[:addbutton] ||= []
+      scriptopt[:addbutton] ||= {}
       scriptopt[:addbutton].each do |buttonopt| 
          unless ["script","gear","cart","wrench","star"].index( buttonopt[:button_icon]).nil? then
             str_addbutton << %Q|   .navButtonAdd("##{id}_pager",{ caption:"",title:"#{buttonopt[:button_title]}",buttonicon:"ui-icon-#{buttonopt[:button_icon]}",

@@ -8,16 +8,16 @@ app.Workbooks.open(ARGV[0])
 ####   app.Workbooks.open(ARGV[0]);
 tablname = "TABLE"
 app.Worksheets.each do |ersheet|
-maxj = ersheet.UsedRange.CoLumns.Count
-maxi = ersheet.UsedRange.Rows.Count
-crttbl = []
-crtproc = []
-crtnst = []
-nstflg = []
-kakkoflg = []
-### for j in 1..maxj
-1.step(maxj, j) {|j|
-   for i in 1..maxi
+  maxj = ersheet.UsedRange.CoLumns.Count
+  maxi = ersheet.UsedRange.Rows.Count
+  crttbl = []
+  crtproc = []
+  crtnst = []
+  nstflg = []
+  kakkoflg = []
+  ### 
+  1.step(maxj, 5) {|j|
+    for i in 1..maxi
       case   ersheet.cells(i,j).value
          when "<TABLE>"
              tblname =  ersheet.cells(i,j+1).value
@@ -113,8 +113,8 @@ kakkoflg = []
        else  
      end   # case
    end     # i
-}        # j
-end
+  }        # j
+end  #app.Worksheets.each 
 app.ActiveWorkbook.Close(0) if !app.ActiveWorkbook.nil?
 app.Quit()
 foo.puts "/" 

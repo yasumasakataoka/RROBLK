@@ -4,9 +4,8 @@ CREATE TABLE CustFrcs
   ( id NUMBER(38)
   ,Custs_id NUMBER(38)
   ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(1)
   ,Locas_id_SHPSCH NUMBER(38)
+  ,FrcNo Varchar(40)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
   ,Persons_id_Chrg NUMBER(38)
@@ -22,16 +21,19 @@ CREATE TABLE CustFrcs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT CustFrcs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence CustFrcs_seq
+;  
+create sequence CustFrcs_seq
+;  
 DROP TABLE CustPlns
 ;
 CREATE TABLE CustPlns
   ( id NUMBER(38)
   ,Custs_id NUMBER(38)
   ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(1)
   ,Locas_id_SHPSCH NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
@@ -48,23 +50,27 @@ CREATE TABLE CustPlns
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT CustPlns_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence CustPlns_seq
+;  
+create sequence CustPlns_seq
+;  
 DROP TABLE CustOrds
 ;
 CREATE TABLE CustOrds
   ( id NUMBER(38)
+  ,Custs_id NUMBER(38)
   ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(1)
-  ,Locas_id_ARVSCH NUMBER(38)
-  ,Locas_id_SHPSCH NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Duedate timestamp
+  ,ToDuedate timestamp
   ,IsuDate timestamp
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
+  ,OrderNo Varchar(40)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
   ,Infomation varchar(2000)
@@ -75,11 +81,11 @@ CREATE TABLE CustOrds
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT CustOrds_id_pk PRIMARY KEY (id)
-  , CONSTRAINT CustOrds_80_uk  UNIQUE (SNO,LINENO,ID)
-  , CONSTRAINT CustOrds_81_uk  UNIQUE (Locas_id_ARVSCH,ID)
-  , CONSTRAINT CustOrds_82_uk  UNIQUE (ITMS_ID,ID)
-  , CONSTRAINT CustOrds_83_uk  UNIQUE (Locas_id_ARVSCHuedate,ID)
-  , CONSTRAINT CustOrds_84_uk  UNIQUE (Duedate,Locas_id_ARVSCH,ID)
+  , CONSTRAINT CustOrds_85_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT CustOrds_86_uk  UNIQUE (Locas_id_ARVSCH,ID)
+  , CONSTRAINT CustOrds_87_uk  UNIQUE (ITMS_ID,ID)
+  , CONSTRAINT CustOrds_88_uk  UNIQUE (Locas_id_ARVSCHuedate,ID)
+  , CONSTRAINT CustOrds_89_uk  UNIQUE (Duedate,Locas_id_ARVSCH,ID)
 )
 ;
 drop sequence CustOrds_seq
@@ -95,12 +101,11 @@ DROP TABLE CustInsts
 ;
 CREATE TABLE CustInsts
   ( id NUMBER(38)
+  ,Custs_id NUMBER(38)
   ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(1)
-  ,Locas_id_ARVSCH NUMBER(38)
-  ,Locas_id_SHPSCH NUMBER(38)
+  ,CustRCVPlc NUMBER(38)
   ,Duedate timestamp
+  ,ToDuedate timestamp
   ,IsuDate timestamp
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
@@ -115,8 +120,8 @@ CREATE TABLE CustInsts
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT CustInsts_id_pk PRIMARY KEY (id)
-  , CONSTRAINT CustInsts_114_uk  UNIQUE (SNO,LINENO,ID)
-  , CONSTRAINT CustInsts_115_uk  UNIQUE (Cust_ID,Duedate,ID)
+  , CONSTRAINT CustInsts_121_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT CustInsts_122_uk  UNIQUE (Cust_ID,Duedate,ID)
 )
 ;
 drop sequence CustInsts_seq
@@ -125,65 +130,20 @@ create sequence CustInsts_seq
 ;  
 ; 
 ; 
-DROP TABLE CustRplys
-;
-CREATE TABLE CustRplys
-  ( id NUMBER(38)
-  ,CustInsts_id NUMBER(38)
-  ,Duedate timestamp
-  ,IsuDate timestamp
-  ,QTY NUMBER(16,4)
-  ,Price NUMBER(16,4)
-  ,Infomation varchar(2000)
-  ,Remark varchar(200)
-  ,Persons_id_Upd NUMBER(38)
-  ,Update_IP Varchar(40)
-  ,created_at timestamp
-  ,Updated_at timestamp
-  , CONSTRAINT CustRplys_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence CustRplys_seq
-;  
-create sequence CustRplys_seq
-;  
-DROP TABLE CustActs
-;
-CREATE TABLE CustActs
-  ( id NUMBER(38)
-  ,CustInsts_id NUMBER(38)
-  ,Actdate timestamp
-  ,Inputdate timestamp
-  ,QTY NUMBER(16,4)
-  ,Price NUMBER(16,4)
-  ,Amt NUMBER(16,4)
-  ,Sno Varchar(40)
-  ,LineNo NUMBER(4)
-  ,Persons_id_Chrg NUMBER(38)
-  ,Infomation varchar(2000)
-  ,Remark varchar(200)
-  ,Persons_id_Upd NUMBER(38)
-  ,Update_IP Varchar(40)
-  ,created_at timestamp
-  ,Updated_at timestamp
-)
-;
 DROP TABLE ArvSchs
 ;
 CREATE TABLE ArvSchs
   ( id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
   ,orgtblname varchar(30)
   ,orgRcordid NUMBER(38)
-  ,tblname varchar(30)
-  ,Rcordid NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
   ,Dueday timestamp
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
+  ,DataFlg char(2)
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
@@ -195,10 +155,10 @@ CREATE TABLE ArvOrds
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,IsuDate timestamp
   ,Duedate timestamp
+  ,ToDuedate timestamp
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
@@ -219,8 +179,7 @@ CREATE TABLE ArvInsts
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,IsuDate timestamp
   ,Duedate timestamp
   ,QTY NUMBER(16,4)
@@ -244,9 +203,6 @@ CREATE TABLE ArvActs
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,ArvInsts_id NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
   ,Transport_id NUMBER(38)
   ,Actdate timestamp
   ,Inputdate timestamp
@@ -264,7 +220,7 @@ CREATE TABLE ArvActs
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT ArvActs_id_pk PRIMARY KEY (id)
-  , CONSTRAINT ArvActs_120_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT ArvActs_125_uk  UNIQUE (SNO,LINENO,ID)
 )
 ;
 drop sequence ArvActs_seq
@@ -276,16 +232,16 @@ DROP TABLE ShpSchs
 ;
 CREATE TABLE ShpSchs
   ( id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
   ,orgtblname varchar(30)
   ,orgRcordid NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
   ,DueDay timestamp
+  ,DataFlg char(2)
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
@@ -297,8 +253,7 @@ CREATE TABLE ShpOrds
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,IsuDate timestamp
   ,OrdNo Varchar(40)
   ,Duedate timestamp
@@ -316,8 +271,7 @@ CREATE TABLE ShpInsts
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Duedate timestamp
   ,QTY NUMBER(16,4)
   ,Transport_id varchar(200)
@@ -334,9 +288,7 @@ CREATE TABLE ShpActs
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,locas_id NUMBER(38)
-  ,ShpInsts_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Transport_id NUMBER(38)
   ,Actdate timestamp
   ,Inputdate timestamp
@@ -352,7 +304,7 @@ CREATE TABLE ShpActs
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT ShpActs_id_pk PRIMARY KEY (id)
-  , CONSTRAINT ShpActs_104_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT ShpActs_111_uk  UNIQUE (SNO,LINENO,ID)
 )
 ;
 drop sequence ShpActs_seq
@@ -366,11 +318,6 @@ CREATE TABLE PrcPlns
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,tblname varchar(30)
-  ,Rcordid NUMBER(38)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Duedate timestamp
   ,Isudate timestamp
@@ -382,46 +329,47 @@ CREATE TABLE PrcPlns
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PrcPlns_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PrcPlns_seq
+;  
+create sequence PrcPlns_seq
+;  
 DROP TABLE PrcSCHs
 ;
 CREATE TABLE PrcSCHs
   ( id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,orgtblname varchar(30)
   ,orgRcordid NUMBER(38)
-  ,orgtblname varchar(30)
-  ,orgRcordid NUMBER(38)
-  ,tblname varchar(30)
-  ,Rcordid NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
+  ,PredIsuDate timestamp
   ,Duedate timestamp
   ,QTY NUMBER(16,4)
+  ,DataFlg char(2)
   ,Remark varchar(200)
   ,Persons_id_Chrg NUMBER(38)
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PrcSCHs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PrcSCHs_seq
+;  
+create sequence PrcSCHs_seq
+;  
 DROP TABLE PrcOrds
 ;
 CREATE TABLE PrcOrds
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,IsuDate timestamp
   ,Duedate timestamp
+  ,ToDuedate timestamp
   ,QTY NUMBER(16,4)
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
@@ -430,15 +378,19 @@ CREATE TABLE PrcOrds
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PrcOrds_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PrcOrds_seq
+;  
+create sequence PrcOrds_seq
+;  
 DROP TABLE PrcInsts
 ;
 CREATE TABLE PrcInsts
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,Opeitms_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Isudate timestamp
   ,Duedate timestamp
@@ -449,16 +401,44 @@ CREATE TABLE PrcInsts
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PrcInsts_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PrcInsts_seq
+;  
+create sequence PrcInsts_seq
+;  
+DROP TABLE PrcRplys
+;
+CREATE TABLE PrcRplys
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,StkHists_id NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Isudate timestamp
+  ,Duedate timestamp
+  ,QTY NUMBER(16,4)
+  ,Price NUMBER(16,4)
+  ,Amt NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+  , CONSTRAINT PrcRplys_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence PrcRplys_seq
+;  
+create sequence PrcRplys_seq
+;  
 DROP TABLE PrcActs
 ;
 CREATE TABLE PrcActs
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,Opeitms_id NUMBER(38)
-  ,PrcInsts_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Actdate timestamp
   ,Inputdate timestamp
@@ -467,19 +447,20 @@ CREATE TABLE PrcActs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PrcActs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PrcActs_seq
+;  
+create sequence PrcActs_seq
+;  
 DROP TABLE PurPlns
 ;
 CREATE TABLE PurPlns
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
+  ,dealers_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,dueday timestamp
   ,IsuDate timestamp
@@ -489,43 +470,46 @@ CREATE TABLE PurPlns
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PurPlns_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PurPlns_seq
+;  
+create sequence PurPlns_seq
+;  
 DROP TABLE PurSCHs
 ;
 CREATE TABLE PurSCHs
   ( id NUMBER(38)
-  ,tblname varchar(30)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
   ,orgtblname varchar(30)
   ,orgRcordid NUMBER(38)
-  ,Rcordid NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
+  ,dealers_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Duedate timestamp
+  ,PredIsuDate timestamp
   ,QTY NUMBER(16,4)
+  ,DataFlg char(2)
   ,Remark varchar(200)
   ,Persons_id_Chrg NUMBER(38)
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PurSCHs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PurSCHs_seq
+;  
+create sequence PurSCHs_seq
+;  
 DROP TABLE PurOrds
 ;
 CREATE TABLE PurOrds
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,Custs_id NUMBER(38)
-  ,itms_id NUMBER(38)
-  ,TblIndctPC CHAR(1)
-  ,TblIndct1NTYPE CHAR(2)
-  ,Locas_id_SHPSCH NUMBER(38)
-  ,Locas_id_ARVSCH NUMBER(38)
+  ,dealers_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,QTY NUMBER(16,4)
   ,DUEDATE timestamp
@@ -535,8 +519,13 @@ CREATE TABLE PurOrds
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PurOrds_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PurOrds_seq
+;  
+create sequence PurOrds_seq
+;  
 DROP TABLE PurInsts
 ;
 CREATE TABLE PurInsts
@@ -552,12 +541,20 @@ CREATE TABLE PurInsts
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PurInsts_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PurInsts_seq
+;  
+create sequence PurInsts_seq
+;  
 DROP TABLE PurRplys
 ;
 CREATE TABLE PurRplys
   ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,StkHists_id NUMBER(38)
   ,PurInsts_id NUMBER(38)
   ,IsuDATE timestamp
   ,QTY NUMBER(16,4)
@@ -567,15 +564,20 @@ CREATE TABLE PurRplys
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT PurRplys_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence PurRplys_seq
+;  
+create sequence PurRplys_seq
+;  
 DROP TABLE PurActs
 ;
 CREATE TABLE PurActs
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,PurInsts_id NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Actdate timestamp
   ,Inputdate timestamp
@@ -583,6 +585,381 @@ CREATE TABLE PurActs
   ,Price NUMBER(16,4)
   ,Amt NUMBER(16,4)
   ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+  , CONSTRAINT PurActs_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence PurActs_seq
+;  
+create sequence PurActs_seq
+;  
+DROP TABLE WrkSCHs
+;
+CREATE TABLE WrkSCHs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,orgtblname varchar(30)
+  ,orgRcordid NUMBER(38)
+  ,itms_id NUMBER(38)
+  ,itms_id NUMBER(38)
+  ,Locas_id NUMBER(38)
+  ,DataFlg char(2)
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE WrkOrds
+;
+CREATE TABLE WrkOrds
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE WrkInsts
+;
+CREATE TABLE WrkInsts
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE WrkActs
+;
+CREATE TABLE WrkActs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Inputdate timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE RstSCHs
+;
+CREATE TABLE RstSCHs
+  ( id NUMBER(38)
+  ,orgtblname varchar(30)
+  ,orgRcordid NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Start_Time timestamp
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,DataFlg char(2)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE RstOrds
+;
+CREATE TABLE RstOrds
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE RstInsts
+;
+CREATE TABLE RstInsts
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE RstActs
+;
+CREATE TABLE RstActs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,RstInst_id NUMBER(38)
+  ,Start_Time timestamp
+  ,End_Time timestamp
+  ,Inputdate timestamp
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE CnsmSCHs
+;
+CREATE TABLE CnsmSCHs
+  ( id NUMBER(38)
+  ,orgtblname varchar(30)
+  ,orgRcordid NUMBER(38)
+  ,itms_id NUMBER(38)
+  ,Locas_id_SHPSCH NUMBER(38)
+  ,Locas_id_ARVSCH NUMBER(38)
+  ,End_Time timestamp
+  ,Remark varchar(200)
+  ,Duedate timestamp
+  ,QTY NUMBER(16,4)
+  ,DataFlg char(2)
+  ,Remark varchar(200)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE CnsmOrds
+;
+CREATE TABLE CnsmOrds
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Persons_id_Chrg NUMBER(38)
+  ,itms_id NUMBER(38)
+  ,locas_id NUMBER(38)
+  ,Duedate timestamp
+  ,QTY NUMBER(16,4)
+  ,Remark varchar(200)
+  ,PARETBLNAME Varchar(40)
+  ,PARID Varchar(40)
+  ,Expiredate date
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE CnsmInsts
+;
+CREATE TABLE CnsmInsts
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,itms_id NUMBER(38)
+  ,locas_id NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Duedate timestamp
+  ,QTY NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Expiredate date
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE CnsmActs
+;
+CREATE TABLE CnsmActs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,CnsmInsts_id NUMBER(38)
+  ,itms_id NUMBER(38)
+  ,locas_id NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,ActDate timestamp
+  ,QTY NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Expiredate date
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE PaySCHs
+;
+CREATE TABLE PaySCHs
+  ( id NUMBER(38)
+  ,orgtblname varchar(30)
+  ,orgRcordid NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Rcordid NUMBER(38)
+  ,Locas_id NUMBER(38)
+  ,AMT NUMBER(16,4)
+  ,TAX NUMBER(16,4)
+  ,DataFlg char(2)
+  ,Remark varchar(200)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE PayOrds
+;
+CREATE TABLE PayOrds
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,PurACTs_id NUMBER(38)
+  ,Locas_id_From NUMBER(38)
+  ,Locas_id_To NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Duedate timestamp
+  ,IsuDate timestamp
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE PayInsts
+;
+CREATE TABLE PayInsts
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Duedate timestamp
+  ,InstStamp timestamp
+  ,QTY NUMBER(16,4)
+  ,Price NUMBER(16,4)
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,CtlDataProcsTrees_id NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE PayActs
+;
+CREATE TABLE PayActs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,PayInsts_id NUMBER(38)
+  ,ActDate timestamp
+  ,Inputdate timestamp
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,CtlDataProcsTrees_id NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE BillPlns
+;
+CREATE TABLE BillPlns
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Persons_id_Chrg NUMBER(38)
+  ,dueday timestamp
+  ,IsuDate timestamp
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE BillSCHs
+;
+CREATE TABLE BillSCHs
+  ( id NUMBER(38)
+  ,orgtblname varchar(30)
+  ,orgRcordid NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Duedate timestamp
+  ,AMT NUMBER(16,4)
+  ,TAX NUMBER(16,4)
+  ,DataFlg char(2)
+  ,Remark varchar(200)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE BillOrds
+;
+CREATE TABLE BillOrds
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,CustACTs_id NUMBER(38)
+  ,Locas_id_From NUMBER(38)
+  ,Locas_id_To NUMBER(38)
+  ,Persons_id_Chrg NUMBER(38)
+  ,Duedate timestamp
+  ,IsuDate timestamp
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE BillInsts
+;
+CREATE TABLE BillInsts
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,Duedate timestamp
+  ,InstStamp timestamp
+  ,QTY NUMBER(16,4)
+  ,Price NUMBER(16,4)
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,CtlDataProcsTrees_id NUMBER(38)
+  ,Update_IP Varchar(40)
+  ,created_at timestamp
+  ,Updated_at timestamp
+)
+;
+DROP TABLE BillActs
+;
+CREATE TABLE BillActs
+  ( id NUMBER(38)
+  ,Sno Varchar(40)
+  ,LineNo NUMBER(4)
+  ,BillInsts_id NUMBER(38)
+  ,ActDate timestamp
+  ,Inputdate timestamp
+  ,Amt NUMBER(16,4)
+  ,Tax NUMBER(16,4)
+  ,Remark varchar(200)
+  ,CtlDataProcsTrees_id NUMBER(38)
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
@@ -1249,9 +1626,7 @@ DROP TABLE Dealers
 ;
 CREATE TABLE Dealers
   ( id number(38)
-  ,Locas_id_Dealers number(38)
-  ,Locas_id_AcctVenders number(38)
-  ,Locas_id_Entprs number(38)
+  ,Locas_id_AccVns number(38)
   ,MaxAMT number(10)
   ,MinAMT number(10)
   ,Currencys_id number(38)
@@ -1289,6 +1664,25 @@ drop sequence PrcSecs_seq
 ;  
 create sequence PrcSecs_seq
 ;  
+DROP TABLE AccVns
+;
+CREATE TABLE AccVns
+  ( id number(38)
+  ,PersonNameOfOutside VARCHAR(30)
+  ,Persons_id_Chrg number(38)
+  ,Remark VARCHAR(100)
+  ,Expiredate date
+  ,Persons_id_Upd number(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Updated_at date
+  , CONSTRAINT AccVns_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence AccVns_seq
+;  
+create sequence AccVns_seq
+;  
 DROP TYPE TypOpeItm force 
 ; 
 CREATE TYPE TypOpeItm AS OBJECT  
@@ -1299,7 +1693,7 @@ CREATE TYPE TypOpeItm AS OBJECT
   ,Itms_id number(38)
   ,LT number(10,2)
   ,Units_id_LTTime number(38)
-  ,Shptype char(1)
+  ,ProPucr char(3)
   ,Expiredate date
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
@@ -1510,7 +1904,7 @@ CREATE TABLE StkHists
   ( id NUMBER(38)
   ,Locas_ID NUMBER(38)
   ,ITMS_ID NUMBER(38)
-  ,Flg char(2)
+  ,DataFlg char(2)
   ,QTY NUMBER(38)
   ,AMT NUMBER(38)
   ,Remark VARCHAR(100)
@@ -1521,34 +1915,11 @@ CREATE TABLE StkHists
   ,created_at date
   ,Updated_at date
   , CONSTRAINT StkHists_id_pk PRIMARY KEY (id)
-  , CONSTRAINT StkHists_17_uk  UNIQUE (LOCAS_ID,ITMS_ID,flg,Expiredate)
 )
 ;
 drop sequence StkHists_seq
 ;  
 create sequence StkHists_seq
-;  
-; 
-DROP TABLE CNTSTKHISTS
-;
-CREATE TABLE CNTSTKHISTS
-  ( ID NUMBER(38)
-  ,StkHists_id NUMBER(38)
-  ,TBLNAME varchar(30)
-  ,Recordid NUMBER(38)
-  ,QTY NUMBER(38)
-  ,AMT NUMBER(38)
-  ,Expiredate date
-  ,Persons_id_Upd NUMBER(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
-  , CONSTRAINT CNTSTKHISTS_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence CNTSTKHISTS_seq
-;  
-create sequence CNTSTKHISTS_seq
 ;  
 DROP TABLE Ctlxxxxxx
 ;
@@ -1565,59 +1936,49 @@ CREATE TABLE Ctlxxxxxx
   ,Updated_at date
 )
 ;
-DROP TABLE CtlPareChilTbls
+DROP TABLE ProcessTbls
 ;
-CREATE TABLE CtlPareChilTbls
+CREATE TABLE ProcessTbls
   ( id NUMBER(38)
-  ,PareTBLNAME VARCHAR(30)
-  ,ChilTBLNAME VARCHAR(30)
-  ,YMLCode clob
+  ,TBLNAME VARCHAR(30)
+  ,YMLCode VARCHAR(4000)
   ,Expiredate date
   ,Remark VARCHAR(200)
   ,Persons_id_Upd NUMBER(38)
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-  , CONSTRAINT CtlPareChilTbls_id_pk PRIMARY KEY (id)
+  , CONSTRAINT ProcessTbls_id_pk PRIMARY KEY (id)
 )
 ;
-drop sequence CtlPareChilTbls_seq
+drop sequence ProcessTbls_seq
 ;  
-create sequence CtlPareChilTbls_seq
+create sequence ProcessTbls_seq
 ;  
-DROP TABLE CtlAUTOCRTSHCfromhiss
+DROP TABLE ProcessScrs
 ;
-CREATE TABLE CtlAUTOCRTSHCfromhiss
+CREATE TABLE ProcessScrs
   ( id NUMBER(38)
-  ,SchTBLName VARCHAR(30)
-  ,RubyCode clob
+  ,screens_id NUMBER(38)
+  ,YMLCode VARCHAR(4000)
   ,Expiredate date
   ,Remark VARCHAR(200)
   ,Persons_id_Upd NUMBER(38)
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
+  , CONSTRAINT ProcessScrs_id_pk PRIMARY KEY (id)
 )
 ;
-DROP TABLE CtlAutoCRTORDFrmSchs
+drop sequence ProcessScrs_seq
+;  
+create sequence ProcessScrs_seq
+;  
+DROP TABLE DetailFields
 ;
-CREATE TABLE CtlAutoCRTORDFrmSchs
+CREATE TABLE DetailFields
   ( id NUMBER(38)
-  ,SCHTBLNAME VARCHAR(30)
-  ,ORDTBLName VARCHAR(30)
-  ,RubyCode clob
-  ,Expiredate date
-  ,Remark VARCHAR(200)
-  ,Persons_id_Upd NUMBER(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
-)
-;
-DROP TYPE TypField force 
-; 
-CREATE TYPE TypField AS OBJECT  
-  ( id NUMBER(38)
+  ,Code varchar(30)
   ,screens_id NUMBER(38)
   ,selection NUMBER(1, 0) 
   ,hideflg NUMBER(1, 0) 
@@ -1625,18 +1986,20 @@ CREATE TYPE TypField AS OBJECT
   ,rowpos NUMBER(4) 
   ,colpos NUMBER(4) 
   ,paragraph NUMBER(1, 0) 
-  ,Code varchar(30)
   ,width NUMBER(4,0) 
-  ,Type VARCHAR2(106)
-  ,Length NUMBER
+  ,Type VARCHAR2(10)
   ,DATAPRECISION NUMBER
   ,DATASCALE NUMBER
-  ,DefaultValue varchar(40)
   ,Indisp NUMBER(1, 0) 
   ,SubIndisp NUMBER(1, 0) 
   ,editable NUMBER(1, 0) 
-  ,InputSize NUMBER(4) 
-  ,MAXLENGTH NUMBER(4) 
+  ,EdOptsize NUMBER
+  ,EdOptInputSize NUMBER(4) 
+  ,EdOptMAXLENGTH NUMBER(4) 
+  ,EdOptValue varchar(50)
+  ,EdOptMultiple NUMBER(4) 
+  ,EdOptRow NUMBER(4) 
+  ,EdOptCols NUMBER(4) 
   ,editablehide VARCHAR(12)
   ,listoptions varchar(40)
   ,tblkey char(1)
@@ -1648,13 +2011,8 @@ CREATE TYPE TypField AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,updated_at date
-)
-;
-DROP TABLE DetailFields
-;
-CREATE TABLE DetailFields OF TypField
-  (  CONSTRAINT DetailFields_id_pk PRIMARY KEY (id)
-  , CONSTRAINT DetailFields_52_uk  UNIQUE (Code,screens_id,Expiredate)
+  , CONSTRAINT DetailFields_id_pk PRIMARY KEY (id)
+  , CONSTRAINT DetailFields_39_uk  UNIQUE (Code,screens_id,Expiredate)
 )
 ;
 drop sequence DetailFields_seq
@@ -1682,7 +2040,7 @@ DROP TABLE Buttons
 ;
 CREATE TABLE Buttons OF  TypButton
   (  CONSTRAINT Buttons_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Buttons_75_uk  UNIQUE (screens_id,Expiredate,icon)
+  , CONSTRAINT Buttons_81_uk  UNIQUE (screens_id,Expiredate,icon)
 )
 ;
 drop sequence Buttons_seq
@@ -1721,14 +2079,13 @@ DROP TABLE Screens
 CREATE TABLE Screens
   ( id NUMBER(38)
   ,Code varchar(30)
+  ,Name varchar(30)
   ,ViewName varchar(30)
   ,GrpNames_id NUMBER(38)
   ,strselect varchar(4000)
   ,strwhere varchar(4000)
   ,strgrouporder varchar(4000)
   ,CDRfLayout varchar(10)
-  ,TblIndct1NTYPE CHAR(2)
-  ,TblIndct1NPC CHAR(1)
   ,Expiredate date
   ,Remark varchar(200)
   ,Persons_id_Upd NUMBER(38)
@@ -1736,28 +2093,7 @@ CREATE TABLE Screens
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Screens_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Screens_43_uk  UNIQUE (ViewName)
-)
-;
-drop sequence Screens_seq
-;  
-create sequence Screens_seq
-;  
-; 
-DROP TABLE Screens
-;
-CREATE TABLE Screens
-  ( id NUMBER(38)
-  ,Code varchar(30)
-  ,GrpName varchar(30)
-  ,Expiredate date
-  ,Remark varchar(200)
-  ,Persons_id_Upd NUMBER(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
-  , CONSTRAINT Screens_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Screens_36_uk  UNIQUE (ViewName)
+  , CONSTRAINT Screens_45_uk  UNIQUE (code,Expiredate)
 )
 ;
 drop sequence Screens_seq

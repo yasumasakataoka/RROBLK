@@ -15,7 +15,7 @@ class DbCud  < ActionController::Base
                 j_to_s = j.to_s
 	        ###debugger
                 if j_to_s.split(/_/,2)[0] == xtblname then  ##本体の更新
-		   p " LINE #{__LINE__}  command_r #{command_r}"
+		   fprnt " LINE #{__LINE__}  command_r #{command_r}"
                    command_r[j_to_s.split(/_/,2)[1].to_sym] = k  unless k.nil?  ###org tbl field name
                    else  ### link先のidを求める
 	           if   j_to_s =~ /(_upd|sio_|id_tbl)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
@@ -24,10 +24,10 @@ class DbCud  < ActionController::Base
                    end  ## unless j_to_s
                 end   ## if j_to_s.
            end ## i
-	   p " LINE #{__LINE__}   command_r:#{command_r}"
+	   fprnt " LINE #{__LINE__}   command_r:#{command_r}"
            command_r = sub_code_to_id(tmp_key)
-	   p " LINE #{__LINE__}   i:#{i}"
-	   p " LINE #{__LINE__}   command_r:#{command_r}"
+	   fprnt " LINE #{__LINE__}   i:#{i}"
+	   fprnt " LINE #{__LINE__}   command_r:#{command_r}"
            case i[:sio_classname]
                 when "plsql_blk_insert" then
                     command_r[:id] = plsql.__send__(tblname + "_seq").nextval
@@ -42,16 +42,24 @@ class DbCud  < ActionController::Base
                     plsql.__send__(tblname).update  command_r
                 when "plsql_blk_delete" then 
                     plsql.__send__(tblname).delete(:id => i[:id_tbl])
+		when "plsql_blk_copy_insert" then
+                    command_r[:id] = plsql.__send__(tblname + "_seq").nextval
+                    command_r[:persons_id_upd] = i[:sio_user_code]
+                    command_r[:created_at] = Time.now
+                    plsql.__send__(tblname).insert command_r
+		    add_tbl_ctlxxxxxx i[:sio_org_tblname],i[:sio_org_tblid],tblname,command_r[:id] 
            end   ## case iud 
 	   r_cnt += 1
-	    command_tmp = {}
-	    command_tmp = i
-	    command_tmp[:sio_recordcount] = r_cnt
-            command_tmp[:sio_result_f] = "0"
-            command_tmp[:sio_message_contents] = nil
-              p " LINE #{__LINE__}   command_r:#{command_tmp}"
-           insert_command_r  command_tmp
-      end   ##chk_cmn.each 
+	    tmp_sio_record_r = {}
+	    tmp_sio_record_r = i
+	    tmp_sio_record_r[:sio_recordcount] = r_cnt
+            tmp_sio_record_r[:sio_result_f] = "0"
+            tmp_sio_record_r[:sio_message_contents] = nil
+            fprnt" LINE #{__LINE__}   command_r:#{tmp_sio_record_r}"
+           insert_sio_r  tmp_sio_record_r
+	   cmnd_code = "process_scrs_" + sio_view_name.split(/_/,2)[1]   ##画面ごとの処理
+           __send__(cmnd_cod, tmp_sio_record_r)   if respnd_to(cmnd_code)
+      end   ##chk_cmn.each
       plsql.commit
   end   ## perform
   handle_asynchronously :perform
@@ -61,7 +69,7 @@ class DbCud  < ActionController::Base
            strwhere = "where Expiredate >= SYSDATE  and "
            save_key = ""
            tmp_key.sort.each do|key, value|
-                if  key.to_s.split(/_/)[0] != save_key.split(/_/)[0] and save_key != "" 
+		   if  key.to_s.split(/_/)[0] != save_key.split(/_/)[0] and save_key != "" 
                     command_r.merge! sub_get_main_data(strwhere,save_key) 
                     strwhere = "where Expiredate >= SYSDATE  and "
                 end

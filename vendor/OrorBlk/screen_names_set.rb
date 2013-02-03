@@ -48,19 +48,24 @@ class AddScreen
           :created_at   => Time.now,
           :updated_at   => Time.now,
           :paragraph => nil,
-          :defaultvalue => nil,
+          :edoptvalue => nil,
           :subindisp => nil,
           :editable => nil
           }
 end # initialize   
+def fprnt str
+    foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
+    foo.puts str
+    foo.close
+end   ##fprnt str
 def addmain tblname
+    @tblnamex = tblname
     plsql.execute  @crt_screen_name   ## list 用メニュー作成
     plsql.execute   @crt_pobject_code    ## 画面の名前の元ネタ作成
     ### p @crt_screen_name.gsub("@type@",screen_type)
-       tmp_screen_dtl = "SELECT DetailFields_SEQ.NEXTVAL SEQ," + @crt_screen_dtl  + " AND TABLE_NAME = '#{tblname}'  "
-       @tblnamex = tblname
-       tsqlstr = "delete from  detailfields where id  in ( select id from  r_detailfields "
-       tsqlstr << " where  screen_viewname = '#{tblname}'  and Expiredate > sysdate )"
+    tmp_screen_dtl = "SELECT DetailFields_SEQ.NEXTVAL SEQ," + @crt_screen_dtl  + " AND TABLE_NAME = '#{@tblnamex}'  "
+    tsqlstr = "delete from  detailfields where id  in ( select id from  r_detailfields "
+    tsqlstr << " where  screen_viewname = '#{tblname}'  and Expiredate > sysdate )"
     plsql.execute tsqlstr
     fields = plsql.select(:all,tmp_screen_dtl)   ###テーブルの項目をセット
     fields.each  do |ii|
@@ -86,16 +91,17 @@ def addmain tblname
               end                          
          end
          @detailfields[:code]   = ii[:column_name]
-         @detailfields[:type]   =  ii[:data_type]
-         @detailfields[:length]   =  ii[:data_length]
+	 @detailfields[:type]   =  if ii[:data_length] >=100  then "textarea" else ii[:data_type] end
+         @detailfields[:edoptmaxlength]   =  ii[:data_length]
          @detailfields[:dataprecision]   =  ii[:data_precision]
          @detailfields[:datascale]   =  ii[:data_scale]
-         @detailfields[:indisp]   =  indisp 
+         @detailfields[:indisp]   =  indisp  
          @detailfields[:editable] =  0
          @detailfields[:editablehide] =  nil
-         @detailfields[:width] =  if ii[:data_length] * 8 > 350 then 350 else ii[:data_length] * 9 end 
-         @detailfields[:inputsize]  =  @detailfields[:maxlength]  =  if ii[:data_length] < 50 then ii[:data_length] else 50 end
-         @detailfields[:inputsize]  =  @detailfields[:maxlength]  =   10 if ii[:data_type] == "DATE"
+         @detailfields[:width] =  if ii[:data_length] * 6 > 350 then 350 else ii[:data_length] * 6 end 
+         @detailfields[:width] =  15 if  /_UPD$/ =~ ii[:column_name]      or  /_UPDATE_IP$/ =~ ii[:column_name] 
+	 @detailfields[:edoptsize]  =  @detailfields[:edoptmaxlength]  
+         @detailfields[:edoptsize]  =  10 if ii[:data_type] == "DATE"
 
          ## p "ii[:table_name] : #{ii[:table_name]}"
          ## p "ii[:column_name].split(/_/)[0] #{ii[:column_name].split(/_/)[0]}"
@@ -119,7 +125,7 @@ def addmain tblname
          @detailfields[:rowpos] = 999  
          @detailfields[:colpos] = 1 
          ## p " yy indisp #{ @detailfields[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
-         ###  p " @detailfields : #{@detailfields}"
+         fprnt " @detailfields : #{@detailfields}"
          plsql.detailfields.insert @detailfields
          @strsql << " ,"
          @strsql << ii[:column_name] + " " + ii[:data_type]
@@ -177,6 +183,8 @@ foo = File.open("screen_names_set.log", "a") # 書き込みモード
      tsqlstr <<  "          ,sio_search varchar(10)\n"
      tsqlstr <<  "          ,sio_sidx varchar(256)\n"
      tsqlstr  <<  @strsql
+     tsqlstr <<  "          ,sio_org_tblname varchar(30)\n"
+     tsqlstr <<  "          ,sio_org_tblid numeric(38)\n"
      tsqlstr <<  "          ,sio_add_time date\n"
      tsqlstr <<  "          ,sio_replay_time date\n"
      tsqlstr <<  "          ,sio_result_f char(1)\n"

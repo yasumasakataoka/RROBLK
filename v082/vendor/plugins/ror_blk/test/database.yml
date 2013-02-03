@@ -1,8 +1,0 @@
-
-oracle:
-  adapter: oracle_enhanced
-  database: xe
-  username: rails
-  password: tq6t7rjx
-
-
