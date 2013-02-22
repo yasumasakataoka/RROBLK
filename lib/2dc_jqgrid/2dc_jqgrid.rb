@@ -82,7 +82,18 @@ module Jqgrid
       col_names, col_model = gen_columns(columns)
       highsize = 70  ##edir form 高さ
       columns.each do |edt|
-        highsize += 23 if edt[:editable] == true
+	 p "edt #{edt}"
+         if edt[:formoptions] then
+		 if edt[:formoptions][:colpos] == 1 then 
+		     highsize += 23 
+		 end
+	 end
+	 if edt[:editoptions] then     ##textarea
+		 if edt[:editoptions][:rows]  then 
+		     highsize += -10 * (edt[:editoptions][:rows].to_i  - 1)
+		     highsize += 23
+		 end
+	 end
       end
       # nest screen 
       init_jq = ''
@@ -303,7 +314,7 @@ module Jqgrid
             })
             .navGrid("##{id}_pager",
               {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:true},
-{editCaption:"edit  #{title}",top:100,left:100,width:500,height:#{highsize},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
+{editCaption:"edit  #{title}",top:100,left:100,width:600,height:#{highsize},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {addCaption:"add  #{title}",editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {caption:"delete  #{title}",delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
             #{search}
@@ -396,7 +407,7 @@ module Jqgrid
       editoptions.each do |couple|
         if couple[0] == :value # :value => [[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
           options << %Q/value:"/
-          couple[1].each do |v|
+          couple[1].each do |v|    ###  修正　入力内容をそのまま
             options << "#{v[0]}:#{v[1]};"
           end
           options.chop! << %Q/",/

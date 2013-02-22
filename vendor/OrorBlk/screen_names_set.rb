@@ -28,7 +28,7 @@ class AddScreen
       select screens_seq.nextval,'A','2099/12/31','auto_crt',
               viewname,1, sysdate,sysdate from   screens a 
       where not exists   
-       (select 1 from pobjects b where a.viewname = b.code and objecttype = 'A')
+       (select 1 from pobjects b where a.code = b.code and objecttype = 'A')
     SQL2
 
     @crt_screen_dtl = <<-SQL3
@@ -39,6 +39,8 @@ class AddScreen
        WHERE TABLE_NAME = VIEWNAME
     SQL3
      ##
+end  ## initialize   
+def  init_detailfields
       @detailfields = 
          {:selection   =>  1,
           :expiredate   => Time.parse("2099/12/31"),
@@ -52,7 +54,7 @@ class AddScreen
           :subindisp => nil,
           :editable => nil
           }
-end # initialize   
+end # 
 def fprnt str
     foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
     foo.puts str
@@ -75,6 +77,7 @@ def addmain tblname
    crttype                     ##interface用　ｓｉｏ作成
  end  #end addmain 
  def setdetailfields   ii,tblname
+       init_detailfields
        indisp = 0 
        indisp = sub_indisp(ii,tblname)  if ii[:column_name] =~ /_CODE/ and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_CODE/)[0] != tblname[2..-2]
         @detailfields[:hideflg] = 0
@@ -91,18 +94,24 @@ def addmain tblname
               end                          
          end
          @detailfields[:code]   = ii[:column_name]
-	 @detailfields[:type]   =  if ii[:data_length] >=100  then "textarea" else ii[:data_type] end
-         @detailfields[:edoptmaxlength]   =  ii[:data_length]
+	if ii[:data_length] >=100  then
+	   @detailfields[:type]   =  "textarea" 
+	   @detailfields[:edoptrow]  = if (ii[:data_length] / 80).ceil > 10 then 10 else (ii[:data_length] / 80).ceil end
+	   @detailfields[:edoptcols] = 80
+	   else
+           @detailfields[:type]   =   ii[:data_type] 
+	 end
+	 @detailfields[:edoptmaxlength]   =  ii[:data_length]
          @detailfields[:dataprecision]   =  ii[:data_precision]
          @detailfields[:datascale]   =  ii[:data_scale]
          @detailfields[:indisp]   =  indisp  
          @detailfields[:editable] =  0
          @detailfields[:editablehide] =  nil
-         @detailfields[:width] =  if ii[:data_length] * 6 > 350 then 350 else ii[:data_length] * 6 end 
-         @detailfields[:width] =  15 if  /_UPD$/ =~ ii[:column_name]      or  /_UPDATE_IP$/ =~ ii[:column_name] 
+	 @detailfields[:width] =  if ii[:data_length] * 6 > 300 then 300  else ii[:data_length] * 6 end 
+         @detailfields[:width] =  60 if  /_UPD$/ =~ ii[:column_name]      or  /_UPDATE_IP$/ =~ ii[:column_name] 
 	 @detailfields[:edoptsize]  =  @detailfields[:edoptmaxlength]  
          @detailfields[:edoptsize]  =  10 if ii[:data_type] == "DATE"
-
+         @detailfields[:width] =   60 if ii[:data_type] == "DATE"
          ## p "ii[:table_name] : #{ii[:table_name]}"
          ## p "ii[:column_name].split(/_/)[0] #{ii[:column_name].split(/_/)[0]}"
          if  ii[:table_name][2..-2] == (ii[:column_name].split(/_/)[0]) then   ##同一テーブルの項目のみ変更可
@@ -122,10 +131,10 @@ def addmain tblname
          ##   editform positon 
          @detailfields[:seqno] = 999 
          @detailfields[:seqno] = 88 if  @detailfields[:editable] == 1 
-         @detailfields[:rowpos] = 999  
-         @detailfields[:colpos] = 1 
+         @detailfields[:rowpos] = 999   if @detailfields[:editable] ==  1 
+         @detailfields[:colpos] = 1     if @detailfields[:editable] ==  1 
          ## p " yy indisp #{ @detailfields[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
-         fprnt " @detailfields : #{@detailfields}"
+         fprnt " @detailfields = #{@detailfields}"
          plsql.detailfields.insert @detailfields
          @strsql << " ,"
          @strsql << ii[:column_name] + " " + ii[:data_type]
@@ -173,7 +182,8 @@ foo = File.open("screen_names_set.log", "a") # 書き込みモード
      tsqlstr <<  "          ,sio_Command_Response char(1)\n"
      tsqlstr <<  "          ,sio_session_counter numeric(38)\n"
      tsqlstr <<  "          ,sio_classname varchar(30)\n" 
-     tsqlstr <<  "          ,sio_viewname varchar(30)\n"
+     tsqlstr <<  "          ,sio_viewname varchar(30)\n" 
+     tsqlstr <<  "          ,sio_code varchar(30)\n"
      tsqlstr <<  "          ,sio_strsql varchar(4000)\n"
      tsqlstr <<  "          ,sio_totalcount numeric(38)\n"
      tsqlstr <<  "          ,sio_recordcount numeric(38)\n"

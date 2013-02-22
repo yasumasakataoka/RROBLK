@@ -31,13 +31,13 @@
     fields.each  do |tbldata|
           tblarea << tbldata[:table_name]  
     end
+    if   tblarea == []  then
+		p " not find #{tblname}"
+		subprint " not find #{tblname}"
+		exit
+    end
     tblarea.each  do |i|
         subfields = plsql.USER_TAB_COLUMNS.all("WHERE TABLE_NAME = :1",i)
-	if  subfields  == ""  then
-		p " not find #{i}"
-		subprint " not find #{i}"
-		break
-	end
         selectstr = " select "
         wherestr = " where "   ##joinが条件
         fromstr = " from " + i + " " + i[0..-2] + " ,"   ## 最後のSはとる。
