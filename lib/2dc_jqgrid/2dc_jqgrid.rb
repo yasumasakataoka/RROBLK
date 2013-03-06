@@ -82,7 +82,7 @@ module Jqgrid
       col_names, col_model = gen_columns(columns)
       highsize = 70  ##edir form 高さ
       columns.each do |edt|
-	 p "edt #{edt}"
+	 ### fprnt " class #{self} : LINE #{__LINE__} edt #{edt}"
          if edt[:formoptions] then
 		 if edt[:formoptions][:colpos] == 1 then 
 		     highsize += 23 

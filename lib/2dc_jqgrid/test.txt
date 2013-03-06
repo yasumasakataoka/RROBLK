@@ -1,0 +1,46 @@
+﻿afterSaveCell : function(rowid,name,val,iRow,iCol) { if(name == 'amount') { var taxval = jQuery("#celltbl").jqGrid('getCell',rowid,iCol+1); jQuery("#celltbl").jqGrid('setRowData',rowid,{total:parseFloat(val)+parseFloat(taxval)}); } if(name == 'tax') { var amtval = jQuery("#celltbl").jqGrid('getCell',rowid,iCol-1); jQuery("#celltbl").jqGrid('setRowData',rowid,{total:parseFloat(val)+parseFloat(amtval)}); } }
+
+
+
+
+afterSaveCell : function(rowid,name,val,iRow,iCol) { if(name.match(/_code/i)) { var nameval = jQuery("##{id}").jqGrid('getCell',rowid,iCol+1);
+                                                                                var newcolm = name.replace("code","name");  
+                                                                               jQuery("##{id}").jqGrid('setRowData',rowid,{newcolm:nameval});
+                                                                              } 
+						    }
+
+
+jQuery("#list").setRowData( "1", { tax:"5", total:"205" })	
+
+
+
+■ 正規表現オブジェクト
+str = "ABCDEF";
+if (str.match(/DEF/i)) {
+    alert("DEFを含んでいます。");
+}
+
+
+datatype : function(postdata) { jQuery.ajax({ url: '/screen/code_to_name' , data:postdata, dataType:"json",
+complete: function(jsondata,stat){ if(stat=="success")
+{ var thegrid = jQuery("##{id}")[0]; thegrid.addJSONData(jsondata.responseJSON); } } }); },
+
+
+
+datatype : function(postdata) { jQuery.ajax({ url:'server.php', data:postdata, dataType:"xml",
+complete: function(xmldata,stat){ if(stat=="success")
+{ var thegrid = jQuery("#"+gridid")[0]; thegrid.addXmlData(xmldata.responseXML); } } }); },
+
+
+string.replace(regexp, newString) (e4/N4)
+
+string の内、regexp にマッチする部分を newString に置き換えたものを返します。
+Netscape Communicator の JavaScript1.3 では newString の部分に関数を指定することができます。
+マッチングの規則については「正規表現」を参照してください。
+
+xx1 = "This is a pen.".replace("pen", "book");
+xx2 = "AB".replace("(.)(.)",
+    function(str, p1, p2) {
+        return(p2 + p1);
+    });
+

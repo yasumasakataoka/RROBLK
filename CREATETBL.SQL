@@ -1880,6 +1880,9 @@ CREATE TABLE Ctlxxxxxx
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
+  , CONSTRAINT Ctlxxxxxx_id_pk PRIMARY KEY (id) 
+  , CONSTRAINT Ctlxxxxxx_01_uk  UNIQUE (PTBLID,id)
+  , CONSTRAINT Ctlxxxxxx_01_uk  UNIQUE (CTBLName,CTBLID,id)
 )
 ;
 DROP TABLE ProcessTbls

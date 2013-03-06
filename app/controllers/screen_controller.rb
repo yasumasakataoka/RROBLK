@@ -16,8 +16,8 @@ class ScreenController < ApplicationController
      @disp_screenname_name = getblkpobj(screen_code,"A")
      view_item_set
      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
-    fprnt " class #{self} : LINE #{__LINE__}  index  @disp_screenname_name  : #{  @disp_screenname_name }"
-    fprnt " class #{self} : LINE #{__LINE__}  index  @gridcolumns : #{ @gridcolumns}"
+    ##fprnt " class #{self} : LINE #{__LINE__}  index  @disp_screenname_name  : #{  @disp_screenname_name }"
+    ##fprnt " class #{self} : LINE #{__LINE__}  index  @gridcolumns : #{ @gridcolumns}"
     ## debugger ## 詳細項目の確認
    end  ##index
 
@@ -106,7 +106,7 @@ class ScreenController < ApplicationController
           unless dispfields.nil? then
              dispfields.each do |i|
                 if i[:detailfield_code] =~ /CODE/ then
-                  fprnt "class #{self} : LINE #{__LINE__}  i[:detailfield_code] : #{i[:detailfield_code] } " 
+                  ##fprnt "class #{self} : LINE #{__LINE__}  i[:detailfield_code] : #{i[:detailfield_code] } " 
                    @scriptopt[:pare_contents] << pare_data[i[:detailfield_code].downcase.to_sym] 
                    tname =i[:detailfield_code].gsub(/CODE/,"NAME").downcase.to_sym
                    @scriptopt[:pare_contents] << " (" + pare_data[tname]  + ")     "
@@ -120,7 +120,7 @@ class ScreenController < ApplicationController
              end
           end  ### unless dispfields.nil? then
      end  ### if   @scriptopt[:pare_contents].empty?
-  fprnt " class #{self} : LINE #{__LINE__}  nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
+  ##fprnt " class #{self} : LINE #{__LINE__}  nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
  end    ### def set_pare_contents pare_view,rcd_id
  ### formで矢印がきかない
  def add_upd_del    ##  add update delete
@@ -131,8 +131,8 @@ class ScreenController < ApplicationController
           rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s +  params[:q]  ### :q -->@nst_screenname_id
           hash_rcd = Rails.cache.read(rcd_id_cache_key)  
           tmp_isnr =  tblfields
-          fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
-          fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
+          ## fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
+          ##fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
           tmp_isnr.merge! hash_rcd unless hash_rcd.nil?
           sub_insert_sio_c  do 
              command_r[:sio_classname] = "plsql_blk_insert"
@@ -178,31 +178,7 @@ class ScreenController < ApplicationController
 
         end   ###proc_add_button  
  end   ## proc_add_button  
- def set_extbutton pare_screen     ### 子画面用のラジオボ タンセット
-      ##  debugger
-      ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
-      rad_screen = plsql.r_chilscreens.select(:all,"where chilscreen_Expiredate > sysdate 
-                                            and screen_id = :1",pare_screen)
-           t_extbutton = ""
-           t_extdiv_id = ""
-           k = 0
-           rad_screen.each do |i|     ###child tbl name sym
-               ### view name set
-               hash_key = "#{i[:screen_viewname].downcase}".to_sym 
-                  k += 1
-                  t_extbutton << %Q|<input type="radio" id="radio#{k.to_s}"  name="nst_radio#{@nst_screenname_id}"|
-                  t_extbutton << %Q| value="#{i[:screen_viewname]};#{i[:screen_viewname_chil]};| ### 親のview
-                  t_extbutton << %Q|#{i[:screen_code_chil]};1"/>|  
-                  t_extbutton << %Q| <label for="radio#{k.to_s}">  #{getblkpobj(i[:screen_code_chil],"A")} </label> |
-                  t_extdiv_id << %Q|<div id="div_#{i[:screen_viewname]}#{i[:screen_viewname_chil]}"> </div>|
-      
-        end   ### rad_screen.each
-	@scriptopt = {}
-        @scriptopt[:pare_contents] = ""
-        show_data[:extbutton] =  t_extbutton
-	show_data[:extdiv_id] =  t_extdiv_id
-	
-  end    ## set_extbutton pare_screen  
+
   def subpaging
       ### debugger
            tmp_session_counter = sub_insert_sio_c  do
@@ -258,8 +234,8 @@ class ScreenController < ApplicationController
       command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
       yield
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
-      fprnt " class #{self} : LINE #{__LINE__} sio_\#{ command_r[:sio_viewname] } :sio_#{command_r[:sio_viewname]}"
-      fprnt " class #{self} : LINE #{__LINE__} command_r #{command_r}"
+      ##fprnt " class #{self} : LINE #{__LINE__} sio_\#{ command_r[:sio_viewname] } :sio_#{command_r[:sio_viewname]}"
+      ## fprnt " class #{self} : LINE #{__LINE__} command_r #{command_r}"
       ## debugger
       plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       plsql.commit 
@@ -305,12 +281,19 @@ class ScreenController < ApplicationController
         end
       end
      screen_code
-     get_show_data
+     @show_data = get_show_data screen_code
+     show_data
+     @scriptopt = {}
+     @scriptopt[:pare_contents] = ""
   end
   def screen_code
       @screen_code
   end
-    def  sub_getfield
+  def show_data
+      @show_data
+  end
+
+  def  sub_getfield
        strfields = []
        command_r.each  do |i,j|
           tmp_field = i.to_s 
@@ -334,11 +317,11 @@ class ScreenController < ApplicationController
     tmp_sql = if command_r[:sio_strsql].nil? then command_r[:sio_viewname]  + " a " else command_r[:sio_strsql] end
           
     strsql = "SELECT * FROM " + tmp_sql
-    fprnt "class #{self} : LINE #{__LINE__}  strsql = '#{strsql}"
+    ##fprnt "class #{self} : LINE #{__LINE__}  strsql = '#{strsql}"
     tmp_sql << sub_strwhere  if command_r[:sio_search]  == "true"
     tmp_sql << "  order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == ""
     cnt_strsql = "SELECT 1 FROM " + tmp_sql 
-    fprnt "class #{self} : LINE #{__LINE__}   cnt_strsql = '#{cnt_strsql}'"
+    ##fprnt "class #{self} : LINE #{__LINE__}   cnt_strsql = '#{cnt_strsql}'"
     ## debugger
     command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
     case  command_r[:sio_totalcount]
@@ -354,7 +337,7 @@ class ScreenController < ApplicationController
          strsql = "select #{sub_getfield} from (SELECT rownum cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
          strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
-         fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+         ##fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
          pagedata = plsql.select(:all, strsql)
          pagedata.each do |j|
            r_cnt += 1
@@ -412,92 +395,14 @@ class ScreenController < ApplicationController
                  tmp_buttonopt[:button_proc] = x[:button_proc]
                  buttonopt << tmp_buttonopt
              end 
-	     fprnt "class #{self} : LINE #{__LINE__}   buttonopt :#{  buttonopt }"
-             fprnt "class #{self} : LINE #{__LINE__}  add_button :#{ add_button }"
+	     ##fprnt "class #{self} : LINE #{__LINE__}   buttonopt :#{  buttonopt }"
+             ##fprnt "class #{self} : LINE #{__LINE__}  add_button :#{ add_button }"
         end
       return  buttonopt 
   end   ### set_addbutton pare_screen 
   ################
   
-  def set_detail 
-      @show_data = {}
-      show_data
-      det_screen = plsql.r_detailfields.all(
-                                "where screen_code = '#{screen_code}'
-                                 and detailfield_selection = 1 order by detailfield_seqno ")  ###有効日の考慮
-                                 
-           ## when no_data 該当データ 「r_DetailFields」が無かった時の処理
-           if det_screen.empty?
-              ### debugger ## textは表示できないのでメッセージの変更要
-	      p  "Create DetailFields #{screen_code} by crt_r_view_sql.rb"
-              render :text => "Create DetailFields #{screen_code} by crt_r_view_sql.rb"  and return 
-           end   
-           ###
-           ### pare_screen = det_screen[0][:detailfield_screens_id]
-           pare_screen = det_screen[0][:screen_id]
-           screen_viewname = det_screen[0][:screen_viewname].upcase
-           ### debugger ## 詳細項目セット
-           show_data[:scriptopt] = set_addbutton(pare_screen)     ### add  button セット script,gear,....
-	   gridcolumns = []
-           ###  chkの時のみ
-           gridcolumns   << {:field => "msg_ok_ng",
-                                        :label => "msg",
-                                        :width => 37,
-                                        :editable =>  false  } 
-           allfields = []
-           allfields << "msg_ok_ng".to_sym
-           alltypes = {} 
-	   icnt = 0
-	   det_screen.each do |i|  
-                ## lable名称はユーザ固有よりセット    editable はtblから持ってくるように将来はする。
-                ##    fprnt " i #{i}"
-                   tmp_editrules = {}
-                   tmp_columns = {}
-                   tmp_editrules[:required] = true  if i[:detailfield_indisp] == 1
-                   tmp_editrules[:number] = true if i[:detailfield_type] == "NUMBER"
-                   tmp_editrules[:date] = true  if i[:detailfield_type] == "DATE"
-                   tmp_editrules[:required] = false  if tmp_editrules == {} 
-                   tmp_columns[:field] = i[:detailfield_code].downcase
-                   tmp_columns[:label] = getblkpobj(i[:detailfield_code],"1") 
-                   tmp_columns[:label] ||=  i[:detailfield_code]
-                   tmp_columns[:hidden] = if i[:detailfield_hideflg] == 1 then true else false end 
-                   tmp_columns[:editrules] = tmp_editrules 
-                   tmp_columns[:width] = i[:detailfield_width]
-                   tmp_columns[:search] = if i[:detailfield_paragraph]  == 0 and  screen_code =~ /^H\d_/   then false else true end
-                   if i[:detailfield_editable] == 1 then
-		      tmp_columns[:editable] = true
-		      tmp_columns[:editoptions] = {:size => i[:detailfield_edoptsize],:maxlength => i[:detailfield_maxlength] ||= i[:detailfield_edoptsize] }
-		     else
-		      tmp_columns[:editable] = false
-		   end
-		   tmp_columns[:edittype]  =  i[:detailfield_type]  if  ["textarea","select","checkbox"].index(i[:detailfield_type]) 
-		   if i[:detailfield_type] == "SELECT" or  i[:detailfield_type] == "CHECKBOX" then
-		      tmp_columns[:editoptions] = {:value => i[:detailfield_value] } 
-		   end
-		   if i[:detailfield_type] == "textarea" then
-		      tmp_columns[:editoptions] =  {:rows =>"#{i[:detailfield_edoptrow]}",:cols =>"#{i[:detailfield_edoptcols]}"}
-		   end
-                   if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
-                   ## tmp_columns[:edittype]  =  i[:detailfield_type]  if  ["textarea","select","checkbox"].index(i[:detailfield_type]) 
-		   ## debugger
-                   unless  i[:detailfield_rowpos].nil?    then
-                        tmp_columns[:formoptions] =  {:rowpos=>i[:detailfield_rowpos] ,:colpos=>i[:detailfield_colpos] }
-		        if  i[:detailfield_rowpos] = 999 then
-                            tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
-			end
-		   end 	      
-		   gridcolumns << tmp_columns 
-                   allfields << i[:detailfield_code].downcase.to_sym  
-                   alltypes [i[:detailfield_code].downcase.to_sym] =  i[:detailfield_type].downcase 
-           end   ## detailfields.each
-	   show_data[:allfields] =  allfields  
-           show_data[:alltypes]  =  alltypes  
-           show_data[:screen_viewname] = screen_viewname.upcase
-           show_data[:gridcolumns] = gridcolumns
-	   set_extbutton(pare_screen) 
-        show_cache_key =  "show " + screen_code
-        Rails.cache.write(show_cache_key,show_data) 
-  end    ##set_detai
+
   def sub_add_upd_del_setsio tblfields
 	   tblfields.each_key do |ii|     ### tblfields  paramsをsio用に変換したもの
            if !tblfields[ii].nil?   and ii.to_s != "id_tbl"   ###   sub_set_fields_from_allfields参照 
@@ -524,19 +429,5 @@ class ScreenController < ApplicationController
     ### debugger
     return tmp_isnr
  end  
-  def get_show_data 
-     show_cache_key =  "show " + screen_code
-     ## debugger
-     if Rails.cache.exist?(show_cache_key) then 
-         @show_data = Rails.cache.read(show_cache_key)
-	 show_data
-     else 
-	 set_detail   ## set @gridcolumns 
-     end
-     ##  debugger
- end
- def show_data
-     @show_data
- end
 
 end ## ScreenController

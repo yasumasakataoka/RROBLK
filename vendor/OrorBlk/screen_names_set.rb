@@ -79,7 +79,8 @@ def addmain tblname
  def setdetailfields   ii,tblname
        init_detailfields
        indisp = 0 
-       indisp = sub_indisp(ii,tblname)  if ii[:column_name] =~ /_CODE/ and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_CODE/)[0] != tblname[2..-2]
+       indisp = sub_indisp(ii,tblname,"_CODE")  if ii[:column_name] =~ /_CODE/ and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_CODE/)[0] != tblname[2..-2]
+       indisp = sub_indisp(ii,tblname,"_NAME")  if ii[:column_name] =~ /_NAME/ and  ii[:column_name] != "PERSON_NAME_UPD"  and ii[:column_name].split(/_NAME/)[0] != tblname[2..-2]
         @detailfields[:hideflg] = 0
         @detailfields[:id]  = ii[:seq]
         @detailfields[:screens_id] = ii[:screens_id]
@@ -106,7 +107,7 @@ def addmain tblname
          @detailfields[:datascale]   =  ii[:data_scale]
          @detailfields[:indisp]   =  indisp  
          @detailfields[:editable] =  0
-         @detailfields[:editablehide] =  nil
+         ### @detailfields[:editablehide] =  nil
 	 @detailfields[:width] =  if ii[:data_length] * 6 > 300 then 300  else ii[:data_length] * 6 end 
          @detailfields[:width] =  60 if  /_UPD$/ =~ ii[:column_name]      or  /_UPDATE_IP$/ =~ ii[:column_name] 
 	 @detailfields[:edoptsize]  =  @detailfields[:edoptmaxlength]  
@@ -120,10 +121,10 @@ def addmain tblname
              @detailfields[:editable] =  0 if /_ID_UPD$/ =~ ii[:column_name]     ## 更新者と更新時間          
              @detailfields[:editable] =  0 if  /_CREATED_AT$/ =~ ii[:column_name]         
              @detailfields[:editable] =  0 if  /_UPDATED_AT$/ =~ ii[:column_name]                 
-             @detailfields[:editablehide] =  "ADD" if /_UPDATE_IP$/ =~ ii[:column_name]     ##  
-             @detailfields[:editablehide] =  "ADD" if /_ID_UPD$/ =~ ii[:column_name]     ## 更新者と更新時間          
-             @detailfields[:editablehide] =  "ADD" if  /_CREATED_AT$/ =~ ii[:column_name]         
-             @detailfields[:editablehide] =  "ADD" if  /_UPDATED_AT$/ =~ ii[:column_name]  
+             ## @detailfields[:editablehide] =  "ADD" if /_UPDATE_IP$/ =~ ii[:column_name]     ##  
+             ## @detailfields[:editablehide] =  "ADD" if /_ID_UPD$/ =~ ii[:column_name]     ## 更新者と更新時間          
+             ## @detailfields[:editablehide] =  "ADD" if  /_CREATED_AT$/ =~ ii[:column_name]         
+             ## @detailfields[:editablehide] =  "ADD" if  /_UPDATED_AT$/ =~ ii[:column_name]  
            ###  p " xx indisp #{ @detailfields[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
          end
           
@@ -148,15 +149,15 @@ def addmain tblname
          crttype if @tblnamex != ii[:table_name] 
          @tblnamex = ii[:table_name]
  end ##setdetailfields  \
- def sub_indisp  ii,tblname   ##孫のテーブルのidは不要　edit addの時必須にしない。
+ def sub_indisp  ii,tblname,chngchar   ##孫のテーブルのidは不要　edit addの時必須にしない。
      chk_screen_id = "SELECT 1," + @crt_screen_dtl  + " AND TABLE_NAME = '#{tblname}'  "
-     tblname_of_id = ii[:column_name].sub( /_CODE/,"_ID")
+     tblname_of_id = ii[:column_name].sub( chngchar,"_ID")
      chk_screen_id << " and A.COLUMN_NAME =  '#{tblname_of_id}' " 
      ##  p " chk_screen_id = '#{chk_screen_id}'"
-     if plsql.select(:all,chk_screen_id).empty? then
-        indisp = 0
-       else
+     if plsql.select(:first,chk_screen_id) then
         indisp = 1
+       else
+        indisp = 0
       end
      return  indisp
 end 
