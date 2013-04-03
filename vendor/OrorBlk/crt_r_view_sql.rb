@@ -55,7 +55,7 @@
                    wherestr << rtblname + "." +  j[:column_name].split(/S_ID/)[0]  + "_ID = " 
                end   
                wherestr << i[0..-2] + "." + j[:column_name]  + " AND " 
-               ## selectstr << i[0..-2] + "." +  j[:column_name] + " " + i[0..-2] + "_" +  j[:column_name] + " ,"
+               selectstr << i.chop + "." +  j[:column_name] + " " + i.chop + "_" +  j[:column_name].sub("S_ID","_ID") + " ,"
                subtblcrt  j[:column_name],rtblname do |k|
                  selectstr << k
                end
@@ -99,13 +99,14 @@
                 else
                  xfield  = "" if j[:column_name].match("PERSON")
                end   ## if join_rtbl  
-               ["_ID","EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT","USERGROUP_CODE_UPD","USERGROUP_NAME_UPD","USERGROUP_CODE_CHRG","USERGROUP_NAME_CHRG"].each do |x|
+               ["USERGROUP_ID","EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT","USERGROUP_CODE_UPD","USERGROUP_NAME_UPD","USERGROUP_CODE_CHRG","USERGROUP_NAME_CHRG"].each do |x|
                      xfield = "" if j[:column_name].match(x)
                end
                if   xfield  != "" then 
                     sfx = ""
                     sfx = subrtbl.split(/S_ID/)[0] + "_" if xfield == "ID" 
-                    xfield = rtblname + "." + xfield + " " + sfx + xfield +  subrtbl.split(/_ID/)[1] if !subrtbl.split(/_ID/)[1].nil?
+
+                    xfield = rtblname + "." + xfield + " " + sfx + xfield +  subrtbl.split(/_ID/)[1] if subrtbl.split(/_ID/)[1]
                     xfield = rtblname + "." + xfield + " "  + sfx + xfield  if subrtbl.split(/_ID/)[1].nil?
                     k <<  " " +  xfield   + ",\n" 
                     lngerrfield = xfield.split(" ")[1]
@@ -121,7 +122,7 @@
         ## p " subcrtrtbl  i :" + i
         selectstr = " select "
         wherestr = " where "   ##joinが条件
-        fromstr = " from " + i + " " + i[0..-2] + " ,"   ## 最後のSはとる。
+        fromstr = " from " + i + " " + i.chop + " ,"   ## 最後のSはとる。
         subfields.each do |j|
            if  j[:column_name] =~ /_ID/ then
                ### join_rtbl : view for join
@@ -134,8 +135,8 @@
                  else  
                    wherestr << rtblname + "." +  j[:column_name].split(/S_ID/)[0]  + "_ID = " 
                end   
-               wherestr << i[0..-2] + "." + j[:column_name]  + " AND " 
-               selectstr << i[0..-2] + "." +  j[:column_name] + " " + i[0..-2] + "_" +  j[:column_name] + " ," 
+               wherestr << i.chop + "." + j[:column_name]  + " AND " 
+               selectstr << i.chop + "." +  j[:column_name] + " " + i.chop + "_" +  j[:column_name] + "," 
                ### rtblname    alter sub_rtbl view
                joinfields = plsql.USER_TAB_COLUMNS.all("WHERE TABLE_NAME = :1",join_rtbl)
                p "joinfields.empty?"
@@ -145,7 +146,7 @@
                ## p "x join_rtbl " + join_rtbl                                                                                        
                joinfields.each do |k|
                   xfield =  k[:column_name]
-                  ["_ID","EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT"].each do |x|
+                  ["EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT"].each do |x|
                      xfield = "" if !k[:column_name].match(x).nil?
                   end
                   if join_rtbl == "R_PERSONS" then
@@ -158,7 +159,7 @@
                     sfx = ""
                     sfx = rtblname.split("_")[0] + "_" if rtblname.split("_")[0] != xfield.split("_")[0]
                     xfield = rtblname + "." + xfield + " " + sfx + xfield 
-                    xfield <<   j[:column_name].split(/S_ID/)[1] if !j[:column_name].split(/S_ID/)[1].nil?
+                    xfield <<   j[:column_name].split(/S_ID/)[1]  if j[:column_name].split(/S_ID/)[1]
                     selectstr <<  " " +  xfield  + ",\n" 
                     lngerrfield = xfield.split(" ")[1]
                     p "sub table:" + join_rtbl + " field:" + lngerrfield  + " length:" + (lngerrfield.length).to_s if (lngerrfield.length) > 29
@@ -166,18 +167,18 @@
                end  ## joinfields.each
            ##  p "subtblcrt "
             else 
-               p "table:" + i + " field:" +  j[:column_name] + " length:" + (i[0..-2].length + j[:column_name].length).to_s if  (i[0..-2].length + j[:column_name].length) > 30
+               p "table:" + i + " field:" +  j[:column_name] + " length:" + (i[0..-2].length + j[:column_name].length).to_s if  (i.chop.length + j[:column_name].length) > 30
                if j[:column_name] == 'ID'  then
-                  selectstr << i[0..-2] + "." +  j[:column_name]  + " ,"
-                 else
-                  selectstr << i[0..-2] + "." +  j[:column_name] + " " + i[0..-2] + "_" +  j[:column_name] + " ," 
-                end 
+                  selectstr << i.chop + "." +  j[:column_name]  + " ,"
+	         else
+	 	  selectstr << i.chop + "." +  j[:column_name] + " " + i.chop + "_" +  j[:column_name] + " ," 
+	        end 
                ## p  j[:column_name]
-           end      ## if tbldata[:column_name] =~ /_ID/
+              end      ## if tbldata[:column_name] =~ /_ID/
         end  ## subfields.each  
         p "subcrtrtbl a_rtblw: " + i
         strsql = "create  view  R_" + i + " AS "   
-        strsql << selectstr[0..-2] +  fromstr[0..-2] + wherestr[0..-5]
+        strsql << selectstr.chop +  fromstr.chop + wherestr[0..-5]
         subprint strsql
         ### ERRORを拾えてない。
         plsql.execute  strsql 

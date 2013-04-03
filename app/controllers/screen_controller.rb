@@ -6,7 +6,7 @@ class ScreenController < ApplicationController
   respond_to :html , :json
   def index
       ###  @screenname_name  将来　タイトルに変更
-     ## debugger
+     @pare_class = "online"
      @scriptopt ={}
      @options = {}
      @scriptopt[:pare_contents] = ""
@@ -18,11 +18,11 @@ class ScreenController < ApplicationController
      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
     ##fprnt " class #{self} : LINE #{__LINE__}  index  @disp_screenname_name  : #{  @disp_screenname_name }"
     ##fprnt " class #{self} : LINE #{__LINE__}  index  @gridcolumns : #{ @gridcolumns}"
-    ## debugger ## 詳細項目の確認
+    ##debugger ## 詳細項目の確認
    end  ##index
 
   def  view_item_set   
-      ##  debugger ## 詳細項セット
+      ##debugger ## 詳細項セット
       ### buttonの時は画面が変わるので
       ### 保持しているデータは削除
       # @session_data[:person_id] = plsql.persons.first(:email =>current_user[:email])[:id]   ###########   LOGIN USER  
@@ -35,7 +35,7 @@ class ScreenController < ApplicationController
   end  ## user_screen
   
   def disp   ##  jqgrid返り
-   ## debugger ## 詳細項目セット
+   ##debugger ## 詳細項目セット
    params[:page] ||= 1 
    params[:rows] ||= 10
    ## get from cache
@@ -44,7 +44,7 @@ class ScreenController < ApplicationController
    subpaging           ## subpaging 
    ##  p " @tbldata  :  #{@tbldata}"
    #fprnt  " class #{self} : LINE #{__LINE__} @record_count :  #{@record_count}"
-   ### debugger
+   ##debugger
    respond_with @tbldata.to_jqgrid_json( show_data[:allfields] ,params[:page], params[:rows],@record_count) 
   end  ##disp
 
@@ -65,30 +65,40 @@ class ScreenController < ApplicationController
 
   def nst  ###子画面　link
      rcd_id  =  params[:id]  ### 親画面テーブル内の子画面へのkeyとなるid
-     pare_view =  params[:nst_tbl_val].split(";")[0]   ### 親のview
-     chil_view =  params[:nst_tbl_val].split(";")[1]   ### 子のview
+     pare_code =  params[:nst_tbl_val].split(";")[0]   ### 親のviewのcode
+     chil_code =   params[:nst_tbl_val].split(";")[1]   ### 子のviewのcode
      @disp_screenname_name =  getblkpobj(params[:nst_tbl_val].split(";")[2],"A")   ### 子の画面
      cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
      ##########
-     @nst_screenname_id = "#{pare_view};#{chil_view}"
+     @nst_screenname_id = "#{pare_code}#{chil_code}"
      @scriptopt = {}
      @options ={}
-     @options[:div_repl_id] = "#{@nst_screenname_id}"   ### 親画面内の子画面表示のための　div のid
+     @options[:div_repl_id] = "#{pare_code}#{chil_code}"  ### 親画面内の子画面表示のための　div のid
      @options[:autowidth] = "true"  
-     @screen_code = plsql.screens.first("where viewname = '#{chil_view}' and Expiredate > sysdate order by expiredate ")[:code].upcase  ## set @gridcolumns 
+     chil_view = plsql.screens.first("where code = '#{chil_code}' and Expiredate > sysdate order by expiredate ")[:viewname].upcase  ## set @gridcolumns 
+     pare_view = plsql.screens.first("where code = '#{pare_code}' and Expiredate > sysdate order by expiredate ")[:viewname].upcase  ## set @gridcolumns 
+     @screen_code = chil_code
      screen_code
+     @show_data = get_show_data screen_code
+     show_data
      view_item_set 
-     ## debugger 
+     ##debugger 
      ## p "chil_view : #{chil_view.downcase}  : #{@nst_screenname_id} : "#{@disp_screenname_name} "
      ## p "{pare_view}{chil_view} : #{pare_view}#{chil_view}   :xxx: #{ params[:nst_tbl_val].split(";")[2]}" 
       rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @nst_screenname_id 
       ### set_detail でセットされた@nst_screenname_id
+      pkey = "#{pare_view[2..-2]}_id".downcase
+      if show_data[:allfields].index(pkey.to_sym) then
+	 else
+	     show_data[:allfields].each do |k|
+	     pkey = k.to_s if k.to_s[0,pkey.size] == pkey
+         end
+      end
       hash_rcd = {}
-      hash_rcd["#{pare_view[2..-2]}_id".downcase.to_sym] = rcd_id 
-      hash_rxd[:strsql] = "(select * from #{chil_view} where #{pare_view[2..-2]}_id = '#{rcd_id}' )  a "
+      hash_rcd[:strsql] = "(select * from #{chil_view} where #{pkey} = '#{rcd_id}' )  a "
       Rails.cache.write(rcd_id_cache_key,hash_rcd)   ### add で受け取るための親　id save
       set_pare_contents pare_view,rcd_id      ## 
-     ##  debugger 
+     ##debugger 
      ## render :nst
      render :nst,:layout =>false
  end   ### nst
@@ -146,7 +156,7 @@ class ScreenController < ApplicationController
              command_r[:id_tbl] = tblfields[:id_tbl].to_i
           end
        when "edit"
-	 ### debugger
+	 ###debugger
          sub_insert_sio_c   do
            command_r[:sio_classname] = "plsql_blk_update"
            sub_add_upd_del_setsio( tblfields)
@@ -157,7 +167,7 @@ class ScreenController < ApplicationController
        ##debugger ## textは表示できないのでメッセージの変更要
        render :text => "return to menu because session loss params:#{params[:oper]} "
      end ## case parems[:oper]
-     ### debugger
+     ###debugger
     dbcud = DbCud.new
     dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
  end  ## add_upd_del
@@ -180,7 +190,7 @@ class ScreenController < ApplicationController
  end   ## proc_add_button  
 
   def subpaging
-      ### debugger
+      ###debugger
            tmp_session_counter = sub_insert_sio_c  do
            command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
            command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
@@ -191,12 +201,12 @@ class ScreenController < ApplicationController
 	   command_r[:sio_classname] = "plsql_blk_paging"
       end
       plsql_blk_paging
-##      debugger # breakpoint   
+      ##debugger # breakpoint   
 ##      $ts.take(["R",request.remote_ip,params[:q],tmp_session_counter,"SIO_#{command_r[:sio_viewname]}"])
 ###      $ts.take(["R",request.remote_ip,params[:q],command_r[:session_counter],"sio_#{command_r[:sio_viewname]}"],10)
       const = "R"
       
-      ##  debugger # breakpoint
+      ##debugger # breakpoint
       rcd =  plsql.__send__("SIO_#{command_r[:sio_viewname]}").all("where sio_term_id = :1 and sio_session_id = :2
                                                         and sio_session_counter = :3
                                                         and sio_command_response = :4",
@@ -204,7 +214,7 @@ class ScreenController < ApplicationController
                                                         tmp_session_counter,const)
       @tbldata = []
       
-       #### debugger
+       ####debugger
       
       for j in 0..rcd.size - 1
           tmp_data = {}
@@ -220,7 +230,7 @@ class ScreenController < ApplicationController
       @record_count = rcd[0][:sio_totalcount] unless rcd.empty?
   end  ##subpaging
   def sub_insert_sio_c  
-      ## debugger
+      ##debugger
       sub_set_fields_from_allfields 
       command_r[:person_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 1  ###########   LOGIN USER  
       command_r[:sio_viewname]  = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")[:viewname]
@@ -236,7 +246,7 @@ class ScreenController < ApplicationController
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
       ##fprnt " class #{self} : LINE #{__LINE__} sio_\#{ command_r[:sio_viewname] } :sio_#{command_r[:sio_viewname]}"
       ## fprnt " class #{self} : LINE #{__LINE__} command_r #{command_r}"
-      ## debugger
+      ##debugger
       plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       plsql.commit 
 ##    p Time.now
@@ -244,20 +254,25 @@ class ScreenController < ApplicationController
        return  command_r[:sio_session_counter]
   end   ## sub_insert_sio_c 
   def sub_strsql 
-      tmp_str = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")
-      unless tmp_str.nil? then
-        strsql = " ( "  unless tmp_str[:strselect].nil?
-        strsql << tmp_str[:strselect] unless tmp_str[:strselect].nil?
-        strsql << tmp_str[:strwhere] unless tmp_str[:strwhere].nil?
-        strsql << tmp_str[:strgrouporder] unless tmp_str[:strgrouporder].nil?
-        strsql << " ) a "  unless tmp_str[:strselect].nil?
-      end   
+      rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @nst_screenname_id 
+      if Rails.cache.exist?(rcd_id_cache_key)   then  ### 
+         strsql =  Rails.cache.read(rcd_id_cache_key)[:strsql]   ### 親からのidで子を表示
+        else
+         tmp_str = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")
+         if tmp_str then
+           strsql = " ( "  if tmp_str[:strselect]
+           strsql << tmp_str[:strselect] if tmp_str[:strselect]
+           strsql << tmp_str[:strwhere] if tmp_str[:strwhere]
+           strsql << tmp_str[:strgrouporder] if tmp_str[:strgrouporder]
+           strsql << " ) a "  if tmp_str[:strselect]
+         end
+      end
      strsql = nil if strsql == ""
      return strsql
   end
   def sub_set_fields_from_allfields 
       get_screen_code 
-     ### debugger  
+     ###debugger  
      @command_r = {}
      show_data[:allfields].each do |j|
         @command_r[j] = params[j]  unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
@@ -269,20 +284,23 @@ class ScreenController < ApplicationController
       @command_r
   end
    def get_screen_code 
-      ## debugger ## 画面の項目
+      ##debugger ## 画面の項目
       if params[:action]  == "index"  then  ## listからの初期画面の時
          @screen_code = @nst_screenname_id  = params[:id].upcase
       else
-        if  params[:q].split(';')[2].nil?   then ## 
-            @screen_code = @nst_screenname_id   =  params[:q].split(';')[0].to_s.upcase 
+        if  params[:q]  and  params[:q].split('_')[2].nil?  then ## 
+            @screen_code = @nst_screenname_id   =  params[:q].to_s.upcase 
         else    ###子画面の時
-	 @nst_screenname_id   =  params[:q].split(';')[0].to_s.upcase + ";" + params[:q].split(';')[1].to_s.upcase
-         @screen_code = params[:q].split(';')[1].to_s.upcase
+	  @nst_screenname_id   =  params[:q].to_s.upcase
+          @screen_code = params[:q].split('_')[1].to_s.upcase[-1] +  "_" + params[:q].split('_')[2].to_s.upcase
         end
       end
      screen_code
      @show_data = get_show_data screen_code
      show_data
+     if show_data.empty?
+        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
+     end
      @scriptopt = {}
      @scriptopt[:pare_contents] = ""
   end
@@ -322,7 +340,7 @@ class ScreenController < ApplicationController
     tmp_sql << "  order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == ""
     cnt_strsql = "SELECT 1 FROM " + tmp_sql 
     ##fprnt "class #{self} : LINE #{__LINE__}   cnt_strsql = '#{cnt_strsql}'"
-    ## debugger
+    ##debugger
     command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
     case  command_r[:sio_totalcount]
     when nil,0   ## 該当データなし
@@ -346,7 +364,7 @@ class ScreenController < ApplicationController
              command_r[j_key]   = j_val unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
              command_r[:id_tbl] = j_val if j_key.to_s == "id"
            end  
-           ## debugger
+           ##debugger
              command_r[:sio_recordcount] = r_cnt
              command_r[:sio_result_f] = "0"
              command_r[:sio_message_contents] = nil
@@ -382,32 +400,13 @@ class ScreenController < ApplicationController
        return strwhere[0..-7]
   end   ## sub_strwhere
 
-
- def set_addbutton pare_screen 
-      buttonopt = []
-      add_button = plsql.r_buttons.select(:all,"where button_Expiredate > sysdate 
-                                            and screen_id = :1",pare_screen)
-      unless add_button.empty?
-	      add_button.each do |x|
-                 tmp_buttonopt = {}
-                 tmp_buttonopt[:button_icon] = x[:button_icon]
-                 tmp_buttonopt[:button_title] = x[:button_title]
-                 tmp_buttonopt[:button_proc] = x[:button_proc]
-                 buttonopt << tmp_buttonopt
-             end 
-	     ##fprnt "class #{self} : LINE #{__LINE__}   buttonopt :#{  buttonopt }"
-             ##fprnt "class #{self} : LINE #{__LINE__}  add_button :#{ add_button }"
-        end
-      return  buttonopt 
-  end   ### set_addbutton pare_screen 
-  ################
   
 
   def sub_add_upd_del_setsio tblfields
 	   tblfields.each_key do |ii|     ### tblfields  paramsをsio用に変換したもの
            if !tblfields[ii].nil?   and ii.to_s != "id_tbl"   ###   sub_set_fields_from_allfields参照 
               tmp_type = plsql.DETAILFIELDS.first(" where code = '#{ii.to_s.upcase}' and Expiredate > sysdate order by expiredate ") 
-          ##  debugger
+          ##debugger
               tmp_type = unless  tmp_type.nil? then  tmp_type[:type] else "" end
               case tmp_type
 	      ### 日付項目が画面から入力されなければ当日をセット　いやなら必須項目にする。
@@ -426,8 +425,24 @@ class ScreenController < ApplicationController
         tmp_isnr[j] = params[j]  unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
         tmp_isnr[:id_tbl] = params[j] if j.to_s == "id"          
     end ##    
-    ### debugger
+    ###debugger
     return tmp_isnr
- end  
-
+ end 
+ def code_to_name
+      chgname = params[:chgname]
+      chgval  = params[:chgval]
+     if chgname then
+       getrecord = plsql.__send__(chgname.split(/_/)[0]+"s").first("where code = '#{chgval}' order by expiredate")
+       if getrecord.nil? then
+          @getname =  {"name" => "!!! no record"}
+	 else
+	  if getrecord[:name].nil? then
+	     @getname = {"name" => "!!! no record"}
+	   else
+             @getname = {"name" => "#{getrecord[:name]}"}
+          end ##getrecord[:name].nil? 
+	 end ## getrecord
+     end ##chgcode
+     render :json => @getname
+  end
 end ## ScreenController

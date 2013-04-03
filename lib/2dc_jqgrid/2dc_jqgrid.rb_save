@@ -328,8 +328,8 @@ module Jqgrid
             .navGrid("##{id}_pager",
               {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:true},
 {editCaption:"edit  #{title}",top:100,left:100,width:600,height:#{highsize},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
-{addCaption:"add  #{title}",top:100,left:100,width:600,height:#{highsize},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
-{caption:"delete  #{title}",top:100,left:100,width:600,height:#{highsize},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
+{addCaption:"add  #{title}",editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
+{caption:"delete  #{title}",delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
             #{search}
             .navButtonAdd("##{id}_pager",{ caption:"",title:"copy and add",buttonicon:"ui-icon-copy",
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");

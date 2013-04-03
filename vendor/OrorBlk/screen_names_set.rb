@@ -60,7 +60,7 @@ def fprnt str
     foo.puts str
     foo.close
 end   ##fprnt str
-def addmain tblname
+def addmain tblname     ### tblname = "R_xxxxxxx"
     @tblnamex = tblname
     plsql.execute  @crt_screen_name   ## list 用メニュー作成
     plsql.execute   @crt_pobject_code    ## 画面の名前の元ネタ作成
@@ -79,13 +79,12 @@ def addmain tblname
  def setdetailfields   ii,tblname
        init_detailfields
        indisp = 0 
-       indisp = sub_indisp(ii,tblname,"_CODE")  if ii[:column_name] =~ /_CODE/ and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_CODE/)[0] != tblname[2..-2]
-       indisp = sub_indisp(ii,tblname,"_NAME")  if ii[:column_name] =~ /_NAME/ and  ii[:column_name] != "PERSON_NAME_UPD"  and ii[:column_name].split(/_NAME/)[0] != tblname[2..-2]
+       indisp = sub_indisp(ii[:column_name],tblname)  if (ii[:column_name] =~ /_CODE/ or ii[:column_name] =~ /_NAMME/) and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_/)[0] != tblname[2..-2]
+       ### indisp = sub_indisp(ii,tblname,"_NAME")  if ii[:column_name] =~ /_NAME/ and  ii[:column_name] != "PERSON_NAME_UPD"  and ii[:column_name].split(/_NAME/)[0] != tblname[2..-2]
         @detailfields[:hideflg] = 0
         @detailfields[:id]  = ii[:seq]
         @detailfields[:screens_id] = ii[:screens_id]
-        @detailfields[:hideflg]   = if ii[:column_name] =~ /_ID/ then 1 else 0 end 
-        if  ii[:column_name] =~ /CODE/ or ii[:column_name] =~ /NAME/ then
+	if  ii[:column_name] =~ /_CODE/ or ii[:column_name] =~ /_NAME/ then
               @detailfields[:hideflg] = 0
            else
              if  ii[:table_name][2..-2] == ii[:column_name].split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
@@ -94,8 +93,9 @@ def addmain tblname
                   @detailfields[:hideflg] = 1
               end                          
          end
+        @detailfields[:hideflg]   = if ii[:column_name] =~ /_ID/ then 1 else 0 end 
          @detailfields[:code]   = ii[:column_name]
-	if ii[:data_length] >=100  then
+	if ii[:data_length] > 100  then
 	   @detailfields[:type]   =  "textarea" 
 	   @detailfields[:edoptrow]  = if (ii[:data_length] / 80).ceil > 10 then 10 else (ii[:data_length] / 80).ceil end
 	   @detailfields[:edoptcols] = 80
@@ -149,11 +149,10 @@ def addmain tblname
          crttype if @tblnamex != ii[:table_name] 
          @tblnamex = ii[:table_name]
  end ##setdetailfields  \
- def sub_indisp  ii,tblname,chngchar   ##孫のテーブルのidは不要　edit addの時必須にしない。
-     chk_screen_id = "SELECT 1," + @crt_screen_dtl  + " AND TABLE_NAME = '#{tblname}'  "
-     tblname_of_id = ii[:column_name].sub( chngchar,"_ID")
-     chk_screen_id << " and A.COLUMN_NAME =  '#{tblname_of_id}' " 
-     ##  p " chk_screen_id = '#{chk_screen_id}'"
+ def sub_indisp  column_name,tblname   ##孫のテーブルのidは不要　edit addの時必須にしない。tblname = "R_xxxx"
+      xtblname = tblname.split(/_/,2)[1]
+     chk_screen_id = "SELECT COLUMN_NAME    FROM USER_TAB_COLUMNS WHERE TABLE_NAME =  '#{xtblname}' " 
+     chk_screen_id << %Q| and COLUMN_NAME = '#{column_name.sub("_" + column_name.split(/_/)[1],"S_ID")}'|      ####CODE又はNAMEをID
      if plsql.select(:first,chk_screen_id) then
         indisp = 1
        else
