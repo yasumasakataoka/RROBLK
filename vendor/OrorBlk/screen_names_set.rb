@@ -65,11 +65,12 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
     plsql.execute  @crt_screen_name   ## list 用メニュー作成
     plsql.execute   @crt_pobject_code    ## 画面の名前の元ネタ作成
     ### p @crt_screen_name.gsub("@type@",screen_type)
-    tmp_screen_dtl = "SELECT DetailFields_SEQ.NEXTVAL SEQ," + @crt_screen_dtl  + " AND TABLE_NAME = '#{@tblnamex}'  "
+    tmp_screen_dtl = "SELECT " + @crt_screen_dtl  + " AND TABLE_NAME = '#{@tblnamex}' order by column_name "
     tsqlstr = "delete from  detailfields where id  in ( select id from  r_detailfields "
     tsqlstr << " where  screen_viewname = '#{tblname}'  and Expiredate > sysdate )"
     plsql.execute tsqlstr
     fields = plsql.select(:all,tmp_screen_dtl)   ###テーブルの項目をセット
+    @row_cnt = 0
     fields.each  do |ii|
        setdetailfields ii,tblname  ## iiの中はscreens_id 「s」がつくよ
     end
@@ -79,10 +80,12 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
  def setdetailfields   ii,tblname
        init_detailfields
        indisp = 0 
-       indisp = sub_indisp(ii[:column_name],tblname)  if (ii[:column_name] =~ /_CODE/ or ii[:column_name] =~ /_NAMME/) and  ii[:column_name] != "PERSON_CODE_UPD"  and ii[:column_name].split(/_/)[0] != tblname[2..-2]
+       indisp = sub_indisp(ii[:column_name],tblname)  if (ii[:column_name] =~ /_CODE/ or ii[:column_name] =~ /_NAME/) and  ii[:column_name] !~ /_UPD$/  and ii[:column_name].split(/_/)[0] != tblname[2..-2]
        ### indisp = sub_indisp(ii,tblname,"_NAME")  if ii[:column_name] =~ /_NAME/ and  ii[:column_name] != "PERSON_NAME_UPD"  and ii[:column_name].split(/_NAME/)[0] != tblname[2..-2]
+        @detailfields[:editable] =  0
+       @detailfields[:editable] = indisp  
         @detailfields[:hideflg] = 0
-        @detailfields[:id]  = ii[:seq]
+        @detailfields[:id]  = plsql.detailfields_seq.nextval
         @detailfields[:screens_id] = ii[:screens_id]
 	if  ii[:column_name] =~ /_CODE/ or ii[:column_name] =~ /_NAME/ then
               @detailfields[:hideflg] = 0
@@ -106,8 +109,7 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
          @detailfields[:dataprecision]   =  ii[:data_precision]
          @detailfields[:datascale]   =  ii[:data_scale]
          @detailfields[:indisp]   =  indisp  
-         @detailfields[:editable] =  0
-         ### @detailfields[:editablehide] =  nil
+	 ### @detailfields[:editablehide] =  nil
 	 @detailfields[:width] =  if ii[:data_length] * 6 > 300 then 300  else ii[:data_length] * 6 end 
          @detailfields[:width] =  60 if  /_UPD$/ =~ ii[:column_name]      or  /_UPDATE_IP$/ =~ ii[:column_name] 
 	 @detailfields[:edoptsize]  =  @detailfields[:edoptmaxlength]  
@@ -118,7 +120,7 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
          if  ii[:table_name][2..-2] == (ii[:column_name].split(/_/)[0]) then   ##同一テーブルの項目のみ変更可
              @detailfields[:editable] =  1                  
              @detailfields[:editable] =  0 if /_UPDATE_IP$/ =~ ii[:column_name]     ##  
-             @detailfields[:editable] =  0 if /_ID_UPD$/ =~ ii[:column_name]     ## 更新者と更新時間          
+             @detailfields[:editable] =  0 if /_ID/ =~ ii[:column_name]     ## 更新者と更新時間          
              @detailfields[:editable] =  0 if  /_CREATED_AT$/ =~ ii[:column_name]         
              @detailfields[:editable] =  0 if  /_UPDATED_AT$/ =~ ii[:column_name]                 
              ## @detailfields[:editablehide] =  "ADD" if /_UPDATE_IP$/ =~ ii[:column_name]     ##  
@@ -128,13 +130,16 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
            ###  p " xx indisp #{ @detailfields[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
          end
           
-         @detailfields[:editable] = indisp if ii[:column_name] =~ /_CODE/ and ii[:column_name] != "PERSON_CODE_UPD"  and  ii[:column_name].split(/_CODE/)[0] != tblname[2..-2] 
          ##   editform positon 
          @detailfields[:seqno] = 999 
-         @detailfields[:seqno] = 88 if  @detailfields[:editable] == 1 
+         @detailfields[:seqno] = 888 if  @detailfields[:editable] == 1 
          @detailfields[:rowpos] = 999   if @detailfields[:editable] ==  1 
-         @detailfields[:colpos] = 1     if @detailfields[:editable] ==  1 
-         ## p " yy indisp #{ @detailfields[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
+         @detailfields[:rowpos] = @row_cnt  += 1   if @detailfields[:editable] ==  1  and  @detailfields[:code] =~ /_CODE/
+	 @detailfields[:colpos] = 1     if @detailfields[:editable] ==  1 
+	 @detailfields[:colpos] = 2     if @detailfields[:editable] ==  1  and  @detailfields[:code] =~ /_NAME/
+	 ### 他の同一テーブルに必須項目は　codeとNAMEだけ 項目別にソート済
+	 @detailfields[:rowpos] = @row_cnt     if @detailfields[:editable] ==  1  and  @detailfields[:code] =~ /_NAME/
+         ## p " yy indisp #{ oooooooo[:editable] } ,ii[:column_name] :#{ii[:column_name] } "  if ii[:column_name] =~ /_CODE/ 
          fprnt " @detailfields = #{@detailfields}"
          plsql.detailfields.insert @detailfields
          @strsql << " ,"

@@ -82,21 +82,8 @@ module Jqgrid
       
       # Generate columns data
       col_names, col_model = gen_columns(columns)
-      highsize = 70  ##edir form 高さ
-      columns.each do |edt|
-	 ### fprnt " class #{self} : LINE #{__LINE__} edt #{edt}"
-         if edt[:formoptions] then
-		 if edt[:formoptions][:colpos] == 1 then 
-		     highsize += 23 
-		 end
-	 end
-	 if edt[:editoptions] then     ##textarea
-		 if edt[:editoptions][:rows]  then 
-		     highsize += -10 * (edt[:editoptions][:rows].to_i  - 1)
-		     highsize += 23
-		 end
-	 end
-      end
+       ##edir form_posion_size 
+      form_ps = "top:100,left:50,width:1200,height:600,dataheight:500"
       # nest screen 
       init_jq = ''
       nst_div  = '</script> <div id="pare_div">' 
@@ -327,9 +314,9 @@ module Jqgrid
             })
             .navGrid("##{id}_pager",
               {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:true},
-{editCaption:"edit  #{title}",top:100,left:100,width:600,height:#{highsize},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
-{addCaption:"add  #{title}",top:100,left:100,width:600,height:#{highsize},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
-{caption:"delete  #{title}",top:100,left:100,width:600,height:#{highsize},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
+{editCaption:"edit  #{title}",#{form_ps},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
+{addCaption:"add  #{title}",#{form_ps},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
+{caption:"delete  #{title}",#{form_ps},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
             #{search}
             .navButtonAdd("##{id}_pager",{ caption:"",title:"copy and add",buttonicon:"ui-icon-copy",
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");

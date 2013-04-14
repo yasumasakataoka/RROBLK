@@ -5,7 +5,7 @@ before_filter :authenticate_user!
 ## 1 session 1 user が必須　今 no chk 
   def index
        ## debugger  ##debugger  の位置を変更するとエラーになる。???
-       cache_key = "listindex" + current_user[:id].to_s
+       cache_key = "listindex" + sub_blkget_grpcode
        @vlist = Rails.cache.read(cache_key)  ##
 ###       if  @vlist.nil? or @vlist.empty?
            @vlist = Hash.new
@@ -18,7 +18,7 @@ before_filter :authenticate_user!
   ##         debugger # breakpoint
            selveiw =  plsql.r_screens.all
            selveiw.each do |i|
-             @vlist[i[:screen_code].downcase.to_sym] = getblkpobj(i[:screen_code],"A") ## A:画面
+             @vlist[i[:screen_code].downcase.to_sym] = sub_blkgetpobj(i[:screen_code],"A",sub_blkget_grpcode) ## A:画面
              ### 画面の種類にかかわらずViewnameでユニークであること。
              # 将来はグループ分けが必要
            end 

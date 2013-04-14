@@ -185,7 +185,7 @@ CREATE TABLE ArvInsts
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,StkHists_id_arvinsts NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,IsuDate timestamp
   ,Duedate timestamp
   ,QTY NUMBER(16,4)
@@ -196,7 +196,7 @@ CREATE TABLE ArvInsts
   ,Carton NUMBER(4)
   ,Remark varchar(200)
   ,ConfUrl varchar(100)
-  ,Transports_id varchar(200)
+  ,Transports_id NUMBER(38)
   ,Persons_id_Chrg NUMBER(38)
   ,Persons_id_Upd NUMBER(38)
   ,Update_IP Varchar(40)
@@ -248,7 +248,7 @@ CREATE TABLE ShpOrds
   ( id NUMBER(38)
   ,Sno Varchar(40)
   ,LineNo NUMBER(4)
-  ,StkHists_id_shpords NUMBER(38)
+  ,StkHists_id NUMBER(38)
   ,IsuDate timestamp
   ,OrdNo Varchar(40)
   ,Duedate timestamp
@@ -277,7 +277,7 @@ CREATE TABLE ShpInsts
   ,StkHists_id_shpinsts NUMBER(38)
   ,Duedate timestamp
   ,QTY NUMBER(16,4)
-  ,Transports_id varchar(200)
+  ,Transports_id NUMBER(38)
   ,ConfUrl varchar(100)
   ,Persons_id_Chrg NUMBER(38)
   ,Persons_id_Upd NUMBER(38)
@@ -860,11 +860,11 @@ drop sequence Persons_seq
 create sequence Persons_seq
 ;  
 ; 
-DROP TYPE TypUserGroup force 
-; 
-CREATE TYPE TypUserGroup AS OBJECT  
+DROP TABLE UserGroups
+;
+CREATE TABLE UserGroups
   ( id numeric(38)
-  ,Code numeric(38)
+  ,Code VARCHAR2(30)
   ,Name varchar(20)
   ,Remark VARCHAR(100)
   ,Persons_id_Upd numeric(38)
@@ -872,13 +872,8 @@ CREATE TYPE TypUserGroup AS OBJECT
   ,created_at date
   ,Updated_at date
   ,Expiredate date
-)
-;
-DROP TABLE UserGroups
-;
-CREATE TABLE UserGroups OF  TypUserGroup
-  (  CONSTRAINT UserGroups_id_pk PRIMARY KEY (id)
-  , CONSTRAINT UserGroups_45_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT UserGroups_id_pk PRIMARY KEY (id)
+  , CONSTRAINT UserGroups_39_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence UserGroups_seq
@@ -1307,9 +1302,9 @@ drop sequence Locas_seq
 create sequence Locas_seq
 ;  
 ; 
-DROP TYPE TypInvP force 
-; 
-CREATE TYPE TypInvP AS OBJECT  
+DROP TABLE InvPs
+;
+CREATE TABLE InvPs
   ( id number(38)
   ,Locas_id_InvP number(38)
   ,Persons_id_CHRG number(38)
@@ -1320,12 +1315,7 @@ CREATE TYPE TypInvP AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-)
-;
-DROP TABLE InvPs
-;
-CREATE TABLE InvPs OF  TypInvP
-  (  CONSTRAINT InvPs_id_pk PRIMARY KEY (id)
+  , CONSTRAINT InvPs_id_pk PRIMARY KEY (id)
 )
 ;
 drop sequence InvPs_seq
@@ -1698,6 +1688,7 @@ CREATE TABLE StkHists
   ,QTY NUMBER(38)
   ,AMT NUMBER(38)
   ,Remark VARCHAR(100)
+  ,strdate date
   ,Expiredate date
   ,Persons_id_Upd NUMBER(38)
   ,Update_IP varchar(40)
@@ -1723,11 +1714,23 @@ CREATE TABLE StkchkTbls
   ,MkAmtType NUMBER(8)
   ,MaxBalQty NUMBER(8)
   ,MaxBalAmt NUMBER(8)
-  ,MaxBalAmt NUMBER(8)
   ,safestkqty NUMBER(8)
   ,safestkprd NUMBER(8)
+  ,Expiredate date
+  ,Remark VARCHAR(200)
+  ,Persons_id_Upd NUMBER(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Updated_at date
   , CONSTRAINT StkchkTbls_id_pk PRIMARY KEY (id)
-  , CONSTRAINT StkchkTbls_33_uk  UNIQUE (itms_id,locas_id,org,TBLNAME,newtblname,Expiredate)
+  , CONSTRAINT StkchkTbls_32_uk  UNIQUE (itms_id,locas_id,dataflg,Expiredate)
+)
+;
+drop sequence StkchkTbls_seq
+;  
+create sequence StkchkTbls_seq
+;  
+; 
 DROP TABLE Ctlxxxxxx
 ;
 CREATE TABLE Ctlxxxxxx
@@ -1742,15 +1745,10 @@ CREATE TABLE Ctlxxxxxx
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Ctlxxxxxx_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Ctlxxxxxx_51_uk  UNIQUE (PTBLID,id)
-  , CONSTRAINT Ctlxxxxxx_52_uk  UNIQUE (CTBLName,CTBLID,id)
+  , CONSTRAINT Ctlxxxxxx_50_uk  UNIQUE (PTBLID,id)
+  , CONSTRAINT Ctlxxxxxx_51_uk  UNIQUE (CTBLName,CTBLID,id)
 )
 ;
-drop sequence StkchkTbls_seq
-;  
-create sequence StkchkTbls_seq
-;  
-; 
 drop sequence Ctlxxxxxx_seq
 ;  
 create sequence Ctlxxxxxx_seq
