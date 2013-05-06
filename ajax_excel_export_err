@@ -1,0 +1,7 @@
+ 1 down vote accepted
+	
+
+It does not make sense to use $.ajax to download excel file - the ajax call is really meant to get text-based data (html. xml, JSON) in your js code so that you can work with it. Browser knows how to handle (e.g. prompt for saving the file) the binary content such as excel.
+
+In this case, all you need to is a simple POST/GET request to initiate the excel file download (as simple as document.location = "/home/download?q=keyword";)
+

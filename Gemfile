@@ -48,4 +48,9 @@ gem 'activerecord-oracle_enhanced-adapter'
  gem 'delayed_job_active_record'
 ##gem 'daemon-spawn', :require => 'daemon_spawn'
  gem "daemons"
+ gem "axlsx"
+## gem "simple-spreadsheet"
+##  gem 'roo'
+  gem "rubyXL"
+ gem 'google-spreadsheet-ruby'
 

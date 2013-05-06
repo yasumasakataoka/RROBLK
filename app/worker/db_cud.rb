@@ -1,10 +1,15 @@
 class DbCud  < ActionController::Base
  ## @queue = :default
  ## def self.perform(sio_id,sio_view_name)
-  def perform(sio_id,sio_view_name)
+   def command_r
+      @command_r
+  end
+  def perform(sio_session_counter,sio_view_name)
       begin
+     @command_r = {}
+     command_r
        @pare_class = "batch"
-      strsql = "where sio_session_counter = #{sio_id} and sio_command_response = 'C'"
+      strsql = "where sio_session_counter = #{sio_session_counter} and sio_command_response = 'C'"
       ## fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql}"
       chk_cmn =  plsql.__send__(sio_view_name).all(strsql)
       tblname = sio_view_name.split(/_/,3)[2]
@@ -21,7 +26,7 @@ class DbCud  < ActionController::Base
 	           ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
                    else  ### link先のidを求める
-	           if   j_to_s =~ /(_upd|sio_|id_tbl)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
+	           if   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
                         else
 			  case j_to_s 
                                when   /_code/  ##tmp_key[j] = other tablename+_+fielfname+_+shikibetushi  <-- value
@@ -34,45 +39,50 @@ class DbCud  < ActionController::Base
            end ## j,k
            to_cr.merge! sub_code_to_id(tmp_key)  ##codeからもとめたid優先
 	   ##  fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{i[:person_id_upd]}"
-	   to_cr[:persons_id_upd] = i[:person_id_upd]  
-	   to_cr[:created_at] = Time.now
+	   to_cr[:persons_id_upd] = i[(xtblname + "_person_id_upd").to_sym]
 	   case i[:sio_classname]
                 when "plsql_blk_insert" then
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
+		    to_cr[:created_at] = Time.now
+		    to_cr[:updated_at] = Time.now
 		    fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
                 when "plsql_blk_update" then
-                    to_cr[:where] = {:id => i[:id_tbl]}
+                    to_cr[:where] = {:id => i[:id]}             ##update deleteの時はテーブル_idにはなにもセットされない。
+		    to_cr[:updated_at] = Time.now
                     fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
 		    ##debugger
                     plsql.__send__(tblname).update  to_cr
                 when "plsql_blk_delete" then 
-                    plsql.__send__(tblname).delete(:id => i[:id_tbl])
+                    plsql.__send__(tblname).delete(:id => i[:id])
 		when "plsql_blk_copy_insert" then   ###画面から新しい画面に
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
 		    fprnt "class #{self} : LINE #{__LINE__} COPY INSERT : to_cr = #{to_cr}"
+		    to_cr[:created_at] = Time.now
+		    to_cr[:updated_at] = Time.now
 		    plsql.__send__(tblname).insert to_cr
 		    add_tbl_ctlxxxxxx i[:sio_org_tblname],i[:sio_org_tblid],tblname,to_cr[:id] 
 		when "plsql_blk_chk_insert" then   ##バランスチェック
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
+		    to_cr[:created_at] = Time.now
+		    to_cr[:updated_at] = Time.now
 		    fprnt "class #{self} : LINE #{__LINE__} chk INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
 		end   ## case iud 
 	   r_cnt += 1
-	   command_r = {}
 	   ##debugger
-	   command_r = i
-	   command_r[:id_tbl] =  to_cr[:id] 
-	   command_r[:sio_recordcount] = r_cnt
-           command_r[:sio_result_f] = "0"
-           command_r[:sio_message_contents] = nil
-	   to_cr.each do |i,j| 
+               command_r = i
+	       command_r[:id] = command_r[(xtblname + "_id").to_sym] =  to_cr[:id]   if i[:sio_classname] =~/_insert/
+	       command_r[:sio_recordcount] = r_cnt
+               command_r[:sio_result_f] = "0"
+               command_r[:sio_message_contents] = nil
+	       to_cr.each do |i,j| 
 	          if i.to_s =~ /s_id/ then
-		     newi = i.to_s.sub("s_id","_id").to_sym
+		     newi = (xtblname + "_" + i.to_s.sub("s_id","_id")).to_sym
 		     command_r[newi] = j if j
 	          end
-	   end
-           sub_insert_sio_r command_r   do
+	        end
+	   sub_insert_sio_r   command_r do
 	   end	   ## 結果のsio書き込み
 	   cmnd_code = "process_scrs_" + i[:sio_code]   ##画面ごとの処理
 	   fprnt " LINE #{__LINE__}  i[:sio_code] = #{i[:sio_code]}  "
@@ -100,6 +110,5 @@ class DbCud  < ActionController::Base
      end   ## begin
   end   ##perform
   handle_asynchronously :perform
-
  end ## class
 

@@ -12,7 +12,8 @@ class ScreenController < ApplicationController
      @scriptopt[:pare_contents] = ""
      @options[:div_repl_id] = ""
      @options[:autowidth] = "true"
-     sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+     ###sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+     get_screen_code 
      @disp_screenname_name = sub_blkgetpobj(screen_code,"A",sub_blkget_grpcode)
      view_item_set
      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
@@ -40,11 +41,15 @@ class ScreenController < ApplicationController
    params[:rows] ||= 10
    ## get from cache
    #### subpaging delay
+   get_screen_code 
    sub_set_fields_from_allfields ###画面の内容をcommand_rへ
-   subpaging           ## subpaging 
+   @tbldata =  []
+   subpaging    do   	  |tmp_data|    ## subpaging 
+	 @tbldata << tmp_data 
+   end 
    ##  p " @tbldata  :  #{@tbldata}"
    #fprnt  " class #{self} : LINE #{__LINE__} @record_count :  #{@record_count}"
-   ##debugger
+   ###debugger
    plsql.commit
    respond_with @tbldata.to_jqgrid_json( show_data[:allfields] ,params[:page], params[:rows],@record_count) 
   end  ##disp
@@ -55,6 +60,7 @@ class ScreenController < ApplicationController
      chil_code =   params[:nst_tbl_val].split(";")[1]   ### 子のviewのcode
      @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split(";")[2],"A",sub_blkget_grpcode)   ### 子の画面
      cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
+     get_screen_code
      ##########
      @nst_screenname_id = "#{pare_code}#{chil_code}"
      @scriptopt = {}
@@ -65,8 +71,9 @@ class ScreenController < ApplicationController
      pare_view = plsql.screens.first("where code = '#{pare_code}' and Expiredate > sysdate order by expiredate ")[:viewname].upcase  ## set @gridcolumns 
      @screen_code = chil_code
      screen_code
-     @show_data = get_show_data screen_code
+     @show_data = get_show_data(screen_code)
      show_data
+     render :text=> "xxxx  Create DetailFields #{screen_code} by crt_r_view_sql.rb" and exit if show_data.nil?
      view_item_set 
      ##debugger 
      ## p "chil_view : #{chil_view.downcase}  : #{@nst_screenname_id} : "#{@disp_screenname_name} "
@@ -123,27 +130,29 @@ class ScreenController < ApplicationController
  ### formで矢印がきかない
  def add_upd_del    ##  add update delete
      params[:oper] = "add" if  params[:copy] == "yes"   ### copy and add
+     get_screen_code
+     sub_set_fields_from_allfields
      case params[:oper] 
        when "add"
           rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s +  params[:q]  ### :q -->@nst_screenname_id
           hash_rcd = Rails.cache.read(rcd_id_cache_key)  
-          tmp_isnr =  sub_set_fields_from_allfields
+          ##tmp_isnr =  sub_set_fields_from_allfields
           ## fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
           ##fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
           tmp_isnr.merge! hash_rcd unless hash_rcd.nil?
-          sub_insert_sio_c  command_r do    ###更新要求
+          sub_insert_sio_c   do    ###更新要求
              command_r[:sio_classname] = "plsql_blk_insert"
-             command_r[:id_tbl] = nil
+             ## command_r[:id_tbl] = nil
           end
        when "del"
-	  sub_set_fields_from_allfields ###画面の内容をcommand_rへ
-          sub_insert_sio_c  command_r do
+	  ##sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+          sub_insert_sio_c   do
              command_r[:sio_classname] = "plsql_blk_delete"
           end
        when "edit"
 	 ###debugger
-	 sub_set_fields_from_allfields ###画面の内容をcommand_rへ
-         sub_insert_sio_c command_r   do
+	 ##sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+         sub_insert_sio_c   do
            command_r[:sio_classname] = "plsql_blk_update"
 	   ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
          end
@@ -152,15 +161,15 @@ class ScreenController < ApplicationController
        render :text => "return to menu because session loss params:#{params[:oper]} "
      end ## case parems[:oper]
      ###debugger
+     plsql.commit
     dbcud = DbCud.new
     dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-    plsql.commit
     render :nothing=>true
  end  ## add_upd_del
  #####
-  def subpaging
+  def subpaging  
       ###debugger
-      tmp_session_counter = sub_insert_sio_c (command_r) do    ###ページング要求
+      sub_insert_sio_c  do    ###ページング要求
 	   command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
            command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
            command_r[:sio_sord] = params[:sord]
@@ -168,6 +177,7 @@ class ScreenController < ApplicationController
 	   command_r[:sio_sidx]  = params[:sidx]
 	   command_r[:sio_classname] = "plsql_blk_paging"
       end
+      tmp_session_counter = command_r[:sio_session_counter]
       plsql_blk_paging
       ##debugger # breakpoint   
 ##      $ts.take(["R",request.remote_ip,params[:q],tmp_session_counter,"SIO_#{command_r[:sio_viewname]}"])
@@ -180,19 +190,20 @@ class ScreenController < ApplicationController
                                                         and sio_command_response = :4",
                                                         request.remote_ip,params[:q],
                                                         tmp_session_counter,const)
-      @tbldata = []
       
-       ####debugger
+       ##debugger
       
       for j in 0..rcd.size - 1
           tmp_data = {}
           show_data[:allfields].each do |k|
-           k_to_s =  k.to_s 
-           tmp_data[k] = rcd[j][k] if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-           tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
-           tmp_data[k] = rcd[j][k].strftime("%Y-%m-%d") if k_to_s =~ /expiredate/ and  !rcd[j][k].nil?
+             k_to_s =  k.to_s 
+             tmp_data[k] = rcd[j][k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+             ## tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
+             tmp_data[k] = rcd[j][k].strftime("%Y-%m-%d") if k_to_s =~ /expiredate/ and  !rcd[j][k].nil?
           end 
-          @tbldata << tmp_data
+         ## @tbldata << tmp_data if  j < 10000
+	 ## @alldatas << tmp_data
+	 yield tmp_data
       end ## for
       @record_count = 0
       @record_count = rcd[0][:sio_totalcount] unless rcd.empty?
@@ -214,35 +225,20 @@ class ScreenController < ApplicationController
      strsql = nil if strsql == ""
      return strsql
   end
-  def char_to_number_data  ###   
-      show_data[:allfields].each do |i|
-          unless params[i].nil? then 
-             command_r[i] = params[i] 
-             case show_data[:alltypes][i]
-                  when "date","timestamp(6)" then
-			 begin
-                           command_r[i] = Time.parse(command_r[i].gsub(/\W/,""))
-			  rescue
-                            command_r[i] = Time.now
-			  end
-                  when "number"
-                         command_r[i] = command_r[i].gsub(/\W/,"").to_f
-             end
-           end  ## unless
-      end
-      return command_r
-  end ## defar_to....
-
   def sub_set_fields_from_allfields ###画面の内容をcommand_rへ
-      get_screen_code 
-     ###debugger  
+     #get_screen_code 
+     ##debugger  
      @command_r = {}
      command_r
+     ##debugger
+     if show_data.empty? 
+        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
+     end
      show_data[:allfields].each do |j|
-        command_r[j] = params[j]  unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-        command_r[:id_tbl] = params[j].to_i if j.to_s == "id"          
-    end ##
-    char_to_number_data     ##parmsの文字型を数字・日付に
+        command_r[j] = params[j]  ##unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
+        ##command_r[:id_tbl] = params[j].to_i if j.to_s == "id"          
+     end ##
+    ##char_to_number_data      ##parmsの文字型を数字・日付に
   end  
   def get_screen_code 
       ##debugger ## 画面の項目
@@ -257,11 +253,9 @@ class ScreenController < ApplicationController
         end
       end
      screen_code
-     @show_data = get_show_data screen_code
+     @show_data = get_show_data(screen_code)
      show_data
-     if show_data.empty?
-        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
-     end
+     ##debugger
      @scriptopt = {}
      @scriptopt[:pare_contents] = ""
   end
@@ -279,9 +273,9 @@ class ScreenController < ApplicationController
        command_r.each  do |i,j|
           tmp_field = i.to_s 
           unless  tmp_field =~ /^sio_/  then
-             unless  tmp_field == "id_tbl" then
+             ##unless  tmp_field == "id_tbl" then
                strfields <<  tmp_field
-             end 
+             ##end 
           end  ## unless  unless i.to_s =~ /^sio_/ 
        end   ## command_r.each
        strfields =  strfields.join(",") 
@@ -289,7 +283,7 @@ class ScreenController < ApplicationController
   end   ##  sub_getfield
 
   def plsql_blk_paging  
-    command_r[:id] = nil
+    ##command_r[:id] = nil
     #####   strsqlにコーディングしてないときは、viewをしよう
 ####     strdql はupdate insertには使用できない。
     
@@ -308,7 +302,7 @@ class ScreenController < ApplicationController
     case  command_r[:sio_totalcount]
     when nil,0   ## 該当データなし　　回答
          ## insert_sio_r recodcount,result_f,contents
-	 sub_insert_sio_r command_r do
+	 sub_insert_sio_r  command_r do
 	    contents = "not find record"    ### 将来usergroup毎のメッセージへ
 	    command_r[:sio_recordcount] = 0
             command_r[:sio_result_f] = "1"
@@ -319,17 +313,17 @@ class ScreenController < ApplicationController
          strsql = "select #{sub_getfield} from (SELECT rownum cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
          strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
-         ##fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+         fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
          pagedata = plsql.select(:all, strsql)
          pagedata.each do |j|
            r_cnt += 1
            ##   command_r.merge j なぜかうまく動かない。
            j.each do |j_key,j_val|
-             command_r[j_key]   = j_val unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-             command_r[:id_tbl] = j_val if j_key.to_s == "id"
+             command_r[j_key]   = j_val ## unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
+             ## command_r[:id_tbl] = j_val if j_key.to_s == "id"
            end  
            ##debugger
-           sub_insert_sio_r  command_r do    ###回答
+           sub_insert_sio_r command_r  do    ###回答
 	       command_r[:sio_recordcount] = r_cnt
                command_r[:sio_result_f] = "0"
                command_r[:sio_message_contents] = nil
@@ -397,4 +391,43 @@ class ScreenController < ApplicationController
      end ##chgcode
      render :json => @getname
   end  #code_to_name
+
+ ####### ajaxでは xls,xlsxはdownloadできない?????
+  def export_to_xlsx
+      params[:page] = 1 
+      params[:rows] = 10
+      sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+      @alldatas =  []
+      subpaging    do  |tmp_data|	      ## subpaging 
+	 @alldatas << tmp_data
+      end 
+      plsql.commit
+      fields =  show_data[:allfields]
+      pkg = Axlsx::Package.new
+      pkg.workbook do |wb|
+          wb.add_worksheet(:name => 'result') do |ws|   # シート名の指定は省略可
+             ws.add_row fields
+             @alldatas.each do  |i|
+                rowvalue = []
+	        i.each do |key,value|  ###項目の順番をタイトルと合わすこと。必須で色をわける。
+	           rowvalue << value
+                 end
+	         ws.add_row rowvalue
+              end  ###alldatas
+           end  ##wb
+       end  ##pkg
+      ##debugger
+       send_data(pkg.to_stream.read, 
+            :type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	    ### :disposition=>"inline",
+            :filename => "export.xlsx")
+      
+      #temp = Tempfile.new("#{screen_code}_export.xlsx")
+      #pkg.serialize temp.path
+      #send_file temp.path,
+      #     :type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      #     :filename => "#{screen_code}_export.xlsx"
+
+       ## respond_with @tbldata.to_jqgrid_json( show_data[:allfields] ,params[:page], params[:rows],@record_count) 
+  end  #export
 end ## ScreenController

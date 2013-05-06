@@ -1,0 +1,608 @@
+﻿https://github.com/randym/axlsx
+
+
+ axlsx /
+
+Show whitespace preservation in basic worksheet example.
+latest commit 0c9a48eef6
+randym authored 2 days ago
+	examples 	2 days ago 	Show whitespace preservation in basic worksheet example. [randym]
+	lib 	2 days ago 	Refactored and renamed space preservation [randym]
+	test 	2 days ago 	Refactored and renamed space preservation [randym]
+	.gitignore 	18 days ago 	Updated gemfile source and added ruby-prof [randym]
+	.rvmrc 	10 months ago 	make fit_to_page MOAR readable [randym]
+	.travis.yml 	18 days ago 	Excluded profile group when running on travis [randym]
+	.yardopts 	7 months ago 	Patched .yardopts to remove nodoc option and proprly include CHANGELO… [randym]
+	.yardopts_guide 	a year ago 	-refactoring chart position and axis data/category for chart. [randym]
+	CHANGELOG.md 	10 days ago 	Added prep for 1.3.6 release [randym]
+	Gemfile 	10 days ago 	Moved simplecov dependency to Gemfile [randym]
+	LICENSE 	a year ago 	more release prep [randym]
+	README.md 	2 days ago 	Refactored and renamed space preservation [randym]
+	Rakefile 	5 months ago 	Updated readme and docs for pre 1.3.4 release [randym]
+	axlsx.gemspec 	10 days ago 	Moved simplecov dependency to Gemfile [randym]
+	notes_on_header_footer.md 	10 months ago 	code updates for readability. [randym]
+	rubima.md 	10 months ago 	dynamic docs… hmmm [randym]
+README.md
+Axlsx: Office Open XML Spreadsheet Generation
+
+Build Status
+
+If you are using axlsx for comercial purposes, or just want to show your appreciation for the gem, please don't hesitate to make a donation.
+
+Click here to lend your support to: axlsx and make a donation at www.pledgie.com !
+
+IRC:irc.freenode.net / #axlsx
+
+Git:http://github.com/randym/axlsx
+
+Twitter: https://twitter.com/#!/morgan_randy
+
+Google Group: https://groups.google.com/forum/?fromgroups#!forum/axlsx
+
+Author: Randy Morgan
+
+Copyright: 2011 - 2013
+
+License: MIT License
+
+Latest Version: 1.3.6
+
+Ruby Version: 1.8.7 (soon to be depreciated!!!), 1.9.2, 1.9.3, 2.0.0
+
+JRuby Version: 1.6.7 1.8 and 1.9 modes
+
+Rubinius Version: rubinius 2.0.0dev * lower versions may run, this gem always tests against head.
+
+Release Date: April 24th 2013
+
+If you are working in rails, or with active record see: acts_as_xlsx
+
+acts_as_xlsx is a simple ActiveRecord mixin that lets you generate a workbook with:
+
+```ruby
+Posts.where(created_at > Time.now-30.days).to_xlsx
+```
+
+** and **
+
+    http://github.com/straydogstudio/axlsx_rails Axlsx_Rails provides an Axlsx renderer so you can move all your spreadsheet code from your controller into view files. Partials are supported so you can organize any code into reusable chunks (e.g. cover sheets, common styling, etc.) You can use it with acts_as_xlsx, placing the to_xlsx call in a view and add ':package => xlsx_package' to the parameter list. Now you can keep your controllers thin!
+
+There are guides for using axlsx and acts_as_xlsx here: http://axlsx.blog.randym.net
+
+If you are working with ActiveAdmin see:
+
+activeadmin_axlsx
+
+It provies a plugin and dsl for generating downloadable reports.
+
+The examples directory contains a number of more specific examples as well.
+Synopsis
+
+Axlsx is an Office Open XML Spreadsheet generator for the Ruby programming language. With Axlsx you can create excel worksheets with charts, images (with links), automated and fixed column widths, customized styles, functions, tables, conditional formatting, print options, comments, merged cells, auto filters, file and stream serialization as well as full schema validation. Axlsx excels at helping you generate beautiful Office Open XML Spreadsheet documents without having to understand the entire ECMA specification.
+
+Screen 1
+Feature List
+
+**1. Author xlsx documents: Axlsx is made to let you easily and quickly generate professional xlsx based reports that can be validated before serialization.
+
+**2. Generate 3D Pie, Line, Scatter and Bar Charts: With Axlsx chart generation and management is as easy as a few lines of code. You can build charts based off data in your worksheet or generate charts without any data in your sheet at all. Customize gridlines, label rotation and series colors as well.
+
+**3. Custom Styles: With guaranteed document validity, you can style borders, alignment, fills, fonts, and number formats in a single line of code. Those styles can be applied to an entire row, or a single cell anywhere in your workbook.
+
+**4. Automatic type support: Axlsx will automatically determine the type of data you are generating. In this release Float, Integer, String, Date, Time and Boolean types are automatically identified and serialized to your spreadsheet.
+
+**5. Automatic and fixed column widths: Axlsx will automatically determine the appropriate width for your columns based on the content in the worksheet, or use any value you specify for the really funky stuff.
+
+**6. Support for automatically formatted 1904 and 1900 epochs configurable in the workbook.
+
+**7. Add jpg, gif and png images to worksheets with hyperlinks
+
+**8. Reference cells in your worksheet with "A1" and "A1:D4" style references or from the workbook using "Sheet1!A3:B4" style references
+
+**9. Cell level style overrides for default and customized style objects
+
+**10. Support for formulas, merging, row and column outlining as well as cell level input data validation.
+
+**12. Auto filtering tables with worksheet.auto_filter as well as support for Tables
+
+**13. Export using shared strings or inline strings so we can inter-op with iWork Numbers (sans charts for now).
+
+**14. Output to file or StringIO
+
+**15. Support for page margins and print options
+
+**16. Support for password and non password based sheet protection.
+
+**17. First stage interoperability support for GoogleDocs, LibreOffice, and Numbers
+
+**18. Support for defined names, which gives you repeated header rows for printing.
+
+**19. Data labels for charts as well as series color customization.
+
+**20. Support for sheet headers and footers
+Installing
+
+To install Axlsx, use the following command:
+
+$ gem install axlsx
+
+Examples
+
+The example listing is getting overly large to maintain here. If you are using Yard, you will be able to see the examples in line below.
+
+Here's a teaser that kicks about 2% of what the gem can do.
+
+Axlsx::Package.new do |p|
+  p.workbook.add_worksheet(:name => "Pie Chart") do |sheet|
+    sheet.add_row ["Simple Pie Chart"]
+    %w(first second third).each { |label| sheet.add_row [label, rand(24)+1] }
+    sheet.add_chart(Axlsx::Pie3DChart, :start_at => [0,5], :end_at => [10, 20], :title => "example 3: Pie Chart") do |chart|
+      chart.add_series :data => sheet["B2:B4"], :labels => sheet["A2:A4"],  :colors => ['FF0000', '00FF00', '0000FF']
+    end
+  end
+  p.serialize('simple.xlsx')
+end
+
+Please see the examples for more.
+
+{include:file:examples/example.rb}
+
+There is much, much more you can do with this gem. If you get stuck, grab me on IRC or submit an issue to GitHub. Chances are that it has already been implemented. If it hasn't - let's take a look at adding it in.
+Documentation
+
+This gem is 100% documented with YARD, an exceptional documentation library. To see documentation for this, and all the gems installed on your system use:
+
+ gem install yard
+
+ yard server -g
+
+Specs
+
+This gem has 100% test coverage using test/unit. To execute tests for this gem, simply run rake in the gem directory.
+Change log
+
+    April.??.13:1.37
+        Added space preservation for cell text. This will allow whitespace in cell text both when using shared strings and when serializing directly to the cell.
+    April.24.13:1.3.6
+        Fixed LibreOffice/OpenOffice issue to properly apply colors to lines in charts.
+        Added support for specifying between/notBetween formula in an array. thanks straydogstudio!
+        Added standard line chart support. thanks scambra
+        Fixed straydogstudio's link in the README. thanks nogara!
+    February.4.13:1.3.5
+        converted vary_colors for chart data to instance variable with appropriate defulats for the various charts.
+        Added trust_input method on Axlsx to instruct the serializer to skip HTML escaping. This will give you a tremendous performance boost, Please be sure that you will never have <, >, etc in your content or the XML will be invalid.
+        Rewrote cell serialization to improve performance
+        Added iso_8601 type to support text based date and time management.
+        Bug fix for relationahip management in drawings when you add images and charts to the same worksheet drawing.
+        Added outline_level_rows and outline_level_columns to worksheet to simplify setting up outlining in the worksheet.
+        Added support for pivot tables
+        Added support for descrete border edge styles
+        Improved validation of sheet names
+        Added support for formula value caching so that iOS and OSX preview can show the proper values. See Cell.add_row and the formula_values option.
+    November.25.12:1.3.4
+        Support for headers and footers for worksheets
+        bug fix: Properly escape hyperlink urls
+        Improvements in color_scale generation for conditional formatting
+        Improvements in autowidth calculation.
+    November.8.12:1.3.3
+        Patched cell run styles for u and validation for family
+
+Please see the {file:CHANGELOG.md} document for past release information.
+Known interoperability issues.
+
+As axslx implements the Office Open XML (ECMA-376 spec) much of the functionality is interoperable with other spreadsheet software. Below is a listing of some known issues.
+
+    Libre Office
+        You must specify colors for your series. see examples/chart_colors.rb for an example.
+        You must use data in your sheet for charts. You cannot use hard coded values.
+        Chart axis and gridlines do not render. I have a feeling this is related to themes, which axlsx does not implement at this time.
+
+    Google Docs
+        Images are known to not work with google docs
+        border colors do not work
+
+    Numbers
+        you must set 'use_shared_strings' to true. This is most conveniently done just before rendering by calling Package.use_shared_strings = true prior to serialization.
+
+p = Axlsx::Package.new
+p.workbook.add_worksheet(:name => "Basic Worksheet") do |sheet|
+  sheet.add_row ["First Column", "Second", "Third"]
+  sheet.add_row [1, 2, 3]
+end
+p.use_shared_strings = true
+p.serialize('simple.xlsx')
+
+    charts do not render
+
+
+#########################################
+
+
+http://rails.hatenadiary.jp/entry/2013/02/25/160344
+
+2013-02-25
+axlsx (gem) で xlsx ファイルをダウンロード
+Rails3 axlsx
+
+Ruby on Rails v3.2.11
+axlsx v1.3.4
+
+
+いい加減そろそろ Excel2003 形式 (.xls) で出力し続ける理由がなくなってきてしまったので(^_^;、ようやく重い腰をあげて Excel2007 形式 (.xlsx) で出力に移行することにしました。使えそうなライブラリはないかと gem を探してみました。とりあえず目についた以下の3つをさわってみました。
+
+    roo
+    acts_as_xlsx
+    axlsx
+
+3つを試してみた印象
+
+roo は xls と xlsx の両対応という触れ込みで、No.1候補か！？と思ったんですが、xls部は spreadsheet に丸投げのようで、xls部とxlsx部とで書き方の作法がまるで違って、別々のものを使っても大して変わらない… さらに独自に作成されたxlsx部は、cell, row, column といったクラスがなく常に番地（行番号・列番号）でアクセスするという具合で、なんかかっちょ悪い感じがしました。（使用者の感想です）
+
+他の2つ、acts_as_xlsx と axlsx は同じ作者によるライブラリのようで rails で使うなら acts_to_xlsx がおすすめと書いてありました。たとえば
+
+Posts.where(created_at > Time.now-30.days).to_xlsx
+
+みたいに、モデルからfindした結果をそのまま xlsx 化する場合には便利なようです。
+
+ただ今回の自分の用途としては、表のヘッダー（表頭・表側）に色をつけたり複数のセルの結合 (merge) をしたりしたかったので axlsx でいくことにしました。
+
+※ xlsx ファイルの書き出しのみで、現時点では読み込みには対応していない模様。
+※ グラフを書いたりピボットテーブルを作ったりといったこともできるみたいです。
+
+axlsx で xlsx ファイルを書き出す
+
+基本的な使い方は、
+
+    新しいpackageを作り
+    packageの中のworkbookに新しいworksheetを追加
+    worksheetに１行ずつ追加
+    package.to_stream.readで得られるデータをsend_dataで書き出す
+
+といった感じです。
+
+pkg = Axlsx::Package.new
+pkg.workbook do |wb|
+  wb.add_worksheet(:name => 'シート名') do |ws|   # シート名の指定は省略可
+    ws.add_row ['a', 1]
+    ws.add_row ['b', 2]
+  end
+end
+send_data(pkg.to_stream.read, 
+  :type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  :filename => "test.xlsx")
+
+
+実際にダウンロードさせる際にはMIMEタイプの設定（config/initializers/mime_types.rb）も必要ですので忘れずに。
+
+Mime::Type.register 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', :xlsx
+
+もうちょっと細かく出力データを調整する
+書式を指定する
+
+書式の指定は、シート毎に add_style でスタイルを登録して、add_row する際に登録したスタイルを一緒に指定します。追加する行まとめて1つの書式を指定することもできますし、配列で1セルずつ指定してセル毎に書式を変えることも可能です。書式を指定しないか nil を指定するとデフォルトの書式になります。
+
+my_style = ws.styles.add_style
+             :fg_color=> "FF00000",
+             :bg_color => "FFF0E6BE",
+             :b => true,
+             :sz => 14,
+             :border => {:style => :thin, :color => "FF333333"},
+             :alignment => {:horizontal => :center, :vertical => :center}
+
+# １行まとめて書式設定
+ws.add_row ['a', 'b', 'c'], :style => my_style
+# セルごとに書式設定
+ws.add_row ['d', 'e', 'f'], :style => [my_style, nil, nil]
+
+
+色の指定について
+
+色は16進数でのRGB表示の頭に "FF" をつけて指定する。赤(#FF0000) ⇒ "FFFF0000"、黒: #000000 ⇒ "FF000000" といった具合。ちなみにRGBの各値が同じ場合は2桁の数字で省略できる。
+
+my_style = ws.styles.add_style
+             :fg_color=> "FF000000",
+             :border => {:style => :thin, :color => "33"}  # "FF333333"と同じ
+
+
+0パディングを維持する（セルの型を設定する）
+
+セルの型は何も指定しないとデフォルトで Excel の「標準」型になります。基本的にはデータの値にあわせて自動的に型を判別してくれます。
+
+date_format = ws.styles.add_style :format_code => 'YYYY-MM-DD'
+time_format = ws.styles.add_style :format_code => 'hh:mm:ss'
+ws.add_row ["Date", "Time", "String", "Boolean", "Float", "Integer"]
+ws.add_row [Date.today, Time.now, "value", true, 0.1, 1],
+             :style => [date_format, time_format]
+
+
+ただし、"0016" など0でパディングされた数字列は数字として解釈されてしまい、そのまま add_row すると 16 となってしまいます。そんなときは add_row をするときに types を一緒に設定すればOKです。
+
+ws.add_row ['0016']
+# ws.rows.last.cells[0].value = 16
+
+ws.add_row ['0016'], types => [:string]
+# ws.rows.last.cells[0].value = "0016"
+
+types は styles とは別に指定します。
+
+date_format = ws.styles.add_style :format_code => 'YYYY-MM-DD'
+ws.add_row ['2013/03/20'], styles => date_format, types => :date
+
+（style の中にも type という別のプロパティがあるので注意）
+
+型として使用できる値は :date、:time、:float、:integer、:string、:boolean の6つです。
+
+参考サイト
+
+    Documentation for randym/axlsx (master)
+    axlsx/examples at master · randym/axlsx · GitHub
+
+
+
+
+
+
+
+
+##############################
+
+
+
+CSVにエクスポートする
+
+Ruby 1.9には便利なCSV libraryが付いてきますが、これはRuby 1.8ではFaster CSVとして知れれていたものです。
+このライブラリを用いてCSVデータを生成することにします。これは標準ライブラリの一部なので、ただrequireするだけで利用できるようになります。
+これをアプリケーションの設定ファイルで行ないます。
+
+
+/config/application.rb
+
+require File.expand_path('../boot', __FILE__)
+
+require 'csv'
+require 'rails/all'
+
+ユーザが/products.csvのパスにアクセスしたときに、このライブラリを使ってカンマ区切りのデータを生成することができます。
+現状では、アクションがこの形式に対応しないため、これは動作しません。
+しかし、ProductsControllerのindexアクションにrespond_toブロックを追加することで簡単に修正できます。
+このフォーマット用のビューテンプレートを生成するか、あるいはコントローラでインラインでデータを出力するかの、
+いずれかの方法から選択します。今回のニーズに対しては、よりシンプルである後者の方法をとることにしますが、いずれの方法でも同じ結果になります。
+
+
+
+/app/controllers/products_controller.rb
+
+class ProductsController < ApplicationController
+  def index
+    @products = Product.order(:name)
+    respond_to do |format|
+      format.html
+      format.csv { render text: @products.to_csv }
+    end
+  end
+end
+
+Productモデル内に新たに作成するto_csvメソッドでCSVデータを生成することにします。
+メソッド名は既存のto_jsonとto_xmlメソッドに合わせてわかりやすいよう設定しました。
+/app/models/product.rb
+
+class Product < ActiveRecord::Base
+  attr_accessible :name, :price, :released_on
+  
+  def self.to_csv
+    CSV.generate do |csv|
+      csv << column_names
+      all.each do |product|
+        csv << product.attributes.values_at(*column_names)
+      end
+    end
+  end
+end
+
+
+データを作成するために、ブロックに渡されたcsvオブジェクトに値の配列を追加します。1行目はヘッダ行で、column_namesと設定してモデルのすべての属性を配列で返します。
+列のサブセットを返したい場合は、ここで列名を列挙する必要があります。次に全商品をループして、ひとつずつにCSVファイルに行を追加して列名に一致する値を設定していきます。
+これにより、正しいフィールドが正しい順番で返されます。csvライブラリを読み込ませるためにサーバを再起動すると、CSVデータを表示できるようになりました。
+
+ABBR src="http://asciicasts.com/system/photos/1239/original/E362I02.png" width="800
+" height="400" alt="The CSV data rendered in the browser."/>
+
+このデータをブラウザ内に表示するのではなくダウンロードさせたい場合は、コントローラでrender :textではなくsend_dataを使います。
+ページをリロードするとCSVファイルをダウンロードできるようになります。
+Excel形式でエクスポートする
+
+ではExcel形式はどうすればいいでしょうか?一番簡単なのはユーザにCSVファイルをExcelで開いてもらう方法ですが、
+できればデフォルトでExcelが起動するxls形式のファイルを提供する方がいいでしょう。
+そのためにはxlsファイルのための新しいMIMEタイプを追加する必要があり、これをmime_types初期化ファイルで行います。
+/config/initializers/mime_types.rb
+
+Mime::Type.register "application/xls", :xls
+
+このタイプのファイルに対応するようコントローラを修正します。
+Excelで正しく開くためにはデータがタブ区切りになっている必要があります。
+幸いcsvライブラリがカラム区切りオプションに対応しているので、これをおこなうためにタブ記号を渡します。
+
+/app/controllers/products_controller.rb
+
+class ProductsController < ApplicationController
+  def index
+    @products = Product.order(:name)
+    respond_to do |format|
+      format.html
+      format.csv { send_data @products.to_csv }
+      format.xls { send_data @products.to_csv(col_sep: "\t") }
+    end
+  end
+end
+
+
+Productモデルのto_csvメソッドを修正して、CSV.generateに渡すオプションのハッシュを受け付けるように変更します。
+/app/models/product.rb
+
+class Product < ActiveRecord::Base
+  attr_accessible :name, :price, :released_on
+  
+  def self.to_csv(options = {})
+    CSV.generate(options) do |csv|
+      csv << column_names
+      all.each do |product|
+        csv << product.attributes.values_at(*column_names)
+      end
+    end
+  end
+end
+
+/products.xlsのパスにアクセスすると、ファイルがダウンロードされExcelで開くことができます。
+ほとんどの部分はこれでうまく行きました。ファイルは正常に開き、列は正しく区切られています。しかし少し問題があります。
+例えばファイルはエンコードが正しく処理されていないため、温度記号などの文字の表示がおかしくなっています。
+この問題を回避する方法はありますが、その場合に別の問題が発生します。その一つが、セル内に改行を入れることができないという問題です。
+
+コントローラでデータを出力する代わりに、xlsファイルを出力するためのテンプレートファイルを作成することにします。
+最初にコントローラのxlsのフォーマットからブロックを削除します。
+
+
+app/controllers/products.rb
+
+class ProductsController < ApplicationController
+  def index
+    @products = Product.order(:name)
+    respond_to do |format|
+      format.html
+      format.csv { send_data @products.to_csv }
+      format.xls
+    end
+  end
+end
+
+次に新規のテンプレートを作成します。
+/app/views/products/index.xls.erb
+
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Release Date</th>
+    <th>Price</th>
+  </tr>
+  <% @products.each do |product| %>
+  <tr>
+    <td><%= product.id %></td>
+    <td><%= product.name %></td>
+    <td><%= product.released_on %></td>
+    <td><%= product.price %></td>
+  </tr>
+  <% end %>
+</table>
+
+HTMLテーブルにエクスポートしたいデータを入れることで対応可能で、Excelはこれを問題なく表示できます。
+これをExcelで開くと、文字コードの問題はなくなり、改行記号を含むデータも正しく処理されています。
+ただし表の見た目が少し違っています。これはHTMLのフォーマットで、セルにborderを付け、ヘッダのセルを中央揃えしているからです。
+Excelでのフォーマットを制御したい場合は、HTMLドキュメントの中でカスタマイズすることもできます。
+よりExcel文書らしい見た目のファイルを作成したい場合は、テンプレートを次のように修正することで対応可能です。
+
+
+/app/views/products/index.xls.erb
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Worksheet ss:Name="Sheet1">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type="String">ID</Data></Cell>
+        <Cell><Data ss:Type="String">Name</Data></Cell>
+        <Cell><Data ss:Type="String">Release Date</Data></Cell>
+        <Cell><Data ss:Type="String">Price</Data></Cell>
+      </Row>
+    <% @products.each do |product| %>
+      <Row>
+        <Cell><Data ss:Type="Number"><%= product.id %></Data></Cell>
+        <Cell><Data ss:Type="String"><%= product.name %></Data></Cell>
+        <Cell><Data ss:Type="String"><%= product.released_on %></Data></Cell>
+        <Cell><Data ss:Type="Number"><%= product.price %></Data></Cell>
+      </Row>
+    <% end %>
+    </Table>
+  </Worksheet>
+</Workbook>
+
+今度はデータをExcelが解釈できるXML形式で出力します。
+この方法によってできることの自由度が高まります。例えば複数のシートを作成したり、各列のフォーマットを指定したりすることが可能です。
+このファイルをリロードして新規にスプレッドシートを生成すると、ファイルのダウンロード時に警告が表示されます(少なくともOS Xでは)。
+これはこのフォーマットのファイルが、マクロなどの危険性のある要素を含んでいる可能性があるからです。
+
+今回のファイルはエンコードが正しく処理され、本来のExcelドキュメントらしくなっています。
+この形式についての最良な情報源はMSDNのWebサイトにある“XML Spreadsheet Reference”です。
+ここにはExcelドキュメントで使用できるすべてのタグの一覧が含まれています。
+使いたい機能がスプレッドシートに含まれていたら、それをXMLファイルとして保存してテキストエディタで開くことでリバースエンジニアリングすることが可能です。
+リンクを追加する
+
+両方のフォーマットを生成できるようになったので、商品一覧ページ上にユーザが対応するファイルをダウンロードするためのリンクを追加します。
+これをページの最上部に追加します。
+
+
+/app/views/products/index.html.erb
+
+<h1>Products</h1>
+
+<p>
+  Download:
+  <%= link_to "CSV", products_path(format: "csv") %> |
+  <%= link_to "Excel", products_path(format: "xls") %>
+</p><!-- Rest of file omitted -->
+
+これでページをリロードするとダウンロードリンクが表示され、いずれかをクリックすると対応するファイルをダウンロードすることができます。
+ページにデータを両方のフォーマットでダウンロードするためのリンクができた
+©2013 RailsCasts - Privacy Policy - Hosted by Digital Ocean
+
+
+
+
+************************** 別　hp
+
+
+
+http://railskey.wordpress.com/2012/04/17/export-data-to-csv-in-rails/
+
+
+1. require the CSV library to controller, Where we need to write import code
+require 'csv'
+
+2. Emport code in controller
+
+def export_to_csv       
+    @users = User.find(:all)
+    csv_string = CSV.generate do |csv|
+         csv << ["Id", "Name", "Email","Role"]
+         @users.each do |user|
+           csv << [user.id, user.name, user.name, user.role]
+         end
+    end         
+  
+   send_data csv_string,
+   :type => 'text/csv; charset=iso-8859-1; header=present',
+   :disposition => "attachment; filename=users.csv" 
+end 
+
+
+@users = User.find(:all)
+Fetching all user details and assigned on @users
+csv_string = CSV.generate do |csv|
+Using CSV class generate method to create csv file
+csv << ["Id", "Name", "Email","Role"] 
+Creating header of CSV file
+
+@users.each do |user|
+  csv << [user.id, user.name, user.name, user.role] 
+end 
+Retrieving each rows and assigning on csv_string variable.
+
+
+send_data csv_string,
+:type => 'text/csv; charset=iso-8859-1; header=present',
+:disposition => "attachment; 
+filename=users.csv" 
+sending data to browser. 

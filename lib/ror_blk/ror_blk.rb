@@ -23,13 +23,15 @@
          orgname = plsql.select(:first,fstrsql)[:pobjgrp_name]  if plsql.select(:first,fstrsql)
          ## p "orgname #{orgname}"
          ## p "code #{code}"
-         if orgname.empty? or orgname.nil? then
+         if (orgname.empty? or orgname.nil?) and ptype == "1" then
             orgname = ""
             code.split('_').each do |i|
               fstrsqly =  basesql +  "   POBJECT_CODE = '#{i}' "
               # p pstrsqly
                 if plsql.select(:first,fstrsqly) then   ## tbl name get
-                  orgname << plsql.select(:first,fstrsqly)[:pobjgrp_name]
+			orgname <<  plsql.select(:first,fstrsqly)[:pobjgrp_name] 
+		    else
+                        orgname << i
                end   
             end   ## do code. 
          end ## if orgname
@@ -73,7 +75,11 @@
            pare_screen = det_screen[0][:screen_id]
            screen_viewname = det_screen[0][:screen_viewname].upcase
            ###debugger ## 詳細項目セット
-           show_data[:scriptopt] = set_addbutton(pare_screen)     ### add  button セット script,gear,....
+	  if pare_screen.nil? then
+	     show_data[:scriptopt] = [] 
+	    else
+	     set_addbutton(pare_screen)
+	   end     ### add  button セット script,gear,....
 	   gridcolumns = []
            ###  chkの時のみ
            gridcolumns   << {:field => "msg_ok_ng",
@@ -95,8 +101,8 @@
                    tmp_editrules[:date] = true  if i[:detailfield_type] == "DATE"
                    tmp_editrules[:required] = false  if tmp_editrules == {} 
                    tmp_columns[:field] = i[:detailfield_code].downcase
-                   tmp_columns[:label] = sub_blkgetpobj(i[:detailfield_code],"1",grp_code) 
-                   tmp_columns[:label] ||=  i[:detailfield_code]
+                   tmp_columns[:label] = sub_blkgetpobj(i[:detailfield_code],"1",grp_code)  ##"1":項目
+                   ### tmp_columns[:label] ||=  i[:detailfield_code]
                    tmp_columns[:hidden] = if i[:detailfield_hideflg] == 1 then true else false end 
                    tmp_columns[:editrules] = tmp_editrules 
                    tmp_columns[:width] = i[:detailfield_width]
@@ -135,8 +141,13 @@
            show_data[:alltypes]  =  alltypes  
            show_data[:screen_viewname] = screen_viewname.upcase
            show_data[:gridcolumns] = gridcolumns
-	show_data =  set_extbutton(pare_screen,show_data,screen_code) 
-        show_cache_key =  "show " + screen_code
+	  if pare_screen.nil? then 
+	     show_data[:extbutton] = ""
+	     show_data[:extdiv_id] = "" 
+	    else
+	      show_data = set_extbutton(pare_screen,show_data,screen_code)
+	  end
+        show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
         Rails.cache.write(show_cache_key,show_data) 
 	return show_data
   end    ##set_detai
@@ -144,7 +155,7 @@
  def set_addbutton pare_screen 
       buttonopt = []
       add_button = plsql.r_buttons.select(:all,"where button_Expiredate > sysdate 
-                                            and screen_id = :1",pare_screen)
+                                            and button_screen_id = :1",pare_screen)
       unless add_button.empty?
 	      add_button.each do |x|
                  tmp_buttonopt = {}
@@ -164,7 +175,7 @@
       ##debugger
       ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
       rad_screen = plsql.r_chilscreens.select(:all,"where chilscreen_Expiredate > sysdate 
-                                            and screen_id = :1",pare_screen)
+                                            and chilscreen_screen_id = :1",pare_screen)
            t_extbutton = ""
            t_extdiv_id = ""
            k = 0
@@ -176,7 +187,7 @@
                   t_extbutton << %Q|<input type="radio" id="radio#{k.to_s}"  name="nst_radio#{screen_code}"|
                   t_extbutton << %Q| value="#{i[:screen_viewname]};#{i[:screen_viewname_chil]};| ### 親のview
                   t_extbutton << %Q|#{i[:screen_code_chil]};1"/>|  
-                  t_extbutton << %Q| <label for="radio#{k.to_s}">  #{sub_blkgetpobj(i[:screen_code_chil],"A",grp_code)} </label> |
+                  t_extbutton << %Q| <label for="radio#{k.to_s}">  #{sub_blkgetpobj(i[:screen_code_chil],"A",grp_code)} </label> |   ##"A"画面
                   t_extdiv_id << %Q|<div id="div_#{i[:screen_viewname]}#{i[:screen_viewname_chil]}"> </div>|
       
         end   ### rad_screen.each
@@ -214,7 +225,7 @@
         tmp_rec[:itms_id] = itms_id
 	tmp_rec[:dataflg] = dataflg
 	tmp_rec[:dataseq] = dataseq
-	tmp_rec[:persons_id_upd] = 1
+	tmp_rec[:persons_id_upd] = 0
 	tmp_rec[:created_at] = Time.now
 	tmp_rec[:updated_at] = Time.now
       ##debugger
@@ -262,7 +273,7 @@
 	    ##debugger
        return rstk_id
   end  ##sub_stk
-  def   sub_code_to_id  tmp_key
+  def   sub_code_to_id  tmp_key  ### idとcodeが一対一の時叉はn:1の時この時codeは本日に対して有効であること。
 	   ##fprnt "class #{self} : LINE #{__LINE__} tmp_key #{tmp_key}"
            strwhere = "where Expiredate >= SYSDATE  and "
 	   sub_command_r  = {}
@@ -281,7 +292,7 @@
         aim_id = plsql.__send__(tblname).first(strwhere)
         ##fprnt" aim_id =  '#{aim_id}',"
         add_char = key.split(/_code/,2)[1] ||= ""
-        others_tbl_id_isrt[(tblname + "_id" + add_char).to_sym] = aim_id[:id] unless aim_id.nil?
+        others_tbl_id_isrt[(tblname + "_id" + add_char).to_sym] = aim_id[:id] if aim_id
         others_tbl_id_isrt[:sio_message_contents] = "logic err" if aim_id.nil?
         return  others_tbl_id_isrt
   end   ### def sub_get...
@@ -355,6 +366,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	to_command_r[j] = val if key =~ /^sio_/  
 	##fprnt " LINE #{__LINE__} j = '#{j}'" 
 	to_command_r[j] = val  if  show_data[:allfields].index(j) 
+	###to_command_r[:sio_org_tblid] = va if key == "id_tbl"
     end
     ##debugger
     yield
@@ -363,14 +375,14 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	 to_command_r[m] = n  unless n.is_a?(Symbol)
     end
     to_command_r[:sio_command_response] = "C"
-    if to_command_r[:sio_classname] =~ /insert/ then
-       to_command_r[:sio_org_tblname]  =  orgtbl
-       to_command_r[:sio_classname] = "plsql_blk_copy_insert"
-    end	
-    to_command_r[:sio_org_tblid]  = tsio_r[:id_tbl] 
+    to_command_r[:sio_org_tblname]  =  orgtbl
+    to_command_r[:sio_org_tblid]  = tsio_r[:id] 
     to_command_r[:sio_code]   = screen_code
     to_command_r[:sio_viewname] =  plsql.screens.select(:first,"where EXPIREDATE> sysdate and code = '#{screen_code}' order by EXPIREDATE")[:viewname]
-    to_command_r[:id] =  plsql.__send__("SIO_#{to_command_r[:sio_viewname]}_SEQ").nextval
+    to_command_r[:sio_classname] = "plsql_blk_copy_insert"  if to_command_r[:sio_classname] =~ /insert/ 
+    to_command_r[:id] =  sub_set_chil_tbl_info(to_command_r)  if to_command_r[:sio_classname] =~ /update/ 
+    to_command_r[:id] =  sub_set_chil_tbl_info(to_command_r)  if to_command_r[:sio_classname] =~ /delete/ 
+    to_command_r[:sio_id] =  plsql.__send__("SIO_#{to_command_r[:sio_viewname]}_SEQ").nextval
     to_command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
     to_command_r[:sio_add_time] = Time.now
     to_command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
@@ -387,7 +399,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
  def add_tbl_ctlxxxxxx org_tblname,org_tblid,tblname,tblid
      crttblxxxx(org_tblname) unless plsql.user_tables.first(:table_name=>"CTL#{org_tblname}")
      ctl_command_r = {}
-     ctl_command_r[:persons_id_upd] = 1    ### 変更者は1で固定値
+     ctl_command_r[:persons_id_upd] = 0    ### 変更者は0で固定値
      ctl_command_r[:created_at] = Time.now
      ctl_command_r[:expiredate] = Time.parse("2099/12/31")
      ctl_command_r[:id] =  plsql.__send__("CTL#{org_tblname}_seq").nextval
@@ -422,9 +434,21 @@ def record_auto tsio_r,to_screen,to_tblname,fields
  def strcrtseqxxxxxx
      %Q|create sequence CTLxxxxxx_SEQ|
  end
+ def sub_set_chil_tbl_info to_command_r
+     strwhere = "where ptblid = #{to_command_r[:sio_org_tblid]} and "
+     strwhere << "ctblname = '#{to_command_r[:sio_viewname].split("_")[1]}'  "
+     ctbl_id = plsql.__send__("CTL#{to_command_r[:sio_org_tblname]}").first(strwhere)
+     if ctbl_id
+	return ctbl_id[:ctblid]
+      else
+	 fprnt " LINE #{__LINE__}  ptblname CTL#{to_command_r[:sio_org_tblname]} ; strwhere = #{strwhere} "
+	 raise "error"
+     end
+ end
  def reset_show_data screen_code
+      ##debugger
       show_cache_key =  "show " + screen_code
-      Rails.cache.delete(show_cache_key) if  Rails.cache.exist?(show_cache_key)
+      Rails.cache.delete_matched(show_cache_key) 
   end
   def sub_get_ship_locas_frm_itm_id itms_id
       rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = '#{itms_id}' and Expiredate > sysdate ) and Priority = (select max(Priority) from OpeItms where  itms_id = '#{itms_id}' and Expiredate > sysdate ) ")
@@ -480,8 +504,8 @@ def record_auto tsio_r,to_screen,to_tblname,fields
          end   ## if dataseq
         rp = plsql.stkhists.all("where itms_id = #{prm[:itms_id]} and locas_id = #{prm[:locas_id]} and dataflg= '#{dataflg}' and Expiredate > sysdate and  Expiredate < to_date('2100/01/01','yyyy/mm/dd') order by strdate")
 	sub_command_r = {}
-	sub_command_r[:person_id_upd] =  1  ###########  batch   
-	sub_command_r[:person_code_chrg] =  "1"  ###########    batch
+	sub_command_r[:stkhist_person_id_upd] =  0  ###########  batch   
+	sub_command_r[:person_code_chrg] =  "0"  ###########    batch
         sub_command_r[:sio_viewname]  =  "R_ARV#{dataflg}"
         sub_command_r[:sio_code]  = sub_command_r[:sio_viewname] 
 	sub_command_r[:sio_term_id] =  "1"
@@ -504,7 +528,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	 end  ###ro[:safestkprd].nil?  ・・・・
 	    ##debugger
 	sub_command_r["arv#{dataflg.chop}_stkhist_id".downcase.to_sym] = sub_stk_inout( sub_command_r[:sio_viewname],prm[:itms_id],prm[:locas_id],dueday,newqty,newamt,nil)
-        sub_command_r[:id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
+        sub_command_r[:sio_id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
 	sub_command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
         sub_command_r[:sio_add_time] = Time.now
 	sub_command_r["arv#{dataflg.chop}_isudate".downcase.to_sym] = Time.now
@@ -536,39 +560,72 @@ def record_auto tsio_r,to_screen,to_tblname,fields
         end
        return tblname
   end  ###sub_dec_pur_prd
-  def sub_insert_sio_c  sub_command_r ###要求
+  def sub_insert_sio_c   ###要求
+      char_to_number_data
       ##debugger
-      sub_command_r[:person_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 1   ###########   LOGIN USER  
-      sub_command_r[:sio_viewname]  = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")[:viewname]
-      sub_command_r[:sio_code]  = screen_code
-      sub_command_r[:id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
-      sub_command_r[:sio_term_id] =  request.remote_ip
-      sub_command_r[:sio_session_id] = params[:q]
-      sub_command_r[:sio_command_response] = "C"
-      sub_command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
-      sub_command_r[:sio_add_time] = Time.now
-      sub_command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
+      command_r[:sio_viewname]  = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")[:viewname]
+      person_id_upd =  (command_r[:sio_viewname].split("_")[1].chop.downcase + "_person_id_upd").to_sym  
+      command_r[person_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
+      command_r[:sio_code]  = screen_code
+      command_r[:sio_id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
+      command_r[:sio_term_id] =  request.remote_ip
+      command_r[:sio_session_id] = params[:q]
+      command_r[:sio_command_response] = "C"
+      command_r[:sio_session_counter] =  command_r[:sio_id]   if command_r[:sio_session_counter].nil?  ##
+      command_r[:sio_add_time] = Time.now
+      command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
       yield
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
       ##fprnt " class #{self} : LINE #{__LINE__} sio_\#{ sub_command_r[:sio_viewname] } :sio_#{sub_command_r[:sio_viewname]}"
-      fprnt " class #{self} : LINE #{__LINE__} sub_command_r  = #{sub_command_r}"
+      fprnt " class #{self} : LINE #{__LINE__} command_r  = #{command_r}"
       ##debugger
-      plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}").insert sub_command_r
+      plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       ### plsql.commit 
 ##    p Time.now
 ##      $ts.write(["C",request.remote_ip,params[:q],sub_command_r[:sio_session_counter],"SIO_#{sub_command_r[:sio_viewname]}"])
-       return  sub_command_r[:sio_session_counter]
   end   ## sub_insert_sio_c
-  def sub_insert_sio_r  sub_command_r  ####回答
+  def sub_insert_sio_r sub_command_r   ####回答
+      ##char_to_number_data
       ##debugger
-      yield
-      sub_command_r[:id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
+       yield
+       fprnt " class #{self} : LINE #{__LINE__} sub_command_r  = #{sub_command_r}"
+      sub_command_r[:sio_id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
       sub_command_r[:sio_command_response] = "R"
       sub_command_r[:sio_add_time] = Time.now
-      fprnt " class #{self} : LINE #{__LINE__} sub_command_r  = #{sub_command_r}"
-      ##debugger
+          ##debugger
       plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}").insert sub_command_r
       ###plsql.commit 
   end   ## sub_insert_sio_r 
+  def char_to_number_data    ###   
+       ##rubyXl マッキントッシュ excel windows excel not perfect
+       @date1904 = nil
+      show_data[:allfields].each do |i|
+	   if command_r[i] then
+             case show_data[:alltypes][i]
+                  when "date","timestamp(6)" then
+			 begin
+                           command_r[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
+			   command_r[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
+			  rescue
+                            command_r[i] = Time.now
+			  end
+                  when "number" then
+                         command_r[i] = command_r[i].gsub(/\W/,"").to_f if command_r[i].class == String
+                  when "varchar2","char"
+                       command_r[i] = command_r[i].to_i.to_s if command_r[i].class == Fixnum
+             end  #case show_data
+	  end  ## if command_r
+      end  ## sho_data.each
+  end ## defar_to....
+  def num_to_date(num)
+      return nil if num.nil?
+      if @date1904
+        compare_date = DateTime.parse('December 31, 1903')
+      else
+        compare_date = DateTime.parse('December 31, 1899')
+      end
+      # subtract one day to compare date for erroneous 1900 leap year compatibility
+      compare_date - 1 + num
+    end
 end   ##module Ror_blk
 

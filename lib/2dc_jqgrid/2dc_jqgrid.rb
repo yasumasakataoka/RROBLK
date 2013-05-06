@@ -37,7 +37,7 @@ module Jqgrid
           :add                 => 'true',
           :delete              => 'true',
           :search              => 'true',
-          :view                => 'false',
+          :view                => 'true',
           :edit                => 'true',  
           :inline_edit         => 'false',
           :autowidth           => 'false',
@@ -97,9 +97,12 @@ module Jqgrid
       search = ""
       filter_toolbar = ""
       if options[:search] == 'true'
-        search = %Q/.navButtonAdd("##{id}_pager",{caption:"",title:$.jgrid.nav.searchtitle, buttonicon :"ui-icon-search", onClickButton:function(){ mygrid[0].toggleToolbar() } })/
+        search = %Q/.navButtonAdd("##{id}_pager",{caption:"",title:$.jgrid.nav.searchtitle, buttonicon :"ui-icon-search", onClickButton:function(){mygrid[0].toggleToolbar() } })/
+	##search = %Q/.navButtonAdd("##{id}_pager",{caption:"",title:$.jgrid.nav.searchtitle, buttonicon :"ui-icon-search", onClickButton:function(){var sgrid = jQuery("##{id}")[0]; sgrid.toggleToolbar();jQuery("##{id}").jqGrid('filterToolbar',{});}})/
         filter_toolbar = "mygrid.filterToolbar();"
         filter_toolbar << "mygrid[0].toggleToolbar()"
+        #filter_toolbar << ";mygrid[0].triggerToolbar()"
+
       end
      
       # Enable sortableRows
@@ -188,7 +191,7 @@ module Jqgrid
                                 jQuery("input",formid).change(function(){ 
 				        var chgname = jQuery(this).attr("name");
 					var chgval  = jQuery(this).val();
-					if(chgname.match(/_code/i)){ if(chgname.match(/#{id.split(/_/,2)[1].chop.downcase}/i)){}
+					if(chgname.match(/_code/i)){ if(chgname.match(/^#{id.split(/_/,2)[1].chop.downcase}/i)){}
 					  else{ var newname = "#"+chgname.replace("_code","_name");
 					        jQuery.getJSON("/screen/code_to_name",{"chgname":chgname,"chgval":chgval},function(data){
 						  jQuery(newname,formid).val(data.name);
@@ -213,7 +216,7 @@ module Jqgrid
       scriptopt[:addbutton] ||= {}
       scriptopt[:addbutton].each do |buttonopt| 
          unless ["script","gear","cart","wrench","star"].index( buttonopt[:button_icon]).nil? then
-            str_addbutton << %Q|   .navButtonAdd("##{id}_pager",{ caption:"",title:"#{buttonopt[:button_title]}",buttonicon:"ui-icon-#{buttonopt[:button_icon]}",
+            str_addbutton << %Q|.navButtonAdd("##{id}_pager",{ caption:"",title:"#{buttonopt[:button_title]}",buttonicon:"ui-icon-#{buttonopt[:button_icon]}",
               onClickButton: function(){ var button_proc = "#{buttonopt[:button_proc]}";
                                          var q = "#{id}";
                                          var script_id = "#{scriptopt[:script_id]}";
@@ -313,7 +316,7 @@ module Jqgrid
 	      caption: "#{title}"             
             })
             .navGrid("##{id}_pager",
-              {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:true},
+              {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:false },
 {editCaption:"edit  #{title}",#{form_ps},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {addCaption:"add  #{title}",#{form_ps},afterShowForm:#{code_to_name},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {caption:"delete  #{title}",#{form_ps},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
@@ -321,7 +324,12 @@ module Jqgrid
             .navButtonAdd("##{id}_pager",{ caption:"",title:"copy and add",buttonicon:"ui-icon-copy",
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");
                               if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",authenticity_token:"#{authenticity_token}"}}); } else { alert("Please select Row") } } , position:"right" })
-            #{str_addbutton}
+	   .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-n",
+              onClickButton: function() { document.location = "/excelexport/index?q=#{id}"; } , position:"right" })
+	              #{str_addbutton}
+           .navButtonAdd("##{id}_pager",{ caption:"",title:"import_from_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
+              onClickButton: function() { document.location = "/importfmxlsx/index?q=#{id}"; } , position:"right" })
+	              #{str_addbutton}
            .navButtonAdd("##{id}_pager",{ caption:"",title:"check",buttonicon:"ui-icon-check",
               onClickButton: function(){ var q = "#{id}";
                             jQuery.get("/screen/chk",{q:q,authenticity_token:"#{authenticity_token}"},null,"script");

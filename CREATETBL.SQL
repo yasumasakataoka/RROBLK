@@ -548,8 +548,13 @@ CREATE TABLE WrkSCHs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT WrkSCHs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence WrkSCHs_seq
+;  
+create sequence WrkSCHs_seq
+;  
 DROP TABLE WrkInsts
 ;
 CREATE TABLE WrkInsts
@@ -562,8 +567,13 @@ CREATE TABLE WrkInsts
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT WrkInsts_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence WrkInsts_seq
+;  
+create sequence WrkInsts_seq
+;  
 DROP TABLE WrkActs
 ;
 CREATE TABLE WrkActs
@@ -577,8 +587,13 @@ CREATE TABLE WrkActs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT WrkActs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence WrkActs_seq
+;  
+create sequence WrkActs_seq
+;  
 DROP TABLE RstOrds
 ;
 CREATE TABLE RstOrds
@@ -592,8 +607,13 @@ CREATE TABLE RstOrds
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT RstOrds_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence RstOrds_seq
+;  
+create sequence RstOrds_seq
+;  
 DROP TABLE RstInsts
 ;
 CREATE TABLE RstInsts
@@ -606,8 +626,13 @@ CREATE TABLE RstInsts
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT RstInsts_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence RstInsts_seq
+;  
+create sequence RstInsts_seq
+;  
 DROP TABLE RstActs
 ;
 CREATE TABLE RstActs
@@ -622,8 +647,13 @@ CREATE TABLE RstActs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT RstActs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence RstActs_seq
+;  
+create sequence RstActs_seq
+;  
 DROP TABLE CnsmOrds
 ;
 CREATE TABLE CnsmOrds
@@ -642,8 +672,13 @@ CREATE TABLE CnsmOrds
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT CnsmOrds_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence CnsmOrds_seq
+;  
+create sequence CnsmOrds_seq
+;  
 DROP TABLE CnsmInsts
 ;
 CREATE TABLE CnsmInsts
@@ -660,8 +695,13 @@ CREATE TABLE CnsmInsts
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT CnsmInsts_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence CnsmInsts_seq
+;  
+create sequence CnsmInsts_seq
+;  
 DROP TABLE CnsmActs
 ;
 CREATE TABLE CnsmActs
@@ -679,8 +719,13 @@ CREATE TABLE CnsmActs
   ,Update_IP Varchar(40)
   ,created_at timestamp
   ,Updated_at timestamp
+  , CONSTRAINT CnsmActs_id_pk PRIMARY KEY (id)
 )
 ;
+drop sequence CnsmActs_seq
+;  
+create sequence CnsmActs_seq
+;  
 DROP TABLE PayOrds
 ;
 CREATE TABLE PayOrds
@@ -831,9 +876,9 @@ CREATE TABLE BillActs
   ,Updated_at timestamp
 )
 ;
-DROP TYPE TypPerson force 
-; 
-CREATE TYPE TypPerson AS OBJECT  
+DROP TABLE Persons
+;
+CREATE TABLE Persons
   ( id numeric(38)
   ,Code varchar(10)
   ,Name VARCHAR(50)
@@ -846,13 +891,8 @@ CREATE TYPE TypPerson AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-)
-;
-DROP TABLE Persons
-;
-CREATE TABLE Persons OF  TypPerson
-  (  CONSTRAINT Persons_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Persons_22_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT Persons_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Persons_16_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence Persons_seq
@@ -873,7 +913,7 @@ CREATE TABLE UserGroups
   ,Updated_at date
   ,Expiredate date
   , CONSTRAINT UserGroups_id_pk PRIMARY KEY (id)
-  , CONSTRAINT UserGroups_39_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT UserGroups_41_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence UserGroups_seq
@@ -881,9 +921,9 @@ drop sequence UserGroups_seq
 create sequence UserGroups_seq
 ;  
 ; 
-DROP TYPE TypCurrency force 
-; 
-CREATE TYPE TypCurrency AS OBJECT  
+DROP TABLE Currency
+;
+CREATE TABLE Currency
   ( id numeric(38)
   ,Code varchar(3)
   ,Name varchar(10)
@@ -895,21 +935,16 @@ CREATE TYPE TypCurrency AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
+  , CONSTRAINT Currency_id_pk PRIMARY KEY (id)
 )
 ;
-DROP TABLE Currencys
-;
-CREATE TABLE Currencys OF  TypCurrency
-  (  CONSTRAINT Currencys_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence Currencys_seq
+drop sequence Currency_seq
 ;  
-create sequence Currencys_seq
+create sequence Currency_seq
 ;  
-DROP TYPE TypClndr force 
-; 
-CREATE TYPE TypClndr AS OBJECT  
+DROP TABLE Clndrs
+;
+CREATE TABLE Clndrs
   ( id numeric(38)
   ,Code varchar(10)
   ,Name VARCHAR(100)
@@ -919,13 +954,8 @@ CREATE TYPE TypClndr AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-)
-;
-DROP TABLE Clndrs
-;
-CREATE TABLE Clndrs OF  TypClndr
-  (  CONSTRAINT Clndrs_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Clndrs_91_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT Clndrs_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Clndrs_89_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence Clndrs_seq
@@ -947,21 +977,9 @@ CREATE TYPE TypCalendarDetail AS OBJECT
   ,Updated_at date
 )
 ;
-DROP TABLE CalendarDetails
+DROP TABLE Units
 ;
-CREATE TABLE CalendarDetails OF  TypCalendarDetail
-  (  CONSTRAINT CalendarDetails_id_pk PRIMARY KEY (id)
-  , CONSTRAINT CalendarDetails_114_uk  UNIQUE (Clndrs_id,FromHM)
-)
-;
-drop sequence CalendarDetails_seq
-;  
-create sequence CalendarDetails_seq
-;  
-; 
-DROP TYPE Units force 
-; 
-CREATE TYPE Units AS OBJECT  
+CREATE TABLE Units
   ( id numeric(38)
   ,Code varchar(3)
   ,Name varchar(10)
@@ -972,7 +990,7 @@ CREATE TYPE Units AS OBJECT
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Units_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Units_131_uk  UNIQUE (Code,ExpireDate)
+  , CONSTRAINT Units_136_uk  UNIQUE (Code,ExpireDate)
 )
 ;
 drop sequence Units_seq
@@ -980,55 +998,6 @@ drop sequence Units_seq
 create sequence Units_seq
 ;  
 ; 
-DROP TYPE TypLang force 
-; 
-CREATE TYPE TypLang AS OBJECT  
-  ( id numeric(38)
-  ,Code varchar(3)
-  ,Name varchar(10)
-  ,Remark VARCHAR(100)
-  ,Persons_id_Upd numeric(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
-  ,Expiredate date
-)
-;
-DROP TABLE Langs
-;
-CREATE TABLE Langs OF  TypLang
-  (  CONSTRAINT Langs_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence Langs_seq
-;  
-create sequence Langs_seq
-;  
-DROP TYPE TypNameUnit force 
-; 
-CREATE TYPE TypNameUnit AS OBJECT  
-  ( id numeric(38)
-  ,Units_id numeric(38)
-  ,Langs_id numeric(38)
-  ,UnitName varchar(10)
-  ,Remark VARCHAR(100)
-  ,Persons_id_Upd numeric(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
-  ,Expiredate date
-)
-;
-DROP TABLE NameUnits
-;
-CREATE TABLE NameUnits OF  TypNameUnit
-  (  CONSTRAINT NameUnits_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence NameUnits_seq
-;  
-create sequence NameUnits_seq
-;  
 DROP TYPE TypResource force 
 ; 
 CREATE TYPE TypResource AS OBJECT  
@@ -1075,85 +1044,30 @@ drop sequence ProcNames_seq
 ;  
 create sequence ProcNames_seq
 ;  
-DROP TYPE TypFObject force 
-; 
-CREATE TYPE TypFObject AS OBJECT  
-  ( id numeric(38)
-  ,PObjects_id numeric(38)
-  ,Fieldlength NUMBER(4) 
-  ,DataPresion NUMBER(2) 
-  ,DataScale NUMBER(2) 
-  ,Persons_id_Upd numeric(38)
-  ,FieldDenomination varchar(40)
-  ,Contens VARCHAR(200)
-  ,Remark VARCHAR(200)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Expiredate date
-  ,updated_at date
-)
+DROP TABLE Pobjects
 ;
-DROP TABLE FObjects
-;
-CREATE TABLE FObjects OF  TypFObject
-  (  CONSTRAINT FObjects_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence FObjects_seq
-;  
-create sequence FObjects_seq
-;  
-DROP TYPE TypFOBJGrp force 
-; 
-CREATE TYPE TypFOBJGrp AS OBJECT  
-  ( id numeric(38)
-  ,FObjects_id numeric(38)
-  ,Name varchar(30)
-  ,UserGroups_id numeric(38)
-  ,Remark VARCHAR(200)
-  ,Persons_id_Upd numeric(38)
-  ,Update_IP varchar(40)
-  ,created_at date
-  ,Expiredate date
-  ,updated_at date
-)
-;
-DROP TABLE FOBJGrpS
-;
-CREATE TABLE FOBJGrpS OF  TypFOBJGrp
-  (  CONSTRAINT FOBJGrpS_id_pk PRIMARY KEY (id)
-)
-;
-drop sequence FOBJGrpS_seq
-;  
-create sequence FOBJGrpS_seq
-;  
-DROP TYPE TypPObject force 
-; 
-CREATE TYPE TypPObject AS OBJECT  
+CREATE TABLE Pobjects
   ( id numeric(38)
   ,ObjectType char(1)
   ,Code varchar(30)
+  ,Fieldlength NUMBER(4) 
+  ,DataPresion NUMBER(2) 
+  ,DataScale NUMBER(2) 
   ,Contens VARCHAR(200)
   ,Remark VARCHAR(200)
-  ,RubyCode clob
+  ,RubyCode VARCHAR(4000)
   ,Persons_id_Upd numeric(38)
   ,Update_IP varchar(40)
   ,created_at date
   ,Expiredate date
   ,Updated_at date
+  , CONSTRAINT Pobjects_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Pobjects_68_uk  UNIQUE (code,ObjectType,Expiredate)
 )
 ;
-DROP TABLE PObjects
-;
-CREATE TABLE PObjects OF  TypPObject
-  (  CONSTRAINT PObjects_id_pk PRIMARY KEY (id)
-  , CONSTRAINT PObjects_69_uk  UNIQUE (code,ObjectType,Expiredate)
-)
-;
-drop sequence PObjects_seq
+drop sequence Pobjects_seq
 ;  
-create sequence PObjects_seq
+create sequence Pobjects_seq
 ;  
 ; 
 DROP TABLE POBJGrps
@@ -1176,9 +1090,9 @@ drop sequence POBJGrps_seq
 ;  
 create sequence POBJGrps_seq
 ;  
-DROP TYPE TypBottonRule force 
-; 
-CREATE TYPE TypBottonRule AS OBJECT  
+DROP TABLE BottonRules
+;
+CREATE TABLE BottonRules
   ( id numeric(38)
   ,Object_id_Upd numeric(38)
   ,Code varchar(30)
@@ -1190,12 +1104,7 @@ CREATE TYPE TypBottonRule AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,updated_at date
-)
-;
-DROP TABLE BottonRules
-;
-CREATE TABLE BottonRules OF  TypBottonRule
-  (  CONSTRAINT BottonRules_id_pk PRIMARY KEY (id)
+  , CONSTRAINT BottonRules_id_pk PRIMARY KEY (id)
 )
 ;
 drop sequence BottonRules_seq
@@ -1241,7 +1150,7 @@ CREATE TABLE TblRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT TblRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT TblRelas_202_uk  UNIQUE (code,Expiredate)
+  , CONSTRAINT TblRelas_210_uk  UNIQUE (code,Expiredate)
 )
 ;
 drop sequence TblRelas_seq
@@ -1263,7 +1172,7 @@ CREATE TABLE fieldRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT fieldRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT fieldRelas_221_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
+  , CONSTRAINT fieldRelas_229_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
 )
 ;
 drop sequence fieldRelas_seq
@@ -1278,7 +1187,6 @@ CREATE TABLE Locas
   ,Code varchar(40)
   ,Name VARCHAR(100)
   ,ABBR varchar(50)
-  ,Currencys_id number(38)
   ,zip varchar(10)
   ,country varchar(20)
   ,PRFCT varchar(20)
@@ -1375,7 +1283,7 @@ CREATE TABLE Billings
   ,Locas_id_Billings number(38)
   ,Remark VARCHAR(100)
   ,Expiredate date
-  ,Persons_id_Upd varchar(10)
+  ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
@@ -1417,6 +1325,7 @@ CREATE TABLE Custs
   ( id number(38)
   ,Locas_id_Custs number(38)
   ,Locas_id_Billings number(38)
+  ,Currencys_id number(38)
   ,PersonNameOfCust VARCHAR(30)
   ,Persons_id_Chrg number(38)
   ,Remark VARCHAR(100)
@@ -1653,24 +1562,18 @@ drop sequence Transports_seq
 ;  
 create sequence Transports_seq
 ;  
-DROP TYPE TypSect force 
-; 
-CREATE TYPE TypSect AS OBJECT  
+DROP TABLE Sects
+;
+CREATE TABLE Sects
   ( id number(38)
-  ,Locas_id_sects varchar(10)
-  ,name varchar(40)
+  ,Locas_id_sects number(38)
   ,Remark number(38)
   ,Expiredate varchar(40)
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-)
-;
-DROP TABLE Sects
-;
-CREATE TABLE Sects OF  TypSect
-  (  CONSTRAINT Sects_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Sects_id_pk PRIMARY KEY (id)
 )
 ;
 drop sequence Sects_seq
@@ -1801,9 +1704,9 @@ drop sequence DetailFields_seq
 create sequence DetailFields_seq
 ;  
 ; 
-DROP TYPE TypButton force 
-; 
-CREATE TYPE TypButton AS OBJECT  
+DROP TABLE Buttons
+;
+CREATE TABLE Buttons
   ( id NUMBER(38)
   ,screens_id NUMBER(38)
   ,ICON varchar(10)
@@ -1815,13 +1718,8 @@ CREATE TYPE TypButton AS OBJECT
   ,Update_IP varchar(40)
   ,created_at date
   ,updated_at date
-)
-;
-DROP TABLE Buttons
-;
-CREATE TABLE Buttons OF  TypButton
-  (  CONSTRAINT Buttons_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Buttons_82_uk  UNIQUE (screens_id,Expiredate,icon)
+  , CONSTRAINT Buttons_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Buttons_76_uk  UNIQUE (screens_id,Expiredate,icon)
 )
 ;
 drop sequence Buttons_seq
@@ -1829,9 +1727,9 @@ drop sequence Buttons_seq
 create sequence Buttons_seq
 ;  
 ; 
-DROP TABLE TypChilScreen
+DROP TABLE ChilScreen
 ;
-CREATE TABLE TypChilScreen
+CREATE TABLE ChilScreen
   ( id NUMBER(38)
   ,screens_id NUMBER(38)
   ,screens_id_chil NUMBER(38)
@@ -1841,13 +1739,13 @@ CREATE TABLE TypChilScreen
   ,Update_IP varchar(40)
   ,created_at date
   ,Updated_at date
-  , CONSTRAINT TypChilScreen_id_pk PRIMARY KEY (id)
-  , CONSTRAINT TypChilScreen_14_uk  UNIQUE (screens_id_chil,screens_id,Expiredate)
+  , CONSTRAINT ChilScreen_id_pk PRIMARY KEY (id)
+  , CONSTRAINT ChilScreen_14_uk  UNIQUE (screens_id_chil,screens_id,Expiredate)
 )
 ;
-drop sequence TypChilScreen_seq
+drop sequence ChilScreen_seq
 ;  
-create sequence TypChilScreen_seq
+create sequence ChilScreen_seq
 ;  
 ; 
 DROP TABLE Screens

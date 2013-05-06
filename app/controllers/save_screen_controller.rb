@@ -12,7 +12,7 @@ class ScreenController < ApplicationController
      @scriptopt[:pare_contents] = ""
      @options[:div_repl_id] = ""
      @options[:autowidth] = "true"
-     get_screen_code
+     sub_set_fields_from_allfields ###画面の内容をcommand_rへ
      @disp_screenname_name = sub_blkgetpobj(screen_code,"A",sub_blkget_grpcode)
      view_item_set
      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
@@ -40,28 +40,14 @@ class ScreenController < ApplicationController
    params[:rows] ||= 10
    ## get from cache
    #### subpaging delay
-   get_screen_code
+   sub_set_fields_from_allfields ###画面の内容をcommand_rへ
    subpaging           ## subpaging 
    ##  p " @tbldata  :  #{@tbldata}"
    #fprnt  " class #{self} : LINE #{__LINE__} @record_count :  #{@record_count}"
-   ##debugger
+   ###debugger
+   plsql.commit
    respond_with @tbldata.to_jqgrid_json( show_data[:allfields] ,params[:page], params[:rows],@record_count) 
   end  ##disp
-
-  def sub_params_set view_name  ###   日付と数字で<>の比較ができてない
-      show_data[:allfields].each do |i|
-          unless params[i].nil? then 
-             command_r[i] = params[i] 
-             case show_data[:alltypes][i]
-                  when "DATE" then
-                         command_r[i] = Time.parse(command_r[i]) 
-                  when "NUMBER"
-                         command_r[i] = command_r[i].to_f
-             end
-           end  ## unless
-      end
-      return command_r
-  end ## def sub_params_set view_name
 
   def nst  ###子画面　link
      rcd_id  =  params[:id]  ### 親画面テーブル内の子画面へのkeyとなるid
@@ -81,6 +67,7 @@ class ScreenController < ApplicationController
      screen_code
      @show_data = get_show_data screen_code
      show_data
+     render :text=> "xxxx  Create DetailFields #{screen_code} by crt_r_view_sql.rb" and exit if show_data.nil?
      view_item_set 
      ##debugger 
      ## p "chil_view : #{chil_view.downcase}  : #{@nst_screenname_id} : "#{@disp_screenname_name} "
@@ -100,6 +87,7 @@ class ScreenController < ApplicationController
       set_pare_contents pare_view,rcd_id      ## 
      ##debugger 
      ## render :nst
+     plsql.commit
      render :nst,:layout =>false
  end   ### nst
 
@@ -136,33 +124,29 @@ class ScreenController < ApplicationController
  ### formで矢印がきかない
  def add_upd_del    ##  add update delete
      params[:oper] = "add" if  params[:copy] == "yes"   ### copy and add
-     tblfields = sub_set_fields_from_allfields
      case params[:oper] 
        when "add"
           rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s +  params[:q]  ### :q -->@nst_screenname_id
           hash_rcd = Rails.cache.read(rcd_id_cache_key)  
-          tmp_isnr =  tblfields
+          tmp_isnr =  sub_set_fields_from_allfields
           ## fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
           ##fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
           tmp_isnr.merge! hash_rcd unless hash_rcd.nil?
-          sub_insert_sio_c  do 
+          sub_insert_sio_c  command_r do    ###更新要求
              command_r[:sio_classname] = "plsql_blk_insert"
-             sub_add_upd_del_setsio(tmp_isnr)
-             command_r[:id_tbl] = nil
+             ## command_r[:id_tbl] = nil
           end
        when "del"
-          sub_insert_sio_c   do
+	  sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+          sub_insert_sio_c  command_r do
              command_r[:sio_classname] = "plsql_blk_delete"
-             sub_add_upd_del_setsio( tblfields)
-             command_r[:id_tbl] = tblfields[:id_tbl].to_i
           end
        when "edit"
 	 ###debugger
-         sub_insert_sio_c   do
+	 sub_set_fields_from_allfields ###画面の内容をcommand_rへ
+         sub_insert_sio_c command_r   do
            command_r[:sio_classname] = "plsql_blk_update"
-           sub_add_upd_del_setsio( tblfields)
-           command_r[:id_tbl] = tblfields[:id_tbl].to_i
-           ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
+	   ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
          end
        else     
        ##debugger ## textは表示できないのでメッセージの変更要
@@ -171,34 +155,18 @@ class ScreenController < ApplicationController
      ###debugger
     dbcud = DbCud.new
     dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
+    plsql.commit
+    render :nothing=>true
  end  ## add_upd_del
  #####
- def proc_add_button    ### 
-     sub_insert_sio_c  do
-	   command_r[:id_tbl] = sub_set_fields_from_allfields[:id_tbl].to_i 
-           command_r[:sio_classname]  = params[:button_proc]
-           rowdata = {}
-           ####  なぜ　iはsymでないの?
-           params[:rowdata].except("msg_ok_ng","id").each_key do |i|
-             rowdata[i.to_sym] =  params[:rowdata][i] 
-           end  
-           sub_add_upd_del_setsio(rowdata)  
-           ### screenの時は画面が変わるので
-           ### 保持しているデータは削除
-           ##  Rails.cache.clear if  command_r[:sio_viewname]  == "r_screens"       
-
-        end   ###proc_add_button  
- end   ## proc_add_button  
-
   def subpaging
       ###debugger
-           tmp_session_counter = sub_insert_sio_c  do
-           command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
+      tmp_session_counter = sub_insert_sio_c (command_r) do    ###ページング要求
+	   command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
            command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
            command_r[:sio_sord] = params[:sord]
            command_r[:sio_search] = params[:_search] 
-           sub_params_set(command_r[:sio_viewname]) if params[:_search]  == "true" 
-           command_r[:sio_sidx]  = params[:sidx]
+	   command_r[:sio_sidx]  = params[:sidx]
 	   command_r[:sio_classname] = "plsql_blk_paging"
       end
       plsql_blk_paging
@@ -215,14 +183,14 @@ class ScreenController < ApplicationController
                                                         tmp_session_counter,const)
       @tbldata = []
       
-       ####debugger
+       ##debugger
       
       for j in 0..rcd.size - 1
           tmp_data = {}
           show_data[:allfields].each do |k|
            k_to_s =  k.to_s 
-           tmp_data[k] = rcd[j][k] if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-           tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
+           tmp_data[k] = rcd[j][k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+           ## tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
            tmp_data[k] = rcd[j][k].strftime("%Y-%m-%d") if k_to_s =~ /expiredate/ and  !rcd[j][k].nil?
           end 
           @tbldata << tmp_data
@@ -230,30 +198,6 @@ class ScreenController < ApplicationController
       @record_count = 0
       @record_count = rcd[0][:sio_totalcount] unless rcd.empty?
   end  ##subpaging
-  def sub_insert_sio_c  
-      ##debugger
-      sub_set_fields_from_allfields 
-      command_r[:person_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 1  ###########   LOGIN USER  
-      command_r[:sio_viewname]  = plsql.screens.first("where code = '#{screen_code}' and Expiredate > sysdate order by expiredate ")[:viewname]
-      command_r[:sio_code]  = screen_code
-      command_r[:id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
-      command_r[:sio_term_id] =  request.remote_ip
-      command_r[:sio_session_id] = params[:q]
-      command_r[:sio_command_response] = "C"
-      command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
-      command_r[:sio_add_time] = Time.now
-      command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
-      yield
-      ### remark とcodeがnumberになっていた。原因不明　2011-09-19
-      ##fprnt " class #{self} : LINE #{__LINE__} sio_\#{ command_r[:sio_viewname] } :sio_#{command_r[:sio_viewname]}"
-      ## fprnt " class #{self} : LINE #{__LINE__} command_r #{command_r}"
-      ##debugger
-      plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
-      plsql.commit 
-##    p Time.now
-##      $ts.write(["C",request.remote_ip,params[:q],command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}"])
-       return  command_r[:sio_session_counter]
-  end   ## sub_insert_sio_c 
   def sub_strsql 
       rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @nst_screenname_id 
       if Rails.cache.exist?(rcd_id_cache_key)   then  ### 
@@ -271,20 +215,41 @@ class ScreenController < ApplicationController
      strsql = nil if strsql == ""
      return strsql
   end
-  def sub_set_fields_from_allfields 
+  def char_to_number_data  ###   
+      show_data[:allfields].each do |i|
+          unless params[i].nil? then 
+             command_r[i] = params[i] 
+             case show_data[:alltypes][i]
+                  when "date","timestamp(6)" then
+			 begin
+                           command_r[i] = Time.parse(command_r[i].gsub(/\W/,""))
+			  rescue
+                            command_r[i] = Time.now
+			  end
+                  when "number"
+                         command_r[i] = command_r[i].gsub(/\W/,"").to_f
+             end
+           end  ## unless
+      end
+      return command_r
+  end ## defar_to....
+
+  def sub_set_fields_from_allfields ###画面の内容をcommand_rへ
       get_screen_code 
-     ###debugger  
+     ##debugger  
      @command_r = {}
+     command_r
+     ##debugger
+     if show_data.empty? 
+        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
+     end
      show_data[:allfields].each do |j|
-        @command_r[j] = params[j]  unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-        @command_r[:id_tbl] = params[j] if j.to_s == "id"          
+        command_r[j] = params[j]  ##unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
+        ##command_r[:id_tbl] = params[j].to_i if j.to_s == "id"          
     end ##
-    command_r
+    char_to_number_data     ##parmsの文字型を数字・日付に
   end  
-  def command_r
-      @command_r
-  end
-   def get_screen_code 
+  def get_screen_code 
       ##debugger ## 画面の項目
       if params[:action]  == "index"  then  ## listからの初期画面の時
          @screen_code = @nst_screenname_id  = params[:id].upcase
@@ -299,9 +264,7 @@ class ScreenController < ApplicationController
      screen_code
      @show_data = get_show_data screen_code
      show_data
-     if show_data.empty?
-        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
-     end
+     ##debugger
      @scriptopt = {}
      @scriptopt[:pare_contents] = ""
   end
@@ -311,15 +274,17 @@ class ScreenController < ApplicationController
   def show_data
       @show_data
   end
-
+  def command_r
+      @command_r
+  end
   def  sub_getfield
        strfields = []
        command_r.each  do |i,j|
           tmp_field = i.to_s 
           unless  tmp_field =~ /^sio_/  then
-             unless  tmp_field == "id_tbl" then
+             ##unless  tmp_field == "id_tbl" then
                strfields <<  tmp_field
-             end 
+             ##end 
           end  ## unless  unless i.to_s =~ /^sio_/ 
        end   ## command_r.each
        strfields =  strfields.join(",") 
@@ -327,7 +292,7 @@ class ScreenController < ApplicationController
   end   ##  sub_getfield
 
   def plsql_blk_paging  
-    command_r[:id] = nil
+    ##command_r[:id] = nil
     #####   strsqlにコーディングしてないときは、viewをしよう
 ####     strdql はupdate insertには使用できない。
     
@@ -341,39 +306,40 @@ class ScreenController < ApplicationController
     tmp_sql << "  order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == ""
     cnt_strsql = "SELECT 1 FROM " + tmp_sql 
     ##fprnt "class #{self} : LINE #{__LINE__}   cnt_strsql = '#{cnt_strsql}'"
-    debugger
+    ##debugger
     command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
     case  command_r[:sio_totalcount]
-    when nil,0   ## 該当データなし
+    when nil,0   ## 該当データなし　　回答
          ## insert_sio_r recodcount,result_f,contents
-         contents = "not find record"    ### 将来usergroup毎のメッセージへ
-	 command_r[:sio_recordcount] = 0
-         command_r[:sio_result_f] = "1"
-         command_r[:sio_message_contents] = contents
-         insert_sio_r  command_r
+	 sub_insert_sio_r command_r do
+	    contents = "not find record"    ### 将来usergroup毎のメッセージへ
+	    command_r[:sio_recordcount] = 0
+            command_r[:sio_result_f] = "1"
+            command_r[:sio_message_contents] = contents
+	 end
 
     else      
          strsql = "select #{sub_getfield} from (SELECT rownum cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
          strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
-         ##fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+         fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
          pagedata = plsql.select(:all, strsql)
          pagedata.each do |j|
            r_cnt += 1
            ##   command_r.merge j なぜかうまく動かない。
            j.each do |j_key,j_val|
-             command_r[j_key]   = j_val unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-             command_r[:id_tbl] = j_val if j_key.to_s == "id"
+             command_r[j_key]   = j_val ## unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
+             ## command_r[:id_tbl] = j_val if j_key.to_s == "id"
            end  
            ##debugger
-             command_r[:sio_recordcount] = r_cnt
-             command_r[:sio_result_f] = "0"
-             command_r[:sio_message_contents] = nil
-           insert_sio_r  command_r
+           sub_insert_sio_r  command_r do    ###回答
+	       command_r[:sio_recordcount] = r_cnt
+               command_r[:sio_result_f] = "0"
+               command_r[:sio_message_contents] = nil
+	    end
 	 end ##    plsql.select(:all, "#{strsql}").each do |j|
     end   ## case
   ### p  "e: " + Time.now.to_s 
-  plsql.commit
   end   ###plsql_paging
   def  sub_strwhere
        command_r[:sio_strsql] = sub_strsql
@@ -382,61 +348,41 @@ class ScreenController < ApplicationController
           else
            strwhere = " WHERE "
        end
-       command_r.each  do |i,j|
-          unless i.to_s =~ /^sio_/ then
-             unless j.to_s.empty? then             
-               tmpwhere = " #{i.to_s} = '#{j}'         AND " if show_data[:alltypes][i] =~ /char/ 
-               tmpwhere = " #{i.to_s} = #{j.to_i}     AND " if show_data[:alltypes][i] == "number"
-               tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) and (show_data[:alltypes][i] =~ /char/ or  show_data[:alltypes][i] == "textarea")
-	       tmpwhere = " to_char( #{i.to_s},'yyyy-mm') = '#{j}'       AND "  if show_data[:alltypes][i] == "date" and j.size == 7
-	       tmpwhere = " to_char( #{i.to_s},'yyyy-mm-dd') = '#{j}'    AND "  if show_data[:alltypes][i] == "date" and j.size == 10
-              if j =~ /^</   or  j =~ /^>/ then 
-                   tmpwhere = " #{i.to_s}  #{j[0]}  '#{j[1..-1]}'         AND " if show_data[:alltypes][i] =~ /char/ 
-                   tmpwhere = " #{i.to_s}  #{j[0]}  #{j[1..-1].to_i}      AND "  if show_data[:alltypes][i] == "number"
-	           tmpwhere = " to_char( #{i.to_s},'yyyy-mm') #{j[0]} '#{j}'      AND "  if show_data[:alltypes][i] == "date" and j.size == 8
-	           tmpwhere = " to_char( #{i.to_s},'yyyy-mm-dd')  #{j[0]} '#{j}'      AND "  if show_data[:alltypes][i] == "date" and j.size == 11
-		   if j =~ /^<=/  or j =~ /^>=/ then 
-                      tmpwhere = " #{i.to_s} #{j[0..1]} '#{j[2..-1]}'       AND "  if show_data[:alltypes][i] =~ /char/ 
-                      tmpwhere = " #{i.to_s} #{j[0..1]} #{j[2..-1].to_i}      AND "   if show_data[:alltypes][i] == "number" 
-	              tmpwhere = " to_char( #{i.to_s},'yyyy-mm') #{j[0..1]} '#{j}'     AND "  if show_data[:alltypes][i] == "date" and j.size == 9
-	              tmpwhere = " to_char( #{i.to_s},'yyyy-mm-dd')  #{j[0..1]} '#{j}'    AND "  if show_data[:alltypes][i] == "date" and j.size == 12
-                    end  ## <=
-                end   ## if j
-            strwhere << tmpwhere 
-           end ## unless empty 
-          end  ## unless  unless i.to_s =~ /^sio_/ 
-       end   ## command_r.each
+       params.each  do |i,j|
+	   ###debugger
+	   case show_data[:alltypes][i.to_sym]
+	       when   /char/ 
+                     tmpwhere = " #{i} = '#{j}'         AND "
+		     tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/ 
+		     tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
+		     tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
+	       when  "textarea"
+                      tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
+	       when "number"
+                     tmpwhere = " #{i} = #{j.to_i}     AND " 
+		     tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
+		     tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
+	       when "date","timestamp(6)"
+		     case  j.size  
+			when 7
+			  tmpwhere = " to_char( #{i},'yyyy-mm') = '#{j}'       AND "  if Date.valid_date?(j.split("-")[0].to_i,j.split("-")[1].to_i,01)
+			when 8
+			  tmpwhere = " to_char( #{i},'yyyy-mm') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
+                        when 9 
+			  tmpwhere = " to_char( #{i},'yyyy-mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
+			when 10
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') = '#{j}'       AND "  if Date.valid_date?(j.split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)
+			when 11
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
+                        when 12 
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
+                    end ## j.size  
+                end   ##show_data[:alltypes][i]
+	   strwhere << tmpwhere  if  tmpwhere 
+        end ### params.each  do |i,j|###
        return strwhere[0..-7]
   end   ## sub_strwhere
 
-  
-
-  def sub_add_upd_del_setsio tblfields
-	   tblfields.each_key do |ii|     ### tblfields  paramsをsio用に変換したもの
-           if !tblfields[ii].nil?   and ii.to_s != "id_tbl"   ###   sub_set_fields_from_allfields参照 
-              tmp_type = plsql.DETAILFIELDS.first(" where code = '#{ii.to_s.upcase}' and Expiredate > sysdate order by expiredate ") 
-          ##debugger
-              tmp_type = unless  tmp_type.nil? then  tmp_type[:type] else "" end
-              case tmp_type
-	      ### 日付項目が画面から入力されなければ当日をセット　いやなら必須項目にする。
-              when "DATE","TIMESTAMP(6)" then
-		      command_r[ii] =  if tblfields[ii] == "" then Time.now else Time.parse(tblfields[ii])  end
-              when "NUMBER"
-                   command_r[ii] = tblfields[ii].to_f
-              else
-                   command_r[ii] = tblfields[ii]
-              end
-           end  ## if    !params[ii].nil?  
-           end   ## do |ii|
-           render :nothing => true
-     tmp_isnr = {}
-     show_data[:allfields].each do|j|
-        tmp_isnr[j] = params[j]  unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-        tmp_isnr[:id_tbl] = params[j] if j.to_s == "id"          
-    end ##    
-    ###debugger
-    return tmp_isnr
- end 
  def code_to_name
       chgname = params[:chgname]
       chgval  = params[:chgval]
@@ -453,5 +399,8 @@ class ScreenController < ApplicationController
 	 end ## getrecord
      end ##chgcode
      render :json => @getname
+  end  #code_to_name
+  def export_to_xlsx
+      redirect_to :action => 'index',:id=>params[:q]  ### reloadでエラー
   end
 end ## ScreenController
