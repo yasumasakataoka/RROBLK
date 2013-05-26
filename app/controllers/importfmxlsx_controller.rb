@@ -1,5 +1,7 @@
 class ImportfmxlsxController < ApplicationController
   before_filter :authenticate_user!  
+  ####  roo:char exlelæ•°å­—ã ã¨ 1.0ã«ãªã‚‹ã€‚
+  ####  rubyXL: æ¼¢å­—ãŒæ··åœ¨ã™ã‚‹ã¨é …ç›®ã®ä½ç½®ãŒãšã‚Œã‚‹ã€‚
   def index
       @tblname =  sub_blkgetpobj( params[:q] ,"A",sub_blkget_grpcode)
       @screen_code = params[:q] 
@@ -15,28 +17,30 @@ class ImportfmxlsxController < ApplicationController
      temp = params[:dump][:excel_file].tempfile
      file = File.join("public",params[:dump][:excel_file].original_filename)
      FileUtils.cp temp.path, file
-     ##debugger
-     spt = RubyXL::Parser.parse file
+    ##debugger
+     spt = SimpleXlsxReader.open file
      ##debugger
       FileUtils.rm file
-      spt.each do |sh|
+      spt.sheets.each do |sh|
       s_cnt = nil               ####session_counter
-         sh.each_with_index do |rowdata,count|
+         sh.rows.each_with_index do |rowdata,count|
 	   if count == 0
-	      nchk rowdata,sh.sheet_name if count == 0
+	      ##debugger
+	      nchk rowdata,sh.name if count == 0
 	       ##debugger
                break  unless  @errmsg == ""
              else
 	      @command_r = {}
               command_r
 	      rowdata.each_with_index do |cell,cellcnt|
-                 command_r[ @row0[cellcnt]] = cell.value  if @row0[cellcnt] and cell
+                 command_r[ @row0[cellcnt]] = cell  if @row0[cellcnt] and cell
 	      end  ##column
+	      ##debugger
 	      command_r[:sio_session_counter]  = s_cnt
-	      ##	 char_to_number_data  ####type •ÏŠ·
-        	case sh.sheet_name.upcase
+	      ##	 char_to_number_data  ####type å¤‰æ›
+        	case sh.name.upcase
 	            when "INSERT"
-                          sub_insert_sio_c  do    ###XV—v‹
+                          sub_insert_sio_c  do    ###æ›´æ–°è¦???
                               command_r[:sio_classname] = "plsql_blk_insert"
                          end
          	   when "UPDATE"
@@ -70,29 +74,49 @@ class ImportfmxlsxController < ApplicationController
        @rfields = {}
        errfield  = []
        @errmsg = ""
-       @nfields = []   ## •K{(XV)€–Ú
+       @nfields = []   ## æ›´æ–°???ç›®
+       @indispfs = []   ## ???é ˆ???ç›®
+       @keyfs = []   ## key???é ˆ???ç›®
        @show_data = get_show_data(screen_code)
        show_data
        show_data[:gridcolumns].each do |i|
-	 if @fields.key?(i[:label].to_sym) then  ###Šù‚Ékey‚ª‘¶Ý‚·‚éB
+	 if @fields.key?(i[:label].to_sym) then  ###æ—¢ã«???ç›®ãŒå­˜åœ¨ã™ã‚‹???
 	    errfield << i[:label]
 	 else 
 	    @fields[i[:label].to_sym] = i[:field] if i[:hidden] == false
 	    @rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false
 	 end
-	 @nfields << i[:field].to_sym  if i[:editable] == true   ###XV‰Â”\€–Ú
+	 if i[:editable] == true   ###æ›´æ–°å¯èƒ½???ç›®
+	     @nfields << i[:field].to_sym 
+             @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
+	     @keyfs <<  i[:field].to_sym  if show_data[:keysfield].index(i[:field])
+          end
        end
      @errmsg = "#{errfield.join(',').encode('utf-8')}" unless errfield == []
   end
-  def nchk spt,s
-       errfield  = []
-       @row0 = []
-       spt.each do |cell|   ##ˆês–Ú‚Í€–Ú
-           @row0 <<  @fields[cell.value.to_sym].to_sym if cell
+  def nchk spt,sheet_name
+      errfield  = []
+      @row0 = []
+      spt.each do |cell|   ##ä¸€è¡Œç›®ã¯???ç›®
+	   ##p cell
+	   ##debugger
+           @row0 <<  @fields[cell.encode("utf-8").to_sym].to_sym if cell and @fields[cell.encode("utf-8").to_sym]
       end
-      @nfields.each do |i|
-	  errfield << i.to_s  + ":" + @rfields[i] unless @row0.index(i)
-      end
+      if   sheet_name.upcase == "INSERT"
+           @indispfs.each do |i|
+	     ##errfield << "???é ˆ???ç›®ãª???".encode("utf-8")  + i  + ":" + @rfields[i].encode("utf-8") if @row0.index(i).nil? 
+	     errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
+           end
+       end
+       if   sheet_name.upcase == "UPDATE"
+           @keyfs.each do |i|
+	     ###errfield << "key???ç›®ãª???" + i  + ":" + @rfields[i] if @row0.index(i).nil? 
+	     errfield <<  i.to_s  + ":" + @rfields[i] if @row0.index(i).nil? 
+           end
+	   ###errfield << "æ›´æ–°???ç›®ãª???"  if @row0.size <2
+	   errfield << "no field for update "  if @row0.size <2
+       end  
+      @errmsg
       @errmsg = "#{errfield.join(',')}" unless errfield == []
   end
   def get_id_from_code

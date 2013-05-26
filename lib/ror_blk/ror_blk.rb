@@ -45,7 +45,7 @@
     foo.puts str
     foo.close
   end   ##fprnt str
-  def get_show_data screen_code 
+  def get_show_data screen_code ,jqgrid_id = ""
      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
      ##debugger
      if Rails.cache.exist?(show_cache_key) then
@@ -53,12 +53,12 @@
          show_data = Rails.cache.read(show_cache_key)
      else 
 	 ### create_def screen_code
-	 show_data = set_detail  screen_code  ## set gridcolumns
+	 show_data = set_detail  screen_code,jqgrid_id  ## set gridcolumns
      end
      ##debugger
      return show_data
  end  ## get_show_data
- def set_detail screen_code
+ def set_detail screen_code,jqgrid_id
       show_data = {}
       det_screen = plsql.r_detailfields.all(
                                 "where screen_code = '#{screen_code}'
@@ -68,6 +68,8 @@
            if det_screen.empty?
               ###debugger ## textは表示できないのでメッセージの変更要
 	      p  "Create DetailFields #{screen_code} by crt_r_view_sql.rb"
+	      ##render :text =>"Create DetailFields #{screen_code} by crt_r_view_sql.rb" 
+	      show_data = nil
               return show_data 
            end   
            ###
@@ -76,7 +78,7 @@
            screen_viewname = det_screen[0][:screen_viewname].upcase
            ###debugger ## 詳細項目セット
 	  if pare_screen.nil? then
-	     show_data[:scriptopt] = [] 
+	     show_data[:scriptopt] = {}
 	    else
 	     set_addbutton(pare_screen)
 	   end     ### add  button セット script,gear,....
@@ -141,7 +143,8 @@
            show_data[:alltypes]  =  alltypes  
            show_data[:screen_viewname] = screen_viewname.upcase
            show_data[:gridcolumns] = gridcolumns
-	  if pare_screen.nil? then 
+	   show_data.merge!(set_aftershowform jqgrid_id, screen_code)
+	   if pare_screen.nil? then 
 	     show_data[:extbutton] = ""
 	     show_data[:extdiv_id] = "" 
 	    else
@@ -188,7 +191,7 @@
                   t_extbutton << %Q| value="#{i[:screen_viewname]};#{i[:screen_viewname_chil]};| ### 親のview
                   t_extbutton << %Q|#{i[:screen_code_chil]};1"/>|  
                   t_extbutton << %Q| <label for="radio#{k.to_s}">  #{sub_blkgetpobj(i[:screen_code_chil],"A",grp_code)} </label> |   ##"A"画面
-                  t_extdiv_id << %Q|<div id="div_#{i[:screen_viewname]}#{i[:screen_viewname_chil]}"> </div>|
+                  t_extdiv_id << %Q|<div id="div_#{i[:screen_viewname]}-#{i[:screen_viewname_chil]}"> </div>|
       
         end   ### rad_screen.each
 	show_data[:extbutton] =  t_extbutton
@@ -627,5 +630,180 @@ def record_auto tsio_r,to_screen,to_tblname,fields
       # subtract one day to compare date for erroneous 1900 leap year compatibility
       compare_date - 1 + num
     end
+    def sub_plsql_blk_paging  
+    ##command_r[:id] = nil
+    #####   strsqlにコーディングしてないときは、viewをしよう
+####     strdql はupdate insertには使用できない。
+    
+    ###command_r[:sio_strsql] = get_strsql
+
+    tmp_sql = if command_r[:sio_strsql].nil? then command_r[:sio_viewname]  + " a " else command_r[:sio_strsql] end
+          
+    strsql = "SELECT id FROM " + tmp_sql
+    ##fprnt "class #{self} : LINE #{__LINE__}  strsql = '#{strsql}"
+    tmp_sql << sub_strwhere  if command_r[:sio_search]  == "true"
+    tmp_sql << "  order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == ""
+    cnt_strsql = "SELECT 1 FROM " + tmp_sql 
+    fprnt "class #{self} : LINE #{__LINE__}   sub_strwhere = '#{sub_strwhere}'"
+    ##debugger
+    command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
+    case  command_r[:sio_totalcount]
+    when nil,0   ## 該当データなし　　回答
+         ## insert_sio_r recodcount,result_f,contents
+	 sub_insert_sio_r  command_r do
+	    contents = "not find record"    ### 将来usergroup毎のメッセージへ
+	    command_r[:sio_recordcount] = 0
+            command_r[:sio_result_f] = "1"
+            command_r[:sio_message_contents] = contents
+	 end
+
+    else      
+         strsql = "select #{sub_getfield} from (SELECT rownum cnt,a.* FROM #{tmp_sql} ) "
+         r_cnt = 0
+         strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
+         fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+         pagedata = plsql.select(:all, strsql)
+         pagedata.each do |j|
+           r_cnt += 1
+           ##   command_r.merge j なぜかうまく動かない。
+           j.each do |j_key,j_val|
+             command_r[j_key]   = j_val ## unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
+             ## command_r[:id_tbl] = j_val if j_key.to_s == "id"
+           end  
+           ##debugger
+           sub_insert_sio_r command_r  do    ###回答
+	       command_r[:sio_recordcount] = r_cnt
+               command_r[:sio_result_f] = "0"
+               command_r[:sio_message_contents] = nil
+	    end
+	 end ##    plsql.select(:all, "#{strsql}").each do |j|
+    end   ## case
+  ### p  "e: " + Time.now.to_s 
+  end   ###plsql_paging
+  def  sub_strwhere
+        ##command_r[:sio_strsql] = get_strsql
+       if command_r[:sio_strsql] then
+          strwhere = unless command_r[:sio_strsql].upcase.split(")")[-1] =~ /WHERE/ then  " WHERE "  else " and " end
+          else
+           strwhere = " WHERE "
+       end
+       xparams.each  do |i,j|  ##xparams gridの生
+	   ###debugger
+	   case show_data[:alltypes][i.to_sym]
+	       when   /char/ 
+                     tmpwhere = " #{i} = '#{j}'         AND "
+		     tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/ 
+		     tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
+		     tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
+	       when  "textarea"
+                      tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
+	       when "number"
+                     tmpwhere = " #{i} = #{j.to_i}     AND " 
+		     tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
+		     tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
+	       when "date","timestamp(6)"
+		     case  j.size  
+			when 7
+			  tmpwhere = " to_char( #{i},'yyyy-mm') = '#{j}'       AND "  if Date.valid_date?(j.split("-")[0].to_i,j.split("-")[1].to_i,01)
+			when 8
+			  tmpwhere = " to_char( #{i},'yyyy-mm') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
+                        when 9 
+			  tmpwhere = " to_char( #{i},'yyyy-mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
+			when 10
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') = '#{j}'       AND "  if Date.valid_date?(j.split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)
+			when 11
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
+                        when 12 
+			  tmpwhere = " to_char( #{i},'yyyy-mm-dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
+                    end ## j.size  
+                end   ##show_data[:alltypes][i]
+	   strwhere << tmpwhere  if  tmpwhere 
+        end ### params.each  do |i,j|###
+       return strwhere[0..-7]
+  end   ## sub_strwhere
+  def subpaging  command_r
+      ###debugger
+      sub_insert_sio_c  do    ###ページング要求
+      end
+      ##tmp_session_counter = command_r[:sio_session_counter]
+      sub_plsql_blk_paging
+      ##debugger # breakpoint   
+##      $ts.take(["R",request.remote_ip,params[:q],tmp_session_counter,"SIO_#{command_r[:sio_viewname]}"])
+###      $ts.take(["R",request.remote_ip,params[:q],command_r[:session_counter],"sio_#{command_r[:sio_viewname]}"],10)
+      const = "R"
+      
+      ##debugger # breakpoint
+      rcd =  plsql.__send__("SIO_#{command_r[:sio_viewname]}").all("where sio_session_counter = :1
+                                                        and sio_command_response = :2",
+                                                        command_r[:sio_session_counter],const)
+      
+       ##debugger
+      
+      for j in 0..rcd.size - 1
+          tmp_data = {}
+          show_data[:allfields].each do |k|
+             k_to_s =  k.to_s 
+             tmp_data[k] = rcd[j][k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+             ## tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
+             tmp_data[k] = rcd[j][k].strftime("%Y-%m-%d") if k_to_s =~ /expiredate/ and  !rcd[j][k].nil?
+          end 
+         ## @tbldata << tmp_data if  j < 10000
+	 ## @alldatas << tmp_data
+	 yield tmp_data
+      end ## for
+      command_r[:sio_totalcount] = 0
+      command_r[:sio_totalcount] = rcd[0][:sio_totalcount] unless rcd.empty?
+  end  ##subpaging
+    def  sub_getfield
+       strfields = []
+       command_r.each  do |i,j|
+          tmp_field = i.to_s 
+          unless  tmp_field =~ /^sio_/  then
+             ##unless  tmp_field == "id_tbl" then
+               strfields <<  tmp_field
+             ##end 
+          end  ## unless  unless i.to_s =~ /^sio_/ 
+       end   ## command_r.each
+       strfields =  strfields.join(",") 
+       return strfields
+  end   ##  sub_getfield
+  def set_aftershowform id,screen_code
+       javascript_add = %Q|function(formid) { 
+                                jQuery("input",formid).change(function(){ 
+      		        var chgname = jQuery(this).attr("name");
+     					var chgval  = jQuery(this).val();
+      					if(chgname.match(/_code/i)){ if(chgname.match(/^#{id.split(/_/,2)[1].chop.downcase}/i)){}
+      					  else{ var newname = "#"+chgname.replace("_code","_name");
+     					        jQuery.getJSON("/screen/code_to_name",{"chgname":chgname,"chgval":chgval},function(data){
+      					  jQuery(newname,formid).val(data.name);
+      						})
+      					      }
+      					}
+      				})|
+	javascript_edit = %Q|function(formid) { 
+                                jQuery("input",formid).change(function(){ 
+      		        var chgname = jQuery(this).attr("name");
+     					var chgval  = jQuery(this).val();
+      					if(chgname.match(/_code/i)){ if(chgname.match(/^#{id.split(/_/,2)[1].chop.downcase}/i)){}
+      					  else{ var newname = "#"+chgname.replace("_code","_name");
+     					        jQuery.getJSON("/screen/code_to_name",{"chgname":chgname,"chgval":chgval},function(data){
+      					  jQuery(newname,formid).val(data.name);
+      						})
+      					      }
+      					}
+      				})|		
+	tmp = plsql.pobjects.all("where expiredate > sysdate and objecttype = '1' and code like '#{screen_code.split("_")[1].downcase.chop}%' and UKEYFLG is not null ")
+	strtmp = ""
+        keysfield = []
+	tmp.each do |i|
+            javascript_edit << %Q|;jQuery("##{i[:code]}",formid).attr('disabled',true)|
+	    javascript_add  << %Q|;jQuery("##{i[:code]}",formid).removeAttr('disabled')|
+	    keysfield << i[:code]
+	end
+	javascript_add << "}"
+	javascript_edit << "}"
+	{:aftershowform_add => javascript_add,:aftershowform_edit => javascript_edit,:keysfield=>keysfield}
+ end
+
 end   ##module Ror_blk
 

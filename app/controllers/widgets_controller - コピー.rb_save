@@ -1,0 +1,13 @@
+class WidgetsController < ApplicationController
+  class TestDocument < Prawn::Document
+    def to_pdf
+      text_box "Hello World!",:at=>[100,100]
+      render
+    end
+  end
+
+  def index
+    output = TestDocument.new.to_pdf
+     send_data output, :filename => "hello.pdf", :type => "application/pdf"
+  end
+end

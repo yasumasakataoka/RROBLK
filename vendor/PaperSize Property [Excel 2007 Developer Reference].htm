@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><link rel="canonical" href="http://msdn.microsoft.com/en-us/library/office/bb208944%28v=office.12%29.aspx">
+        <title>PaperSize Property&nbsp;[Excel 2007 Developer Reference]</title>
+
+
+
+
+<meta name="DCS.dcsuri" content="/en-us/library/office/bb208944(d=default,l=en-us,v=office.12).aspx">
+
+<meta name="NormalizedUrl" content="http://msdn.microsoft.com/en-us/library/office/bb208944(d=default,l=en-us,v=office.12).aspx">
+
+<meta name="DCSext.ProductFamily" content="MSDN_Office">
+
+<meta name="DCSext.ContentType" content="MSDN_OFFICEVBAREF">
+
+<meta name="DCSext.MSDNLibOffice" content="MSDN_OFFICE; MSDN_OFFICEEXCEL">
+
+<meta name="DCSext.Product" content="MSDN_OFFICEEXCEL">
+
+<meta name="DCSext.Title" content="PaperSize Property&nbsp;[Excel 2007 Developer Reference]">
+
+<meta name="VotingContextUrl" content="http://msdn.microsoft.com/en-us/library/office/bb208944(d=default,l=en-us,v=office.12).aspx">
+
+<meta name="MN" content="4B9B1F25-10:49:31 PM">
+
+<meta name="Search.ShortId" content="bb208944">
+
+<meta name="Ms.Locale" content="en-us">
+
+
+
+
+
+
+
+
+        
+    <link rel="stylesheet" type="text/css" href="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/Combined.css"><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/ms2.js" async="" type="text/javascript"></script><script class="mtps-injected">try {
+/**/
+(window.MTPS || (window.MTPS = {})).cdnDomains || (window.MTPS.cdnDomains = { 
+	"image": "http://i.msdn.microsoft.com", 
+	"js": "http://i2.msdn.microsoft.com", 
+	"css": "http://i3.msdn.microsoft.com"
+});
+/**/
+} finally { MTPS._injectNextScript_0 && MTPS._injectNextScript_0(); }</script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/jquery-1.js" class="mtps-injected"></script><script class="mtps-injected">try {
+//
+  var literalNormalizedUrl = '/en-us/library/office/bb208944(d=default,l=en-us,v=office.12).aspx';
+  var wt_nvr_ru = 'WT_NVR_RU';
+  var wt_fpcdom = '.microsoft.com';
+  var wt_domlist = 'msdn.microsoft.com';
+  var wt_pathlist = '';
+  var wt_paramlist = 'DCSext.mtps_devcenter';
+  var wt_siteid = 'MSDN';
+  var gDomain = 'm.webtrends.com';
+  var gDcsId = 'dcsmgru7m99k7mqmgrhudo0k8_8c6m';
+  var gFpc = 'WT_FPC';
+
+
+
+  if (document.cookie.indexOf(gFpc + "=") == -1) {
+    var wtidJs = document.createElement("script");
+    wtidJs.src = "//" + gDomain + "/" + gDcsId + "/wtid.js";
+    document.getElementsByTagName("head")[0].appendChild(wtidJs);
+  }
+
+
+
+  var detectedLocale = 'en-us';
+  var wtsp = 'msdnlib_office';
+  var gTrackEvents = '0';
+/**/
+} finally { MTPS._injectNextScript_2 && MTPS._injectNextScript_2(); }</script><script class="mtps-injected">try {
+/**/
+  var omni_guid = "cba8b44e-c628-4397-808b-91a34a802a0e";
+/**/
+} finally { MTPS._injectNextScript_3 && MTPS._injectNextScript_3(); }</script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/Combined_002.js" class="mtps-injected"></script><script class="mtps-injected">try {
+//
+        var isMtps = true;
+        //
+} finally { MTPS._injectNextScript_5 && MTPS._injectNextScript_5(); }</script><script class="mtps-injected">try {
+//
+    function SearchClick() {
+        window.location = "http://social.msdn.microsoft.com/search/en-us/?query=" + document.getElementById("HeaderSearchTextBox").value();
+    }
+
+    function SearchClientClick() {
+        if (document.getElementById("HeaderSearchTextBox").value == document.getElementById("HeaderSearchTextBox").title) return false;
+        document.HeaderSearchForm.submit(); return true;
+    }
+//
+} finally { MTPS._injectNextScript_6 && MTPS._injectNextScript_6(); }</script><script class="mtps-injected">try {
+//
+            $(document).ready(function () {
+                var scriptElem = document.createElement('script');
+                scriptElem.src = 'http://i2.services.social.microsoft.com/Search/Widgets/SearchBox.jss?boxid=HeaderSearchTextBox&btnid=HeaderSearchButton&brand=MSDN&loc=en-us&Refinement=68&watermark=Office&focusOnInit=false&iroot=Office';
+                scriptElem.id = "mscom.srch.searchBox";
+                scriptElem.defer = "defer";
+                document.getElementsByTagName('head')[0].appendChild(scriptElem);
+            });
+            //
+} finally { MTPS._injectNextScript_7 && MTPS._injectNextScript_7(); }</script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/Combined_003.js" class="mtps-injected"></script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/jquery.js" class="mtps-injected"></script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/Combined.js" class="mtps-injected"></script><script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/broker.js"></script><script class="mtps-injected">try {
+$(document).ready(function() {
+        try {
+            var token = $("#globalRequestVerification input[name='__RequestVerificationToken']").clone();
+            $("#siteFeedbackForm").append(token);
+        } catch(err) {
+            
+        }
+    });
+} finally { MTPS._injectNextScript_11 && MTPS._injectNextScript_11(); }</script><link media="print" type="text/css" rel="stylesheet" href="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/PrintView.css"><script defer="defer" id="mscom.srch.searchBox" src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/SearchBox.js"></script></head>
+    <body class="library">
+        <div id="page">
+            
+            
+  
+            
+    
+    
+    <div id="ux-header">
+        <div class="BrandLogo">
+            <a href="http://msdn.microsoft.com/office">
+               <span class="BrandLogoImage officeImg"></span>
+               <span class="BrandLogoTitle officeTxt">Dev Center</span>
+            </a>
+        </div>
+        
+        
+
+
+<div class="Search">    
+    <div class="SearchBox">
+    <form name="HeaderSearchForm" method="get" action="http://social.msdn.microsoft.com/search/en-us/?query=">
+        <input style="color: rgb(170, 170, 170); font-style: italic;" autocomplete="off" id="HeaderSearchTextBox" name="query" class="TextBoxSearch" title="Search Office with Bing" type="text">
+        <input id="RefinementId" name="RefinementId" title="68" type="hidden">
+        <div class="SearchButton" tabindex="0">
+        <img src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/Sprite.png" id="HeaderSearchButton" onclick="if (document.getElementById('HeaderSearchTextBox').value != document.getElementById('HeaderSearchTextBox').title) {window.location = 'http://social.msdn.microsoft.com/search/en-us/?query=' + document.getElementById('HeaderSearchTextBox').value; return true;} else return false;" type="button" alt="Search Office" title="Search Office with Bing"></div>
+        
+    <div style="display: none; text-align: left; border: 1px solid buttonshadow; position: absolute; z-index: 1000; padding: 2px; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); font-family: 'Segoe UI','Lucida Grande',Verdana,Arial,Helvetica,sans-serif; font-size: 13px;" id="SearchFlyoutContainer"><div id="SuggestionContainer"><ul style="list-style: none outside none; padding: 4px 2px 0px 1px; cursor: pointer; margin: 1px; white-space: nowrap;"></ul></div></div></form>
+    </div>
+</div>
+        
+        <div class="GlobalBar">
+            <div id="LocaleSelector">
+                <form id="ChangeLocaleForm" action="/en-us/office/SelectLocale">
+                <input name="fromPage" value="/en-us/library/office/bb208944(v=office.12).aspx" type="hidden">
+                <div id="FlyoutTop">
+                    <a title="Change your language" href="#Change%20your%20language" onclick="$('#ChangeLocaleForm').submit();return false;" id="LinkCountryLanguage" class="LocaleManagementFlyoutStaticLink"> United States (English)</a>
+                </div>
+                </form>
+            </div>
+            <div class="PassportScarab">
+                <a id="idPPScarab" href="https://login.live.com/login.srf?wa=wsignin1.0&amp;rpsnv=11&amp;ct=1368856171&amp;rver=6.0.5276.0&amp;wp=MCLBI&amp;wlcxt=msdn%24msdn%24msdn&amp;wreply=http%3a%2f%2fmsdn.microsoft.com%2fen-us%2flibrary%2foffice%2fbb208944%2528v%3doffice.12%2529.aspx&amp;lc=1033&amp;id=254354&amp;mkt=en-US"><span id="idPPScarabSIT">Sign in</span></a>
+            </div>
+            <div class="Clear">
+            </div>
+        </div>
+        <div class="internav">
+                <a href="http://msdn.microsoft.com/en-us/office/aa905340" class="normal" title="Home">Home</a> 
+                <a href="http://msdn.microsoft.com/en-us/office/aa905369" class="normal" title="Products">Products</a> 
+                <a href="http://msdn.microsoft.com/en-US/office365" class="normal" title="Office 365">Office 365</a> 
+                <a href="http://msdn.microsoft.com/en-us/library/office" class="active" title="Docs">Docs</a> 
+                <a href="http://code.msdn.microsoft.com/office" class="normal" title="Samples">Samples</a> 
+                <a href="http://msdn.microsoft.com/en-us/office/aa905351" class="normal" title="Downloads">Downloads</a> 
+                <a href="http://msdn.microsoft.com/en-us/office/gg610406" class="normal" title="Training">Training</a> 
+                <a href="http://msdn.microsoft.com/en-us/office/aa905375" class="normal" title="How To">How To</a> 
+                <a href="http://msdn.microsoft.com/en-us/office/aa905515" class="normal" title="Support">Support</a> 
+                <a href="http://social.msdn.microsoft.com/Forums/en-us/category/officedev" class="normal" title="Forums">Forums</a> 
+        </div>
+        <div class="networkTagLineArea NetworkLogo">
+            <a title="Microsoft Developer Network" href="http://msdn.microsoft.com/"></a>
+        </div>
+        <div class="ShareThisContainer">
+                
+    <div style="-moz-user-select: none;" class="ux-sharethis ux-sharethisDown" id="c_573fb46362144f84b291813ed2dace2b">
+  <ul>
+      <li class="Items">
+        <a href="mailto:?subject=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D&amp;Body=http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx" title="mailto:?subject=[[1]]&amp;Body=[[0]]" target="_blank">
+          <span title="Email">
+            <span class="Icon ShareThisEmail"></span>
+            <span class="Label">Email</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://www.facebook.com/sharer.php?u=http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx&amp;t=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D" title="http://www.facebook.com/sharer.php?u=[[0]]&amp;t=[[1]]" target="_blank">
+          <span title="Facebook">
+            <span class="Icon ShareThisFacebook"></span>
+            <span class="Label">Facebook</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://twitter.com/home?status=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D%20:%20http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx" title="http://twitter.com/home?status=[[1]] : [[0]]" target="_blank">
+          <span title="Twitter">
+            <span class="Icon ShareThisTwitter"></span>
+            <span class="Label">Twitter</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://digg.com/submit?url=http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx&amp;title=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D" title="http://digg.com/submit?url=[[0]]&amp;title=[[1]]" target="_blank">
+          <span title="Digg">
+            <span class="Icon ShareThisDigg"></span>
+            <span class="Label">Digg</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://technorati.com/account/signup/" title="http://technorati.com/account/signup/" target="_blank">
+          <span title="Technorati">
+            <span class="Icon ShareThisTechnorati"></span>
+            <span class="Label">Technorati</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://del.icio.us/post?url=http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx&amp;title=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D" title="http://del.icio.us/post?url=[[0]]&amp;title=[[1]]" target="_blank">
+          <span title="Delicious">
+            <span class="Icon ShareThisDelicious"></span>
+            <span class="Label">Delicious</span>
+          </span>
+        </a>
+      </li>
+      <li class="Items">
+        <a href="http://profile.live.com/badge?url=http%3A//msdn.microsoft.com/en-us/library/office/bb208944%28v%3Doffice.12%29.aspx&amp;title=PaperSize%20Property%A0%5BExcel%202007%20Developer%20Reference%5D" title="http://profile.live.com/badge?url=[[0]]&amp;title=[[1]]" target="_blank">
+          <span title="Messenger">
+            <span class="Icon ShareThisMessenger"></span>
+            <span class="Label">Messenger</span>
+          </span>
+        </a>
+      </li>
+  </ul>
+  <a>
+    <span class="Icon"></span>
+    <span class="Label" tabindex="0">Share This</span>
+  </a>
+</div>
+
+        </div>
+    </div>     
+
+
+
+
+
+    <div class="breadCrumb">
+<a href="http://msdn.microsoft.com/en-us/library/office/fp161347.aspx" title="Office and SharePoint development">Office and SharePoint development</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb726434%28v=office.12%29.aspx" title="Office client development">Office client development</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb726436%28v=office.12%29.aspx" title="Office 2007">Office 2007</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb979621%28v=office.12%29.aspx" title="Excel 2007">Excel 2007</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb149067%28v=office.12%29.aspx" title="Excel 2007 Developer Reference">Excel 2007 Developer Reference</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb149081%28v=office.12%29.aspx" title="Excel Object Model Reference">Excel Object Model Reference</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb258978%28v=office.12%29.aspx" title="PageSetup Object">PageSetup Object</a>            <span>&gt;</span>
+<a href="http://msdn.microsoft.com/en-us/library/office/bb258982%28v=office.12%29.aspx" title="Properties">Properties</a>            <span>&gt;</span>
+
+        <a href="http://msdn.microsoft.com/en-us/library/office/bb208944%28v=office.12%29.aspx" title="PaperSize Property">PaperSize Property</a>
+    </div>
+
+        
+            <div id="body">
+                
+
+
+
+
+
+
+
+
+<div class="leftNavResize1" id="leftNav">
+
+
+
+<div id="tocnav">
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/fp161347.aspx" id="bb665965_office.12_en-us" title="Office and SharePoint development">Office and SharePoint development</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb726434%28v=office.12%29.aspx" id="jj189878_office.15_en-us" title="Office client development">Office client development</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb726436%28v=office.12%29.aspx" id="bb187360_office.12_en-us" title="Office 2007">Office 2007</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb979621%28v=office.12%29.aspx" id="bb187365_office.12_en-us" title="Excel 2007">Excel 2007</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb149067%28v=office.12%29.aspx" id="bb149067_office.12_en-us" title="Excel 2007 Developer Reference">Excel 2007 Developer Reference</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb149081%28v=office.12%29.aspx" id="bb149081_office.12_en-us" title="Excel Object Model Reference">Excel Object Model Reference</a>            </div>
+            <div style="padding-left: 0px;" class="toclevel0" data-toclevel="0">
+<a class="toc_collapsed" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb258978%28v=office.12%29.aspx" id="bb258978_office.12_en-us" title="PageSetup Object">PageSetup Object</a>            </div>
+            <div data-childrenloaded="true" style="padding-left: 17px;" class="toclevel1" data-toclevel="1">
+<a class="toc_expanded" href="#"></a><a data-tochassubtree="true" href="http://msdn.microsoft.com/en-us/library/office/bb258982%28v=office.12%29.aspx" id="bb258982_office.12_en-us" title="Properties">Properties</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225112%28v=office.12%29.aspx" title="AlignMarginsHeaderFooter Property">AlignMarginsHeaderFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225115%28v=office.12%29.aspx" title="Application Property">Application Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220890%28v=office.12%29.aspx" title="BlackAndWhite Property">BlackAndWhite Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220892%28v=office.12%29.aspx" title="BottomMargin Property">BottomMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225118%28v=office.12%29.aspx" title="CenterFooter Property">CenterFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220912%28v=office.12%29.aspx" title="CenterFooterPicture Property">CenterFooterPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225121%28v=office.12%29.aspx" title="CenterHeader Property">CenterHeader Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220913%28v=office.12%29.aspx" title="CenterHeaderPicture Property">CenterHeaderPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220914%28v=office.12%29.aspx" title="CenterHorizontally Property">CenterHorizontally Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb220915%28v=office.12%29.aspx" title="CenterVertically Property">CenterVertically Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb226272%28v=office.12%29.aspx" title="Creator Property">Creator Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225124%28v=office.12%29.aspx" title="DifferentFirstPageHeaderFooter Property">DifferentFirstPageHeaderFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb221052%28v=office.12%29.aspx" title="Draft Property">Draft Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225126%28v=office.12%29.aspx" title="EvenPage Property">EvenPage Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225128%28v=office.12%29.aspx" title="FirstPage Property">FirstPage Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208512%28v=office.12%29.aspx" title="FirstPageNumber Property">FirstPageNumber Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208514%28v=office.12%29.aspx" title="FitToPagesTall Property">FitToPagesTall Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208515%28v=office.12%29.aspx" title="FitToPagesWide Property">FitToPagesWide Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208526%28v=office.12%29.aspx" title="FooterMargin Property">FooterMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208664%28v=office.12%29.aspx" title="HeaderMargin Property">HeaderMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225132%28v=office.12%29.aspx" title="LeftFooter Property">LeftFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb177847%28v=office.12%29.aspx" title="LeftFooterPicture Property">LeftFooterPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225135%28v=office.12%29.aspx" title="LeftHeader Property">LeftHeader Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb177850%28v=office.12%29.aspx" title="LeftHeaderPicture Property">LeftHeaderPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb177853%28v=office.12%29.aspx" title="LeftMargin Property">LeftMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb242106%28v=office.12%29.aspx" title="OddAndEvenPagesHeaderFooter Property">OddAndEvenPagesHeaderFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb213218%28v=office.12%29.aspx" title="Order Property">Order Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb213219%28v=office.12%29.aspx" title="Orientation Property">Orientation Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb242110%28v=office.12%29.aspx" title="Pages Property">Pages Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2 current" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208944%28v=office.12%29.aspx" title="PaperSize Property">PaperSize Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225137%28v=office.12%29.aspx" title="Parent Property">Parent Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208995%28v=office.12%29.aspx" title="PrintArea Property">PrintArea Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb208997%28v=office.12%29.aspx" title="PrintComments Property">PrintComments Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209002%28v=office.12%29.aspx" title="PrintErrors Property">PrintErrors Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209004%28v=office.12%29.aspx" title="PrintGridlines Property">PrintGridlines Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209007%28v=office.12%29.aspx" title="PrintHeadings Property">PrintHeadings Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209008%28v=office.12%29.aspx" title="PrintNotes Property">PrintNotes Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209010%28v=office.12%29.aspx" title="PrintQuality Property">PrintQuality Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209013%28v=office.12%29.aspx" title="PrintTitleColumns Property">PrintTitleColumns Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209015%28v=office.12%29.aspx" title="PrintTitleRows Property">PrintTitleRows Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225140%28v=office.12%29.aspx" title="RightFooter Property">RightFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209165%28v=office.12%29.aspx" title="RightFooterPicture Property">RightFooterPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209171%28v=office.12%29.aspx" title="RightHeader Property">RightHeader Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225143%28v=office.12%29.aspx" title="RightHeaderPicture Property">RightHeaderPicture Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb209175%28v=office.12%29.aspx" title="RightMargin Property">RightMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb225146%28v=office.12%29.aspx" title="ScaleWithDocHeaderFooter Property">ScaleWithDocHeaderFooter Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb221846%28v=office.12%29.aspx" title="TopMargin Property">TopMargin Property</a>            </div>
+            <div style="padding-left: 34px;" class="toclevel2" data-toclevel="2">
+<span class="toc_empty"></span><a href="http://msdn.microsoft.com/en-us/library/office/bb214929%28v=office.12%29.aspx" title="Zoom Property">Zoom Property</a>            </div>
+</div>    
+    
+    
+    
+    
+    
+    
+    
+
+<a style="left: 280px; display: inline-block;" id="NavigationResize" href="javascript:void(0)">
+    <img style="" class="cl_nav_resize_open" src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/ImageSprite.png" title="Expand" alt="Expand">
+    <img style="display: none;" class="cl_nav_resize_close" src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/ImageSprite.png" title="Minimize" alt="Minimize">
+</a>
+
+
+
+</div>
+<div style="margin-left: 280px; width: auto;" id="content" class="content">
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+    
+
+    
+
+        
+
+<div class="topic" xmlns="http://www.w3.org/1999/xhtml">
+  <h1 class="title">PageSetup.PaperSize Property</h1>
+  
+  <div class="lw_vs">
+    <div id="curversion">
+      <strong>
+            Office 2007
+        </strong>
+    </div>
+  <div id="ratingCounterSeperator" class="cl_lw_vs_seperator" style="display: block;"></div><div style="margin: 0px 0px 0px 13px; display: block;" id="ratingCounter">
+        <span id="rcA" class="ratingText">
+            0 out of 1 rated this helpful <span id="rateThisPrefix">- </span><a id="rateThisTopic" href="#feedback" title="Rate this topic">Rate this topic</a>
+            
+        </span>
+    </div></div>
+  <div style="clear:both;"></div>
+  
+  
+  <div class="cdclvSection">
+    <div class="devdocvsbody">
+      <div id="header">
+        <table id="topTable">
+          <tbody><tr id="headerTableRow1">
+            <td>
+              <span id="runningHeaderText">Excel Developer Reference</span>
+            </td>
+          </tr>
+          <tr id="headerTableRow2">
+            <td>
+          </td></tr>
+        </tbody></table>
+      </div>Returns or sets the size of the paper. Read/write <a href="http://msdn.microsoft.com/en-us/library/office/bb241398%28v=office.12%29.aspx">XlPaperSize</a>.<p><strong class="mainheaders">Syntax</strong></p><p class="signature"><strong><em>expression</em>.PaperSize</strong></p><p><em>expression</em>&nbsp;&nbsp;&nbsp;A variable that represents a <strong>PageSetup</strong> object.</p><p><strong class="mainheaders">Remarks</strong><br></p><div class="tableSection"><table>
+				<tbody><tr><td><strong class="bterm">XlPaperSize</strong> can be one of these <strong class="bterm">XlPaperSize</strong> constants.</td></tr>
+				<tr><td><strong class="bterm">xlPaper11x17</strong>. 11 in. x 17 in.</td></tr>
+				<tr><td><strong class="bterm">xlPaperA4</strong>. A4 (210 mm x 297 mm)  </td></tr>
+				<tr><td><strong class="bterm">xlPaperA5</strong>. A5 (148 mm x 210 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperB5</strong>. A5 (148 mm x 210 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperDsheet</strong>. D size sheet</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelope11</strong>. Envelope #11 (4-1/2 in. x 10-3/8 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelope14</strong>. Envelope #14 (5 in. x 11-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeB4</strong>. Envelope B4 (250 mm x 353 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeB6</strong>. Envelope B6 (176 mm x 125 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeC4</strong>. Envelope C4 (229 mm x 324 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeC6</strong>. Envelope C6 (114 mm x 162 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeDL</strong>. Envelope DL (110 mm x 220 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeMonarch</strong>. Envelope Monarch (3-7/8 in. x 7-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEsheet</strong>. E size sheet</td></tr>
+				<tr><td><strong class="bterm">xlPaperFanfoldLegalGerman</strong>. German Legal Fanfold (8-1/2 in. x 13 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperFanfoldUS</strong>. U.S. Standard Fanfold (14-7/8 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperLedger</strong>. Ledger (17 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperLetter</strong>. Letter (8-1/2 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperNote</strong>. Note (8-1/2 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperStatement</strong>. Statement (5-1/2 in. x 8-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperUser</strong>. User-defined</td></tr>
+				<tr><td><strong class="bterm">xlPaper10x14</strong>. 10 in. x 14 in.</td></tr>
+				<tr><td><strong class="bterm">xlPaperA3</strong>. A3 (297 mm x 420 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperA4Small</strong>. A4 Small (210 mm x 297 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperB4</strong>. B4 (250 mm x 354 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperCsheet</strong>. C size sheet</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelope10</strong>. Envelope #10 (4-1/8 in. x 9-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelope12</strong>. Envelope #12 (4-1/2 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelope9</strong>. Envelope #9 (3-7/8 in. x 8-7/8 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeB5</strong>. Envelope B5 (176 mm x 250 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeC3</strong>. Envelope C3 (324 mm x 458 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeC5</strong>. Envelope C5 (162 mm x 229 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeC65</strong>. Envelope C65 (114 mm x 229 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopeItaly</strong>. Envelope (110 mm x 230 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperEnvelopePersonal</strong>. Envelope (3-5/8 in. x 6-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperExecutive</strong>. Executive (7-1/2 in. x 10-1/2 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperFanfoldStdGerman</strong>. German Legal Fanfold (8-1/2 in. x 13 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperFolio</strong>. Folio (8-1/2 in. x 13 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperLegal</strong>. Legal (8-1/2 in. x 14 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperLetterSmall</strong>. Letter Small (8-1/2 in. x 11 in.)</td></tr>
+				<tr><td><strong class="bterm">xlPaperQuarto</strong>. Quarto (215 mm x 275 mm)</td></tr>
+				<tr><td><strong class="bterm">xlPaperTabloid</strong>. Tabloid (11 in. x 17 in.) 
+
+
+					</td></tr>
+			</tbody></table></div><div id="vstablenote"><table><tbody><tr><th><img id="vs_note" alt="Bb208944.vs_note(en-us,office.12).gif" src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/IC101471.gif" title="Bb208944.vs_note(en-us,office.12).gif" xmlns="">&nbsp;&nbsp;Note</th></tr><tr><td>Some printers may not support all of these paper sizes.</td></tr></tbody></table></div><p><strong class="mainheaders">Example</strong><br></p><p>This example sets the paper size to legal for Sheet1.</p><table><tbody><tr><th>Visual Basic for Applications</th></tr><tr><td><pre><code>Worksheets("Sheet1").PageSetup.<strong class="bterm">PaperSize</strong> = xlPaperLegal</code></pre></td></tr></tbody></table></div>
+    <br>
+    <div class="cdSideBox">
+      <div class="cdSideBoxTop">
+        <div class="cdSideBoxTitle">See Also</div>
+      </div>
+      <div class="cdSideBoxBody">
+        <ul>
+          <li>
+            <a href="http://msdn.microsoft.com/en-us/library/office/bb178187%28v=office.12%29.aspx">PageSetup Object</a>
+          </li>
+          <li>
+            <a href="http://msdn.microsoft.com/en-us/library/office/bb242400%28v=office.12%29.aspx">PageSetup Object Members</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <br>
+  <br>
+</div>
+
+
+
+
+
+<div id="contentFeedback">
+    <form method="post" action="/en-us/library/office/feedback/add/bb208944(v=office.12).aspx">
+        <input name="__RequestVerificationToken" value="hk2CXmkVByg1cyjPRKgvw3yXBXmK49f03plb9B5tasrc45uCKWOhWdX61OHo2QAZhjia7DdEAkPgjl28f_FEweCqBjohqLI_45irRaQT3YY_9mGSkFLCeaF7dKttwDYuNjfuNQ2" type="hidden">
+    <div id="contentFeedbackContainer">
+        <div class="FeedbackTitleContainer">
+            <a name="feedback"></a>
+        Did you find this helpful?
+            <input id="rdIsUsefulYes" name="rdIsUseful" value="1" onclick="toggleContentFeedback('Yes');" type="radio"><label for="rdIsUsefulYes">Yes</label>
+            <input id="rdIsUsefulNo" name="rdIsUseful" value="0" onclick="toggleContentFeedback('No');" type="radio"><label for="rdIsUsefulNo">No</label>
+        
+        </div>
+        
+            <div id="contentFeedbackQAContainer">
+                
+                    <div id="feedbackListNoContainer" class="FeedbackListContainer">
+                        
+                            <div>
+                                <input id="chkbxNo201" name="chkbxNo" value="201" type="checkbox">
+                                <label for="chkbxNo201">Not accurate</label>
+                            </div>
+                        
+                            <div>
+                                <input id="chkbxNo202" name="chkbxNo" value="202" type="checkbox">
+                                <label for="chkbxNo202">Not enough depth</label>
+                            </div>
+                        
+                            <div>
+                                <input id="chkbxNo203" name="chkbxNo" value="203" type="checkbox">
+                                <label for="chkbxNo203">Need more code examples</label>
+                            </div>
+                        
+                    </div>
+                
+                <div class="FeedbackTellUsMoreContainer">
+                    <textarea id="feedbackText" name="feedbackText" class="TellUsMoreTextBoxSearchLoaded" onfocus="WatermarkFocus(this, 'Tell us more...', 'TellUsMoreTextBoxSearch')" onblur="WatermarkBlur(this, 'Tell us more...', 'TellUsMoreTextBoxSearchLoaded')" onmouseover="TextBoxCharactersCounter(this, document.getElementById('feedbackTextCounter'), 1500)" onkeydown="TextBoxCharactersCounter(this, document.getElementById('feedbackTextCounter'), 1500)" onkeyup="TextBoxCharactersCounter(this, document.getElementById('feedbackTextCounter'), 1500)">Tell us more...</textarea>
+                </div>
+                <span class="counter">(<span id="feedbackTextCounter">1500</span> characters remaining)</span>
+                <input id="returnUrl" name="returnUrl" value="http://msdn.microsoft.com/en-us/library/office/bb208944(v=office.12).aspx" type="hidden">
+                <input id="submit" value="Submit" title="Click to Submit Feedback" onclick="WatermarkOnSubmit(document.getElementById('feedbackText'), 'Tell us more...', 'TellUsMoreTextBoxSearch')" type="submit">
+                <div style="clear: both;"></div>
+            </div>  
+        
+    </div>
+    </form>
+</div>
+    
+
+
+
+<script id="CommentTemplate" type="text/x-jquery-tmpl">
+    <div class="communityContentAnnotation">
+        <a name="${Index}"></a>
+        <h3>
+            ${Title}
+        </h3>
+        <div class="communityContentAnnotationBody">
+            {{html Body}}
+        </div>
+        <div class="communityContentAnnotationInfo">
+            <div class="communityContentAnnotationAvatarContainer">
+                <a href="${UserAvatar.Href}" title="${UserAvatar.ToolTip}" class="communityContentAnnotationAvatar"><img src="${UserAvatar.ImageUrl}" alt="${UserAvatar.ImageAltText}" width="34" height="34" /></a>
+            </div>
+            <div class="communityContentAnnotationUserDateContainer">
+                <div class="communityContentAnnotationUserContainer">
+                    <a href="${UserAvatar.Href}">
+                        ${User}
+                    </a>
+                </div>
+                <div class="communityContentAnnotationDateContainer">
+                    <span>${Date}</span>
+                    
+                    {{if EditLink}}
+                        <span>
+                            <a href="${EditLink.Href}" title="${EditLink.ToolTip}" class="communityContentCommentEditLink">${EditLink.Title}</a>
+                        </span>
+                    {{/if}}
+
+                    {{if DeleteLink}}
+                        <span>
+                            <a href="${DeleteLink.Href}" title="${DeleteLink.ToolTip}" class="communityContentDeleteLink">${DeleteLink.Title}</a>
+                        </span>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<div class="communityContentContainer">
+    <div id="CommunityContentHeader" class="communityContentHeader">
+        <div class="communityContentHeaderTitleContainer">
+            <h2>Community Additions</h2>
+                <a class="communityContentAddLink" href="http://msdn.microsoft.com/en-us/library/office/community/add/bb208944%28v=office.12%29.aspx">
+                    <span class="communityContentAddButton" title="Add">
+                        ADD
+                    </span>
+                </a>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+    
+    <div id="CommunityComments" data-url="/en-us/library/office/community/comments/bb208944(v=office.12).aspx"></div>
+</div>
+
+
+
+</div>
+
+
+            </div>
+            <div class="clear"></div>
+        
+            
+    
+    <div id="ux-footer">
+<div class="OfficeFooter">
+        <div class="Columns">
+            <h3>Office 2013</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://msdn.microsoft.com/en-US/office/fp142390">New features and capabilities</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/apps/">Apps for Office</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/fp123632">Office 2013 training</a></li>
+                    <li><a href="https://portal.microsoftonline.com/Signup/MainSignup15.aspx?OfferId=CF332B8B-F707-4101-8DDE-7FE4AC5505E9&amp;dl=OFFICESUBSCRIPTION_B_PILOT&amp;pc=O365-Preview-2012&amp;ali=1">Try Office 365 ProPlus Preview</a></li>
+            </ul>
+        </div>
+        <div class="Columns">
+            <h3>Office Extensibility</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://msdn.microsoft.com/en-US/office/apps">Apps for Office</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/hh133430">Visual Studio (VSTO)</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/bb265236">Open XML</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/aa905530">Fluent UI</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/ff688774">VBA</a></li>
+            </ul>
+        </div>
+        <div class="Columns">
+            <h3>Resources</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://msdn.microsoft.com/en-US/office/gg549099">Office 2010 developer map</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/bb497969">Office 2007 developer map</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/aa905496">SDKs and references</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/gg610406">Training</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/aa905350">Videos</a></li>
+            </ul>
+        </div>
+        <div class="Columns">
+            <h3>Connect</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://blogs.msdn.com/b/officeapps/">Apps for Office and SharePoint blog</a></li>
+                    <li><a href="http://blogs.msdn.com/b/officedevdocs/">Office developer blog</a></li>
+                    <li><a href="http://social.msdn.microsoft.com/Forums/en-us/category/officedev">Office developer forums</a></li>
+                    <li><a href="http://answers.microsoft.com/en-us/office">Microsoft community</a></li>
+                    <li><a href="http://stackoverflow.com/questions/tagged/ms-office">Stack Overflow</a></li>
+            </ul>
+        </div>
+        <div class="Columns">
+            <h3>Developer Centers</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://msdn.microsoft.com/en-US/office/apps">Apps for Office and SharePoint</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/sharepoint">SharePoint</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/exchange">Exchange</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/lync">Lync</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/vstudio">Visual Studio</a></li>
+            </ul>
+        </div>
+        <div class="Columns">
+            <h3>Information for</h3>
+            <ul class="bulletedlist">
+                    <li><a href="http://www.microsoft.com/en-us/office365/default.aspx">Office 365</a></li>
+                    <li><a href="http://office.microsoft.com/en-us/business/">Decision makers</a></li>
+                    <li><a href="http://technet.microsoft.com/en-us/office">IT pros</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/office/aa905340">Developers</a></li>
+                    <li><a href="http://office.microsoft.com/en-us/">Business/home</a></li>
+            </ul>
+        </div>
+</div>
+    <div class="FooterLinks">
+        <div class="hpFtr_Outer">
+            <div class="hpFtr_Logo">
+                <div id="logoContainer" title="Microsoft Developer Network">
+                </div>
+            </div>
+            <div class="hpFtr_Copyright">
+                © 2013 Microsoft</div>
+        </div>
+        <div class="hpFtr_Inner" dir="ltr">
+            <ul class="nobullet">
+                    <li><a href="http://go.microsoft.com/?linkid=8786242">Manage Your Profile</a></li>
+            </ul>
+            <ul class="nobullet" id="footerLinksRowTwo">
+                    <li><a href="http://msdn.microsoft.com/en-us/aa570311">Newsletter</a></li>
+                    <li><a href="http://www.microsoft.com/info/privacy.mspx">Privacy Statement</a></li>
+                    <li><a href="http://msdn.microsoft.com/en-US/cc300389">Terms of Use</a></li>
+                    <li><a href="http://www.microsoft.com/library/toolbar/3.0/trademarks/en-us.mspx">Trademarks</a></li>
+                                    <li><span class="Pipe">| </span><a target="_blank" id="bottomsitefeedbacklink" title="Site Feedback" href="https://lab.msdn.microsoft.com/mailform/contactus.aspx?refurl=%2fen-us%2flibrary%2foffice%2fbb208944%28v%3doffice.12%29.aspx&amp;loc=en-us">
+                        Site Feedback</a></li>
+            </ul>
+        </div>
+    </div>
+    </div>
+
+
+            <div class="footerPrintView">
+                <div class="footerCopyrightPrintView">© 2013 Microsoft. All rights reserved.</div>
+            </div>
+
+            
+            
+    
+    
+    <input id="tocPaddingPerLevel" value="17" type="hidden">
+
+
+        
+            <input id="MtpsDevice" value="Default" type="hidden">
+
+
+<!--[CDATA[ Third party scripts and code linked to or referenced from this website are licensed to you by the parties that own such code, not by Microsoft.  See ASP.NET Ajax CDN Terms of Use – http://www.asp.net/ajaxlibrary/CDN.ashx. ]]-->
+        
+            
+            
+            
+            
+            
+        
+
+
+
+
+
+<noscript><div><img alt="DCSIMG" id="Img1" width="1" height="1" src="http://m.webtrends.com/dcsmgru7m99k7mqmgrhudo0k8_8c6m/njs.gif?dcsuri=/nojavascript&amp;WT.js=No" /></div></noscript>
+
+
+
+
+
+
+
+
+
+<noscript>
+  <a href="http://www.omniture.com" title="Web Analytics">
+    <img src="//msstonojsmsdn.112.2o7.net/b/ss/msstonojsmsdn/1/H.20.2--NS/0" height="1" width="1" border="0" alt="" />
+  </a>
+</noscript>
+
+
+
+
+<div id="globalRequestVerification">
+    <input name="__RequestVerificationToken" value="9w3E5gCsq7B-YNLqRBHKDCL7PvKayN3wvla_TU7_zMchDFK5HfM9BMdixyqJrw0yNVkzMFkF55OFesZcxZkdfMXUyPtdxhU3C2VZo4S8s5FgJeA4cSgFM9EPm1soM3m1uN14sg2" type="hidden">
+</div>
+
+
+        </div>
+    <script type="text/javascript" class="mtps-injected">
+/*<![CDATA[*/
+(function(window,document){"use strict";function preload(scripts){for(var result=[],script,e,i=0;i<scripts.length;i++)script=scripts[i],script.hasOwnProperty("url")&&(e=document.createElement("script"),e.src=script.url,script.throwaway=e),result.push(script);return result}function inject(scripts,index){var script,elem;if(index>=scripts.length){delete mtps.injectScripts;return}script=scripts[index],elem=document.createElement("script"),elem.className="mtps-injected",elem.async=!1;var isLoaded=!1,timeoutId=0,injectNextFnName="",injectNext=elem.onerror=function(){isLoaded||(isLoaded=!0,inject(scripts,index+1),window.clearTimeout(timeoutId),elem.onload=elem.onerror=elem.onreadystatechange=null,injectNextFnName&&delete mtps[injectNextFnName],elem.removeEventListener&&elem.removeEventListener("load",injectNext,!1))};elem.addEventListener?elem.addEventListener("load",injectNext,!1):elem.readyState==="uninitialized"?elem.onreadystatechange=function(){(this.readyState==="loaded"||this.readyState==="complete")&&injectNext()}:elem.onload=injectNext,script.hasOwnProperty("url")?(timeoutId=window.setTimeout(injectNext,12e4),elem.src=script.url):(injectNextFnName="_injectNextScript_"+index,mtps[injectNextFnName]=injectNext,timeoutId=window.setTimeout(injectNext,2e3),elem.text="try {\n"+script.txt+"\n} finally { MTPS."+injectNextFnName+" && MTPS."+injectNextFnName+"(); }"),parent.appendChild(elem)}var mtps=window.MTPS||(window.MTPS={}),parent=document.getElementsByTagName("head")[0];mtps.injectScripts=function(scripts){inject(preload(scripts),0)}})(window,document);
+MTPS.injectScripts([
+	{ txt: "/**/\r\n(window.MTPS || (window.MTPS = {})).cdnDomains || (window.MTPS.cdnDomains = { \r\n\t\"image\": \"http://i.msdn.microsoft.com\", \r\n\t\"js\": \"http://i2.msdn.microsoft.com\", \r\n\t\"css\": \"http://i3.msdn.microsoft.com\"\r\n});\r\n/**/" },
+	{ url: "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js" },
+	{ txt: "//\n  var literalNormalizedUrl = \u0027/en-us/library/office/bb208944(d=default,l=en-us,v=office.12).aspx\u0027;\n  var wt_nvr_ru = \u0027WT_NVR_RU\u0027;\n  var wt_fpcdom = \u0027.microsoft.com\u0027;\n  var wt_domlist = \u0027msdn.microsoft.com\u0027;\n  var wt_pathlist = \u0027\u0027;\n  var wt_paramlist = \u0027DCSext.mtps_devcenter\u0027;\n  var wt_siteid = \u0027MSDN\u0027;\n  var gDomain = \u0027m.webtrends.com\u0027;\n  var gDcsId = \u0027dcsmgru7m99k7mqmgrhudo0k8_8c6m\u0027;\n  var gFpc = \u0027WT_FPC\u0027;\n\n\n\n  if (document.cookie.indexOf(gFpc + \"=\") == -1) {\n    var wtidJs = document.createElement(\"script\");\n    wtidJs.src = \"//\" + gDomain + \"/\" + gDcsId + \"/wtid.js\";\n    document.getElementsByTagName(\"head\")[0].appendChild(wtidJs);\n  }\n\n\n\n  var detectedLocale = \u0027en-us\u0027;\n  var wtsp = \u0027msdnlib_office\u0027;\n  var gTrackEvents = \u00270\u0027;\n/**/" },
+	{ txt: "/**/\n  var omni_guid = \"cba8b44e-c628-4397-808b-91a34a802a0e\";\n/**/" },
+	{ url: "http://i2.msdn.microsoft.com/Combined.js?resources=0:Utilities,0:Topic,1:webtrendsscript,2:omni_rsid_MSDN;/Areas/Epx/Content/Scripts:0,/Areas/Global/Content/Webtrends/resources:1,/Areas/Global/Content/Omniture/resources/MSDN:2\u0026amp;hashKey=35BF4EE0DD7E30901440BE9E9CE63DAC" },
+	{ txt: "//\n        var isMtps = true;\n        //" },
+	{ txt: "//\n    function SearchClick() {\n        window.location = \"http://social.msdn.microsoft.com/search/en-us/?query=\" + document.getElementById(\"HeaderSearchTextBox\").value();\n    }\n\n    function SearchClientClick() {\n        if (document.getElementById(\"HeaderSearchTextBox\").value == document.getElementById(\"HeaderSearchTextBox\").title) return false;\n        document.HeaderSearchForm.submit(); return true;\n    }\n//" },
+	{ txt: "//\n            $(document).ready(function () {\n                var scriptElem = document.createElement(\u0027script\u0027);\n                scriptElem.src = \u0027http://i2.services.social.microsoft.com/Search/Widgets/SearchBox.jss?boxid=HeaderSearchTextBox\u0026btnid=HeaderSearchButton\u0026brand=MSDN\u0026loc=en-us\u0026Refinement=68\u0026watermark=Office\u0026focusOnInit=false\u0026iroot=Office\u0027;\n                scriptElem.id = \"mscom.srch.searchBox\";\n                scriptElem.defer = \"defer\";\n                document.getElementsByTagName(\u0027head\u0027)[0].appendChild(scriptElem);\n            });\n            //" },
+	{ url: "http://i2.msdn.microsoft.com/Combined.js?resources=0:sharethis.1,1:Toc,1:NavigationResize,2:FeedbackCounter,2:Feedback;/Areas/Epx/Themes/Shared/Content:0,/Areas/Epx/Library/Content:1,/Areas/Epx/Shared/Content:2\u0026amp;hashKey=D71F2FB1F88F7FCDC2A4697740DE7B46" },
+	{ url: "http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js" },
+	{ url: "http://i2.msdn.microsoft.com/Combined.js?resources=0:CommunityContent,1:epxfooter.2,0:CodeSnippet,0:TopicNotInScope,0:CollapsibleArea,0:VersionSelector,0:SurveyBroker;/Areas/Epx/Content/Scripts:0,/Areas/Epx/Themes/Office/Content:1\u0026amp;hashKey=AB326236FBF208EEC62958B330EF247D" },
+	{ txt: "$(document).ready(function() {\n        try {\n            var token = $(\"#globalRequestVerification input[name=\u0027__RequestVerificationToken\u0027]\").clone();\n            $(\"#siteFeedbackForm\").append(token);\n        } catch(err) {\n            \n        }\n    });" }
+]);
+
+/*]]>*/
+</script>
+<script src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/broker-config.js"></script><div id="_WEDCSInsertedData" style="display: none;"><iframe id="_msnFrame" src="PaperSize%20Property%C2%A0%5BExcel%202007%20Developer%20Reference%5D_files/c_002.gif" style="z-index:-1;height:1px;width:1px;display:none;visibility:hidden;" onload="javascript:MscomBeacon();"></iframe></div></body></html>

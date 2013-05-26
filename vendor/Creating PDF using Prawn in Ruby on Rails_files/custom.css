@@ -1,0 +1,255 @@
+@import url('http://fonts.googleapis.com/css?family=Roboto+Condensed|Roboto');
+html {background: url('/Portals/217389/images/body-bg.jpg') repeat !important;}
+#foxboro_container {background-color: white;}
+* {
+	margin: 0;
+	padding: 0;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, main, nav, section, summary {display: block;}
+html, body {width: 100%; height: 100%; font-size: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;}
+img, fieldset {border: none;}
+img, object, embed, audio, video {display: block; max-width: 100%;}
+ul, ol {list-style: none;}
+.clearfix:after {content: "."; display: block; height: 0; visibility: hidden; clear: both; float: none; font-size: 0;}
+table {border-collapse: collapse; border-spacing: 0;}
+a {text-decoration: none;}
+input[type="text"], input[type="password"], textarea {outline: none; width: 100%; border: none;}
+
+/*#foxboro_col2 {border-right: #ddd solid 1px;}*/
+#bb-container div.post h3.title {
+	margin: 10px 0 8px 0;
+}
+
+#bb-container div.post h3.title, #foxboro_col2 .title > a {
+	color: #222 !important;
+	display: block;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	word-spacing: 2px;
+	font: 300 22px/26px 'Roboto Condensed', sans-serif !important;
+}
+
+#bb-container div.post div.byline {
+	/*margin: 0 0 30px 0;*/
+	/*border-bottom: 1px solid #ddd;*/
+	/*padding: 0 0 7px;*/
+	font: normal normal 12px/16px helvetica, arial;
+	color: #ccc;
+}
+
+#bb-container div.post div.byline a {color: #222;}
+
+/* Content Paragraphs */
+#bb-container div.post {
+	font: normal normal 12px/18px 'Helvetica Neue', helvetica, arial;
+	color: #423F37;
+	border-bottom: #888 double 3px;
+	padding: 0 0 10px 0;
+	margin: 0 0 45px 0;
+}
+
+#bb-container div.post p {margin-bottom: 10px;}
+#foxboro_col2 #bb-container div.post .hk_link {margin: 15px 0;}
+#foxboro_col2 #bb-container div.post .hk_link a {font-size: 12px; color: #222; text-decoration: underline;}
+
+/*  Social Media options */
+/* Temperory */
+/*  #bb-container div.post div.submissions, */
+#foxboro_col2 h1, #bb-container div.comments span.Normal, #bb-container span.PostComments {display: none;}
+
+/* Comments count section */
+#bb-container div.comments {
+	border: none;
+	border-top: #ccc solid 1px;
+	padding: 10px 0;
+	line-height: 18px;
+}
+
+#bb-container div.comments > span {
+	font: normal 23px/27px helvetica, arial;
+    letter-spacing: -1px;
+}
+
+#bb-container div.post .tags {
+	font: normal 12px/16px arial;
+    color: #888;
+    margin: 4px 0;
+}
+
+#bb-container div.post .tags a {
+	display: inline-block;
+	background-color: #F1F1F1;
+	border-radius: 10px;
+	line-height: 20px;
+	padding: 0 10px;
+}
+
+#bb-container div.post div.comments a:hover {text-decoration: underline;}
+#foxboro_col2 #bb-container div.post .tags a {color: #999;}
+#foxboro_col2 #bb-container div.post .tags a:hover {color: #555;}
+
+div.block input[type="text"] {border: #ddd solid 1px; border-radius: 15px; margin: 0;}
+div.block input[type="button"] {
+	background-color: #DE6957;
+	border: none;
+	border-radius: 20px;
+	color: white;
+	cursor: pointer;
+	font: 14px/30px Helvetica,arial;
+	height: 30px;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+#foxboro_body #foxboro_content div.block h3, #bb-container div.comments h3 {
+	font: 400 15px/22px 'Roboto', sans-serif;
+	color: #444;
+	/*letter-spacing: 1px;*/
+}
+
+#foxboro_col3 .BlogPostList ul li a {
+	display: block;
+	font: 11px/16px arial;
+	color: #444;
+}
+
+#foxboro_col3 .BlogPostList ul li a:hover {
+	text-decoration: underline;
+}
+
+#dnn__ctl1_ContentPane div {padding: 0 !important;}
+#foxboro_content div.block p:empty {display: none;}
+
+#bb-container div.comments div.comment-body {
+	background-color: #F5F5F5;
+	border-bottom: none;
+	font: normal 12px/16px Helvetica,arial;
+	margin-bottom: 10px;
+}
+
+.normalred {padding: 1px 5px; background-color: #fbe3e4; color: #8a1f11; border: #fbc2c4 solid 1px; font: normal 11px/15px arial;}
+.normalred:empty{display: none;}
+
+.blognav, .blognav + a {float: left; font: normal 11px/15px helvetica, arial; margin: 0 10px 0 0;}
+#foxboro_col2 .blognav a {color: #555}
+/*.blognav.previous:before {
+	content: "&laquo; ";
+}
+
+.blognav.next:after {
+	content: " &raquo;";
+}*/
+
+#bb-container div.comments span.Normal {
+	display: none;
+	color: #423F37;
+	font: normal 14px/18px helvetica, arial;
+}
+
+#bb-container div.comment-form {
+	border: 1px solid #ddd !important;
+}
+
+table.Settings .SubHead {
+	display: block;
+	color: #747474;
+	font: 13px/18px helvetica,arial,sans-serif;
+	/*text-transform: none;*/
+	margin: 0 0 3px 0;
+}
+table.Settings .SubHead + input[type="text"], #bb-container div.comment-form textarea {
+	width: 100% !important;
+	border: 1px solid #ddd;
+	color: #555;
+	font: normal 14px/20px 'Roboto',sans-serif;
+    margin-bottom: 20px;
+    padding: 7px;
+}
+table.Settings .SubHead + input[type="text"]:focus, #bb-container div.comment-form textarea:focus {border: #aaa solid 1px;}
+
+table.Settings .SubHead + input[type="text"] + span.NormalRed, table.Settings .SubHead + textarea + span.NormalRed, table.Settings .SubHead + textarea + span.NormalRed + p {display: none;}
+#bb-container div.comment-form textarea {
+	width: 100% !important;
+    height: 140px;
+}
+
+/* Idyllic Navigation */
+.horizontal.rootGroup {display: none;}
+
+.hk_readmore_wrapper {background-color: #f8f8f8; padding: 10px;}
+#bb-container div.comments h3 {margin-bottom: 10px;}
+
+#bb-container div.comment-form input[type="submit"] {
+	cursor: pointer;
+	border: none;
+	border-radius: 30px;
+	display: block;
+	color: white;
+	background-color: #DE6957;
+	font: normal 15px/50px Helvetica, arial;
+	padding: 0 15px;
+	height: 50px;
+	text-transform: uppercase;
+}
+
+.listing + .CommandButton {float: left; font: normal 11px/15px helvetica, arial; margin: 0 10px 0 0; color: #555;}
+
+#foxboro_header {
+	float: left;
+	width: 157px;
+	margin: 0 0 0 20px;
+}
+
+/* Navigation */
+
+#foxboro_menu {float: right; width: 80%;}
+#foxboro_menu .radmenu {float: none !important;}
+#foxboro_menu ul {float: right;}
+
+#foxboro_menu ul li {float: left;}
+#foxboro_menu ul li:hover {
+	background-color: #fffeff;
+	/*border-left: #f8f7f8 solid 1px;
+	border-top: #f8f7f8 solid 1px;*/
+}
+
+#foxboro_menu ul li a {
+	display: block;
+	/*border-left: transparent solid 1px;
+	border-top: transparent solid 1px;*/
+	padding: 17px 28px 15px 9px;
+	color: black !important;
+}
+
+#foxboro_menu ul li a span {
+	font: normal normal 14px/18px 'Roboto Condensed', sans-serif !important;
+	color: black !important;
+	padding: 0 !important;
+}
+/*#foxboro_menu ul li a:hover span {color: #DE6957 !important;}*/
+
+#foxboro_menu .link:hover span.text {color: #DE6957 !important;}
+.slide {display: none !important;}
+
+#foxboro_col2 .Normal.hk_menu > a {
+	display: inline-block;
+	font: normal normal 11px/15px helvetica neue, helvetica, arial !important;
+}
+#foxboro_col2 .Normal.hk_menu > a.hk_rss {
+    position: relative;
+    top: 4px;
+}
+#foxboro_two-column-right #foxboro_col3 {border-left: #ddd solid 1px;}
+
+#bb-container div.post div.submissions {margin: 0 0 30px 0;}
+#bb-container div.post div.submissions .smallsocial a {float: left; font: 12px/15px helvetica neue,helvetica,arial;}
+#bb-container div.post div.submissions .smallsocial a img{float: left;}
+
+#foxboro_col2 h4 {
+	font: normal normal 14px/14px helvetica neue, helvetica, arial !important;
+	color: #444;
+	margin: 0 0 14px 0;
+}

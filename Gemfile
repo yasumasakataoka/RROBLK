@@ -51,6 +51,8 @@ gem 'activerecord-oracle_enhanced-adapter'
  gem "axlsx"
 ## gem "simple-spreadsheet"
 ##  gem 'roo'
-  gem "rubyXL"
- gem 'google-spreadsheet-ruby'
-
+##  gem "rubyXL"
+## gem 'google-spreadsheet-ruby'
+ gem 'simple_xlsx_reader'
+ gem 'prawn'
+gem 'prawn_rails'

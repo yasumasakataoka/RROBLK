@@ -1053,6 +1053,7 @@ CREATE TABLE Pobjects
   ,Fieldlength NUMBER(4) 
   ,DataPresion NUMBER(2) 
   ,DataScale NUMBER(2) 
+  ,UKEYFLG CHAR(1)
   ,Contens VARCHAR(200)
   ,Remark VARCHAR(200)
   ,RubyCode VARCHAR(4000)
@@ -1062,7 +1063,7 @@ CREATE TABLE Pobjects
   ,Expiredate date
   ,Updated_at date
   , CONSTRAINT Pobjects_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Pobjects_68_uk  UNIQUE (code,ObjectType,Expiredate)
+  , CONSTRAINT Pobjects_69_uk  UNIQUE (code,ObjectType)
 )
 ;
 drop sequence Pobjects_seq
@@ -1150,7 +1151,7 @@ CREATE TABLE TblRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT TblRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT TblRelas_210_uk  UNIQUE (code,Expiredate)
+  , CONSTRAINT TblRelas_211_uk  UNIQUE (code,Expiredate)
 )
 ;
 drop sequence TblRelas_seq
@@ -1172,7 +1173,7 @@ CREATE TABLE fieldRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT fieldRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT fieldRelas_229_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
+  , CONSTRAINT fieldRelas_230_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
 )
 ;
 drop sequence fieldRelas_seq
@@ -1281,7 +1282,7 @@ DROP TABLE Billings
 CREATE TABLE Billings
   ( id number(38)
   ,Locas_id_Billings number(38)
-  ,Remark VARCHAR(100)
+  ,Remark VARCHAR(200)
   ,Expiredate date
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
@@ -1336,12 +1337,14 @@ CREATE TABLE Custs
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Custs_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Custs_169_uk  UNIQUE (Locas_id_Custs,Locas_id_Billings,Locas_id_Billings)
 )
 ;
 drop sequence Custs_seq
 ;  
 create sequence Custs_seq
 ;  
+; 
 DROP TABLE Dealers
 ;
 CREATE TABLE Dealers

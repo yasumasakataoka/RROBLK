@@ -1219,3 +1219,78 @@ itm.std itm_std ,itm.model itm_model ,itm.material itm_material ,itm.design itm_
 itm.update_ip itm_update_ip ,itm.created_at itm_created_at ,itm.updated_at itm_updated_at
  from itms itm ,r_units  unit,r_persons  person_upd
  where  unit.unit_id = itm.units_id and  person_upd.person_id = itm.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg
+ from pobjects pobject ,r_persons  person_upd
+ where  person_upd.person_id = pobject.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
+ screen.screen_viewname screen_viewname,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+ screen.screen_name screen_name,
+ screen.screen_ymlcode screen_ymlcode,
+detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
+ from detailfields detailfield ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
+join_rtbl  = 'r_locas' 
+join_rtbl  = 'r_itms' 
+join_rtbl  = 'r_units' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_opeitms as  select opeitm.id ,opeitm.id opeitm_id ,opeitm.processseq opeitm_processseq ,opeitm.priority opeitm_priority ,opeitm.locas_id opeitm_loca_id , loca.loca_code loca_code,
+ loca.loca_name loca_name,
+ loca.loca_abbr loca_abbr,
+ loca.loca_zip loca_zip,
+ loca.loca_country loca_country,
+ loca.loca_prfct loca_prfct,
+ loca.loca_addr1 loca_addr1,
+ loca.loca_addr2 loca_addr2,
+ loca.loca_tel loca_tel,
+ loca.loca_fax loca_fax,
+ loca.loca_mail loca_mail,
+ loca.loca_remark loca_remark,
+opeitm.itms_id opeitm_itm_id , itm.itm_code itm_code,
+ itm.itm_name itm_name,
+ itm.itm_itmtype itm_itmtype,
+ itm.itm_consumtype itm_consumtype,
+ itm.unit_code unit_code,
+ itm.unit_name unit_name,
+ itm.unit_remark unit_remark,
+ itm.itm_std itm_std,
+ itm.itm_model itm_model,
+ itm.itm_material itm_material,
+ itm.itm_design itm_design,
+ itm.itm_weight itm_weight,
+ itm.itm_length itm_length,
+ itm.itm_deth itm_deth,
+ itm.itm_packqty itm_packqty,
+ itm.itm_minqty itm_minqty,
+ itm.itm_remark itm_remark,
+opeitm.packqty opeitm_packqty ,opeitm.minqty opeitm_minqty ,opeitm.lt opeitm_lt ,opeitm.units_id_lttime opeitm_unit_id_lttime , unit_lttime.unit_code unit_code_lttime,
+ unit_lttime.unit_name unit_name_lttime,
+ unit_lttime.unit_remark unit_remark_lttime,
+opeitm.propucr opeitm_propucr ,opeitm.expiredate opeitm_expiredate ,opeitm.persons_id_upd opeitm_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+opeitm.update_ip opeitm_update_ip ,opeitm.created_at opeitm_created_at ,opeitm.updated_at opeitm_updated_at
+ from opeitms opeitm ,r_locas  loca,r_itms  itm,r_units  unit_lttime,r_persons  person_upd
+ where  loca.loca_id = opeitm.locas_id and  itm.itm_id = opeitm.itms_id and  unit_lttime.unit_id = opeitm.units_id_lttime and  person_upd.person_id = opeitm.persons_id_upd 

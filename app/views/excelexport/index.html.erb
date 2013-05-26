@@ -12,9 +12,17 @@ Condition
 		<td>	<%= f.text_field i[:field] %></td>
 	        </tr>
 	        </li>
-                <% end %>
-<% end %>
-<tr><td align="right"><b>Download: Table(</b> <%= f.text_field :screen_code,value:@screen_code,:readonly => true  %>
+	<% end %>
+        <% end %>
+
+	       <li>
+		<tr>
+		<td align="right"><b> max output cnt  </b></td>
+		<td>	<%= f.text_field "maxcount",value:10000%></td>
+	        </tr>
+	        </li>
+
+<tr><td align="right"><b>Download: Table(</b> <%= f.text_field :exportscreen_code,value:@screen_code,:readonly => true  %>
 			<b>) to excels :<%=@tblname%>_export.xlsx</b></td></tr>
 	<%= f.submit "Export"  %>  </p>
 <% end %>

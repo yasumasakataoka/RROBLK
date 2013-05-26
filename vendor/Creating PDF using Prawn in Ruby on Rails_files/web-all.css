@@ -1,0 +1,1391 @@
+
+
+ /* Starting 01-content-manager-module.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+.PreviewPanel
+{
+	border-right: silver thin solid;
+	border-top: silver thin solid;
+	border-left: silver thin solid;
+	border-bottom: silver thin solid;
+}
+
+ /* Ending 01-content-manager-module.css */
+
+
+
+
+ /* Starting 02-doclink-module.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+
+
+
+
+ /* Ending 02-doclink-module.css */
+
+
+
+
+ /* Starting 03-bizblogger-module.css */
+
+
+	
+.linksubmission
+{
+	border:solid 0 red;
+	font: normal 11px Tahoma, Arial, Verdana, sans-serif;  
+}	
+
+.linksubmission IMG
+{
+	border:solid 0 red!important;
+}	
+
+.linksubmission A
+{
+	border:solid 0 red!important;
+	text-decoration:none!important;
+	font: normal 11px Tahoma, Arial, Verdana, sans-serif;  
+}
+
+.GridHeader_Monochrome a:visited, .GridHeader_Monochrome a:hover
+{
+	color: white!important;
+	font: bold 11px Tahoma!important;
+}
+
+.GridPager_Monochrome a:visited, .GridPager_Monochrome a:hover
+{
+	font: normal 11px Tahoma!important;
+}
+
+/* popup icon */
+.popupHelpTitle { 
+	padding-bottom:5px; 
+	font-weight:bold; 
+	color:black;
+} 
+
+.nostyle
+{
+	border : 0px solid red!important;
+}
+
+.nostyleimg
+{
+	border : 0px solid red!important;
+}
+
+
+.CommandItem
+{
+	background-color:Transparent;
+	background-image:none;
+}
+
+
+
+ /* Ending 03-bizblogger-module.css */
+
+
+
+
+ /* Starting 04-mail-subscribe-module.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+
+
+ /* Ending 04-mail-subscribe-module.css */
+
+
+
+
+ /* Starting 05-bizblogger-monthly.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+
+/* Grid Styles */
+.Grid 
+{ 
+  border: 1px solid #7C7C94; 
+  background-color: #FFFFFF; 
+  cursor: pointer; 
+}
+
+.HeadingRow 
+{ 
+  background-color: #E2E2E2; 
+}
+
+.HeadingCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+  padding: 3px;
+}
+
+.HeadingCellText
+{
+  font-family: verdana; 
+  font-size: 10px; 
+  font-weight: bold; 
+  text-align: left;
+}
+
+.DataRow 
+{ 
+  background-color: #FFFFFF; 
+}
+
+.DataCell 
+{ 
+  cursor: default;
+  padding: 3px; 
+  border-right: 1px solid #EAE9E1; 
+  border-bottom: 1px solid #EAE9E1; 
+  font-family: verdana; 
+  font-size: 10px; 
+} 
+
+.EditDataCell
+{ 
+  padding: 0px!important; 
+  background-color: #E2E2E2; 
+  border-width:0px!important;
+} 
+
+.EditDataField
+{ 
+  padding: 0px; 
+  padding-left: 1px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  height: 20px;
+  width: 98%!important; 
+} 
+
+.DataRow td.FirstDataCell 
+{ 
+  padding-left: 3px; 
+} 
+
+.SelectedRow 
+{ 
+  background-color: #FFEEC2; 
+}
+
+.SelectedRow td.DataCell 
+{ 
+  cursor: default; 
+  padding: 2px; 
+  padding-left: 3px; 
+  padding-bottom: 3px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  border-bottom: 1px solid #4B4B6F; 
+  border-top: 1px solid #4B4B6F; 
+  border-right: 0px; 
+}
+
+.SelectorCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+}
+
+.GridFooter
+{
+  cursor: default;
+  padding:5px;
+}
+
+.GridFooter a 
+{
+  color: Black;
+  font-weight: bold;
+  vertical-align: bottom;
+}
+
+.PagerText
+{ 
+  font-family: verdana; 
+  font-size: 11px; 
+} 
+
+
+
+/* Component Art Tree Styles */
+.TreeView 
+{ 
+  background-color:White;
+  padding-top:4px; 
+  padding-left:1px; 
+  border: #7C7C94 1px solid; 
+  cursor:default; 
+}
+
+.TreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px;
+}
+
+.TreeView TD {vertical-align : text-top; }
+
+
+.CategoryTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+}
+
+.GrayedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  color:gray; 
+  cursor:default;
+}
+
+.HoverTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  text-decoration:none; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  cursor: default; 
+  color:Red;
+}
+
+.HoverCategoryTreeNode
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+  color:Red;
+}
+
+.SelectedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  background-color: gray; 
+  color:white; 
+  padding-top:0px;
+  padding-bottom:0px;
+  padding-left: 2px; 
+  padding-right: 2px; 
+  cursor: default; 
+  border: 1px solid #3F3F3F;
+}
+
+.NodeEdit 
+{
+  border:1px gray solid;
+  font-family: tahoma; 
+  font-size: 11px;
+}
+
+/* Component Art Menu Styles */
+.Tracker_MenuGroup
+{
+  background-color:white;
+  background-image:url(res/mnuimgs/group_background.gif);
+  border-width:1px; 
+  border-color:#7E7E81; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuItem
+{
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  margin:1px; 
+  cursor:default; 
+}
+
+.Tracker_DisMenuItem
+{
+	font-size: 11px;
+	margin: 1px;
+	cursor: default;
+	color: gray;
+	font-style: italic;
+	font-family: tahoma;
+}
+
+.Tracker_MenuItemHover 
+{
+  background-color:#FFEEC2; 
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  border-width:1px; 
+  border-color:#4B4B6F; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuBreak
+{
+  background-image:url(res/mnuimgs/break_bg.gif);
+  width:100%;
+  height:1px;
+}
+
+.TVNode
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeSelected
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeHover
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	text-decoration:none!important;
+	color:Red!important;
+	text-decoration:none!important;
+}
+
+.TVASPNET2
+{
+	border:1px solid #7c7c94!important;
+	background-color:white!important;
+	overflow:auto!important;
+}
+
+.TVASPNET2 table td 
+{ 
+	vertical-align:top!important;
+}
+
+
+ /* Ending 05-bizblogger-monthly.css */
+
+
+
+
+ /* Starting 06-bizblogger-nav.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+
+/* Grid Styles */
+.Grid 
+{ 
+  border: 1px solid #7C7C94; 
+  background-color: #FFFFFF; 
+  cursor: pointer; 
+}
+
+.HeadingRow 
+{ 
+  background-color: #E2E2E2; 
+}
+
+.HeadingCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+  padding: 3px;
+}
+
+.HeadingCellText
+{
+  font-family: verdana; 
+  font-size: 10px; 
+  font-weight: bold; 
+  text-align: left;
+}
+
+.DataRow 
+{ 
+  background-color: #FFFFFF; 
+}
+
+.DataCell 
+{ 
+  cursor: default;
+  padding: 3px; 
+  border-right: 1px solid #EAE9E1; 
+  border-bottom: 1px solid #EAE9E1; 
+  font-family: verdana; 
+  font-size: 10px; 
+} 
+
+.EditDataCell
+{ 
+  padding: 0px!important; 
+  background-color: #E2E2E2; 
+  border-width:0px!important;
+} 
+
+.EditDataField
+{ 
+  padding: 0px; 
+  padding-left: 1px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  height: 20px;
+  width: 98%!important; 
+} 
+
+.DataRow td.FirstDataCell 
+{ 
+  padding-left: 3px; 
+} 
+
+.SelectedRow 
+{ 
+  background-color: #FFEEC2; 
+}
+
+.SelectedRow td.DataCell 
+{ 
+  cursor: default; 
+  padding: 2px; 
+  padding-left: 3px; 
+  padding-bottom: 3px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  border-bottom: 1px solid #4B4B6F; 
+  border-top: 1px solid #4B4B6F; 
+  border-right: 0px; 
+}
+
+.SelectorCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+}
+
+.GridFooter
+{
+  cursor: default;
+  padding:5px;
+}
+
+.GridFooter a 
+{
+  color: Black;
+  font-weight: bold;
+  vertical-align: bottom;
+}
+
+.PagerText
+{ 
+  font-family: verdana; 
+  font-size: 11px; 
+} 
+
+
+
+/* Component Art Tree Styles */
+.TreeView 
+{ 
+  background-color:White;
+  padding-top:4px; 
+  padding-left:1px; 
+  border: #7C7C94 1px solid; 
+  cursor:default; 
+}
+
+.TreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px;
+}
+
+.TreeView TD {vertical-align : text-top; }
+
+
+.CategoryTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+}
+
+.GrayedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  color:gray; 
+  cursor:default;
+}
+
+.HoverTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  text-decoration:none; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  cursor: default; 
+  color:Red;
+}
+
+.HoverCategoryTreeNode
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+  color:Red;
+}
+
+.SelectedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  background-color: gray; 
+  color:white; 
+  padding-top:0px;
+  padding-bottom:0px;
+  padding-left: 2px; 
+  padding-right: 2px; 
+  cursor: default; 
+  border: 1px solid #3F3F3F;
+}
+
+.NodeEdit 
+{
+  border:1px gray solid;
+  font-family: tahoma; 
+  font-size: 11px;
+}
+
+/* Component Art Menu Styles */
+.Tracker_MenuGroup
+{
+  background-color:white;
+  background-image:url(res/mnuimgs/group_background.gif);
+  border-width:1px; 
+  border-color:#7E7E81; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuItem
+{
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  margin:1px; 
+  cursor:default; 
+}
+
+.Tracker_DisMenuItem
+{
+	font-size: 11px;
+	margin: 1px;
+	cursor: default;
+	color: gray;
+	font-style: italic;
+	font-family: tahoma;
+}
+
+.Tracker_MenuItemHover 
+{
+  background-color:#FFEEC2; 
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  border-width:1px; 
+  border-color:#4B4B6F; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuBreak
+{
+  background-image:url(res/mnuimgs/break_bg.gif);
+  width:100%;
+  height:1px;
+}
+
+.TVNode
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeSelected
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeHover
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	text-decoration:none!important;
+	color:Red!important;
+	text-decoration:none!important;
+}
+
+.TVASPNET2
+{
+	border:1px solid #7c7c94!important;
+	background-color:white!important;
+	overflow:auto!important;
+}
+
+.TVASPNET2 table td 
+{ 
+	vertical-align:top!important;
+}
+
+
+ /* Ending 06-bizblogger-nav.css */
+
+
+
+
+ /* Starting 07-bizblogger-popular.css */
+
+/* ================================
+    CSS STYLES FOR Module [!output PROJECT_NAME]
+   ================================
+*/
+
+/* Grid Styles */
+.Grid 
+{ 
+  border: 1px solid #7C7C94; 
+  background-color: #FFFFFF; 
+  cursor: pointer; 
+}
+
+.HeadingRow 
+{ 
+  background-color: #E2E2E2; 
+}
+
+.HeadingCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+  padding: 3px;
+}
+
+.HeadingCellText
+{
+  font-family: verdana; 
+  font-size: 10px; 
+  font-weight: bold; 
+  text-align: left;
+}
+
+.DataRow 
+{ 
+  background-color: #FFFFFF; 
+}
+
+.DataCell 
+{ 
+  cursor: default;
+  padding: 3px; 
+  border-right: 1px solid #EAE9E1; 
+  border-bottom: 1px solid #EAE9E1; 
+  font-family: verdana; 
+  font-size: 10px; 
+} 
+
+.EditDataCell
+{ 
+  padding: 0px!important; 
+  background-color: #E2E2E2; 
+  border-width:0px!important;
+} 
+
+.EditDataField
+{ 
+  padding: 0px; 
+  padding-left: 1px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  height: 20px;
+  width: 98%!important; 
+} 
+
+.DataRow td.FirstDataCell 
+{ 
+  padding-left: 3px; 
+} 
+
+.SelectedRow 
+{ 
+  background-color: #FFEEC2; 
+}
+
+.SelectedRow td.DataCell 
+{ 
+  cursor: default; 
+  padding: 2px; 
+  padding-left: 3px; 
+  padding-bottom: 3px; 
+  font-family: verdana; 
+  font-size: 10px; 
+  border-bottom: 1px solid #4B4B6F; 
+  border-top: 1px solid #4B4B6F; 
+  border-right: 0px; 
+}
+
+.SelectorCell 
+{ 
+  background-color: #E2E2E2; 
+  border: 1px solid #FFFFFF; 
+  border-right-color: #B5B5B5; 
+  border-bottom-color: #B5B5B5; 
+}
+
+.GridFooter
+{
+  cursor: default;
+  padding:5px;
+}
+
+.GridFooter a 
+{
+  color: Black;
+  font-weight: bold;
+  vertical-align: bottom;
+}
+
+.PagerText
+{ 
+  font-family: verdana; 
+  font-size: 11px; 
+} 
+
+
+
+/* Component Art Tree Styles */
+.TreeView 
+{ 
+  background-color:White;
+  padding-top:4px; 
+  padding-left:1px; 
+  border: #7C7C94 1px solid; 
+  cursor:default; 
+}
+
+.TreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px;
+}
+
+.TreeView TD {vertical-align : text-top; }
+
+
+.CategoryTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+}
+
+.GrayedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  color:gray; 
+  cursor:default;
+}
+
+.HoverTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  text-decoration:none; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  cursor: default; 
+  color:Red;
+}
+
+.HoverCategoryTreeNode
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  padding-top:0px;
+  padding-bottom:1px;
+  padding-left: 3px; 
+  padding-right: 3px; 
+  font-weight:bold;
+  color:Red;
+}
+
+.SelectedTreeNode 
+{ 
+  font-family: tahoma; 
+  font-size: 11px; 
+  background-color: gray; 
+  color:white; 
+  padding-top:0px;
+  padding-bottom:0px;
+  padding-left: 2px; 
+  padding-right: 2px; 
+  cursor: default; 
+  border: 1px solid #3F3F3F;
+}
+
+.NodeEdit 
+{
+  border:1px gray solid;
+  font-family: tahoma; 
+  font-size: 11px;
+}
+
+/* Component Art Menu Styles */
+.Tracker_MenuGroup
+{
+  background-color:white;
+  background-image:url(res/mnuimgs/group_background.gif);
+  border-width:1px; 
+  border-color:#7E7E81; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuItem
+{
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  margin:1px; 
+  cursor:default; 
+}
+
+.Tracker_DisMenuItem
+{
+	font-size: 11px;
+	margin: 1px;
+	cursor: default;
+	color: gray;
+	font-style: italic;
+	font-family: tahoma;
+}
+
+.Tracker_MenuItemHover 
+{
+  background-color:#FFEEC2; 
+  color:black; 
+  font-family:tahoma; 
+  font-size:11px; 
+  border-width:1px; 
+  border-color:#4B4B6F; 
+  border-style:solid;
+  cursor:default; 
+}
+
+.Tracker_MenuBreak
+{
+  background-image:url(res/mnuimgs/break_bg.gif);
+  width:100%;
+  height:1px;
+}
+
+.TVNode
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeSelected
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	color:black!important;
+	text-decoration:none!important;
+}
+
+.TVNodeHover
+{
+	font-family:Tahoma!important;
+	font-size:11px!important;
+	padding-left:2px!important;
+	padding-right:2px!important;
+	text-decoration:none!important;
+	color:Red!important;
+	text-decoration:none!important;
+}
+
+.TVASPNET2
+{
+	border:1px solid #7c7c94!important;
+	background-color:white!important;
+	overflow:auto!important;
+}
+
+.TVASPNET2 table td 
+{ 
+	vertical-align:top!important;
+}
+
+
+ /* Ending 07-bizblogger-popular.css */
+
+
+
+
+ /* Starting 10-cms.css */
+
+
+body, html 
+{
+   border: 0px;   
+}
+
+.ContactFormWrapper 
+{
+    
+}
+
+.ContactFormWrapper label 
+{
+    display: block;
+    margin-bottom: 4px;
+    text-align: left;
+    
+}
+
+.ContactFormWrapper .CheckboxGroupContainer {
+  text-align: left;
+}
+
+.ContactFormWrapper .CheckboxGroupContainer label 
+{
+    display: inline;
+    
+    
+}
+.ContactFormWrapper .CheckboxGroupContainer input 
+{
+    vertical-align: middle;
+    
+    
+}
+
+.ContactFormWrapper .FormSubmitButton
+{
+    display: block;
+    margin-top: 8px;
+    
+}
+.ContactFormWrapper .fieldclear
+{
+    clear: both;
+}
+
+.ContactFormWrapper .hs-form-field {
+
+}
+.ContactFormWrapper .hs-form-field textarea {
+    margin-bottom:12px;
+}
+.ContactFormWrapper .hs-form-radio input, .ContactFormWrapper .hs-form-checkbox input {
+    display: inline;
+    width: 20px;
+    vertical-align: -11%;
+}
+.ContactFormWrapper ul.inputs-list, #foxboro_content div.block ul.inputs-list {
+    list-style-type: none;
+    margin: 0px 0px 0px 0px !important;
+    padding:0px 0px 0px 0px !important;
+    line-height: 0px;
+}
+.ContactFormWrapper ul.inputs-list li, #foxboro_content div.block ul.inputs-list li {
+    list-style-type: none;
+    margin: 0px 0px 0px 0px !important;
+    padding: 0px 0px 0px 0px !important;
+    line-height: 0px;
+}
+.ContactFormWrapper .hs-field-desc {
+    color: #666;
+    font-style:italic;
+}
+
+.ContactFormWrapper form.ContactFormItems label {
+    line-height: 14px;
+}
+.ContactFormWrapper .ContactFormItem {
+    margin-bottom: 10px;
+}
+
+.ContactFormWrapper .hs-form-booleancheckbox {
+    
+}
+.ContactFormWrapper .hs-form-booleancheckbox input {
+    width: auto;
+    margin: 0px 5px 0px 0px;
+    vertical-align: -11%;
+    font-weight:normal;
+}
+
+.radmenu li a span 
+{
+   cursor: pointer;   
+}
+
+div.message.correct {
+background:#E3FCE3 url(//static.hubspot.com/img/i/tick.gif) no-repeat scroll 10px 10px;
+border-color:#9FE8B8;
+padding-left:32px;
+}
+div.message {
+background:#F6F4D5 none repeat scroll 0% 0%;
+border:1px solid #E0DEB9;
+clear:both;
+color:#444444;
+display:block;
+margin:15px 0pt 5px;
+padding:10px 10px 10px 15px;
+}
+div.message {
+background:#FFE6BF none repeat scroll 0% 0%;
+clear:both;
+color:#444444;
+display:block;
+line-height:145%;
+margin:15px 0pt 5px;
+padding:10px 10px 10px 15px;
+}
+
+#bb-container div.post .tags { margin: 4px 0px; color: #888; 
+	font-weight: bold; }
+
+ /* Ending 10-cms.css */
+
+
+
+
+ /* Starting 11-bizblogger-japanese.css */
+
+
+#listing .post.blogjapanese {
+	margin : 0px 0px;
+}
+
+#listing .post.blogjapanese {
+	
+	
+}
+#listing .post.blogjapanese .Submissions, #listing .post.blogjapanese .Buttons 
+{
+	
+	margin-bottom: 13px;
+}
+
+table.Settings .SubHead 
+{
+	text-align: left;
+	margin-bottom: 5px;
+	margin-top: 8px;
+}
+
+.blogjapaneselisting 
+{
+	margin-top: 9px;
+	
+}
+
+.blogjapaneselisting .postfoot 
+{
+	margin-top: 14px;
+}
+
+#listing .post.blogjapanese h3 {
+	
+	
+	padding : 2px;
+	
+	padding-left : 0px;	
+	text-align: left;
+	font-size: 1.4em;
+	margin-bottom: 6px;
+	line-height: 1.5em;
+}
+
+
+
+
+#listing .post.blogjapanese {
+	border-bottom : 0px solid #777;
+	margin-bottom: 35px;
+	
+}
+
+#listing .post.blogjapanese .postfoot {
+	font-size : 12px;
+	text-align: left;
+}
+
+.post.blogjapanese div.dateandauthor  {
+  font-size:  11px;
+ 
+	
+	color: #777;
+	padding-bottom: 9px;
+}
+
+#listing .blogjapanese .Buttons {
+  margin-bottom: 10px;
+
+
+}
+
+#listing .blogjapanese .Submissions {
+  
+  margin-bottom: 10px;
+
+}
+
+
+.Head.PostComments {
+
+   font-weight: bold;
+
+} 
+
+
+.Settings.PostComments {
+   margin-top: 10px;
+}
+
+ /* Ending 11-bizblogger-japanese.css */
+
+
+/* Image alignments - fix */
+html>body #foxboro_col2 img.alignRight,
+html>body #brighton_col2 img.alignRight,
+html>body #duxbury_col2 img.alignRight,
+html>body #everett_col2 img.alignRight,
+html>body #cambridge_col2 img.alignRight {
+    margin:0 0 5px 15px;border:0px solid #ccc;padding:2px;
+}
+html>body #foxboro_col2 img.alignLeft,
+html>body #brighton_col2 img.alignLeft,
+html>body #duxbury_col2 img.alignLeft,
+html>body #everett_col2 img.alignLeft,
+html>body #cambridge_col2 img.alignLeft {
+    margin:0 15px 5px 0;border:0px solid #ccc;padding:2px;
+}
+/* end image alignments */
+
+
+/* Fix for CMS-2247 */
+
+.radmenu.NavHidden ul li a { cursor:default;}
+.radmenu.NavHidden ul li a span { cursor:default;}
+#cambridge_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#cambridge_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+#brighton_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#brighton_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+#foxboro_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#foxboro_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+#everett_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#everett_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+#duxbury_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#duxbury_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+#allston_menu .radmenu.NavHidden ul li a.link { background-color:transparent;}
+#allston_menu .radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+.radmenu.NavHidden ul li a.link { background-color:transparent;}
+.radmenu.NavHidden ul li a.link:hover { background-color:transparent;}
+
+/* ================================
+    CSS STYLES FOR Gallery Pagination and Thumbnails
+   ================================
+*/
+
+.clearfix:after{
+	content: ".";
+	display: block;
+	clear: both;
+	visibility: hidden;
+	line-height: 0;
+	height: 0;
+}
+ 
+.clearfix {
+  zoom: 1;
+}
+
+div.albumview .pagination {
+  text-align: center;
+  position: relative;
+  padding: 10px;
+}
+
+div.albumview  div.pagination a.current, div.pagination span.current {
+    background: none repeat scroll 0 0 #808080;
+    border-color: #707070;
+    color: #f0f0f0;
+}
+
+div.albumview div.pagination a, div.pagination span {
+    background: none repeat scroll 0 0 #F1F1F1;
+    border: 1px solid #CCCCCC;
+    display: block;
+    float: left;
+    margin: 0 0 0 4px;
+    padding: 3px 7px;
+    text-decoration: none;
+}
+
+div.albumview .pagination {
+   display: inline-block !important;
+   float: none !important;
+   font-size: 80%;
+   margin: 0 !important;
+}
+        
+
+div.albumview .pagination .current.prev, .pagination .current.next{
+    color:#999;
+    border-color:#ccc;
+    background:#fff;
+}
+
+div.albumview.view-thumbnail {
+
+}
+
+div.albumview.view-thumbnail div.page_holder {
+}
+
+div.albumview.view-thumbnail div.page_holder a {
+  display: inline-block;
+  margin: 0 10px 10px 0;
+}
+
+div.albumview.view-thumbnail div.page_holder a img {
+  height: 80px;
+}
+
+.fakecrop a,
+.fakecrop-fill a {
+  border: 1px solid #efefef;
+}
+
+
+
+/*
+.submissions .smallsocial span iframe { width:118px !important;}
+*/
+

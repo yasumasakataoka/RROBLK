@@ -325,12 +325,11 @@ module Jqgrid
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");
                               if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",authenticity_token:"#{authenticity_token}"}}); } else { alert("Please select Row") } } , position:"right" })
 	   .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-n",
-              onClickButton: function() { jQuery("##{id}").setGridParam({url:"/screen/export_to_xlsx?q=#{id}"}).trigger("reloadGrid").setGridParam({url:"/screen/disp"});} , position:"right" })
-	   .navButtonAdd("##{id}_pager",{ caption:"",title:"import_from_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
-              onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");
-                              if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",autheicity_token:"#{authenticity_token}"}}); } else { alert("Please select Row") } } , position:"right" })
-
-            #{str_addbutton}
+              onClickButton: function() { document.location = "/excelexport/index?q=#{id}"; } , position:"right" })
+	              #{str_addbutton}
+           .navButtonAdd("##{id}_pager",{ caption:"",title:"import_from_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
+              onClickButton: function() { document.location = "/importfmxlsx/index?q=#{id}"; } , position:"right" })
+	              #{str_addbutton}
            .navButtonAdd("##{id}_pager",{ caption:"",title:"check",buttonicon:"ui-icon-check",
               onClickButton: function(){ var q = "#{id}";
                             jQuery.get("/screen/chk",{q:q,authenticity_token:"#{authenticity_token}"},null,"script");

@@ -6,32 +6,100 @@ class ExcelexportController < ApplicationController
       @screen_code = params[:q] 
   end
   def export
-     ##@fields =   plsql.__send__(params[:id]).column_names  ##show_data‚Ìfield‚É•ÏX
-     gridcolumns =  get_show_data(params[:export][:screen_code])[:gridcolumns] 
-     fields = {}
-     gridcolumns.each do |i|
-	 fields[i[:field].to_sym] = i[:label] if i[:hidden] == false
+     ##@fields =   plsql.__send__(params[:id]).column_names  ##show_dataã®fieldã«å¤‰æ›´
+	  #è©²å½“ãƒ‡ãƒ¼ã‚¿ãªã—ã®æ™‚å‡¦ç†ã€€
+     @screen_code = params[:export][:exportscreen_code]
+     screen_code 
+     @show_data = get_show_data screen_code
+     show_data
+     @xparams = {}
+     params[:export].each do |i,j|   ###jqgridã¨å…¥åŠ›ç„¡ã®æ™‚ã®é€ã‚‰ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ãŒã“ã¨ãªã‚‹ã€‚ jqgrid field nothing  rails fieldx= ""
+	@xparams[i] = j if j != ""
      end
-     fields.delete(:msg_ok_ng)    ####‹ß‚¢‚¤‚¿‚É  Æ‰ïEC³‚ÌŽž‚Í‚Æ‚éB@@Šm”F‚ÌŽž‚Ì‚Ý
-     @alldatas =   plsql.__send__(params[:export][:screen_code]).all
+     xparams
+     set_fields_from_params 
+     ##debugger
+     fields = {}
+     col_type =[]
+     show_data[:gridcolumns].each do |i|
+       if  i[:hidden] == false and i[:editrules]              ### omit :msg_ok_ng
+	   fields[i[:field].to_sym] = i[:label] 
+	   tmpcol_type = nil
+	   tmpcol_type = "input" if i[:editable] == true
+	   tmpcol_type = "indisp" if i[:editrules][:required]  == true
+	   tmpcol_type = "key" if show_data[:keysfield].index(i[:field])
+	   col_type << tmpcol_type 
+       end
+     end
+    command_r[:sio_start_record] =  1
+    command_r[:sio_end_record] =  params[:export][:maxcount].to_i 
+    command_r[:sio_sord] = params[:sord]  
+    command_r[:sio_sidx]  = params[:sidx]
+    command_r[:sio_session_id] = "export"
+
+    command_r[:sio_classname] = "plsql_blk_export"
+    @alldatas = []
+    ##debugger
+    subpaging  command_r  do   	  |tmp_data|    ## subpaging 
+	 @alldatas << tmp_data 
+    end 
+     fields.delete(:msg_ok_ng)    ####è¿‘ã„ã†ã¡ã«  ç…§ä¼šãƒ»ä¿®æ­£ã®æ™‚ã¯ã¨ã‚‹ã€‚ã€€ã€€ç¢ºèªã®æ™‚ã®ã¿
+     ##@alldatas =   plsql.__send__(params[:export][:screen_code]).all
      pkg = Axlsx::Package.new
      pkg.workbook do |wb|
-      wb.add_worksheet(:name => 'export') do |ws|   # ƒV[ƒg–¼‚ÌŽw’è‚ÍÈ—ª‰Â
-      ### column–ˆ‚É•¶ŽšA”—ÊA“ú•t‚ÌŽw’è‚ð‚·‚éB
-         ws.add_row  fields.values
+      wb.add_worksheet(:name => 'export') do |ws|   # ã‚·ãƒ¼ãƒˆåã®æŒ‡å®šã¯çœç•¥å¯
+	      ### columnæ¯Žã«æ–‡å­—ã€æ•°é‡ã€æ—¥ä»˜ã®æŒ‡å®šã‚’ã™ã‚‹ã€‚
+	 key_color = ws.styles.add_style  :bg_color => 'FF0000'
+	 indisp_color = ws.styles.add_style  :bg_color => 'FF8C00'
+	 input_color = ws.styles.add_style  :bg_color => '00FF00'
+	 fcolors = []
+         col_type.each do  |j|
+	   fcolors <<  key_color if j == "key"
+	   fcolors <<  indisp_color if j == "indisp"
+	   fcolors <<  input_color if j == "input"
+	   fcolors <<  nil if j.nil?
+         end
+         ws.add_row  fields.values,:style =>fcolors
+	 ##debugger
          @alldatas.each do  |i|
 		 rowvalue = []
 		 fields.keys.each do |key|
 		    rowvalue << i[key.to_sym] if i.key?(key.to_sym)
                  end
-		  ws.add_row rowvalue
+		  ws.add_row rowvalue,:style =>fcolors
          end
+         ##debugger
       end
-    end
+     end
   send_data(pkg.to_stream.read, 
   :type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   :filename => "#{params[:id]}.xlsx")
 
 
  end
+ def set_fields_from_params ###ç”»é¢ã®å†…å®¹ã‚’command_r
+     @command_r = {}
+     command_r
+     if show_data.empty? 
+        render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
+     end
+     command_r[:sio_search]  = "false"
+     show_data[:allfields].each do |j|
+        command_r[j] = params[:export][j]  ##     
+	command_r[:sio_search]  = "true" if command_r[j]
+     end ##
+ end  
+ def command_r
+     @command_r
+ end
+ def show_data
+     @show_data
+ end
+ def screen_code
+     @screen_code
+ end
+ def xparams
+     @xparams
+ end
+
 end

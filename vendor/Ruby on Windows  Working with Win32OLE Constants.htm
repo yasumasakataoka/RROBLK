@@ -1,0 +1,1489 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr"><head>
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<script async="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/cbgapi.loaded_1"></script><script async="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/cbgapi.loaded_0"></script><script type="text/javascript">(function() { var b=window,e="jstiming",g="tick";(function(){function d(a){this.t={};this.tick=function(a,d,c){c=void 0!=c?c:(new Date).getTime();this.t[a]=[c,d]};this[g]("start",null,a)}var a=new d;b.jstiming={Timer:d,load:a};if(b.performance&&b.performance.timing){var a=b.performance.timing,c=b[e].load,f=a.navigationStart,a=a.responseStart;0<f&&a>=f&&(c[g]("_wtsrt",void 0,f),c[g]("wtsrt_","_wtsrt",a),c[g]("tbsd_","wtsrt_"))}try{a=null,b.chrome&&b.chrome.csi&&(a=Math.floor(b.chrome.csi().pageT),c&&0<f&&(c[g]("_tbnd",void 0,b.chrome.csi().startE),
+c[g]("tbnd_","_tbnd",f))),null==a&&b.gtbExternal&&(a=b.gtbExternal.pageT()),null==a&&b.external&&(a=b.external.pageT,c&&0<f&&(c[g]("_tbnd",void 0,b.external.startE),c[g]("tbnd_","_tbnd",f))),a&&(b[e].pt=a)}catch(l){}})();b.tickAboveFold=function(d){var a=0;if(d.offsetParent){do a+=d.offsetTop;while(d=d.offsetParent)}d=a;750>=d&&b[e].load[g]("aft")};var h=!1;function k(){h||(h=!0,b[e].load[g]("firstScrollTime"))}b.addEventListener?b.addEventListener("scroll",k,!1):b.attachEvent("onscroll",k);
+ })();</script>
+<meta content="true" name="MSSmartTagsPreventParsing">
+<meta content="blogger" name="generator">
+<link href="http://rubyonwindows.blogspot.jp/favicon.ico" rel="icon" type="image/x-icon">
+<link href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html" rel="canonical">
+<link rel="alternate" type="application/atom+xml" title="Ruby on Windows - Atom" href="http://rubyonwindows.blogspot.com/feeds/posts/default">
+<link rel="alternate" type="application/rss+xml" title="Ruby on Windows - RSS" href="http://rubyonwindows.blogspot.com/feeds/posts/default?alt=rss">
+<link rel="service.post" type="application/atom+xml" title="Ruby on Windows - Atom" href="http://www.blogger.com/feeds/284600789737488130/posts/default">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.blogger.com/rsd.g?blogID=284600789737488130">
+<link rel="alternate" type="application/atom+xml" title="Ruby on Windows - Atom" href="http://rubyonwindows.blogspot.com/feeds/1661201160190579596/comments/default">
+<!--[if IE]> <script> (function() { var html5 = ("abbr,article,aside,audio,canvas,datalist,details," + "figure,footer,header,hgroup,mark,menu,meter,nav,output," + "progress,section,time,video").split(','); for (var i = 0; i < html5.length; i++) { document.createElement(html5[i]); } try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {} })(); </script> <![endif]-->
+<title>Ruby on Windows: Working with Win32OLE Constants</title>
+<link type="text/css" rel="stylesheet" href="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/1832531788-widget_css_bundle.css">
+<link type="text/css" rel="stylesheet" href="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/authorization.css">
+<style id="page-skin-1" type="text/css"><!--
+/*
+-----------------------------------------------
+Blogger Template Style
+Name:     Minima Stretch
+Designer: Douglas Bowman / Darren Delaye
+URL:      www.stopdesign.com
+Date:     26 Feb 2004
+----------------------------------------------- */
+/* Variable definitions
+====================
+<Variable name="bgcolor" description="Page Background Color"
+type="color" default="#fff">
+<Variable name="textcolor" description="Text Color"
+type="color" default="#333">
+<Variable name="linkcolor" description="Link Color"
+type="color" default="#58a">
+<Variable name="pagetitlecolor" description="Blog Title Color"
+type="color" default="#666">
+<Variable name="descriptioncolor" description="Blog Description Color"
+type="color" default="#999">
+<Variable name="titlecolor" description="Post Title Color"
+type="color" default="#c60">
+<Variable name="bordercolor" description="Border Color"
+type="color" default="#ccc">
+<Variable name="sidebarcolor" description="Sidebar Title Color"
+type="color" default="#999">
+<Variable name="sidebartextcolor" description="Sidebar Text Color"
+type="color" default="#666">
+<Variable name="visitedlinkcolor" description="Visited Link Color"
+type="color" default="#999">
+<Variable name="bodyfont" description="Text Font"
+type="font" default="normal normal 100% Georgia, Serif">
+<Variable name="headerfont" description="Sidebar Title Font"
+type="font"
+default="normal normal 78% 'Trebuchet MS',Trebuchet,Arial,Verdana,Sans-serif">
+<Variable name="pagetitlefont" description="Blog Title Font"
+type="font"
+default="normal normal 200% Georgia, Serif">
+<Variable name="descriptionfont" description="Blog Description Font"
+type="font"
+default="normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif">
+<Variable name="postfooterfont" description="Post Footer Font"
+type="font"
+default="normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif">
+*/
+/* Use this with templates/template-twocol.html */
+body {
+background:#ffffff;
+margin:0;
+color:#333333;
+font:x-small Georgia Serif;
+font-size/* */:/**/small;
+font-size: /**/small;
+text-align: center;
+}
+a:link {
+color:#5588aa;
+text-decoration:none;
+}
+a:visited {
+color:#999999;
+text-decoration:none;
+}
+a:hover {
+color:#cc0000;
+text-decoration:underline;
+}
+a img {
+border-width:0;
+}
+/* Header
+-----------------------------------------------
+*/
+#header-wrapper {
+margin:0 2% 10px;
+border:1px solid #cccccc;
+}
+#header {
+margin: 5px;
+border: 1px solid #cccccc;
+text-align: center;
+color:#cc0000;
+}
+#header-inner {
+background-position: center;
+margin-left: auto;
+margin-right: auto;
+}
+#header h1 {
+margin:5px 5px 0;
+padding:15px 20px .25em;
+line-height:1.2em;
+text-transform:uppercase;
+letter-spacing:.2em;
+font: normal normal 261% Georgia, Serif;
+}
+#header a {
+color:#cc0000;
+text-decoration:none;
+}
+#header a:hover {
+color:#cc0000;
+}
+#header .description {
+margin:0 5px 5px;
+padding:0 20px 15px;
+text-transform:uppercase;
+letter-spacing:.2em;
+line-height: 1.4em;
+font: normal normal 77% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+color: #000000;
+}
+#header img {
+margin-left: auto;
+margin-right: auto;
+}
+/* Outer-Wrapper
+----------------------------------------------- */
+#outer-wrapper {
+margin:0;
+padding:10px;
+text-align:left;
+font: normal normal 121% Georgia, Serif;
+}
+#main-wrapper {
+margin-left: 1%;
+width: 67%;
+float: left;
+word-wrap: break-word; /* fix for long text breaking sidebar float in IE */
+overflow: hidden;     /* fix for long non-text content breaking IE sidebar float */
+}
+html > body #main-wrapper {
+margin-left: 2%;
+}
+#sidebar-wrapper {
+margin-right: 1%;
+width: 25%;
+float: right;
+word-wrap: break-word; /* fix for long text breaking sidebar float in IE */
+overflow: hidden;     /* fix for long non-text content breaking IE sidebar float */
+}
+html > body #sidebar-wrapper {
+margin-right: 2%;
+}
+/* Headings
+----------------------------------------------- */
+h2 {
+margin:1.5em 0 .75em;
+font:normal normal 78% 'Trebuchet MS',Trebuchet,Arial,Verdana,Sans-serif;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.2em;
+color:#999999;
+}
+/* Posts
+-----------------------------------------------
+*/
+h2.date-header {
+margin:1.5em 0 .5em;
+}
+.post {
+margin:.5em 0 1.5em;
+border-bottom:1px dotted #cccccc;
+padding-bottom:1.5em;
+}
+.post h3 {
+margin:.25em 0 0;
+padding:0 0 4px;
+font-size:140%;
+font-weight:normal;
+line-height:1.4em;
+color:#cc0000;
+}
+.post h3 a, .post h3 a:visited, .post h3 strong {
+display:block;
+text-decoration:none;
+color:#cc0000;
+font-weight:normal;
+}
+.post h3 strong, .post h3 a:hover {
+color:#333333;
+}
+.post p {
+margin:0 0 .75em;
+line-height:1.6em;
+}
+.post-footer {
+margin: .75em 0;
+color:#999999;
+text-transform:uppercase;
+letter-spacing:.1em;
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+line-height: 1.4em;
+}
+.comment-link {
+margin-left:.6em;
+}
+.post img {
+padding:4px;
+border:1px solid #cccccc;
+}
+.post blockquote {
+margin:1em 20px;
+}
+.post blockquote p {
+margin:.75em 0;
+}
+/* Comments
+----------------------------------------------- */
+#comments h4 {
+margin:1em 0;
+font-weight: bold;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.2em;
+color: #999999;
+}
+#comments-block {
+margin:1em 0 1.5em;
+line-height:1.6em;
+}
+#comments-block .comment-author {
+margin:.5em 0;
+}
+#comments-block .comment-body {
+margin:.25em 0 0;
+}
+#comments-block .comment-footer {
+margin:-.25em 0 2em;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.1em;
+}
+#comments-block .comment-body p {
+margin:0 0 .75em;
+}
+.deleted-comment {
+font-style:italic;
+color:gray;
+}
+.feed-links {
+clear: both;
+line-height: 2.5em;
+}
+#blog-pager-newer-link {
+float: left;
+}
+#blog-pager-older-link {
+float: right;
+}
+#blog-pager {
+text-align: center;
+}
+/* Sidebar Content
+----------------------------------------------- */
+<script type="text/javascript" src="http://embed.technorati.com/embed/jj7zqgcdp6.js"></script>
+.sidebar {
+color: #666666;
+line-height: 1.5em;
+}
+.sidebar ul {
+list-style:none;
+margin:0 0 0;
+padding:0 0 0;
+}
+.sidebar li {
+margin:0;
+padding:0 0 .25em 15px;
+text-indent:-15px;
+line-height:1.5em;
+}
+.sidebar .widget, .main .widget {
+border-bottom:1px dotted #cccccc;
+margin:0 0 1.5em;
+padding:0 0 1.5em;
+}
+.main .Blog {
+border-bottom-width: 0;
+}
+/* Profile
+----------------------------------------------- */
+.profile-img {
+float: left;
+margin: 0 5px 5px 0;
+padding: 4px;
+border: 1px solid #cccccc;
+}
+.profile-data {
+margin:0;
+text-transform:uppercase;
+letter-spacing:.1em;
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+color: #999999;
+font-weight: bold;
+line-height: 1.6em;
+}
+.profile-datablock {
+margin:.5em 0 .5em;
+}
+.profile-textblock {
+margin: 0.5em 0;
+line-height: 1.6em;
+}
+.profile-link {
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+text-transform: uppercase;
+letter-spacing: .1em;
+}
+/* Footer
+----------------------------------------------- */
+#footer {
+width:660px;
+clear:both;
+margin:0 auto;
+padding-top:15px;
+line-height: 1.6em;
+text-transform:uppercase;
+letter-spacing:.1em;
+text-align: center;
+}
+/** Page structure tweaks for layout editor wireframe */
+body#layout #header {
+margin-left: 0px;
+margin-right: 0px;
+}
+
+--></style>
+<script type="text/javascript">var a=navigator,b="userAgent",c="indexOf",f="&m=1",g="(^|&)m=",h="?",k="?m=1";function l(){var d=window.location.href,e=d.split(h);switch(e.length){case 1:return d+k;case 2:return 0<=e[1].search(g)?null:d+f;default:return null}}if(-1!=a[b][c]("Mobile")&&-1!=a[b][c]("WebKit")&&-1==a[b][c]("iPad")||-1!=a[b][c]("Opera Mini")||-1!=a[b][c]("IEMobile")){var m=l();m&&window.location.replace(m)};
+</script><script type="text/javascript">
+if (window.jstiming) window.jstiming.load.tick('headEnd');
+</script><script src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/google_top_exp.js" type="text/javascript"></script><style>.gc-bubbleDefault{background-color:transparent !important;text-align:left;padding:0 !important;margin:0 !important;border:0 !important;table-layout:auto !important}.gc-reset{background-color:transparent !important;border:0 !important;padding:0 !important;margin:0 !important;text-align:left}.pls-bubbleTop{border-bottom:1px solid #ccc !important}.pls-topTail,.pls-vertShimLeft,.pls-contentLeft{background-image:url(//ssl.gstatic.com/s2/oz/images/stars/po/bubblev1/border_3.gif) !important}.pls-topTail{background-repeat:repeat-x !important;background-position:bottom !important}.pls-vertShim{background-color:#fff !important;text-align:right}.tbl-grey .pls-vertShim{background-color:#f5f5f5 !important}.pls-vertShimLeft{background-repeat:repeat-y !important;background-position:right !important;height:4px}.pls-vertShimRight{height:4px}.pls-confirm-container .pls-vertShim{background-color:#fff3c2 !important}.pls-contentWrap{background-color:#fff !important;position:relative !important;vertical-align:top}.pls-contentLeft{background-repeat:repeat-y;background-position:right;vertical-align:top}.pls-dropRight{background-image:url(//ssl.gstatic.com/s2/oz/images/stars/po/bubblev1/bubbleDropR_3.png) !important;background-repeat:repeat-y !important;vertical-align:top}.pls-vert,.pls-tailleft,.pls-dropTR .pls-dropBR,.pls-dropBL,.pls-vert img{vertical-align:top}.pls-dropBottom{background-image:url(//ssl.gstatic.com/s2/oz/images/stars/po/bubblev1/bubbleDropB_3.png) !important;background-repeat:repeat-x !important;width:100%;vertical-align:top}.pls-topLeft{background:inherit !important;text-align:right;vertical-align:bottom}.pls-topRight{background:inherit !important;text-align:left;vertical-align:bottom}.pls-bottomLeft{background:inherit !important;text-align:right}.pls-bottomRight{background:inherit !important;text-align:left;vertical-align:top}.pls-tailtop,.pls-tailright,.pls-tailbottom,.pls-tailleft{display:none;position:relative}.pls-tailbottom,.pls-tailtop,.pls-tailright,.pls-tailleft,.pls-dropTR,.pls-dropBR,.pls-dropBL{background-image:url(//ssl.gstatic.com/s2/oz/images/stars/po/bubblev1/bubbleSprite_3.png) !important;background-repeat:no-repeat}.tbl-grey .pls-tailbottom,.tbl-grey .pls-tailtop,.tbl-grey .pls-tailright,.tbl-grey .pls-tailleft,.tbl-grey .pls-dropTR,.tbl-grey .pls-dropBR,.tbl-grey .pls-dropBL{background-image:url(//ssl.gstatic.com/s2/oz/images/stars/po/bubblev1/bubbleSprite-grey.png) !important}.pls-tailbottom{background-position:-23px 0}.pls-confirm-container .pls-tailbottom{background-position:-23px -10px}.pls-tailtop{background-position:-19px -20px}.pls-tailright{background-position:0 0}.pls-tailleft{background-position:-10px 0}.pls-tailtop{vertical-align:top}.gc-bubbleDefault td{line-height:0;font-size:0}.pls-topLeft img,.pls-topRight img,.pls-tailbottom{vertical-align:bottom}.pls-bottomLeft img,.bubbleDropTR,.pls-dropBottomL img,.pls-dropBottom img,.pls-dropBottomR img,.pls-bottomLeft{vertical-align:top}.pls-dropTR{background-position:0 -22px}.pls-dropBR{background-position:0 -27px}.pls-dropBL{background-position:0 -16px}.pls-spacertop,.pls-spacerright,.pls-spacerbottom,.pls-spacerleft{position:static !important}.pls-spinner{bottom:0;position:absolute;left:0;margin:auto;right:0;top:0}</style></head>
+<body>
+<div class="navbar section" id="navbar"><div class="widget Navbar" id="Navbar1"><script type="text/javascript">
+    function setAttributeOnload(object, attribute, val) {
+      if(window.addEventListener) {
+        window.addEventListener('load',
+          function(){ object[attribute] = val; }, false);
+      } else {
+        window.attachEvent('onload', function(){ object[attribute] = val; });
+      }
+    }
+  </script>
+<div id="navbar-iframe-container"><iframe src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/navbar.htm" name="navbar-iframe" id="navbar-iframe" vspace="0" tabindex="0" style="" marginwidth="0" marginheight="0" hspace="0" frameborder="0" scrolling="no" width="100%"></iframe></div>
+<script gapi_processed="true" type="text/javascript" src="navbar_data/plusone.js"></script>
+<script type="text/javascript">
+        gapi.load("iframes-styles-bubble", function() {
+          if (window.iframes && iframes.open) {
+            iframes.open(
+                '//www.blogger.com/navbar.g?targetBlogID\075284600789737488130\46blogName\75Ruby+on+Windows\46publishMode\75PUBLISH_MODE_BLOGSPOT\46navbarType\75SILVER\46layoutType\75LAYOUTS\46searchRoot\75http://rubyonwindows.blogspot.com/search\46blogLocale\75en_US\46v\0752\46homepageUrl\75http://rubyonwindows.blogspot.com/\46targetPostID\0751661201160190579596\46blogPostOrPageUrl\75http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html\46vt\0756229396727695125048',
+                {
+                  container: "navbar-iframe-container",
+                  id: "navbar-iframe"
+                },
+                {
+                });
+          }
+        });
+      </script><script type="text/javascript">
+(function() {
+var script = document.createElement('script');
+script.type = 'text/javascript';
+script.src = '//pagead2.googlesyndication.com/pagead/js/google_top_exp.js';
+var head = document.getElementsByTagName('head')[0];
+if (head) {
+head.appendChild(script);
+}})();
+</script>
+</div></div>
+<div id="outer-wrapper"><div id="wrap2">
+<!-- skip links for text browsers -->
+<span id="skiplinks" style="display:none;">
+<a href="#main">skip to main </a> |
+      <a href="#sidebar">skip to sidebar</a>
+</span>
+<div id="header-wrapper">
+<div class="header section" id="header"><div class="widget Header" id="Header1">
+<div id="header-inner">
+<div class="titlewrapper">
+<h1 class="title">
+<a href="http://rubyonwindows.blogspot.jp/">Ruby on Windows</a>
+</h1>
+</div>
+<div class="descriptionwrapper">
+<p class="description"><span>On using the Ruby programming language on the Microsoft Windows platform</span></p>
+</div>
+</div>
+</div></div>
+</div>
+<div id="content-wrapper">
+<div id="crosscol-wrapper" style="text-align:center">
+<div class="crosscol section" id="crosscol"></div>
+</div>
+<div id="main-wrapper">
+<div class="main section" id="main"><div class="widget Blog" id="Blog1">
+<div class="blog-posts hfeed">
+<!-- google_ad_section_start(name=default) -->
+
+          <div class="date-outer">
+        
+<h2 class="date-header"><span>Sunday, July 6, 2008</span></h2>
+
+          <div class="date-posts">
+        
+<div class="post-outer">
+<div class="post uncustomized-post-template">
+<a name="1661201160190579596"></a>
+<h3 class="post-title">
+<a href="http://rubyonwindows.blogspot.jp/2008/07/working-with-win32ole-constants.html">Working with Win32OLE Constants</a>
+</h3>
+<div class="post-header-line-1"></div>
+<div class="post-body">
+<p>
+Excel (and Word, Outlook, etc.) has hundreds of built-in constants that 
+represent numeric values. When reviewing code written in Visual Basic, 
+you may see these constants passed when calling methods or setting 
+property values:<br></p><pre><br>mychart.ChartType = <span style="font-style:italic;">xlColumnClustered</span><br></pre><br>But the above line of code won't work on its own in Ruby, as <span style="font-style:italic;">xlColumnClustered</span> won't be recognized as a constant. So, when translating this code to Ruby, how do you get it to work?<br><br><span style="font-weight:bold;">Do-It-Yourself</span><br><br>In my code examples here, I usually either provide the actual value...<br><pre><br>mychart.ChartType = 51<br></pre><br>...or explicitly assign the value to a constant or variable myself:<br><pre><br>xlColumnClustered = 51<br>mychart.ChartType = xlColumnClustered<br></pre><br>In Ruby, constants must begin with an upper-case letter, so '<span style="font-style:italic;">xlColumnClustered</span>' is really a variable in the last example above. To make it a constant, I should actually name it something like '<span style="font-style:italic;">XlColumnClustered</span>', with an upper-case X.<br><br>How did I know that the Excel constant <span style="font-style:italic;">xlColumnClustered </span>equals 51? Well, I simply googled '<span style="font-style:italic;">Const xlColumnClustered</span>'
+ and quickly found examples where the constant was being explicitly 
+declared in VB/VBA code ("Const xlColumnClustered = 51"). Googling for '<span style="font-style:italic;">Excel Constants</span>'
+ will return numerous pages that list all the the Excel constants and 
+their corresponding values. Microsoft provides their own listing <a href="http://msdn.microsoft.com/en-us/library/aa221100%28office.11%29.aspx" target="_blank">here</a>.<br><br><span style="font-weight:bold;">Loading the Win32OLE Constants</span><br><br>But
+ you don't have to do it yourself. Ruby's win32ole library allows you to
+ load an object's built-in constants into a class or module. To do so, 
+first create an empty class or module:<br><pre><br>class ExcelConst<br>end<br></pre><br>Then call the <span style="font-weight:bold;">WIN32OLE.const_load</span> method. Pass this method your previously-defined <a href="http://rubyonwindows.blogspot.com/2007/03/automating-excel-with-ruby-application.html" target="_blank">Excel application object</a> and your new ExcelConst class:<br><pre><br>WIN32OLE.const_load(excel, ExcelConst)<br></pre><br>This loads the Excel application object's built-in constants into your ExcelConst class, but <span style="font-style:italic;">each constant will now begin with an upper-case letter</span>, as required in Ruby. Now you can call Excel's built-in constants from your new ExcelConst class. So our original example...<br><pre><br>mychart.ChartType = xlColumnClustered<br></pre><br>...works
+ with only a slight modification, inserting the name of our ExcelConst 
+class and capitalizing the first letter of the constant:<br><pre><br>mychart.ChartType = ExcelConst::XlColumnClustered<br></pre><br>There you have it. This same method works for loading constants from other win32 application objects, such as Word or Outlook.<br><br>By the way, you can review the docs for the WIN32OLE library, including the const_load method, <a href="http://www.ruby-doc.org/core/classes/WIN32OLE.html" target="_blank">here</a>.<br><br>I
+ hope you found this useful. Feel free to post a comment here or email 
+me if you have questions, comments, or suggestions for future articles 
+(or <a href="http://rubyonwindows.blogspot.com/2008/06/ruby-on-windows-book.html">the book</a>).<br><br>Thanks for stopping by!<p></p>
+<div style="clear: both;"></div>
+</div>
+<div class="post-footer">
+<p class="post-footer-line post-footer-line-1">
+<span class="post-author">
+Posted by
+David Mullet
+</span>
+<span class="post-timestamp">
+at
+<a class="timestamp-link" href="http://rubyonwindows.blogspot.jp/2008/07/working-with-win32ole-constants.html" title="permanent link">10:00 AM</a>
+</span>
+<span class="post-comment-link">
+</span>
+<span class="post-backlinks post-comment-link">
+</span>
+<span class="post-icons">
+<span class="item-action">
+<a href="http://www.blogger.com/email-post.g?blogID=284600789737488130&amp;postID=1661201160190579596" title="Email Post">
+<span class="email-post-icon">&nbsp;</span>
+</a>
+</span>
+<span class="item-control blog-admin pid-1489274461">
+<a href="http://www.blogger.com/post-edit.g?blogID=284600789737488130&amp;postID=1661201160190579596&amp;from=pencil" title="Edit Post">
+<img alt="" class="icon-action" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_edit_allbkg.gif" height="18" width="18">
+</a>
+</span>
+</span>
+</p>
+<p class="post-footer-line post-footer-line-2">
+<span class="post-labels">
+Labels:
+<a href="http://rubyonwindows.blogspot.jp/search/label/excel" rel="tag">excel</a>,
+<a href="http://rubyonwindows.blogspot.jp/search/label/ruby" rel="tag">ruby</a>,
+<a href="http://rubyonwindows.blogspot.jp/search/label/win32ole" rel="tag">win32ole</a>,
+<a href="http://rubyonwindows.blogspot.jp/search/label/windows" rel="tag">windows</a>
+</span>
+</p>
+<p class="post-footer-line post-footer-line-3"></p>
+</div>
+</div>
+<div class="comments" id="comments">
+<a name="comments"></a>
+<h4>6 comments:</h4>
+<div id="Blog1_comments-block-wrapper">
+<dl class="avatar-comment-indent" id="comments-block">
+<dt class="comment-author " id="c4408478245119856536">
+<a name="c4408478245119856536"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/16255445653576846162" rel="nofollow" onclick="" class="avatar-hovercard" id="av-0-16255445653576846162"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="piyo" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/16255445653576846162" rel="nofollow">piyo</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-4408478245119856536">
+<p>
+Truly a time-saving tip. Thank you.<br><br>Another reference for constants (albeit old, for Office 97) was this official download:<br>http://support.microsoft.com/kb/q112671/<br><br>It was good for Ruby use because the constants were copied to a text file.
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1215403920000#c4408478245119856536" title="comment permalink">
+July 6, 2008 at 11:12 PM
+</a>
+<span class="item-control blog-admin pid-2027936186">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=4408478245119856536" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+<dt class="comment-author " id="c3689707629593913533">
+<a name="c3689707629593913533"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/06241817356318669101" rel="nofollow" onclick="" class="avatar-hovercard" id="av-1-06241817356318669101"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="John" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/06241817356318669101" rel="nofollow">John</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-3689707629593913533">
+<p>
+Do you have any examples of how to generate Powerpoint presentations 
+with Ruby?  I can't seem to get past the step on adding a new slide.
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1219880040000#c3689707629593913533" title="comment permalink">
+August 27, 2008 at 6:34 PM
+</a>
+<span class="item-control blog-admin pid-572033603">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=3689707629593913533" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+<dt class="comment-author blog-author" id="c951102604187989136">
+<a name="c951102604187989136"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/05597492688893461137" rel="nofollow" onclick="" class="avatar-hovercard" id="av-2-05597492688893461137"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="David Mullet" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/05597492688893461137" rel="nofollow">David Mullet</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-951102604187989136">
+<p>
+@john:<br><br>I have just posted a new article on <a href="http://rubyonwindows.blogspot.com/2008/08/automating-powerpoint-with-ruby.html" rel="nofollow">Automating PowerPoint with Ruby</a>.<br><br>I'll post more in a later article, but this will hopefully get you started.<br><br>Thanks for the suggestion!<br><br>David
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1220191560000#c951102604187989136" title="comment permalink">
+August 31, 2008 at 9:06 AM
+</a>
+<span class="item-control blog-admin pid-1489274461">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=951102604187989136" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+<dt class="comment-author " id="c3680932739374636076">
+<a name="c3680932739374636076"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/09561701597825876030" rel="nofollow" onclick="" class="avatar-hovercard" id="av-3-09561701597825876030"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="faiz" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/09561701597825876030" rel="nofollow">faiz</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-3680932739374636076">
+<p>
+Thanks for the clear step-by-step. However I was not able to say: Application.Calculation = XlCalculationManual <br><br>using
+ this procedure. Even though the proper constant was returned (-4135) 
+the assignment statement in Ruby gave an error. I ended up using <br><br>ScreenUpdating = false <br><br>and <br><br>EnableCalculation = false <br><br>instead. Any ideas?
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1224143460000#c3680932739374636076" title="comment permalink">
+October 16, 2008 at 2:51 AM
+</a>
+<span class="item-control blog-admin pid-902912151">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=3680932739374636076" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+<dt class="comment-author blog-author" id="c4162773172877009314">
+<a name="c4162773172877009314"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/05597492688893461137" rel="nofollow" onclick="" class="avatar-hovercard" id="av-4-05597492688893461137"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="David Mullet" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/05597492688893461137" rel="nofollow">David Mullet</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-4162773172877009314">
+<p>
+@faiz-<br><br>Be sure to fully qualify your constant with the namespace:<br><br>ExcelConst::XlCalculationManual <br><br>The following code runs for me:<br><br>-----<br>require 'win32ole'<br><br>class ExcelConst<br>end<br><br>excel = WIN32OLE.new('Excel.Application')<br>WIN32OLE.const_load(excel, ExcelConst)<br>excel.Visible = true<br>wb = excel.Workbooks.Add<br>puts excel.Calculation    # outputs -4105<br>excel.Calculation = ExcelConst::XlCalculationManual <br>puts excel.Calculation    # outputs -4135<br>-----<br><br>If you still have problems with this, send me your code and I'll take a look at it.<br><br>David
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1224158040000#c4162773172877009314" title="comment permalink">
+October 16, 2008 at 6:54 AM
+</a>
+<span class="item-control blog-admin pid-1489274461">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=4162773172877009314" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+<dt class="comment-author " id="c1379745552052089442">
+<a name="c1379745552052089442"></a>
+<div class="avatar-image-container avatar-stock"><span dir="ltr"><a href="http://www.blogger.com/profile/09561701597825876030" rel="nofollow" onclick="" class="avatar-hovercard" id="av-5-09561701597825876030"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/b16-rounded.gif" alt="" title="faiz" height="16" width="16">
+
+</a></span></div>
+<a href="http://www.blogger.com/profile/09561701597825876030" rel="nofollow">faiz</a>
+said...
+</dt>
+<dd class="comment-body" id="Blog1_cmt-1379745552052089442">
+<p>
+Thanks David,<br><br>I'll try your tip. Another related information that
+ took a long time googling (since I did not know what to look for) was 
+Application.AutomationSecurity. It has 3 values (ByUI, ForceDisable, 
+Low). I wanted to parse over 6500 XLS files but some of those had auto 
+Macros that triggered dialog boxes (error or otherwise) that needed user
+ interaction. Some went away with DisplayAlerts. But some persisted even
+ when I put Maximum Security for Macros in Excel. Setting this property 
+seems to have solved the problem. I will try to set the macro security 
+to Low in the UI and then see if the Ruby code overrides it or not.
+</p>
+</dd>
+<dd class="comment-footer">
+<span class="comment-timestamp">
+<a href="http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html?showComment=1224582660000#c1379745552052089442" title="comment permalink">
+October 21, 2008 at 4:51 AM
+</a>
+<span class="item-control blog-admin pid-902912151">
+<a class="comment-delete" href="http://www.blogger.com/delete-comment.g?blogID=284600789737488130&amp;postID=1379745552052089442" title="Delete Comment">
+<img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon_delete13.gif">
+</a>
+</span>
+</span>
+</dd>
+</dl>
+</div>
+<p class="comment-footer">
+<a href="http://www.blogger.com/comment.g?blogID=284600789737488130&amp;postID=1661201160190579596" onclick="">Post a Comment</a>
+</p>
+<div id="backlinks-container">
+<div id="Blog1_backlinks-container"><a name="links"></a><h4>Links to this post</h4>
+<p class="comment-footer">
+<a class="comment-link" href="http://www.blogger.com/blog-this.g" id="Blog1_backlinks-create-link" target="_blank">Create a Link</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+
+        </div></div>
+      
+<!-- google_ad_section_end -->
+</div>
+<div class="blog-pager" id="blog-pager">
+<span id="blog-pager-newer-link">
+<a class="blog-pager-newer-link" href="http://rubyonwindows.blogspot.jp/2008/08/automating-powerpoint-with-ruby.html" id="Blog1_blog-pager-newer-link" title="Newer Post">Newer Post</a>
+</span>
+<span id="blog-pager-older-link">
+<a class="blog-pager-older-link" href="http://rubyonwindows.blogspot.jp/2008/06/ruby-on-windows-book.html" id="Blog1_blog-pager-older-link" title="Older Post">Older Post</a>
+</span>
+<a class="home-link" href="http://rubyonwindows.blogspot.jp/">Home</a>
+</div>
+<div class="clear"></div>
+<div class="post-feeds">
+<div class="feed-links">
+Subscribe to:
+<a class="feed-link" href="http://rubyonwindows.blogspot.com/feeds/1661201160190579596/comments/default" target="_blank" type="application/atom+xml">Post Comments (Atom)</a>
+</div>
+</div>
+<script type="text/javascript">window.___gcfg = {'lang': 'en_US'};</script>
+</div></div>
+</div>
+<div id="sidebar-wrapper">
+<div class="sidebar section" id="sidebar"><div class="widget LinkList" id="LinkList1">
+<h2>Tools of the Trade</h2>
+<div class="widget-content">
+<ul>
+<li><a href="http://rubyinstaller.org/">RubyInstaller</a></li>
+<li><a href="http://rubyonwindows.blogspot.com/search/label/faq">Ruby on Windows FAQs</a></li>
+<li><a href="http://www.amazon.com/Programming-Ruby-Pragmatic-Programmers-Second/dp/0974514055/ref=pd_bbs_sr_1/102-9949373-4499311?ie=UTF8&amp;s=books&amp;qid=1183561499&amp;sr=8-1">Programming Ruby: The Book</a></li>
+<li><a href="http://www.ruby-lang.org/">Ruby Programming Language</a></li>
+<li><a href="http://notepad-plus.sourceforge.net/">Notepad++ Code Editor</a></li>
+<li><a href="http://netbeans.org/">NetBeans Ruby IDE</a></li>
+<li><a href="http://sqlite.org/">SQLite</a></li>
+<li><a href="http://rubyforge.org/projects/wxruby/">wxRuby GUI Library</a></li>
+<li><a href="http://ocra.rubyforge.org/">OCRA Compiler</a></li>
+<li><a href="http://www.erikveen.dds.nl/rubyscript2exe/index.html">RubyScript2Exe Compiler</a></li>
+<li><a href="http://www.jrsoftware.org/isinfo.php">Inno Setup Installer</a></li>
+</ul>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=LinkList&amp;widgetId=LinkList1&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("LinkList1"));' target="configLinkList1" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div>
+</div><div class="widget HTML" id="HTML1">
+<div class="widget-content">
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+<input name="cmd" value="_s-xclick" type="hidden">
+<input name="hosted_button_id" value="JX3P2MGSDGVTU" type="hidden">
+<input src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/btn_donateCC_LG.gif" name="submit" alt="PayPal - The safer, easier way to pay online!" border="0" type="image">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/pixel.gif" border="0" height="1" width="1">
+</form>
+</div>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=HTML&amp;widgetId=HTML1&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("HTML1"));' target="configHTML1" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div><div class="widget HTML" id="HTML2">
+<h2 class="title">Subscribe</h2>
+<div class="widget-content">
+<p><a href="http://feeds.feedburner.com/RubyOnWindows" rel="alternate" type="application/rss+xml"><img alt="" style="vertical-align:middle;border:0" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/feed-icon16x16.png"></a>&nbsp;<a href="http://feeds.feedburner.com/RubyOnWindows" rel="alternate" type="application/rss+xml">FeedBurner</a></p>
+</div>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=HTML&amp;widgetId=HTML2&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("HTML2"));' target="configHTML2" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div><div class="widget Label" id="Label1">
+<h2>Labels</h2>
+<div class="widget-content list-label-widget-content">
+<ul>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/access">access</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/ado">ado</a>
+<span dir="ltr">(4)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/api">api</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/book">book</a>
+<span dir="ltr">(2)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/books">books</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/commentary">commentary</a>
+<span dir="ltr">(2)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/dotnet">dotnet</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/excel">excel</a>
+<span dir="ltr">(29)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/faq">faq</a>
+<span dir="ltr">(7)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/gui">gui</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/ie">ie</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/itunes">itunes</a>
+<span dir="ltr">(2)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/jruby">jruby</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/modi">modi</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/msproject">msproject</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/ocr">ocr</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/outlook">outlook</a>
+<span dir="ltr">(9)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/powerpoint">powerpoint</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/ruby">ruby</a>
+<span dir="ltr">(103)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/rubyconf">rubyconf</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/rubygarden">rubygarden</a>
+<span dir="ltr">(3)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/shell">shell</a>
+<span dir="ltr">(4)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/site">site</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/sqlite">sqlite</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/sqlserver">sqlserver</a>
+<span dir="ltr">(2)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/tools">tools</a>
+<span dir="ltr">(13)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/vb">vb</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/watir">watir</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/win32ole">win32ole</a>
+<span dir="ltr">(24)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/windows">windows</a>
+<span dir="ltr">(79)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/wmi">wmi</a>
+<span dir="ltr">(2)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/wmp">wmp</a>
+<span dir="ltr">(1)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/word">word</a>
+<span dir="ltr">(12)</span>
+</li>
+<li>
+<a dir="ltr" href="http://rubyonwindows.blogspot.jp/search/label/wxruby">wxruby</a>
+<span dir="ltr">(3)</span>
+</li>
+</ul>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=Label&amp;widgetId=Label1&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("Label1"));' target="configLabel1" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div>
+</div><div class="widget BlogArchive" id="BlogArchive1">
+<h2>Blog Archive</h2>
+<div class="widget-content">
+<div id="ArchiveList">
+<div id="BlogArchive1_ArchiveList">
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2012-01-01T00:00:00-05:00&amp;updated-max=2013-01-01T00:00:00-05:00&amp;max-results=1">2012</a>
+<span class="post-count" dir="ltr">(1)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2012_03_01_archive.html">March</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2011-01-01T00:00:00-05:00&amp;updated-max=2012-01-01T00:00:00-05:00&amp;max-results=4">2011</a>
+<span class="post-count" dir="ltr">(4)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2011_09_01_archive.html">September</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2011_03_01_archive.html">March</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2011_02_01_archive.html">February</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2011_01_01_archive.html">January</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2010-01-01T00:00:00-05:00&amp;updated-max=2011-01-01T00:00:00-05:00&amp;max-results=6">2010</a>
+<span class="post-count" dir="ltr">(6)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2010_09_01_archive.html">September</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2010_08_01_archive.html">August</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2010_02_01_archive.html">February</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2010_01_01_archive.html">January</a>
+<span class="post-count" dir="ltr">(3)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2009-01-01T00:00:00-05:00&amp;updated-max=2010-01-01T00:00:00-05:00&amp;max-results=18">2009</a>
+<span class="post-count" dir="ltr">(18)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_08_01_archive.html">August</a>
+<span class="post-count" dir="ltr">(4)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_07_01_archive.html">July</a>
+<span class="post-count" dir="ltr">(2)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_06_01_archive.html">June</a>
+<span class="post-count" dir="ltr">(4)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_05_01_archive.html">May</a>
+<span class="post-count" dir="ltr">(5)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_02_01_archive.html">February</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2009_01_01_archive.html">January</a>
+<span class="post-count" dir="ltr">(2)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate expanded">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy toggle-open">▼&nbsp;</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2008-01-01T00:00:00-05:00&amp;updated-max=2009-01-01T00:00:00-05:00&amp;max-results=16">2008</a>
+<span class="post-count" dir="ltr">(16)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_11_01_archive.html">November</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_09_01_archive.html">September</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_08_01_archive.html">August</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate expanded">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy toggle-open">▼&nbsp;</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_07_01_archive.html">July</a>
+<span class="post-count" dir="ltr">(1)</span>
+<ul class="posts">
+<li><a href="http://rubyonwindows.blogspot.jp/2008/07/working-with-win32ole-constants.html">Working with Win32OLE Constants</a></li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_06_01_archive.html">June</a>
+<span class="post-count" dir="ltr">(4)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_04_01_archive.html">April</a>
+<span class="post-count" dir="ltr">(2)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_03_01_archive.html">March</a>
+<span class="post-count" dir="ltr">(1)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2008_01_01_archive.html">January</a>
+<span class="post-count" dir="ltr">(5)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/search?updated-min=2007-01-01T00:00:00-05:00&amp;updated-max=2008-01-01T00:00:00-05:00&amp;max-results=50">2007</a>
+<span class="post-count" dir="ltr">(67)</span>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_12_01_archive.html">December</a>
+<span class="post-count" dir="ltr">(3)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_11_01_archive.html">November</a>
+<span class="post-count" dir="ltr">(3)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_10_01_archive.html">October</a>
+<span class="post-count" dir="ltr">(2)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_09_01_archive.html">September</a>
+<span class="post-count" dir="ltr">(7)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_08_01_archive.html">August</a>
+<span class="post-count" dir="ltr">(4)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_07_01_archive.html">July</a>
+<span class="post-count" dir="ltr">(7)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_06_01_archive.html">June</a>
+<span class="post-count" dir="ltr">(7)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_05_01_archive.html">May</a>
+<span class="post-count" dir="ltr">(14)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_04_01_archive.html">April</a>
+<span class="post-count" dir="ltr">(10)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_03_01_archive.html">March</a>
+<span class="post-count" dir="ltr">(6)</span>
+</li>
+</ul>
+<ul class="hierarchy">
+<li class="archivedate collapsed">
+<a class="toggle" href="javascript:void(0)">
+<span class="zippy">
+
+          ►&nbsp;
+        
+</span>
+</a>
+<a class="post-count-link" href="http://rubyonwindows.blogspot.jp/2007_02_01_archive.html">February</a>
+<span class="post-count" dir="ltr">(4)</span>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=BlogArchive&amp;widgetId=BlogArchive1&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("BlogArchive1"));' target="configBlogArchive1" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div>
+</div><div class="widget Text" id="Text1">
+<h2 class="title">About the Author</h2>
+<div class="widget-content">
+David Mullet is a software developer.  He can be contacted at david (dot) mullet (at) gmail (dot) com.
+</div>
+<div class="clear"></div>
+<span class="widget-item-control">
+<span class="item-control blog-admin">
+<a class="quickedit" href="http://www.blogger.com/rearrange?blogID=284600789737488130&amp;widgetType=Text&amp;widgetId=Text1&amp;action=editWidget&amp;sectionId=sidebar" onclick='return _WidgetManager._PopupConfig(document.getElementById("Text1"));' target="configText1" title="Edit">
+<img alt="" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/icon18_wrench_allbkg.png" height="18" width="18">
+</a>
+</span>
+</span>
+<div class="clear"></div>
+</div></div>
+</div>
+<!-- spacer for skins that want sidebar and main to be the same height-->
+<div class="clear">&nbsp;</div>
+</div>
+<!-- end content-wrapper -->
+<div id="footer-wrapper">
+<div class="footer section" id="footer"></div>
+</div>
+</div></div>
+<!-- end outer-wrapper -->
+<script src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/urchin.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+_uacct = "UA-1367180-1";
+urchinTracker();
+</script>
+<!-- Site Meter XHTML Strict 1.0 -->
+<a id="idSiteMeterHREF" href="http://www.sitemeter.com/stats.asp?site=s33rubyonwindows" target="_top"><img src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/meter.gif" alt="Site Meter" border="0"></a><iframe src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/a.htm" frameborder="0" height="0" width="0"></iframe><script src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/counter.js" type="text/javascript">
+</script><iframe src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/blank.htm" style="height: 0px; width: 0px; position: absolute;" name="google_top_static_frame" id="google_top_static_frame" frameborder="0"></iframe>
+<!-- Copyright (c)2009 Site Meter -->
+<script type="text/javascript">
+if (window.jstiming) window.jstiming.load.tick('widgetJsBefore');
+</script><script type="text/javascript" src="Ruby%20on%20Windows%20%20Working%20with%20Win32OLE%20Constants_files/2292841073-widgets.js"></script>
+<script gapi_processed="true" type="text/javascript" src="navbar_data/plusone.js"></script>
+<script type="text/javascript">
+if (typeof(BLOG_attachCsiOnload) != 'undefined' && BLOG_attachCsiOnload != null) { window['blogger_templates_experiment_id'] = "templatesV1";window['blogger_blog_id'] = '284600789737488130';BLOG_attachCsiOnload('item_'); }_WidgetManager._Init('//www.blogger.com/rearrange?blogID\x3d284600789737488130','//rubyonwindows.blogspot.jp/2008/07/working-with-win32ole-constants.html','284600789737488130');
+_WidgetManager._SetDataContext([{'name': 'blog', 'data': {'blogId': '284600789737488130', 'bloggerUrl': 'http://www.blogger.com', 'title': 'Ruby on Windows', 'pageType': 'item', 'url': 'http://rubyonwindows.blogspot.jp/2008/07/working-with-win32ole-constants.html', 'canonicalUrl': 'http://rubyonwindows.blogspot.com/2008/07/working-with-win32ole-constants.html', 'canonicalHomepageUrl': 'http://rubyonwindows.blogspot.com/', 'homepageUrl': 'http://rubyonwindows.blogspot.jp/', 'blogspotFaviconUrl': 'http://rubyonwindows.blogspot.jp/favicon.ico', 'enabledCommentProfileImages': true, 'adultContent': false, 'disableAdSenseWidget': false, 'analyticsAccountNumber': '', 'searchLabel': '', 'searchQuery': '', 'pageName': 'Working with Win32OLE Constants', 'pageTitle': 'Ruby on Windows: Working with Win32OLE Constants', 'encoding': 'UTF-8', 'locale': 'en', 'localeUnderscoreDelimited': 'en', 'isPrivate': false, 'isMobile': false, 'isMobileRequest': false, 'mobileClass': '', 'isPrivateBlog': false, 'languageDirection': 'ltr', 'feedLinks': '\74link rel\75\42alternate\42 type\75\42application/atom+xml\42 title\75\42Ruby on Windows - Atom\42 href\75\42http://rubyonwindows.blogspot.com/feeds/posts/default\42 /\76\n\74link rel\75\42alternate\42 type\75\42application/rss+xml\42 title\75\42Ruby on Windows - RSS\42 href\75\42http://rubyonwindows.blogspot.com/feeds/posts/default?alt\75rss\42 /\76\n\74link rel\75\42service.post\42 type\75\42application/atom+xml\42 title\75\42Ruby on Windows - Atom\42 href\75\42http://www.blogger.com/feeds/284600789737488130/posts/default\42 /\76\n\74link rel\75\42EditURI\42 type\75\42application/rsd+xml\42 title\75\42RSD\42 href\75\42http://www.blogger.com/rsd.g?blogID\075284600789737488130\42 /\76\n\74link rel\75\42alternate\42 type\75\42application/atom+xml\42 title\75\42Ruby on Windows - Atom\42 href\75\42http://rubyonwindows.blogspot.com/feeds/1661201160190579596/comments/default\42 /\76\n', 'meTag': '', 'openIdOpTag': '', 'imageSrcTag': '', 'latencyHeadScript': '\74script type\75\42text/javascript\42\76(function() { var b\75window,e\75\42jstiming\42,g\75\42tick\42;(function(){function d(a){this.t\75{};this.tick\75function(a,d,c){c\75void 0!\75c?c:(new Date).getTime();this.t[a]\75[c,d]};this[g](\42start\42,null,a)}var a\75new d;b.jstiming\75{Timer:d,load:a};if(b.performance\46\46b.performance.timing){var a\75b.performance.timing,c\75b[e].load,f\75a.navigationStart,a\75a.responseStart;0\74f\46\46a\76\75f\46\46(c[g](\42_wtsrt\42,void 0,f),c[g](\42wtsrt_\42,\42_wtsrt\42,a),c[g](\42tbsd_\42,\42wtsrt_\42))}try{a\75null,b.chrome\46\46b.chrome.csi\46\46(a\75Math.floor(b.chrome.csi().pageT),c\46\0460\74f\46\46(c[g](\42_tbnd\42,void 0,b.chrome.csi().startE),\nc[g](\42tbnd_\42,\42_tbnd\42,f))),null\75\75a\46\46b.gtbExternal\46\46(a\75b.gtbExternal.pageT()),null\75\75a\46\46b.external\46\46(a\75b.external.pageT,c\46\0460\74f\46\46(c[g](\42_tbnd\42,void 0,b.external.startE),c[g](\42tbnd_\42,\42_tbnd\42,f))),a\46\46(b[e].pt\75a)}catch(l){}})();b.tickAboveFold\75function(d){var a\0750;if(d.offsetParent){do a+\75d.offsetTop;while(d\75d.offsetParent)}d\75a;750\76\75d\46\46b[e].load[g](\42aft\42)};var h\75!1;function k(){h||(h\75!0,b[e].load[g](\42firstScrollTime\42))}b.addEventListener?b.addEventListener(\42scroll\42,k,!1):b.attachEvent(\42onscroll\42,k);\n })();\74/script\076', 'mobileHeadScript': '', 'view': '', 'dynamicViewsCommentsSrc': '//www.blogblog.com/dynamicviews/4224c15c4e7c9321/js/comments.js', 'dynamicViewsScriptSrc': '//www.blogblog.com/dynamicviews/437c8f2d6b1382a8', 'plusOneApiSrc': 'https://apis.google.com/js/plusone.js', 'sf': 'n', 'tf': ''}}, {'name': 'skin', 'data': {'vars': {'sidebartextcolor': '#666666', 'linkcolor': '#5588aa', 'visitedlinkcolor': '#999999', 'textcolor': '#333333', 'headerfont': 'normal normal 78% \47Trebuchet MS\47,Trebuchet,Arial,Verdana,Sans-serif', 'pagetitlefont': 'normal normal 261% Georgia, Serif', 'bgcolor': '#ffffff', 'descriptioncolor': '#000000', 'titlecolor': '#cc0000', 'bordercolor': '#cccccc', 'postfooterfont': 'normal normal 78% \47Trebuchet MS\47, Trebuchet, Arial, Verdana, Sans-serif', 'pagetitlecolor': '#cc0000', 'bodyfont': 'normal normal 121% Georgia, Serif', 'descriptionfont': 'normal normal 77% \47Trebuchet MS\47, Trebuchet, Arial, Verdana, Sans-serif', 'sidebarcolor': '#999999'}, 'override': ''}}, {'name': 'view', 'data': {'classic': {'name': 'classic', 'url': '/?view\75classic'}, 'flipcard': {'name': 'flipcard', 'url': '/?view\75flipcard'}, 'magazine': {'name': 'magazine', 'url': '/?view\75magazine'}, 'mosaic': {'name': 'mosaic', 'url': '/?view\75mosaic'}, 'sidebar': {'name': 'sidebar', 'url': '/?view\75sidebar'}, 'snapshot': {'name': 'snapshot', 'url': '/?view\75snapshot'}, 'timeslide': {'name': 'timeslide', 'url': '/?view\75timeslide'}}}]);
+_WidgetManager._RegisterWidget('_LinkListView', new _WidgetInfo('LinkList1', 'sidebar', null, document.getElementById('LinkList1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML1', 'sidebar', null, document.getElementById('HTML1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML2', 'sidebar', null, document.getElementById('HTML2'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_LabelView', new _WidgetInfo('Label1', 'sidebar', null, document.getElementById('Label1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogArchiveView', new _WidgetInfo('BlogArchive1', 'sidebar', null, document.getElementById('BlogArchive1'), {'languageDirection': 'ltr'}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_TextView', new _WidgetInfo('Text1', 'sidebar', null, document.getElementById('Text1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HeaderView', new _WidgetInfo('Header1', 'header', null, document.getElementById('Header1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_NavbarView', new _WidgetInfo('Navbar1', 'navbar', null, document.getElementById('Navbar1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogView', new _WidgetInfo('Blog1', 'main', null, document.getElementById('Blog1'), {'cmtInteractionsEnabled': false, 'showBacklinks': true, 'postId': '1661201160190579596', 'lightboxEnabled': true, 'lightboxModuleUrl': '//www.blogger.com/static/v1/jsbin/3597663559-lbx.js', 'lightboxCssUrl': '//www.blogger.com/static/v1/v-css/228702327-lightbox_bundle.css'}, 'displayModeFull'));
+</script>
+
+</body></html>
