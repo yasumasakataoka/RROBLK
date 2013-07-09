@@ -26,18 +26,20 @@ class DbCud  < ActionController::Base
 	           ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
                    else  ### link先のidを求める
+			 ##CODEでユニークにならなかった時の考慮が漏れている。
 	           if   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
                         else
-			  case j_to_s 
-                               when   /_code/  ##tmp_key[j] = other tablename+_+fielfname+_+shikibetushi  <-- value
-				    tmp_key[j] = k  if i.key?((xtblname + "_" + j_to_s.sub("_code","_id")).to_sym)
+			  ##case j_to_s 
+                               ##when   /_code/  ##tmp_key[j] = other tablename+_+fielfname+_+shikibetushi  <-- value
+				    tmp_key[j] = k  ###if i.key?((xtblname + "_" + j_to_s.sub("_code","_id")).to_sym)
 			       ## when  /_id/
 				####      to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k 
-		           end
+		           ##end
                    end  ## unless j_to_s
                 end   ## if j_to_s.
            end ## j,k
            to_cr.merge! sub_code_to_id(tmp_key)  ##codeからもとめたid優先
+	   ##CODEでユニークにならないテーブルの考慮が漏れている。
 	   ##  fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{i[:person_id_upd]}"
 	   to_cr[:persons_id_upd] = i[(xtblname + "_person_id_upd").to_sym]
 	   case i[:sio_classname]
@@ -45,19 +47,19 @@ class DbCud  < ActionController::Base
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
 		    to_cr[:created_at] = Time.now
 		    to_cr[:updated_at] = Time.now
-		    fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
+		    ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
                 when "plsql_blk_update" then
                     to_cr[:where] = {:id => i[:id]}             ##update deleteの時はテーブル_idにはなにもセットされない。
 		    to_cr[:updated_at] = Time.now
-                    fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
+                    ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
 		    ##debugger
                     plsql.__send__(tblname).update  to_cr
                 when "plsql_blk_delete" then 
                     plsql.__send__(tblname).delete(:id => i[:id])
 		when "plsql_blk_copy_insert" then   ###画面から新しい画面に
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
-		    fprnt "class #{self} : LINE #{__LINE__} COPY INSERT : to_cr = #{to_cr}"
+		    ##fprnt "class #{self} : LINE #{__LINE__} COPY INSERT : to_cr = #{to_cr}"
 		    to_cr[:created_at] = Time.now
 		    to_cr[:updated_at] = Time.now
 		    plsql.__send__(tblname).insert to_cr
@@ -66,7 +68,7 @@ class DbCud  < ActionController::Base
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
 		    to_cr[:created_at] = Time.now
 		    to_cr[:updated_at] = Time.now
-		    fprnt "class #{self} : LINE #{__LINE__} chk INSERT : to_cr = #{to_cr}"
+		    ##fprnt "class #{self} : LINE #{__LINE__} chk INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
 		end   ## case iud 
 	   r_cnt += 1
@@ -82,17 +84,16 @@ class DbCud  < ActionController::Base
 		     command_r[newi] = j if j
 	          end
 	        end
-	   sub_insert_sio_r   command_r do
-	   end	   ## 結果のsio書き込み
+	   sub_insert_sio_r   command_r    ## 結果のsio書き込み
 	   cmnd_code = "process_scrs_" + i[:sio_code]   ##画面ごとの処理
-	   fprnt " LINE #{__LINE__}  i[:sio_code] = #{i[:sio_code]}  "
+	   #fprnt " LINE #{__LINE__}  i[:sio_code] = #{i[:sio_code]}  "
 	   ##debugger
               create_def_screen  i[:sio_code]   unless respond_to?(cmnd_code)
-	    fprnt " LINE #{__LINE__}  cmnd_code : #{cmnd_code}  "
+	    #fprnt " LINE #{__LINE__}  cmnd_code : #{cmnd_code}   \n #{command_r}"
 	    ##debugger
               __send__(cmnd_code, command_r)  #### if respond_to?(cmnd_code)
-            fprnt " LINE #{__LINE__} cmnd_code : #{cmnd_code} "
-	   reset_show_data(i[:screen_code]) if tblname.upcase == "DETAILFIELDS"
+            #fprnt " LINE #{__LINE__} cmnd_code } "
+	   reset_show_data(i[:screen_code]) if tblname.upcase == "SCREENFIELDS"
       end   ##chk_cmn.each
       rescue
 	      plsql.rollback

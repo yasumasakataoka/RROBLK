@@ -54,9 +54,9 @@ module V082
 
     # Enable the asset pipeline
     config.assets.enabled = true
-
+    ##config.action_view.javascript_expansions[:defaults] = %w(jquery rails jqgrid)
     # Version of your assets, change this if you want to expire all your assets
-    config.assets.version = '1.0'
+    ##config.assets.version = '1.0'
     ## for pdf prawn
     config.autoload_paths << "#{Rails.root}/app/reports"
   end

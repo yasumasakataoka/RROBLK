@@ -108,8 +108,71 @@ values(0,0,0,'2099/12/31')
 create or replace view  r_persons as 
  select person.id,person.id person_id ,person.code person_code ,person.name person_name ,person.email person_email ,
  person.remark person_remark ,person.expiredate person_expiredate ,person.update_ip person_update_ip ,
- person.created_at person_created_at ,person.updated_at person_updated_at,
+ person.created_at person_created_at ,person.updated_at person_updated_at,person.persons_id_upd person_id_upd,
  usergroup.code usergroup_code,usergroup.name usergroup_name
  from persons person ,usergroups usergroup
  where person.UserGroups_id= usergroup.id
+;
+require "rubygems"
+require "ruby-plsql"
+plsql.connection = OCI8.new("rails","rails","xe")
+require File.dirname(__FILE__) +  "/vendor/OrorBlk/screen_names_set.rb
+doaddsrn = AddScreen.new
+doaddsrn.addmain "R_PERSONS"
+
+
+
+drop table "RAILS"."SIO_R_PERSONS" 
+;
+CREATE TABLE "RAILS"."SIO_R_PERSONS" 
+   (	"SIO_ID" NUMBER(38,0), 
+	"SIO_USER_CODE" NUMBER(38,0), 
+	"SIO_TERM_ID" VARCHAR2(30), 
+	"SIO_SESSION_ID" VARCHAR2(256), 
+	"SIO_COMMAND_RESPONSE" CHAR(1), 
+	"SIO_SESSION_COUNTER" NUMBER(38,0), 
+	"SIO_CLASSNAME" VARCHAR2(30), 
+	"SIO_VIEWNAME" VARCHAR2(30), 
+	"SIO_CODE" VARCHAR2(30), 
+	"SIO_STRSQL" VARCHAR2(4000), 
+	"SIO_TOTALCOUNT" NUMBER(38,0), 
+	"SIO_RECORDCOUNT" NUMBER(38,0), 
+	"SIO_START_RECORD" NUMBER(38,0), 
+	"SIO_END_RECORD" NUMBER(38,0), 
+	"SIO_SORD" VARCHAR2(256), 
+	"SIO_SEARCH" VARCHAR2(10), 
+	"SIO_SIDX" VARCHAR2(256), 
+	"ID" NUMBER, 
+	"PERSON_ID" NUMBER, 
+	"PERSON_CODE" VARCHAR2(10), 
+	"PERSON_NAME" VARCHAR2(50), 
+	"PERSON_EMAIL" VARCHAR2(50), 
+	"PERSON_REMARK" VARCHAR2(100), 
+	"PERSON_EXPIREDATE" DATE, 
+	"PERSON_UPDATE_IP" VARCHAR2(40), 
+	"PERSON_ID_UPD" NUMBER,
+	"PERSON_CREATED_AT" DATE, 
+	"PERSON_UPDATED_AT" DATE, 
+        "SCREENLEVEL_CODE" VARCHAR(30),     -------- SCREENLEVELÇÃíËã`ÇÇÌÇ∑ÇÍÇ»Ç¢Ç±Ç∆ÅB
+        "SCREENLEVEL_NAME" VARCHAR(30),
+	"USERGROUP_CODE" VARCHAR2(30), 
+	"USERGROUP_NAME" VARCHAR2(20), 
+	"SIO_ORG_TBLNAME" VARCHAR2(30), 
+	"SIO_ORG_TBLID" NUMBER(38,0), 
+	"SIO_ADD_TIME" DATE, 
+	"SIO_REPLAY_TIME" DATE, 
+	"SIO_RESULT_F" CHAR(1), 
+	"SIO_MESSAGE_CODE" CHAR(10), 
+	"SIO_MESSAGE_CONTENTS" VARCHAR2(256), 
+	"SIO_CHK_DONE" CHAR(1), 
+	 CONSTRAINT "SIO_R_PERSONS_ID_PK" PRIMARY KEY ("SIO_ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"
 ;

@@ -1,0 +1,148 @@
+
+
+
+
+I have a JQgrid which contains has just 2 columns..I am pasting my code which i have tried below..
+
+var UserArr = new Array();
+function Grid()
+{
+$("#users_grid").jqGrid({
+
+            colNames: ['Site_Name', 'Details'],
+            colModel: [{ name: 'Site_Name', index: 'Site_Name', width: 130,editable: false, sortable: false,formatter: 'showlink', formatoptions: { baseLinkUrl: 'url of respective site i have clicked'}},
+            { name: 'Details', index: 'Details', width: 400, editable: false, sortable: false }],
+
+            width: 400,
+            height: 'auto',
+            multiselect: true
+
+        });
+
+        var postJSONData = JSON.stringify({ 'parentitem': parent,'childitem':child });
+
+         $.ajax({
+            type: 'POST',
+            data: postJSONData,
+            url: 'ManageAssetService.asmx/DisplayGridData',
+            dataType: 'json',
+            async: false,
+            contentType: 'application/json; charset=utf-8',
+            success: function success(response) {
+
+                UserArr = response.d;
+
+            },
+            error: function failure(response) {
+            alert(response.message);
+                alert('failed to fetch user details');
+            }
+        });
+
+         var mydata;
+
+         for (var i = 0; i <5; i++) {
+
+             mydata = {};
+
+            mydata.Url= UserArr[i].Url;
+            mydata.Details= UserArr[i].Details;
+
+            $("#users_grid").jqGrid('addRowData', 'GridData_Row_' + (i + 1), mydata);
+
+
+        }
+}
+
+I will display the site name and some details about that in the JQgrid.. Now the Site_Name will be an hyperlink when i click that it should redirect to the respective url.. How could i achieve that..Moreover i am adding the grid data dynamically..so where should i give the respective url for the Site_Name column data and how could i link it with that..
+
+Please help..
+jquery jqgrid jqgrid-formatter
+share|improve this question
+	
+edited Dec 19 '12 at 7:50
+
+	
+asked Dec 18 '12 at 10:18
+Xavier
+31212
+	
+1 Answer
+active oldest votes
+up vote 0 down vote accepted
+	
+
+I have got my solution like this..
+
+The JQgrid column shold be defined like this:
+
+colNames: ['Site_Name', 'Details'],
+            colModel: [{ name: 'Site_Name', index: 'Site_Name', width: 130,editable: false, sortable: false,formatter: 'showlink', formatoptions: { baseLinkUrl: 'javascript:', showAction: "Link('", addParam: "');"} },
+            { name: 'Details', index: 'Details', width: 400, editable: false, sortable: false }],
+
+The Javascript function:
+
+function Link(id) {
+
+    var row = id.split("=");
+    var row_ID = row[1];
+    var sitename= $("#users_grid").getCell(row_ID, 'Site_Name');
+    var url = "http://"+sitename; // sitename will be like google.com or yahoo.com
+
+    window.open(url);
+
+
+}
+
+
+Heres an example to open a new window with content using jQuery
+
+<script>
+function nWin() {
+  var w = window.open();
+  var html = $("#toNewWindow").html();
+
+    $(w.document.body).html(html);
+}
+
+$(function() {
+    $("a#print").click(nWin);
+});
+</script>
+
+<div id="toNewWindow">
+    <p>Your content here</p>
+</div>
+
+<a href="javascript:;" id="print">Open</a>
+
+
+01.<style type="text/css">
+02..show_text {
+03.display: none;
+04.}
+05.</style>
+06. 
+07.<span id="target"><span class="show_text">&lt;script type="text/javascript"&gt;
+08.// この内容をテキストエリアに転送します
+09.// ※ クリックすると、選択されます
+10.&lt;/script&gt;
+11.</span></span>
+12. 
+13.<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+14.<script type="text/javascript">
+15. 
+16.$("#target").append("window.openでテキストエリアを開いてクリップボード用データを表示する")
+17..css("cursor","pointer")
+18..click(function() {
+19.var doc = window.open(
+20."about:blank",
+21."",
+22."width=600,height=100").document;
+23.doc.write("<textarea onclick=\"this.select();\" cols=70 rows=5>" );
+24.doc.write( $("#target .show_text").text() );
+25.doc.write("</textarea>");
+26.doc.close();
+27.});
+28. 
+29.</script>

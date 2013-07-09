@@ -1,13 +1,13 @@
 module Jqgrid
 
     def jqgrid_stylesheets(theme="default")
-      css  = stylesheet_link_tag("jqgrid/themes/#{theme}/jquery-ui-1.8.custom.css") + "\n"
+      css  = stylesheet_link_tag("jqgrid/themes/#{theme}/jquery-ui-1.10.3.custom.css") + "\n"
       css << stylesheet_link_tag('jqgrid/ui.jqgrid.css') + "\n"
     end
 
     def jqgrid_javascripts
       locale = I18n.locale rescue :en
-      js = javascript_include_tag('jqgrid/jquery-ui-1.8.custom.min.js') + "\n"
+      js = javascript_include_tag('jqgrid/jquery-ui-1.10.3.custom.min.js') + "\n"
       js << javascript_include_tag("jqgrid/i18n/grid.locale-#{locale}.js") + "\n"
       js << javascript_include_tag('jqgrid/jquery.jqGrid.min.js') + "\n"
       # Don't know if we need it, if smth not working, just uncomment it
@@ -25,7 +25,7 @@ module Jqgrid
       # Default options
           options = 
         { 
-          :rows_per_page       => '10',
+          :rows_per_page       => '50',
           :sort_column         => '',
           :sort_order          => '',
           :height              => '200',  ## update
@@ -123,26 +123,6 @@ module Jqgrid
 
       # Enable master-details
       masterdetails = ""
-      if options[:master_details]
-        masterdetails = %Q/
-          onSelectRow: function(ids) { 
-            if(ids == null) { 
-              ids=0; 
-              if(jQuery("##{id}_details").getGridParam('records') >0 ) 
-              { 
-                jQuery("##{id}_details").setGridParam({url:"#{options[:details_url]}?q=1&id="+ids,page:1})
-                .setCaption("#{options[:details_caption]}: "+ids)
-                .trigger('reloadGrid'); 
-              } 
-            } 
-            else 
-            { 
-              jQuery("##{id}_details").setGridParam({url:"#{options[:details_url]}?q=1&id="+ids,page:1})
-              .setCaption("#{options[:details_caption]} : "+ids)
-              .trigger('reloadGrid'); 
-            } 
-          },/
-      end
 
       # Enable selection link, button
       # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
@@ -160,8 +140,9 @@ module Jqgrid
           return false; 
         });|
       end
-
-      # Enable direct selection (when a row in the table is clicked)
+      pdf_link = %Q|jQuery("##{id}_printid").append("<b>screen has nopdf_list</b>");| 
+      pdf_link = %Q| var sg =  jQuery("##{id}_printid").filterGrid("##{id}",{formclass:"##{id}_filterformclass",buttonclass:"#{id}_filterbuttonclass",enableSearch:true,searchButton:"pdf",autosearch:true,url:"/screen/preview_prnt?q=#{id}",filterModel:[{label:'.  pdf list', name: 'pdflist', stype: 'select', sopt:{value:"#{scriptopt[:pdf]}"}},{label:'  Nobody print records?', name: 'initprnt', stype: 'select', sopt:{value:"1:yes init_new_record_print;2:yes init_update_record_print;9:no all_print"}},{label:'  You update records?', name: 'whoupdate', stype: 'select',sopt:{value:"1:yes My_Records;9:no all_Records"}}]})[0];   #{scriptopt[:pdfdata] }| if scriptopt[:pdf].size>0
+     # Enable direct selection (when a row in the table is clicked)
       # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
       direct_link = ""
       if options[:direct_selection] && options[:selection_handler].present? && options[:multi_selection].blank?
@@ -172,7 +153,6 @@ module Jqgrid
           } 
         },/
       end
-
       # Enable grid_loaded callback
       # When data are loaded into the grid, call the Javascript function options[:grid_loaded] (defined by the user)
       grid_loaded = ""
@@ -185,22 +165,7 @@ module Jqgrid
       end
       ### group search form 
            grp_search_form = %Q| jQuery("#grpsrc#{id}").filterGrid("##{id}",{ gridModel:true, gridNames:true, formtype:"vertical", enableSearch: true, enableClear: true, autosearch: false });|
-      ###      
-      ####    ,afterShowFormかbeforeShowForm???????  
-      #code_to_name = %Q|function(formid) { 
-      #                          jQuery("input",formid).change(function(){ 
-      #		        var chgname = jQuery(this).attr("name");
-      #					var chgval  = jQuery(this).val();
-      #					if(chgname.match(/_code/i)){ if(chgname.match(/^#{id.split(/_/,2)[1].chop.downcase}/i)){}
-      #					  else{ var newname = "#"+chgname.replace("_code","_name");
-      #					        jQuery.getJSON("/screen/code_to_name",{"chgname":chgname,"chgval":chgval},function(data){
-      #						  jQuery(newname,formid).val(data.name);
-      #						})
-      #					      }
-      #					}
-      #				})}|
-# Enable inline editing
-      # When a row is selected, all fields are transformed to input types
+
       editable = ""
       if options[:edit] && options[:inline_edit] == 'true'
         editable = %Q/
@@ -215,7 +180,7 @@ module Jqgrid
       str_addbutton = ""
       scriptopt[:addbutton] ||= {}
       scriptopt[:addbutton].each do |buttonopt| 
-         unless ["script","gear","cart","wrench","star"].index( buttonopt[:button_icon]).nil? then
+         if ["script","gear","cart","wrench","star"].index( buttonopt[:button_icon]) then
             str_addbutton << %Q|.navButtonAdd("##{id}_pager",{ caption:"",title:"#{buttonopt[:button_title]}",buttonicon:"ui-icon-#{buttonopt[:button_icon]}",
               onClickButton: function(){ var button_proc = "#{buttonopt[:button_proc]}";
                                          var q = "#{id}";
@@ -230,55 +195,6 @@ module Jqgrid
       subgrid = ""
       subgrid_enabled = "subGrid:false,"
 
-      if options[:subgrid].present?
-        
-        subgrid_enabled = "subGrid:true,"
-        
-        options[:subgrid] = 
-          {
-            :rows_per_page => '10',
-            :sort_column   => 'id',
-            :sort_order    => 'asc',
-            :add           => 'false',
-            :edit          => 'false',
-            :delete        => 'false',
-            :search        => 'false'
-          }.merge(options[:subgrid])
-
-        # Stringify options values
-        options[:subgrid].inject({}) do |suboptions, (key, value)|
-          suboptions[key] = value.to_s
-          suboptions
-        end
-        
-        subgrid_inline_edit = ""
-        if options[:subgrid][:inline_edit] == true
-          options[:subgrid][:edit] = 'false'
-          subgrid_inline_edit = %Q/
-          onSelectRow: function(id){ 
-            if(id && id!==lastsel){ 
-              jQuery('#'+subgrid_table_id).restoreRow(lastsel);
-              jQuery('#'+subgrid_table_id).editRow(id,true); 
-              lastsel=id; 
-            } 
-          },
-          /
-        end
-          
-        if options[:subgrid][:direct_selection] && options[:subgrid][:selection_handler].present?
-          subgrid_direct_link = %Q/
-          onSelectRow: function(id){ 
-            if(id){ 
-              #{options[:subgrid][:selection_handler]}(id); 
-            } 
-          },
-          /
-        end     
-        
-        sub_col_names, sub_col_model = gen_columns(options[:subgrid][:columns])
-        
-        subgrid = %Q(        )
-      end
       # Generate required Javascript & html to create the jqgrid
       ##
       %Q(
@@ -290,12 +206,12 @@ module Jqgrid
           var mygrid = jQuery("##{id}").jqGrid({
               url:"#{action}?q=#{id}",
               editurl:"#{options[:edit_url]}",
-              datatype: "json",
+              datatype: "xml",
               colNames:#{col_names},
               colModel:#{col_model},
               pager: jQuery("##{id}_pager"),
               rowNum:#{options[:rows_per_page]},
-              rowList:[10,100,1000,10000,100000],
+              rowList:[50,250,1000,10000],
               imgpath: "/images/jqgrid",
               viewrecords: true,
               height: #{options[:height]},
@@ -307,40 +223,39 @@ module Jqgrid
               autowidth: #{options[:autowidth]},
               rownumbers: #{options[:rownumbers]},
               #{multiselect}
-              #{masterdetails}
               #{grid_loaded}
               #{direct_link}
               #{editable}
-	      #{subgrid_enabled}
-              #{subgrid}
-	      caption: "#{title}"             
-            })
+              caption: "#{title}"
+              })
             .navGrid("##{id}_pager",
-              {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:false },
+            {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:false },
 {editCaption:"edit  #{title}",#{form_ps},afterShowForm:#{scriptopt[:aftershowform_edit]},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {addCaption:"add  #{title}",#{form_ps},afterShowForm:#{scriptopt[:aftershowform_add]},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {caption:"delete  #{title}",#{form_ps},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
-            #{search}
+            #{search}\n
             .navButtonAdd("##{id}_pager",{ caption:"",title:"copy and add",buttonicon:"ui-icon-copy",
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");
-                              if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",authenticity_token:"#{authenticity_token}"}}); } else { alert("Please select Row") } } , position:"right" })
-	   .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
+                              if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",authenticity_token:"#{authenticity_token}"},afterShowForm:#{scriptopt[:aftershowform_add]}}); } else { alert("Please select Row") } } , position:"right"})
+   .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
               onClickButton: function() { document.location = "/excelexport/index?q=#{id}"; } , position:"right" })
-	              #{str_addbutton}
            .navButtonAdd("##{id}_pager",{ caption:"",title:"import_from_xlsx",buttonicon:"ui-icon-arrowthickstop-1-n",
               onClickButton: function() { document.location = "/importfmxlsx/index?q=#{id}"; } , position:"right" })
-	              #{str_addbutton}
+           .navButtonAdd("##{id}_pager",{ caption:"",title:"prepare print",buttonicon:"ui-icon-print ",
+              onClickButton: function() {jQuery(".prntclass").toggle();}, position:"right" })
+              #{str_addbutton}
            .navButtonAdd("##{id}_pager",{ caption:"",title:"check",buttonicon:"ui-icon-check",
               onClickButton: function(){ var q = "#{id}";
                             jQuery.get("/screen/chk",{q:q,authenticity_token:"#{authenticity_token}"},null,"script");
                            }, position:"right" });
             jQuery("##{id}").jqGrid("gridResize",{minWidth:350,maxWidth:#{options[:max_width]},minHeight:80, maxHeight:#{options[:max_height]}});
-	    #{multihandler}
+    #{multihandler}
             #{selection_link}
-	    #{filter_toolbar}
+            #{pdf_link}
+    #{filter_toolbar}
             #{'})' unless options[:omit_ready]=='true'}; 
             #{grp_search_form  if  options[:grp_search_form] == true} 
-	    #{nst_div}
+    #{nst_div}
         <p> <span> #{scriptopt[:pare_contents]}</span></p>        
         <p  id="grpsrc#{id}"  ></p> 
         <p id="flash_alert" style="display:none;padding:0.7em;" class="ui-state-highlight ui-corner-all"></p>
@@ -350,27 +265,8 @@ module Jqgrid
         </div>
      #{extdiv_id}
      #{replace_end} 
-      ).gsub(/\n/,"")
+      ).gsub(/\s+/," ").gsub(".nav","\n.nav")
     end
-##    def blk_gantt_plumb ganttdata,options
-##      %Q|
-##         jQuery("#div_#{options[:div_repl_id]}").replaceWith(" <div id='div_#{options[:div_repl_id]}'>
-##         <script type='text/javascript'>
-##         $(function () {var ganttData = #{ganttdata});
-##        $("#ganttChart").ganttView({
-##            showWeekends: true,
-##            data: ganttData,
-##            cellWidth: 21,
-##            start: new Date(2011,00,01),
-##            end: new Date(2011,05,15),
-##            slideWidth: 600,
-##            excludeWeekends: true,
-##            showDayOfWeek: true,
-##            showHolidays: true,
-##            excludeHolidays: true
-##        });</script> </div>")
- ##    |.gsub(/\n/,"")
- ##   end 
     private
     def gen_columns(columns)
       # Generate columns data
@@ -459,6 +355,31 @@ module JqgridJson
       json << "}"
     end
   end
+  def to_jqgrid_xml(attributes, current_page, per_page, total)
+    array = "<rows>"
+    array << %Q(<page>#{current_page}</page><total>#{total/per_page.to_i+1}</total><records>#{total}</records>)
+    if total > 0
+      each do |elem|
+         array << %Q(<row id ="#{elem[:id]}">)
+        attributes.each do |atr|
+          value =elem[atr]
+          value = escape_javascript(value) if value and value.is_a? String
+          array << %Q(<cell>#{value}</cell>)
+        end
+        array << "</row>"
+      end
+      array << "</rows>"
+    else
+      array << "</rows>"
+    end
+    ##fprnt array
+    array
+  end
+  def fprnt str
+    foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
+    foo.puts str
+    foo.close
+  end   ##fprnt str
   
   private
   

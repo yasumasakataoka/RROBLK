@@ -109,9 +109,6 @@ GEM
     prawn (0.12.0)
       pdf-reader (>= 0.9.0)
       ttfunk (~> 1.0.2)
-    prawn_rails (0.0.11)
-      prawn (>= 0.11.1)
-      railties (>= 3.0.0)
     rack (1.4.1)
     rack-cache (1.2)
       rack (>= 0.4)
@@ -134,7 +131,7 @@ GEM
       rake (>= 0.8.7)
       rdoc (~> 3.4)
       thor (>= 0.14.6, < 2.0)
-    rake (10.0.3)
+    rake (10.0.4)
     rdoc (3.12)
       json (~> 1.4)
     ruby-oci8 (2.1.2-x86-mingw32)
@@ -182,9 +179,8 @@ DEPENDENCIES
   jquery-rails
   memcache-client
   prawn
-  prawn_rails
   rails (= 3.2.6)
-  rake (= 10.0.3)
+  rake (> 10.0.3)
   ruby-oci8
   ruby-plsql
   sass-rails (~> 3.2.3)

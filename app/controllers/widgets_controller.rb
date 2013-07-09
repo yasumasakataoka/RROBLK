@@ -18,5 +18,6 @@ class WidgetsController < ApplicationController
 	end
     end
     send_data output, :filename => "hello.pdf", :type => "application/pdf"
+    ### ng   send_data "R_CUSTORDS_10001.pdf", :filename => "R_CUSTORDS_10001.pdf", :type => "application/pdf"
   end
 end

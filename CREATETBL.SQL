@@ -82,8 +82,8 @@ CREATE TABLE CustOrds
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT CustOrds_id_pk PRIMARY KEY (id)
-  , CONSTRAINT CustOrds_86_uk  UNIQUE (SNO,LINENO,ID)
-  , CONSTRAINT CustOrds_88_uk  UNIQUE (ITMS_ID,Duedate,ID)
+  , CONSTRAINT CustOrds_88_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT CustOrds_90_uk  UNIQUE (ITMS_ID,Duedate,ID)
 )
 ;
 drop sequence CustOrds_seq
@@ -115,8 +115,8 @@ CREATE TABLE CustInsts
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT CustInsts_id_pk PRIMARY KEY (id)
-  , CONSTRAINT CustInsts_123_uk  UNIQUE (SNO,LINENO,ID)
-  , CONSTRAINT CustInsts_124_uk  UNIQUE (Locas_id_CustRCVPlc,Duedate,ID)
+  , CONSTRAINT CustInsts_125_uk  UNIQUE (SNO,LINENO,ID)
+  , CONSTRAINT CustInsts_126_uk  UNIQUE (Locas_id_CustRCVPlc,Duedate,ID)
 )
 ;
 drop sequence CustInsts_seq
@@ -883,6 +883,7 @@ CREATE TABLE Persons
   ,Code varchar(10)
   ,Name VARCHAR(50)
   ,UserGroups_id numeric(38)
+  ,SCREENLEVEL_id numeric(38)
   ,Sects_id numeric(38)
   ,Email VARCHAR(50)
   ,Remark VARCHAR(100)
@@ -892,7 +893,7 @@ CREATE TABLE Persons
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Persons_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Persons_16_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT Persons_17_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence Persons_seq
@@ -913,7 +914,7 @@ CREATE TABLE UserGroups
   ,Updated_at date
   ,Expiredate date
   , CONSTRAINT UserGroups_id_pk PRIMARY KEY (id)
-  , CONSTRAINT UserGroups_41_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT UserGroups_42_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence UserGroups_seq
@@ -955,7 +956,7 @@ CREATE TABLE Clndrs
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Clndrs_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Clndrs_89_uk  UNIQUE (Code,Expiredate)
+  , CONSTRAINT Clndrs_90_uk  UNIQUE (Code,Expiredate)
 )
 ;
 drop sequence Clndrs_seq
@@ -990,7 +991,7 @@ CREATE TABLE Units
   ,created_at date
   ,Updated_at date
   , CONSTRAINT Units_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Units_136_uk  UNIQUE (Code,ExpireDate)
+  , CONSTRAINT Units_137_uk  UNIQUE (Code,ExpireDate)
 )
 ;
 drop sequence Units_seq
@@ -1050,10 +1051,6 @@ CREATE TABLE Pobjects
   ( id numeric(38)
   ,ObjectType char(1)
   ,Code varchar(30)
-  ,Fieldlength NUMBER(4) 
-  ,DataPresion NUMBER(2) 
-  ,DataScale NUMBER(2) 
-  ,UKEYFLG CHAR(1)
   ,Contens VARCHAR(200)
   ,Remark VARCHAR(200)
   ,RubyCode VARCHAR(4000)
@@ -1063,7 +1060,7 @@ CREATE TABLE Pobjects
   ,Expiredate date
   ,Updated_at date
   , CONSTRAINT Pobjects_id_pk PRIMARY KEY (id)
-  , CONSTRAINT Pobjects_69_uk  UNIQUE (code,ObjectType)
+  , CONSTRAINT Pobjects_70_uk  UNIQUE (code,ObjectType)
 )
 ;
 drop sequence Pobjects_seq
@@ -1151,7 +1148,7 @@ CREATE TABLE TblRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT TblRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT TblRelas_211_uk  UNIQUE (code,Expiredate)
+  , CONSTRAINT TblRelas_212_uk  UNIQUE (code,Expiredate)
 )
 ;
 drop sequence TblRelas_seq
@@ -1173,7 +1170,7 @@ CREATE TABLE fieldRelas
   ,created_at timestamp
   ,Updated_at timestamp
   , CONSTRAINT fieldRelas_id_pk PRIMARY KEY (id)
-  , CONSTRAINT fieldRelas_230_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
+  , CONSTRAINT fieldRelas_231_uk  UNIQUE (TblRelas_id,TargetField,Expiredate)
 )
 ;
 drop sequence fieldRelas_seq
@@ -1181,6 +1178,30 @@ drop sequence fieldRelas_seq
 create sequence fieldRelas_seq
 ;  
 ; 
+DROP TABLE Fieldcodes
+;
+CREATE TABLE Fieldcodes
+  ( id numeric(38)
+  ,PObjects_id numeric(38)
+  ,Ftype VARCHAR(15)
+  ,DataPresion NUMBER(2) 
+  ,DataScale NUMBER(2) 
+  ,CharType VARchar(10)
+  ,Contens VARCHAR(200)
+  ,Remark VARCHAR(200)
+  ,RubyCode VARCHAR(4000)
+  ,Persons_id_Upd numeric(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Expiredate date
+  ,Updated_at date
+  , CONSTRAINT Fieldcodes_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence Fieldcodes_seq
+;  
+create sequence Fieldcodes_seq
+;  
 DROP TABLE Locas
 ;
 CREATE TABLE Locas
@@ -1661,9 +1682,9 @@ create sequence Ctlxxxxxx_seq
 ;  
 ; 
 ; 
-DROP TABLE DetailFields
+DROP TABLE screenfields
 ;
-CREATE TABLE DetailFields
+CREATE TABLE screenfields
   ( id NUMBER(38)
   ,Code varchar(30)
   ,screens_id NUMBER(38)
@@ -1698,13 +1719,13 @@ CREATE TABLE DetailFields
   ,Update_IP varchar(40)
   ,created_at date
   ,updated_at date
-  , CONSTRAINT DetailFields_id_pk PRIMARY KEY (id)
-  , CONSTRAINT DetailFields_40_uk  UNIQUE (Code,screens_id,Expiredate)
+  , CONSTRAINT screenfields_id_pk PRIMARY KEY (id)
+  , CONSTRAINT screenfields_40_uk  UNIQUE (Code,screens_id,Expiredate)
 )
 ;
-drop sequence DetailFields_seq
+drop sequence screenfields_seq
 ;  
-create sequence DetailFields_seq
+create sequence screenfields_seq
 ;  
 ; 
 DROP TABLE Buttons
@@ -1728,6 +1749,31 @@ CREATE TABLE Buttons
 drop sequence Buttons_seq
 ;  
 create sequence Buttons_seq
+;  
+; 
+DROP TABLE Reports
+;
+CREATE TABLE Reports
+  ( id NUMBER(38)
+  ,Code varchar(30)
+  ,Name varchar(30)
+  ,filename varchar(50)
+  ,screens_id NUMBER(38)
+  ,UserGroups_id NUMBER(38)
+  ,UserGroups_id_pare NUMBER(38)
+  ,Expiredate date
+  ,Remark varchar(200)
+  ,Persons_id_Upd NUMBER(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Updated_at date
+  , CONSTRAINT Reports_id_pk PRIMARY KEY (id)
+  , CONSTRAINT Reports_106_uk  UNIQUE (code,Expiredate)
+)
+;
+drop sequence Reports_seq
+;  
+create sequence Reports_seq
 ;  
 ; 
 DROP TABLE ChilScreen
@@ -1756,7 +1802,6 @@ DROP TABLE Screens
 CREATE TABLE Screens
   ( id NUMBER(38)
   ,Code varchar(30)
-  ,Name varchar(30)
   ,ViewName varchar(30)
   ,POBJGrps_id NUMBER(38)
   ,strselect varchar(4000)
@@ -1777,6 +1822,29 @@ CREATE TABLE Screens
 drop sequence Screens_seq
 ;  
 create sequence Screens_seq
+;  
+; 
+DROP TABLE HisOfRprts
+;
+CREATE TABLE HisOfRprts
+  ( id NUMBER(38)
+  ,tblname varchar(30)
+  ,recordid NUMBER(38)
+  ,reports_id NUMBER(38)
+  ,issuedate date
+  ,Expiredate date
+  ,Remark varchar(200)
+  ,Persons_id_Upd NUMBER(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Updated_at date
+  , CONSTRAINT HisOfRprts_id_pk PRIMARY KEY (id)
+  , CONSTRAINT HisOfRprts_105_uk  UNIQUE (tblname,recordid,reports_id,id)
+)
+;
+drop sequence HisOfRprts_seq
+;  
+create sequence HisOfRprts_seq
 ;  
 ; 
 /

@@ -3,7 +3,7 @@ class ImportfmxlsxController < ApplicationController
   ####  roo:char exlel数字だと 1.0になる。
   ####  rubyXL: 漢字が混在すると項目の位置がずれる。
   def index
-      @tblname =  sub_blkgetpobj( params[:q] ,"A",sub_blkget_grpcode)
+      @tblname =  sub_blkgetpobj( params[:q] ,"A")
       @screen_code = params[:q] 
       screen_code
       dupchk
@@ -89,7 +89,6 @@ class ImportfmxlsxController < ApplicationController
 	 if i[:editable] == true   ###更新可能???目
 	     @nfields << i[:field].to_sym 
              @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
-	     @keyfs <<  i[:field].to_sym  if show_data[:keysfield].index(i[:field])
           end
        end
      @errmsg = "#{errfield.join(',').encode('utf-8')}" unless errfield == []
