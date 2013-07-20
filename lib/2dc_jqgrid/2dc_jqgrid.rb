@@ -7,9 +7,14 @@ module Jqgrid
 
     def jqgrid_javascripts
       locale = I18n.locale rescue :en
-      js = javascript_include_tag('jqgrid/jquery-ui-1.10.3.custom.min.js') + "\n"
+      js = javascript_include_tag('jquery.min.js') + "\n"
+      js << javascript_include_tag('jqgrid/jquery-ui-1.10.3.custom.min.js') + "\n"
       js << javascript_include_tag("jqgrid/i18n/grid.locale-#{locale}.js") + "\n"
+      js << javascript_include_tag('jrails.js') + "\n"
+      js << javascript_include_tag('rails.js') + "\n"
       js << javascript_include_tag('jqgrid/jquery.jqGrid.min.js') + "\n"
+      js << javascript_include_tag('jqgrid/plugins/grid.addons.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentenc"
+      js << javascript_include_tag('jqgrid/plugins/grid.postext.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentene
       # Don't know if we need it, if smth not working, just uncomment it
        #js << javascript_include_tag('jqgrid/grid.tbltogrid') + "\n"
       # js << javascript_include_tag('jqgrid/jquery.contextmenu.js') + "\n"
@@ -81,7 +86,7 @@ module Jqgrid
       end
       
       # Generate columns data
-      col_names, col_model = gen_columns(columns)
+      col_names, col_model,cellnames = gen_columns(columns)
        ##edir form_posion_size 
       form_ps = "top:100,left:50,width:1200,height:600,dataheight:500"
       # nest screen 
@@ -89,7 +94,7 @@ module Jqgrid
       nst_div  = '</script> <div id="pare_div">' 
       replace_end = ""
       unless options[:div_repl_id] == ''
-             init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith(' <div id="div_#{options[:div_repl_id]}">|
+             init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
              nst_div  = "</script>"
              replace_end = "'); "
       end
@@ -141,7 +146,7 @@ module Jqgrid
         });|
       end
       pdf_link = %Q|jQuery("##{id}_printid").append("<b>screen has nopdf_list</b>");| 
-      pdf_link = %Q| var sg =  jQuery("##{id}_printid").filterGrid("##{id}",{formclass:"##{id}_filterformclass",buttonclass:"#{id}_filterbuttonclass",enableSearch:true,searchButton:"pdf",autosearch:true,url:"/screen/preview_prnt?q=#{id}",filterModel:[{label:'.  pdf list', name: 'pdflist', stype: 'select', sopt:{value:"#{scriptopt[:pdf]}"}},{label:'  Nobody print records?', name: 'initprnt', stype: 'select', sopt:{value:"1:yes init_new_record_print;2:yes init_update_record_print;9:no all_print"}},{label:'  You update records?', name: 'whoupdate', stype: 'select',sopt:{value:"1:yes My_Records;9:no all_Records"}}]})[0];   #{scriptopt[:pdfdata] }| if scriptopt[:pdf].size>0
+      pdf_link = %Q| jQuery("##{id}_printid").filterGrid("##{id}",{formclass:"##{id}_filterformclass",buttonclass:"#{id}_filterbuttonclass",enableSearch:true,searchButton:"pdf",autosearch:true,url:"/screen/preview_prnt?q=#{id}",filterModel:[{label:'.  pdf list', name: 'pdflist', stype: 'select', sopt:{value:"#{scriptopt[:pdf]}"}},{label:'  Nobody print records?', name: 'initprnt', stype: 'select', sopt:{value:"1:yes init_new_record_print;2:yes init_update_record_print;9:no all_print"}},{label:'  You update records?', name: 'whoupdate', stype: 'select',sopt:{value:"1:yes My_Records;9:no all_Records"}}]});   #{scriptopt[:pdfdata] }| if scriptopt[:pdf].size>0
      # Enable direct selection (when a row in the table is clicked)
       # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
       direct_link = ""
@@ -177,6 +182,17 @@ module Jqgrid
           } 
         },/
       end
+      return_cod = ""
+      return_code = %Q|
+        onCellSelect:function(rowid, iCol,value,e){ 
+	 var cellname = cellNames[iCol];
+         if(cellname.match(/_code/i)){ 
+            if(window.opener){
+	                      jQuery("#"+ cellname, window.opener.document).val(value); 
+			      window.close();
+					   }
+          } 
+        },|
       str_addbutton = ""
       scriptopt[:addbutton] ||= {}
       scriptopt[:addbutton].each do |buttonopt| 
@@ -194,14 +210,13 @@ module Jqgrid
       # Enable subgrids
       subgrid = ""
       subgrid_enabled = "subGrid:false,"
-
       # Generate required Javascript & html to create the jqgrid
       ##
-      %Q(
-          #{init_jq}
-           <script type="text/javascript">
+      a = %Q( #{init_jq}
+         <script type="text/javascript">
           #{error_handler}
              var lastsel;
+	  #{cellnames}
           #{'jQuery(document).ready(function(){' unless options[:omit_ready]=='true'}
           var mygrid = jQuery("##{id}").jqGrid({
               url:"#{action}?q=#{id}",
@@ -217,6 +232,7 @@ module Jqgrid
               height: #{options[:height]},
               sortname: "#{options[:sort_column]}",
               sortorder: "#{options[:sort_order]}",
+	      multiSort:true,
               gridview: #{options[:gridview]},
               shrinkToFit: #{options[:shrinkToFit]},
               scrollrows: true,
@@ -226,6 +242,7 @@ module Jqgrid
               #{grid_loaded}
               #{direct_link}
               #{editable}
+	      #{return_code}
               caption: "#{title}"
               })
             .navGrid("##{id}_pager",
@@ -251,12 +268,12 @@ module Jqgrid
             jQuery("##{id}").jqGrid("gridResize",{minWidth:350,maxWidth:#{options[:max_width]},minHeight:80, maxHeight:#{options[:max_height]}});
     #{multihandler}
             #{selection_link}
-            #{pdf_link}
+            #{pdf_link if options[:div_repl_id] == ''}
     #{filter_toolbar}
             #{'})' unless options[:omit_ready]=='true'}; 
             #{grp_search_form  if  options[:grp_search_form] == true} 
     #{nst_div}
-        <p> <span> #{scriptopt[:pare_contents]}</span></p>        
+        <p>  #{scriptopt[:pare_contents]}</p>        
         <p  id="grpsrc#{id}"  ></p> 
         <p id="flash_alert" style="display:none;padding:0.7em;" class="ui-state-highlight ui-corner-all"></p>
         <table id="#{id}" class="scroll" cellpadding="0" cellspacing="0"></table>
@@ -265,20 +282,26 @@ module Jqgrid
         </div>
      #{extdiv_id}
      #{replace_end} 
-      ).gsub(/\s+/," ").gsub(".nav","\n.nav")
+      ).gsub(/\s+/," ")
+      a.gsub(".nav","\n.nav") if  options[:div_repl_id] == ''  ###repacewithが \nだと変換してくれない。
+      ##fprnt " jqgrid #{a} "
+      return a
     end
     private
     def gen_columns(columns)
       # Generate columns data
       col_names = "[" # Labels
       col_model = "[" # Options
+      cellnames = "var cellNames = ["
       columns.each do |c|
         col_names << %Q|"#{c[:label]}",|
 	col_model << %Q|{name:"#{c[:field]}", index:"#{c[:field]}"#{get_attributes(c)} },|
+	cellnames << %Q|"#{c[:field]}",|
       end
       col_names.chop! << "]"
       col_model.chop! << "]"
-      [col_names, col_model]
+      cellnames.chop! << "];"
+      [col_names, col_model,cellnames]
     end
 
     # Generate a list of attributes for related column (align:'right', sortable:true, resizable:false, ...)
@@ -291,7 +314,7 @@ module Jqgrid
         elsif couple[0] == :formoptions
           options << "formoptions:#{get_sub_options(couple[1])},"
         elsif couple[0] == :searchoptions
-          options << "searchoptions:#{get_sub_options(couple[1])},"
+          options << %Q|stype:"select",searchoptions:#{get_sub_searchoptions(couple[1])},|  ###日付の時 stype:"text"????
         elsif couple[0] == :editrules
           options << "editrules:#{get_sub_options(couple[1])},"
         else
@@ -309,7 +332,32 @@ module Jqgrid
     def get_sub_options(editoptions)
       options = "{"
       editoptions.each do |couple|
-        if couple[0] == :value # :value => [[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
+        if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
+          options << %Q/value:"/
+          couple[1].each_with_index do |v,i|    ###  修正　入力内容をそのまま
+            options << "#{v[0]}:#{v[1]};" if i >0 
+          end
+          options.chop! << %Q/",/
+        elsif couple[0] == :data # :data => [Category.all, :id, :title])
+          options << %Q/value:"/
+          couple[1].first.each do |obj|
+            options << "%s:%s;" % [obj.send(couple[1].second), obj.send(couple[1].third)]
+          end
+          options.chop! << %Q/",/
+        else # :size => 30, :rows => 5, :maxlength => 20, ...
+          if couple[1].instance_of?(Fixnum) || couple[1] == 'true' || couple[1] == 'false' || couple[1] == true || couple[1] == false || couple[1] =~ /function/
+              options << %Q/#{couple[0]}:#{couple[1]},/
+            else
+              options << %Q/#{couple[0]}:"#{couple[1]}",/          
+          end
+        end
+      end
+      options.chop! << "}"
+    end
+    def get_sub_searchoptions(editoptions)
+      options = "{"
+      editoptions.each do |couple|
+        if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
           options << %Q/value:"/
           couple[1].each do |v|    ###  修正　入力内容をそのまま
             options << "#{v[0]}:#{v[1]};"
@@ -331,6 +379,12 @@ module Jqgrid
       end
       options.chop! << "}"
     end 
+ def fprnt str
+    foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
+    foo.puts "#{Time.now.to_s}  #{str}"
+    foo.close
+  end   ##fprnt str
+
 end
 
 

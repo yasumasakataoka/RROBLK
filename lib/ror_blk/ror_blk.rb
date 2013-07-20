@@ -12,22 +12,22 @@
        end 
        return grp_code
      end
-     def sub_blkgetpobj code,ptype
+     def sub_blkgetpobj tcode,ptype
        grp_code =  sub_blkget_grpcode 
-      if code =~ /_ID/ or   code == "ID" then
-         oragname = code
+      if tcode =~ /_id/ or   tcode == "id" then
+         oragname = tcode
         else
          orgname = ""      
          basesql = "select pobjgrp_name from R_POBJGRPS where USERGROUP_CODE = '#{grp_code}' and   "
-         fstrsql  =  basesql  +  " POBJECT_CODE = '#{code}' and POBJECT_OBJECTTYPE = '#{ptype}' "
+         fstrsql  =  basesql  +  " POBJECT_TCODE = '#{tcode}' and POBJECT_OBJECTTYPE = '#{ptype}' "
          ###  フル項目で指定しているとき
          orgname = plsql.select(:first,fstrsql)[:pobjgrp_name]  if plsql.select(:first,fstrsql)
          ##p "orgname #{orgname}"
-         ##p "code #{code}"
+         ##p "tcode #{tcode}"
          if (orgname.empty? or orgname.nil?) and ptype == "1" then  ###view項目の時はテーブル項目まで
             orgname = ""
-            code.split('_').each_with_index do |value,index|
-		    fstrsqly =  basesql +  "   POBJECT_CODE = '#{if index == 0 then value.upcase + "S" else value end}'  and POBJECT_OBJECTTYPE = '#{if index == 0 then  'T' else '0' end}' "
+            tcode.split('_').each_with_index do |value,index|
+		    fstrsqly =  basesql +  "   POBJECT_TCODE = '#{if index == 0 then value + "s" else value end}'  and POBJECT_OBJECTTYPE = '#{if index == 0 then  'tbl' else 'tbl_field' end}' "
                  ##p fstrsqly 
 		 if plsql.select(:first,fstrsqly) then   ## tbl name get
 			orgname <<  plsql.select(:first,fstrsqly)[:pobjgrp_name] 
@@ -36,7 +36,7 @@
                end   
             end   ## do code. 
          end ## if orgname
-            orgname = code if orgname == "" or orgname.nil?
+            orgname = tcode if orgname == "" or orgname.nil?
       end  ## if ocde
       return orgname 
   end  ## def getpobj
@@ -46,43 +46,40 @@
     foo.puts "#{Time.now.to_s}  #{str}"
     foo.close
   end   ##fprnt str
-  def get_show_data screen_code ,jqgrid_id = ""
-     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+  def get_show_data screen_tcode ,jqgrid_id = ""
+     show_cache_key =  "show " + screen_tcode +  sub_blkget_grpcode
      ##debugger
      if Rails.cache.exist?(show_cache_key) then
-	 ## create_def(screen_code)  unless respond_to?("process_scrs_#{screen_code}")
+	 ## create_def(screen_tcode)  unless respond_to?("process_scrs_#{screen_tcode}")
          show_data = Rails.cache.read(show_cache_key)
      else 
-	 ### create_def screen_code
-	 show_data = set_detail  screen_code,jqgrid_id  ## set gridcolumns
+	 ### create_def screen_tcode
+	 show_data = set_detail  screen_tcode,jqgrid_id  ## set gridcolumns
      end
      ##debugger
      return show_data
  end  ## get_show_data
- def set_detail screen_code,jqgrid_id
+ def set_detail screen_tcode,jqgrid_id
       show_data = {}
       det_screen = plsql.r_screenfields.all(
-                                "where screen_code = '#{screen_code}'
+                                "where screen_tcode = '#{screen_tcode}'
                                  and screenfield_selection = 1 order by screenfield_seqno ")  ###有効日の考慮
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
               ###debugger ## textは表示できないのでメッセージの変更要
-	      p  "Create screenfields #{screen_code} by crt_r_view_sql.rb"
-	      ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
+	      p  "Create screenfields #{screen_tcode} by crt_r_view_sql.rb"
+	      ##render :text =>"Create screenfields #{screen_tcode} by crt_r_view_sql.rb" 
 	      show_data = nil
               return show_data 
            end   
            ###
            ### pare_screen = det_screen[0][:screenfield_screens_id]
-           pare_screen = det_screen[0][:screen_id]
-           screen_viewname = det_screen[0][:screen_viewname].upcase
+           pare_screen = det_screen[0][:screenfield_screen_id]
+           screen_tcode_view = det_screen[0][:screen_tcode_view]
            ###debugger ## 詳細項目セット
-	  if pare_screen.nil? then
-	     show_data[:scriptopt] = {}
-	    else
-	     set_addbutton(pare_screen)
-	   end     ### add  button セット script,gear,....
+	    3.times {p "error screen_id is null "} if pare_screen.nil?
+	   set_addbutton(pare_screen)  ### add  button セット script,gear,....
 	   gridcolumns = []
            ###  chkの時のみ
            #gridcolumns   << {:field => "msg_ok_ng",
@@ -100,16 +97,16 @@
                    tmp_editrules = {}
                    tmp_columns = {}
                    tmp_editrules[:required] = true  if i[:screenfield_indisp] == 1
-                   tmp_editrules[:number] = true if i[:screenfield_type] == "NUMBER"
-                   tmp_editrules[:date] = true  if i[:screenfield_type] == "DATE" or i[:screenfield_type]  =~ /^timestamp/
+                   tmp_editrules[:number] = true if i[:screenfield_type] == "number"
+                   tmp_editrules[:date] = true  if i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/
 		   tmp_editrules[:required] = false  if tmp_editrules == {} 
-                   tmp_columns[:field] = i[:screenfield_code].downcase
-                   tmp_columns[:label] = sub_blkgetpobj(i[:screenfield_code],"1")  ##"1":viewの項目
-                   ### tmp_columns[:label] ||=  i[:screenfield_code]
+                   tmp_columns[:field] = i[:screenfield_tcode]
+                   tmp_columns[:label] = sub_blkgetpobj(i[:screenfield_tcode],"view_field")  ##:viewの項目
+                   ### tmp_columns[:label] ||=  i[:screenfield_tcode]
                    tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
                    tmp_columns[:editrules] = tmp_editrules 
                    tmp_columns[:width] = i[:screenfield_width]
-                   tmp_columns[:search] = if i[:screenfield_paragraph]  == 0 and  screen_code =~ /^H\d_/   then false else true end 
+                   tmp_columns[:search] = if i[:screenfield_paragraph]  == 0 and  screen_tcode =~ /^H\d_/   then false else true end 
 		   if i[:screenfield_editable] == 1 then
 		      tmp_columns[:editable] = true
 		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  if i[:screenfield_type] == "text"
@@ -121,6 +118,7 @@
 		      strselect = sub_get_select_list_value(i[:screenfield_edoptvalue])
 		      tmp_columns[:editoptions] = {:value => eval(strselect) } 
 		      tmp_columns[:formatter] = "select"
+		      tmp_columns[:searchoptions] = {:value => eval(strselect) } 
 		   end
 		   if i[:screenfield_type] == "textarea" then
 		      tmp_columns[:editoptions] =  {:rows =>"#{i[:screenfield_edoptrow]}",:cols =>"#{i[:screenfield_edoptcols]}"}
@@ -139,31 +137,26 @@
                            tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
 		   end 	      
 		   gridcolumns << tmp_columns 
-                   allfields << i[:screenfield_code].downcase.to_sym  
-                   alltypes [i[:screenfield_code].downcase.to_sym] =  i[:screenfield_type].downcase 
+                   allfields << i[:screenfield_tcode].to_sym  
+                   alltypes [i[:screenfield_tcode].to_sym] =  i[:screenfield_type].downcase
 		   evalstr << i[:screenfield_rubycode] if i[:screenfield_rubycode] 
            end   ## screenfields.each
 	   show_data[:allfields] =  allfields  
            show_data[:alltypes]  =  alltypes  
-           show_data[:screen_viewname] = screen_viewname.upcase
+           show_data[:screen_tcode_view] = screen_tcode_view
            show_data[:gridcolumns] = gridcolumns
            show_data[:evalstr] = evalstr
-	   show_data.merge!(set_aftershowform jqgrid_id, screen_code,show_data)
-	   if pare_screen.nil? then 
-	      show_data[:extbutton] = ""
-	      show_data[:extdiv_id] = "" 
-	     else
-	      show_data = set_extbutton(pare_screen,show_data,screen_code)
-	     end
-        show_data[:pdf]  = set_pdf_item(screen_code)
-        show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+	   show_data.merge!(set_aftershowform screen_tcode_view,show_data)
+           show_data = set_extbutton(pare_screen,show_data,screen_tcode)   ### 子画面用のラジオボ タンセット
+        show_data[:pdf]  = set_pdf_item(screen_tcode)
+        show_cache_key =  "show " + screen_tcode +  sub_blkget_grpcode
         Rails.cache.write(show_cache_key,show_data) 
 	return show_data
   end    ##set_detai
  def sub_get_select_list_value edoptvalue 
      edoptvalue.scan(/'\w*'/).each do |i|
 	 j = i.gsub("'","")
-	 edoptvalue =  edoptvalue.sub(j,sub_blkgetpobj(j,"X"))
+	 edoptvalue =  edoptvalue.sub(j,sub_blkgetpobj(j,"fix_char"))
      end
      return edoptvalue
  end 
@@ -185,35 +178,33 @@
       return  buttonopt 
   end   ### set_addbutton pare_screen 
   ################
-  def set_extbutton pare_screen,show_data,screen_code     ### 子画面用のラジオボ タンセット
+  def set_extbutton pare_screen,show_data,screen_tcode     ### 子画面用のラジオボ タンセット
       ##debugger
       ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
       rad_screen = plsql.r_chilscreens.select(:all,"where chilscreen_Expiredate > sysdate 
                                             and chilscreen_screen_id = :1",pare_screen)
            t_extbutton = ""
            t_extdiv_id = ""
-           k = 0
 	   grp_code = sub_blkget_grpcode
-           rad_screen.each do |i|     ###child tbl name sym
+           rad_screen.each_with_index do |i,k|     ###child tbl name sym
                ### view name set
-               hash_key = "#{i[:screen_viewname].downcase}".to_sym 
-                  k += 1
-                  t_extbutton << %Q|<input type="radio" id="radio#{k.to_s}"  name="nst_radio#{screen_code}"|
-                  t_extbutton << %Q| value="#{i[:screen_viewname]};#{i[:screen_viewname_chil]};| ### 親のview
-                  t_extbutton << %Q|#{i[:screen_code_chil]};1"/>|  
-                  t_extbutton << %Q| <label for="radio#{k.to_s}">  #{sub_blkgetpobj(i[:screen_code_chil],"A")} </label> |   ##"A"画面
-                  t_extdiv_id << %Q|<div id="div_#{i[:screen_viewname]}-#{i[:screen_viewname_chil]}"> </div>|
+               hash_key = "#{i[:screen_tcode]}".to_sym 
+                  t_extbutton << %Q|<input type="radio" id="radio#{k.to_s}"  name="nst_radio#{screen_tcode}"|
+                  t_extbutton << %Q| value="#{i[:screen_tcode]}_div_#{i[:screen_tcode_chil]}_div_| ### 親のview
+                  t_extbutton << %Q|#{i[:screen_tcode_chil]}_div_1"/>|  
+                  t_extbutton << %Q| <label for="radio#{k.to_s}">  #{sub_blkgetpobj(i[:screen_tcode_chil],"screen")} </label> |   ##"screen"画面
+                  t_extdiv_id << %Q|<div id="div_#{i[:screen_tcode]}_div_#{i[:screen_tcode_chil]}"> </div>|
       
         end   ### rad_screen.each
 	show_data[:extbutton] =  t_extbutton
 	show_data[:extdiv_id] =  t_extdiv_id
 	return show_data
   end    ## set_extbutton pare_screen  
-  def set_pdf_item screen_code
-      pdflist = plsql.r_reports.all("where screen_code = '#{screen_code}' and REPORT_EXPIREDATE >sysdate")
+  def set_pdf_item screen_tcode
+      pdflist = plsql.r_reports.all("where screen_tcode = '#{screen_tcode}' and REPORT_EXPIREDATE >sysdate")
       pdfvalue = ""
       pdflist.each do |i|
-	      pdfvalue = i[:report_code] + ":" + sub_blkgetpobj(i[:report_name],"A") + ";"
+	      pdfvalue = i[:report_tcode] + ":" + sub_blkgetpobj(i[:report_tcode],"report") + ";"
       end
       pdfvalue.chop if pdfvalue.size > 0
       return pdfvalue
@@ -222,21 +213,21 @@
      ##fprnt "LINE #{__LINE__}" 
       ##debugger
       expiredate ||=  Time.parse("2099-12-31 23:59:59")
-      case inout.upcase
-	   when /ACTS$/
-		dataflg = "ACTS"
+      case inout.downcase
+	   when /acts$/
+		dataflg = "acts"
 		dataseq =  "0"
-	   when /INSTS$/
-		dataflg = "INSTS"
+	   when /insts$/
+		dataflg = "insts"
 		dataseq =  "1"
-	   when  /ORDS$/
-                 dataflg = "ORDS"
+	   when  /ords$/
+                 dataflg = "ords"
 		dataseq =  "2"
-	   when /PLNS$/
-		dataflg = "PLNS"
+	   when /plns$/
+		dataflg = "plns"
 		dataseq =  "3"
-	   when  /FRCS$/
-                 dataflg = "FRCS"
+	   when  /frcs$/
+                 dataflg = "frcs"
 		dataseq =  "4"
       end   ### case inout
       if /^shp/ =~ inout.downcase then
@@ -296,35 +287,27 @@
 	    ##debugger
        return rstk_id
   end  ##sub_stk
-  def   sub_code_to_id  tmp_key  ### idとcodeが一対一の時叉はn:1の時この時codeは本日に対して有効であること。
-	   ##fprnt "class #{self} : LINE #{__LINE__} tmp_key #{tmp_key}"
-           strwhere = "where Expiredate >= SYSDATE  and "
-	   sub_command_r  = {}
+  def   sub_mandatory_field_to_id  tmp_key,pkey  ### idとcodeが一対一の時叉はn:1の時この時codeは本日に対して有効であること。
+	   fprnt "class #{self} : LINE #{__LINE__} tmp_key #{tmp_key}"
+           strwhere = "where Expiredate >= SYSDATE  "
+	   delete_key = []
            tmp_key.sort.each do|key, value|
-                 strwhere = "where Expiredate >= SYSDATE  and code = '#{value}'    "
-		 sub_command_r.merge! sub_get_main_data(strwhere,key,tmp_key) 
+             if pkey == key or pkey.to_s.sub(pkey.to_s.split("_")[1],"") == key.to_s.sub(key.to_s.split("_")[1],"")
+		  strwhere << "  and #{key.to_s.split(/_/)[1]} = '#{value}' " 
+		  delete_key << key
+	     end
            end	
-           sub_command_r
-  end
-  ### code + exipredateでユニークであること  左記条件は中止
-  def   sub_get_main_data strwhere,key,tmp_key
-        others_tbl_id_isrt = {}
-	tmp_key.each do |i,j|
-           unless key == i then
-                  if key.to_s.split("_")[0] == i.to_s.split("_")[0] then
-		     strwhere << " and  #{i.to_s.plit("_",2)[1]} = '#{j}' "
-		  end
-           end
-	end
-        strwhere = strwhere + " order by  Expiredate"
-        tblname = key.to_s.split(/_/,2)[0] + "s"
-        ##fprnt"class #{self} : LINE #{__LINE__} :  tblname : #{tblname}   strwhere = '#{strwhere}' :: key #{key}"
+        strwhere << " order by  Expiredate"
+        tblname = pkey.to_s.split(/_/,2)[0] + "s"
+        fprnt"class #{self} : LINE #{__LINE__} :  tblname : #{tblname}   strwhere = '#{strwhere}' :: pkey #{pkey}"
         aim_id = plsql.__send__(tblname).first(strwhere)
-        ##fprnt" aim_id =  '#{aim_id}',"
-        add_char = key.to_s.split(/_code/,2)[1] ||= ""
+        fprnt" aim_id =  '#{aim_id}',"
+	add_char = ""
+        add_char =  ("_" + pkey.to_s.split(/_/,3)[2] ) if pkey.to_s.split(/_/,3)[2] 
+         others_tbl_id_isrt = {}
         others_tbl_id_isrt[(tblname + "_id" + add_char).to_sym] = aim_id[:id] if aim_id
         others_tbl_id_isrt[:sio_message_contents] = "logic err" if aim_id.nil?
-        return  others_tbl_id_isrt
+        return  [others_tbl_id_isrt,delete_key]
   end   ### def sub_get...
 ##definde_method process_scrs_code do  |tsio_r|
 ##  record_auto tsio_r,to_screenl,field
@@ -333,10 +316,10 @@
 #:field=>{:aaaa=> fa + fb,:bbbb=>xxxx(zzzz)}	
 # fa,zzzzはtsio_rのレコード名
 ### 必須　文法チェックは画面でする。
-def create_def_screen screen_code
+def create_def_screen screen_tcode
     cmdstr = ""
-    rs = plsql.screens.select(:first,"where EXPIREDATE> sysdate and code = '#{screen_code}' order by code,EXPIREDATE")     
-    cmdstr = "def process_scrs_#{screen_code} tsio_r \n"
+    rs = plsql.screens.select(:first,"where EXPIREDATE> sysdate and tcode = '#{screen_tcode}' order by tcode,EXPIREDATE")     
+    cmdstr = "def process_scrs_#{screen_tcode} tsio_r \n"
     cmdstr << " data = {} \n"
     ##debugger
     if   rs[:ymlcode]  then
@@ -350,7 +333,7 @@ def create_def_screen screen_code
 		     ###cmdstr << "\n ##debugger"
 		     cmdstr << "\n" + "record_auto tsio_r"
 		     to_screen =  yml.split(/:fields/,2)[0].split(/=>/)[1].chop  ##nl,カンマ,スペースをとる
-		     to_viewname =  plsql.screens.select(:first,"where EXPIREDATE> sysdate and code = '#{to_screen}' order by code,EXPIREDATE")
+		     to_viewname =  plsql.screens.select(:first,"where EXPIREDATE> sysdate and tcode = '#{to_screen}' order by tcode,EXPIREDATE")
 		     ##debugger
 		     if to_viewname.nil? then p "err line #{__LINE__} to_sceen = #{to_screen} "; raise "error LINE = #{__LINE__} "  end
 		     to_tblname = to_viewname[:viewname].split(/_/,2)[1]
@@ -375,16 +358,16 @@ def create_def_screen screen_code
     eval(cmdstr)
 	###fprnt "create def eval cmdstr = '#{cmdstr}'"
  end
-def record_auto tsio_r,to_screen,to_tblname,fields
+def record_auto tsio_r,jqgrid_id,to_tblname,fields
     ##debugger
     fields ||= {}
     orgtbl = tsio_r[:sio_viewname].split(/_/,2)[1]
     to_command_r = {} 
-    screen_code = to_screen.upcase 
-    show_data = get_show_data(screen_code,to_screen)
+    screen_tcode = to_screen 
+    show_data = get_show_data(screen_tcode,jqgrid_id)
     ##fprnt " LINE #{__LINE__} show_data[:allfields] = '#{show_data[:allfields]}' "
     tsio_r.each do |k,val| 
-	key = k.to_s.sub(orgtbl.downcase.chop,to_tblname.downcase.chop)
+	key = k.to_s.sub(orgtbl.chop,to_tblname.chop)
 	j = key.to_sym
 	to_command_r[j] = val if key =~ /^sio_/  
 	##fprnt " LINE #{__LINE__} j = '#{j}'" 
@@ -400,8 +383,8 @@ def record_auto tsio_r,to_screen,to_tblname,fields
     to_command_r[:sio_command_response] = "C"
     to_command_r[:sio_org_tblname]  =  orgtbl
     to_command_r[:sio_org_tblid]  = tsio_r[:id] 
-    to_command_r[:sio_code]   = screen_code
-    to_command_r[:sio_viewname] =  show_data[:screen_viewname] 
+    to_command_r[:sio_code]   = screen_tcode
+    to_command_r[:sio_viewname] =  show_data[:screen_tcode_view] 
     to_command_r[:sio_classname] = "plsql_blk_copy_insert"  if to_command_r[:sio_classname] =~ /insert/ 
     to_command_r[:id] =  sub_set_chil_tbl_info(to_command_r)  if to_command_r[:sio_classname] =~ /update/ 
     to_command_r[:id] =  sub_set_chil_tbl_info(to_command_r)  if to_command_r[:sio_classname] =~ /delete/ 
@@ -467,10 +450,21 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	 raise "error"
      end
  end
- def reset_show_data screen_code
+ def reset_show_data screenfield_tcode,tblname
       ##debugger
-      show_cache_key =  "show " + screen_code
-      Rails.cache.delete_matched(show_cache_key) 
+      case tblname 
+	   when "screenfield" then
+		screen_tcode = plsql.R_screenfields.first("where screenfield_tcode = '#{screenfield_tcode}' ")[:screen_tcode]
+                cache_key =  "show+" + screen_tcode 
+		Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
+	   when "pobjgrps" then
+		cache_key = "listindex" 
+		Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbat
+		chcache_key =  "show+"
+		Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
+           else
+	        return
+      end		
   end
   def sub_get_ship_locas_frm_itm_id itms_id
        ##debugger
@@ -501,17 +495,17 @@ def record_auto tsio_r,to_screen,to_tblname,fields
   def sub_stkchktbls prm  ###AUTO create ARVxxxx  prm = tsio_r
 	 ##debugger
       prm ||= {}
-       dataflg = prm[:dataflg].upcase
-      case dataflg.upcase
-	   when "ACTS"
+       dataflg = prm[:dataflg].downcase
+      case dataflg.downcase
+	   when "acts"
 		dataseq =  "0"
-	   when  "INSTS"
+	   when  "insts"
 		dataseq =  "1"
-	   when  "ORDS"
+	   when  "ords"
 		dataseq =  "2"
-	   when  "PLNS"
+	   when  "plns"
 		dataseq =  "3"
-	   when "FRCS"
+	   when "frcs"
 		dataseq =  "4"
       end
      ###   品目別ロケーション別管理テーブルは必ず存在していること。
@@ -531,7 +525,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	sub_command_r = {}
 	sub_command_r[:stkhist_person_id_upd] =  0  ###########  batch   
 	sub_command_r[:person_code_chrg] =  "0"  ###########    batch
-        sub_command_r[:sio_viewname]  =  "R_ARV#{dataflg}"
+        sub_command_r[:sio_viewname]  =  "r_arv#{dataflg.downcase}"
         sub_command_r[:sio_code]  = sub_command_r[:sio_viewname] 
 	sub_command_r[:sio_term_id] =  "1"
         sub_command_r[:sio_session_id] =  sub_command_r[:sio_viewname]  
@@ -552,14 +546,14 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	   end  ## rp.each
 	 end  ###ro[:safestkprd].nil?  ・・・・
 	    ##debugger
-	sub_command_r["arv#{dataflg.chop}_stkhist_id".downcase.to_sym] = sub_stk_inout( sub_command_r[:sio_viewname],prm[:itms_id],prm[:locas_id],dueday,newqty,newamt,nil)
+	sub_command_r["arv#{dataflg.chop}_stkhist_id".to_sym] = sub_stk_inout( sub_command_r[:sio_viewname],prm[:itms_id],prm[:locas_id],dueday,newqty,newamt,nil)
         sub_command_r[:sio_id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
 	sub_command_r[:sio_session_counter] = plsql.sessioncounters_seq.nextval  ### user_id に変更
         sub_command_r[:sio_add_time] = Time.now
-	sub_command_r["arv#{dataflg.chop}_isudate".downcase.to_sym] = Time.now
-	sub_command_r["arv#{dataflg.chop}_duedate".downcase.to_sym] = dueday
-	sub_command_r["arv#{dataflg.chop}_qty".downcase.to_sym] = newqty
-	sub_command_r["arv#{dataflg.chop}_amt".downcase.to_sym] = newamt
+	sub_command_r["arv#{dataflg.chop}_isudate".to_sym] = Time.now
+	sub_command_r["arv#{dataflg.chop}_duedate".to_sym] = dueday
+	sub_command_r["arv#{dataflg.chop}_qty".to_sym] = newqty
+	sub_command_r["arv#{dataflg.chop}_amt".to_sym] = newamt
 
         plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}").insert sub_command_r
 	dbcud = DbCud.new
@@ -572,11 +566,11 @@ def record_auto tsio_r,to_screen,to_tblname,fields
   def sub_dec_pur_prd prm   ##prm = tsio_r
       prd = plsql.prcsecs.first("where locas_id_prcsecs = #{prm[:loca_id]} and expiredate > sysdate ")
       if prd 
-	 tblname =  "PRC"
+	 tblname =  "prc"
 	 else 
 	       pur = plsql.dealers.first("where locas_id_dealers = #{prm[:loca_id]} and expiredate > sysdate ")
 	       if  pur
-		   tblname = "PUR"
+		   tblname = "pur"
 	         else 
                     3.times{ fprnt " ERROR Line #{__LINE__} not found locas_id from  PRCSECS OR DEALERS   where LOCAS_id = #{prn[:loca_id]}"}
 		    tblbame = ""
@@ -584,14 +578,10 @@ def record_auto tsio_r,to_screen,to_tblname,fields
         end
        return tblname
   end  ###sub_dec_pur_prd
-  def sub_insert_sio_c   ###要求
-      char_to_number_data
+  def sub_insert_sio_c   command_r   ###要求
+      char_to_number_data command_r
       ##debugger
-      command_r[:sio_viewname]  = show_data[:screen_viewname] 
-      person_id_upd =  (command_r[:sio_viewname].split("_")[1].chop.downcase + "_person_id_upd").to_sym  unless command_r[:sio_viewname] == "R_PERSONS"
-      person_id_upd = :person_id_upd if command_r[:sio_viewname] == "R_PERSONS"
-      command_r[person_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-      command_r[:sio_code]  = screen_code
+      command_r[:sio_code]  = screen_tcode
       command_r[:sio_id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
       command_r[:sio_term_id] =  request.remote_ip
       command_r[:sio_session_id] = params[:q]
@@ -599,10 +589,9 @@ def record_auto tsio_r,to_screen,to_tblname,fields
       command_r[:sio_session_counter] =  command_r[:sio_id]   if command_r[:sio_session_counter].nil?  ##
       command_r[:sio_add_time] = Time.now
       #command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
-      yield
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
       ##fprnt " class #{self} : LINE #{__LINE__} sio_\#{ sub_command_r[:sio_viewname] } :sio_#{sub_command_r[:sio_viewname]}"
-      ##fprnt " class #{self} : LINE #{__LINE__} command_r  = #{command_r}"
+      fprnt " class #{self} : LINE #{__LINE__} command_r  = #{command_r}"
       ##debugger
       plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       ### plsql.commit 
@@ -621,7 +610,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
       return sub_command_r
       ##plsql.commit 
   end   ## sub_insert_sio_r 
-  def char_to_number_data    ###   
+  def char_to_number_data command_r   ###   
        ##rubyXl マッキントッシュ excel windows excel not perfect
        @date1904 = nil
       show_data[:allfields].each do |i|
@@ -652,14 +641,14 @@ def record_auto tsio_r,to_screen,to_tblname,fields
       # subtract one day to compare date for erroneous 1900 leap year compatibility
       compare_date - 1 + num
     end
-    def sub_plsql_blk_paging  
+    def sub_plsql_blk_paging  command_r
     #####   strsqlにコーディングしてないときは、viewをしよう
 ####     strdql はupdate insertには使用できない。
     ###  command_r[:sio_strsql] = (select  ・・・・) a
     tmp_sql = if command_r[:sio_strsql].nil? then command_r[:sio_viewname]  + " a " else command_r[:sio_strsql] end
     strsql = "SELECT id FROM " + tmp_sql
     ##fprnt "class #{self} : LINE #{__LINE__}  strsql = '#{strsql}"
-    tmp_sql << sub_strwhere  if command_r[:sio_search]  == "true"
+    tmp_sql << sub_strwhere(command_r)  if command_r[:sio_search]  == "true"
     sort_sql = ""
     unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == "" then 
 	    sort_sql = " ROW_NUMBER() over (order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  + " ) " 
@@ -667,7 +656,7 @@ def record_auto tsio_r,to_screen,to_tblname,fields
 	     sort_sql = "rownum "
     end
     cnt_strsql = "SELECT 1 FROM " + tmp_sql 
-    fprnt "class #{self} : LINE #{__LINE__}   sub_strwhere = '#{sub_strwhere}'"  if command_r[:sio_search]  == "true"
+    fprnt "class #{self} : LINE #{__LINE__}   sub_strwhere = '#{sub_strwhere(command_r)}'"  if command_r[:sio_search]  == "true"
     ##debugger
     command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
     case  command_r[:sio_totalcount]
@@ -709,25 +698,21 @@ def record_auto tsio_r,to_screen,to_tblname,fields
   ###p  "e: " + Time.now.to_s 
     return all_sub_command_r
   end   ##sub_plsql_blk_paging
-  def  sub_strwhere 
+  def  sub_strwhere command_r
+	## is not nul と is null 対応
+	  #日付　/ - 固定にしないようにできないか?
        if command_r[:sio_strsql] then
-          strwhere = unless command_r[:sio_strsql].upcase.split(")")[-1] =~ /WHERE/ then  " WHERE "  else " and " end
+          strwhere = unless command_r[:sio_strsql].downcase.split(")")[-1] =~ /where/ then  " where "  else " and " end
           else
            strwhere = " WHERE "
        end
+       fprnt "class #{self} : LINE #{__LINE__} : command_r= '#{command_r}"
        ###params.each  do |i,j|  ##xparams gridの生
        command_r.each  do |i,j|  ##xparams gridの生
 	   ###debugger
            next if j.nil?
 	   case show_data[:alltypes][i.to_sym]
-	       when   /char/ ,/text/
-                     tmpwhere = " #{i} = '#{j}'         AND "
-		     tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/ 
-		     tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
-		     tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
-	       #when  "textarea"
-               #       tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
-	       when "number"
+	      when "number"
                      tmpwhere = " #{i} = #{j.to_i}     AND " 
 		     tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
 		     tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
@@ -747,14 +732,23 @@ def record_auto tsio_r,to_screen,to_tblname,fields
                         when 12 
 			  tmpwhere = " to_char( #{i},'yyyy-mm-dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("-")[0].to_i,j.split("-")[1].to_i,j.split("-")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
                     end ## j.size  
+	       when nil
+	       else
+                     tmpwhere = " #{i} = '#{j}'         AND "
+		     tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/ 
+		     tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
+		     tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
+	       #when  "textarea"
+               #       tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
                 end   ##show_data[:alltypes][i]
 	   strwhere << tmpwhere  if  tmpwhere 
         end ### params.each  do |i,j|###
        return strwhere[0..-7]
   end   ## sub_strwhere
-  def  sub_pdfwhere viewname,reports_id
-      tmpwhere = sub_strwhere
-       case  params[:initprnt]       when  "1"  then
+  def  sub_pdfwhere viewname,reports_id,command_r
+      tmpwhere = sub_strwhere command_r
+       case  params[:initprnt] 
+       when  "1"  then
 	    tmpwhere <<  if tmpwhere.size > 1 then " and " else " where " end
 	    tmpwhere << "  not exists (select 1 from HisOfRprts x
                                    where tblname = '#{viewname}' and #{viewname.split('_')[1].chop}_id = recordid
@@ -778,17 +772,9 @@ def record_auto tsio_r,to_screen,to_tblname,fields
   def subpaging  command_r
       ###debugger
       tbldata = []
-      sub_insert_sio_c  do    ###ページング要求
-      end
-      rcd = sub_plsql_blk_paging
-      #const = "R"
-      ##debugger # breakpoint
-      #rcd =  plsql.__send__("SIO_#{command_r[:sio_viewname]}").all("where sio_session_counter = :1
-      #                                                  and sio_command_response = :2",
-      #                                                  command_r[:sio_session_counter],const)
-      
-      ##debugger
-      ##fprnt "class #{self} : LINE #{__LINE__}  rcd = '#{rcd}"
+      command_r[:sio_viewname]  = show_data[:screen_tcode_view] 
+      sub_insert_sio_c command_r     ###ページング要求
+      rcd = sub_plsql_blk_paging command_r
       rcd.each do |j|
           tmp_data = {}
           show_data[:allfields].each do |k|
@@ -799,41 +785,10 @@ def record_auto tsio_r,to_screen,to_tblname,fields
           end 
 	 tbldata << tmp_data
       end ## for
-      return [tbldata,rcd[0][:sio_totalcount]]
-  end  ##subpagin
+      return [tbldata,rcd[0][:sio_totalcount]]    ###[データの中身,レコード件数]
+  end  ##subpagi
   def  sub_getfield show_data
        show_data[:allfields].join(",").to_s
   end   ##  sub_getfield
-  def set_aftershowform id,screen_code,show_data
-       	javascript_edit = javascript_add = %Q|function(formid) { 
-                                jQuery("input",formid).change(function(){ 
-      		        var chgname = jQuery(this).attr("name");
-     					var chgval  = jQuery(this).val();
-      					if(chgname.match(/_code/i)){ if(chgname.match(/^#{id.split(/_/,2)[1].chop.downcase}/i)){}
-      					  else{ var newname = "#"+chgname.replace("_code","_name");
-     					        jQuery.getJSON("/screen/code_to_name",{"chgname":chgname,"chgval":chgval},function(data){
-      					  jQuery(newname,formid).val(data.name);
-      						})
-      					      }
-      					}
-      				})|
-	##tmp = plsql.pobjects.all("where expiredate > sysdate and objecttype = '1' and code like '#{screen_code.split("_")[1].downcase.chop}%'  ")
-	strtmp = ""
-        keysfield = []
-	##tmp.each do |i|
-            ##javascript_edit << %Q|;jQuery("##{i[:code]}",formid).attr('disabled',true)|
-	    ##javascript_add  << %Q|;jQuery("##{i[:code]}",formid).removeAttr('disabled')|
-	    ##keysfield << i[:code]
-	##end
-        show_data[:allfields].each do |i|
-            javascript_edit << %Q|;jQuery("##{i.to_s}",formid).attr('disabled',true)|
-	    javascript_add  << %Q|;jQuery("##{i.to_s}",formid).removeAttr('disabled')|
-         end
-
-	javascript_add << "}" 
-	javascript_edit << "}" if javascript_edit !~ /}$/    ####addに}をセットしたらeditまでセットされた。
-	{:aftershowform_add => javascript_add,:aftershowform_edit => javascript_edit}
- end
-
 end   ##module Ror_blk
 

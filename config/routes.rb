@@ -54,7 +54,8 @@ V082::Application.routes.draw do
   # root :to => 'welcome#index'
    root :to => 'login#index'  
    devise_for :users  
-   get 'list', :to => 'list#index', :as => :user_root  
+   get 'list', :to => 'list#index', :as => :user_root 
+   get 'gantt', :to => 'gantt#index', :as => :user_root  
    ###  resources :list, :only => [ :index, :create ] do  
    resources :list do  
      put :finish, :on => :member  

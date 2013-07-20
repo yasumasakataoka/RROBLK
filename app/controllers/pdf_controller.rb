@@ -14,7 +14,7 @@ def index
       pdfparam = {}
       pagekey = []   ###定義してないとevalで消える
       if params[:pdflist]
-         pdfscript = plsql.reports.first("where Code = '#{params[:pdflist]}' and  Expiredate > sysdate")
+         pdfscript = plsql.reports.first("where tCode = '#{params[:pdflist]}' and  Expiredate > sysdate")
 	 if pdfscript
 	    f = File.open(".#{pdfscript[:filename]}", "r:UTF-8")
 	    if f
@@ -29,7 +29,8 @@ def index
 	         when l[0..14] == "##### /pdfparam"
                      eval(l.split("/")[1])  
 		      get_pdfscreen_code  ###gridの選択項目をセットするため
-		      sqlstr = sub_pdfwhere(pdfparam[:sheetname],pdfscript[:id])
+		      sqlstr = sub_pdfwhere(pdfparam[:sheetname],pdfscript[:id],command_r)
+
 	         when l[0..14] == "##### /order by"
 	             sqlstr << l.split("/")[1]    
 	         when l[0..13] == "##### /pagekey"

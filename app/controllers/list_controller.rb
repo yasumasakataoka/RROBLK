@@ -19,7 +19,7 @@ before_filter :authenticate_user!
 	 else ##
 	  @vlist = {}
 	  plsql.r_screens.all.each do |i|
-                   @vlist[i[:screen_code].downcase.to_sym] = sub_blkgetpobj(i[:screen_code],"A") ## A:画面
+                   @vlist[i[:screen_tcode].downcase.to_sym] = sub_blkgetpobj(i[:screen_tcode],"screen") ## 
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
           end 
@@ -27,5 +27,6 @@ before_filter :authenticate_user!
           ##debugger # breakpoint
       end
      render :text => "no screen data "  and return   if @vlist.nil?
+     ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
 end
 end

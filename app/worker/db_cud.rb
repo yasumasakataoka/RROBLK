@@ -13,45 +13,49 @@ class DbCud  < ActionController::Base
       ## fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql}"
       chk_cmn =  plsql.__send__(sio_view_name).all(strsql)
       tblname = sio_view_name.split(/_/,3)[2]
-      xtblname = tblname.downcase.chop
+      xtblname = tblname.chop
       chk_cmn.each do |i|
 	   tmp_key = {}
 	   r_cnt = 0
 	   to_cr = {}   ###テーブル更新用
            i.each do |j,k|
                 j_to_s = j.to_s
-		 ## fprnt"class #{self} : LINE #{__LINE__} j_to_s: #{j_to_s} xtblname: #{xtblname}"
+	        ## fprnt"class #{self} : LINE #{__LINE__} j_to_s: #{j_to_s} xtblname: #{xtblname}"
 	        ###debugger
                 if j_to_s.split(/_/,2)[0] == xtblname then  ##本体の更新
 	           ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
                    else  ### link先のidを求める
 			 ##CODEでユニークにならなかった時の考慮が漏れている。
-	           if   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
-                        else
-			  ##case j_to_s 
-                               ##when   /_code/  ##tmp_key[j] = other tablename+_+fielfname+_+shikibetushi  <-- value
-				    tmp_key[j] = k  ###if i.key?((xtblname + "_" + j_to_s.sub("_code","_id")).to_sym)
-			       ## when  /_id/
-				####      to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k 
-		           ##end
+	            unless   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
+			 tmp_key[j] = k  ###mandatory field  
                    end  ## unless j_to_s
                 end   ## if j_to_s.
            end ## j,k
-           to_cr.merge! sub_code_to_id(tmp_key)  ##codeからもとめたid優先
+	  tmp_key.each do |key,value|
+	      #if key !~/_tcode/  then ###chil_screenで必要
+	         rvalue = []
+                 rvalue=  sub_mandatory_field_to_id(tmp_key,key)  #mandatory fieldからもとめたid優先
+                 to_cr.merge! rvalue[0]
+	         rvalue.each do |key|
+		     tmp_key.delete(key)
+		 end
+	     #end
+	   end
 	   ##CODEでユニークにならないテーブルの考慮が漏れている。
 	   ##  fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{i[:person_id_upd]}"
 	   to_cr[:persons_id_upd] = i[(xtblname + "_person_id_upd").to_sym]
-	   case i[:sio_classname]
+	   if to_cr[:sio_message_contents].nil?
+	      case i[:sio_classname]
                 when "plsql_blk_insert" then
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
 		    to_cr[:created_at] = Time.now
 		    to_cr[:updated_at] = Time.now
 		    ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
-                when "plsql_blk_update" then
+		    chlctltbl(to_cr) if tblname == "chilscreen"
+		when "plsql_blk_update" then
                     to_cr[:where] = {:id => i[:id]}             ##update deleteの時はテーブル_idにはなにもセットされない。
-		    to_cr[:updated_at] = Time.now
                     ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
 		    ##debugger
                     plsql.__send__(tblname).update  to_cr
@@ -70,7 +74,8 @@ class DbCud  < ActionController::Base
 		    to_cr[:updated_at] = Time.now
 		    ##fprnt "class #{self} : LINE #{__LINE__} chk INSERT : to_cr = #{to_cr}"
 		    plsql.__send__(tblname).insert to_cr
-		end   ## case iud 
+	      end   ## case iud 
+	   end
 	   r_cnt += 1
 	   ##debugger
                command_r = i
@@ -89,11 +94,11 @@ class DbCud  < ActionController::Base
 	   #fprnt " LINE #{__LINE__}  i[:sio_code] = #{i[:sio_code]}  "
 	   ##debugger
               create_def_screen  i[:sio_code]   unless respond_to?(cmnd_code)
-	    #fprnt " LINE #{__LINE__}  cmnd_code : #{cmnd_code}   \n #{command_r}"
+	    ##fprnt " LINE #{__LINE__}  command_r : #{cmnd_code}   "
 	    ##debugger
               __send__(cmnd_code, command_r)  #### if respond_to?(cmnd_code)
-            #fprnt " LINE #{__LINE__} cmnd_code } "
-	   reset_show_data(i[:screen_code]) if tblname.upcase == "SCREENFIELDS"
+           ##fprnt " LINE #{__LINE__} i #{i} } "
+	   reset_show_data(i[:screenfield_tcode],tblname) if ["screenfield","pobjgrps"].index(tblname)   ###キャッシュを削除
       end   ##chk_cmn.each
       rescue
 	      plsql.rollback
@@ -111,5 +116,13 @@ class DbCud  < ActionController::Base
      end   ## begin
   end   ##perform
   handle_asynchronously :perform
+  def  chlctltbl to_cr    ###自動的に親子テーブルの関係テーブル ctlxxxxを作成
+       ###debugger
+       pare_tcode_view =  plsql.screens.first("where id = #{to_cr[:screens_id]}")[:tcode_view]
+       chil_tcode =  plsql.screens.first("where id = #{to_cr[:screens_id_chil]}")[:tcode]
+       allfields = get_show_data(chil_tcode,"")[:allfields]
+       unless allfields.index((pare_tcode_view.split("_")[1] + "_id").to_sym) then
+	       crttblxxxx(pare_tcode_view.split("_")[1])  if PLSQL::Table.find(plsql, ("ctl" + pare_tcode_view.split("_")[1]).to_sym).nil?
+       end
+  end
  end ## class
-

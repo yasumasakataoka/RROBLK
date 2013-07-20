@@ -1184,9 +1184,9 @@ CREATE TABLE Fieldcodes
   ( id numeric(38)
   ,PObjects_id numeric(38)
   ,Ftype VARCHAR(15)
+  ,Fieldlength NUMBER(4) 
   ,DataPresion NUMBER(2) 
   ,DataScale NUMBER(2) 
-  ,CharType VARchar(10)
   ,Contens VARCHAR(200)
   ,Remark VARCHAR(200)
   ,RubyCode VARCHAR(4000)
@@ -1201,6 +1201,26 @@ CREATE TABLE Fieldcodes
 drop sequence Fieldcodes_seq
 ;  
 create sequence Fieldcodes_seq
+;  
+DROP TABLE BlkTables
+;
+CREATE TABLE BlkTables
+  ( id numeric(38)
+  ,PObjects_id numeric(38)
+  ,Tabletype VARCHAR(15)
+  ,Remark VARCHAR(200)
+  ,RubyCode VARCHAR(4000)
+  ,Persons_id_Upd numeric(38)
+  ,Update_IP varchar(40)
+  ,created_at date
+  ,Expiredate date
+  ,Updated_at date
+  , CONSTRAINT BlkTables_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence BlkTables_seq
+;  
+create sequence BlkTables_seq
 ;  
 DROP TABLE Locas
 ;
@@ -1695,7 +1715,6 @@ CREATE TABLE screenfields
   ,colpos NUMBER(4) 
   ,paragraph NUMBER(1, 0) 
   ,width NUMBER(4,0) 
-  ,Type VARCHAR2(12)
   ,DATAPRECISION NUMBER
   ,DATASCALE NUMBER
   ,Indisp NUMBER(1, 0) 
@@ -1705,12 +1724,9 @@ CREATE TABLE screenfields
   ,minvalue NUMBER
   ,EdOptsize NUMBER
   ,EdOptMAXLENGTH NUMBER(4) 
-  ,EdOptValue varchar(50)
+  ,EdOptValue varchar(200)
   ,EdOptMultiple NUMBER(4) 
-  ,EdOptRow NUMBER(4) 
-  ,EdOptCols NUMBER(4) 
-  ,listoptions varchar(40)
-  ,tblkey char(1)
+  ,rubycode varchar(4000)
   ,sumkey char(1)
   ,crtfield varchar(100)
   ,Expiredate date
@@ -1776,9 +1792,9 @@ drop sequence Reports_seq
 create sequence Reports_seq
 ;  
 ; 
-DROP TABLE ChilScreen
+DROP TABLE ChilScreens
 ;
-CREATE TABLE ChilScreen
+CREATE TABLE ChilScreens
   ( id NUMBER(38)
   ,screens_id NUMBER(38)
   ,screens_id_chil NUMBER(38)
@@ -1792,9 +1808,9 @@ CREATE TABLE ChilScreen
   , CONSTRAINT ChilScreen_14_uk  UNIQUE (screens_id_chil,screens_id,Expiredate)
 )
 ;
-drop sequence ChilScreen_seq
+drop sequence ChilScreens_seq
 ;  
-create sequence ChilScreen_seq
+create sequence ChilScreens_seq
 ;  
 ; 
 DROP TABLE Screens

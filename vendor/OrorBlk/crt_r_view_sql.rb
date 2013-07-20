@@ -27,7 +27,7 @@
     #### Hx_,Dx_も抜くこと。
     ##strsql = " where table_name not like 'R_%' and table_name not like 'V_%' "
     ##strsql << " and TABLE_NAME = :1 and column_name = 'ID' "
-    ##fields = plsql.USER_TAB_COLUMNS.all(strsql,tblname.upcase)
+    ##fields = plsql.USER_TAB_COLUMNS.all(strsql,tblname.downcase)
     ### p "addmain2"
     ##fields.each  do |tbldata|
     ##      tblarea << tbldata[:table_name]  
@@ -207,7 +207,7 @@
  doaddsrn = AddScreen.new 
  ARGV.each do |x|
     addmain x.downcase
-    doaddsrn.addmain ("r_" + x).upcase
-    doaddsrn.crt_chil_screen ("r_" + x).upcase
+    doaddsrn.addmain ("r_" + x).downcase
+    ##doaddsrn.crt_chil_screen ("r_" + x).downcase ###子画面作成
     plsql.commit
  end

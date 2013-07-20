@@ -1,148 +1,11 @@
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.code screen_code ,screen.viewname screen_viewname ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at ,screen.ymlcode screen_ymlcode
- from screens screen ,r_persons  person_upd
- where  person_upd.person_id = screen.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_reports as  select report.id ,report.id report_id ,report.code report_code ,report.name report_name ,report.filename report_filename ,report.screens_id report_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
- screen.screen_ymlcode screen_ymlcode,
-report.usergroups_id report_usergroup_id , usergroup.usergroup_code usergroup_code,
- usergroup.usergroup_name usergroup_name,
- usergroup.usergroup_remark usergroup_remark,
-report.usergroups_id_pare report_usergroup_id_pare , usergroup_pare.usergroup_code usergroup_code_pare,
- usergroup_pare.usergroup_name usergroup_name_pare,
- usergroup_pare.usergroup_remark usergroup_remark_pare,
-report.expiredate report_expiredate ,report.remark report_remark ,report.persons_id_upd report_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-report.update_ip report_update_ip ,report.created_at report_created_at ,report.updated_at report_updated_at
- from reports report ,r_screens  screen,r_usergroups  usergroup,r_usergroups  usergroup_pare,r_persons  person_upd
- where  screen.screen_id = report.screens_id and  usergroup.usergroup_id = report.usergroups_id and  usergroup_pare.usergroup_id = report.usergroups_id_pare and  person_upd.person_id = report.persons_id_upd 
 join_rtbl  = 'r_pobjects' 
 join_rtbl  = 'r_usergroups' 
 join_rtbl  = 'r_persons' 
 create or replace view  r_pobjgrps as  select pobjgrp.id ,pobjgrp.id pobjgrp_id ,pobjgrp.pobjects_id pobjgrp_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
+ pobject.pobject_tcode pobject_tcode,
  pobject.pobject_contens pobject_contens,
  pobject.pobject_remark pobject_remark,
  pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
 pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_code usergroup_code,
  usergroup.usergroup_name usergroup_name,
  usergroup.usergroup_remark usergroup_remark,
@@ -155,22 +18,138 @@ pobjgrp.name pobjgrp_name ,pobjgrp.remark pobjgrp_remark ,pobjgrp.persons_id_upd
 pobjgrp.update_ip pobjgrp_update_ip ,pobjgrp.created_at pobjgrp_created_at ,pobjgrp.expiredate pobjgrp_expiredate ,pobjgrp.updated_at pobjgrp_updated_at
  from pobjgrps pobjgrp ,r_pobjects  pobject,r_usergroups  usergroup,r_persons  person_upd
  where  pobject.pobject_id = pobjgrp.pobjects_id and  usergroup.usergroup_id = pobjgrp.usergroups_id and  person_upd.person_id = pobjgrp.persons_id_upd 
+join_rtbl  = 'r_screens' 
 join_rtbl  = 'r_persons' 
-create or replace view  r_units as  select unit.id ,unit.id unit_id ,unit.code unit_code ,unit.name unit_name ,unit.remark unit_remark ,unit.persons_id_upd unit_person_id_upd , person_upd.person_code person_code_upd,
+create or replace view  r_buttons as  select button.id ,button.id button_id ,button.screens_id button_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_ymlcode screen_ymlcode,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+button.icon button_icon ,button.title button_title ,button.proc button_proc ,button.expiredate button_expiredate ,button.remark button_remark ,button.persons_id_upd button_person_id_upd , person_upd.person_code person_code_upd,
  person_upd.person_name person_name_upd,
  person_upd.person_email person_email_upd,
  person_upd.person_remark person_remark_upd,
  person_upd.usergroup_code usergroup_code_upd,
  person_upd.usergroup_name usergroup_name_upd,
-unit.expiredate unit_expiredate ,unit.update_ip unit_update_ip ,unit.created_at unit_created_at ,unit.updated_at unit_updated_at
- from units unit ,r_persons  person_upd
- where  person_upd.person_id = unit.persons_id_upd 
+button.update_ip button_update_ip ,button.created_at button_created_at ,button.updated_at button_updated_at
+ from buttons button ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = button.screens_id and  person_upd.person_id = button.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.tcode pobject_tcode ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at
+ from pobjects pobject ,r_persons  person_upd
+ where  person_upd.person_id = pobject.persons_id_upd 
+join_rtbl  = 'r_locas' 
+join_rtbl  = 'r_locas' 
+join_rtbl  = 'r_persons' 
+join_rtbl  = 'r_currencys' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_custs as  select cust.id ,cust.id cust_id ,cust.locas_id_custs cust_loca_id_custs , loca_custs.loca_code loca_code_custs,
+ loca_custs.loca_name loca_name_custs,
+ loca_custs.loca_abbr loca_abbr_custs,
+ loca_custs.loca_zip loca_zip_custs,
+ loca_custs.loca_country loca_country_custs,
+ loca_custs.loca_prfct loca_prfct_custs,
+ loca_custs.loca_addr1 loca_addr1_custs,
+ loca_custs.loca_addr2 loca_addr2_custs,
+ loca_custs.loca_tel loca_tel_custs,
+ loca_custs.loca_fax loca_fax_custs,
+ loca_custs.loca_mail loca_mail_custs,
+ loca_custs.loca_remark loca_remark_custs,
+cust.locas_id_billings cust_loca_id_billings , loca_billings.loca_code loca_code_billings,
+ loca_billings.loca_name loca_name_billings,
+ loca_billings.loca_abbr loca_abbr_billings,
+ loca_billings.loca_zip loca_zip_billings,
+ loca_billings.loca_country loca_country_billings,
+ loca_billings.loca_prfct loca_prfct_billings,
+ loca_billings.loca_addr1 loca_addr1_billings,
+ loca_billings.loca_addr2 loca_addr2_billings,
+ loca_billings.loca_tel loca_tel_billings,
+ loca_billings.loca_fax loca_fax_billings,
+ loca_billings.loca_mail loca_mail_billings,
+ loca_billings.loca_remark loca_remark_billings,
+cust.personnameofcust cust_personnameofcust ,cust.persons_id_chrg cust_person_id_chrg , person_chrg.person_code person_code_chrg,
+ person_chrg.person_name person_name_chrg,
+ person_chrg.person_email person_email_chrg,
+ person_chrg.person_remark person_remark_chrg,
+ person_chrg.usergroup_code usergroup_code_chrg,
+ person_chrg.usergroup_name usergroup_name_chrg,
+cust.currencys_id cust_currency_id , currency.currency_code currency_code,
+ currency.currency_name currency_name,
+ currency.currency_pricedecimal currency_pricedecimal,
+ currency.currency_amtdecimal currency_amtdecimal,
+ currency.currency_remark currency_remark,
+cust.remark cust_remark ,cust.custtype cust_custtype ,cust.expiredate cust_expiredate ,cust.persons_id_upd cust_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+cust.update_ip cust_update_ip ,cust.created_at cust_created_at ,cust.updated_at cust_updated_at
+ from custs cust ,r_locas  loca_custs,r_locas  loca_billings,r_persons  person_chrg,r_currencys  currency,r_persons  person_upd
+ where  loca_custs.loca_id = cust.locas_id_custs and  loca_billings.loca_id = cust.locas_id_billings and  person_chrg.person_id = cust.persons_id_chrg and  currency.currency_id = cust.currencys_id and  person_upd.person_id = cust.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.tcode screenfield_tcode ,screenfield.screens_id screenfield_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_ymlcode screen_ymlcode,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.rubycode screenfield_rubycode ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
+ from screenfields screenfield ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.tcode screen_tcode ,screen.tcode_view screen_tcode_view ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
+ from screens screen ,r_persons  person_upd
+ where  person_upd.person_id = screen.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.tcode screenfield_tcode ,screenfield.screens_id screenfield_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_ymlcode screen_ymlcode,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.rubycode screenfield_rubycode ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
+ from screenfields screenfield ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
 join_rtbl  = 'r_screens' 
 join_rtbl  = 'r_usergroups' 
 join_rtbl  = 'r_usergroups' 
 join_rtbl  = 'r_persons' 
-create or replace view  r_reports as  select report.id ,report.id report_id ,report.code report_code ,report.name report_name ,report.filename report_filename ,report.screens_id report_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
+create or replace view  r_reports as  select report.id ,report.id report_id ,report.tcode report_tcode ,report.filename report_filename ,report.screens_id report_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
  screen.screen_strselect screen_strselect,
  screen.screen_strwhere screen_strwhere,
  screen.screen_strgrouporder screen_strgrouporder,
@@ -192,6 +171,16 @@ report.expiredate report_expiredate ,report.remark report_remark ,report.persons
 report.update_ip report_update_ip ,report.created_at report_created_at ,report.updated_at report_updated_at
  from reports report ,r_screens  screen,r_usergroups  usergroup,r_usergroups  usergroup_pare,r_persons  person_upd
  where  screen.screen_id = report.screens_id and  usergroup.usergroup_id = report.usergroups_id and  usergroup_pare.usergroup_id = report.usergroups_id_pare and  person_upd.person_id = report.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_usergroups as  select usergroup.id ,usergroup.id usergroup_id ,usergroup.code usergroup_code ,usergroup.name usergroup_name ,usergroup.remark usergroup_remark ,usergroup.persons_id_upd usergroup_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+usergroup.update_ip usergroup_update_ip ,usergroup.created_at usergroup_created_at ,usergroup.updated_at usergroup_updated_at ,usergroup.expiredate usergroup_expiredate
+ from usergroups usergroup ,r_persons  person_upd
+ where  person_upd.person_id = usergroup.persons_id_upd 
 join_rtbl  = 'r_usergroups' 
 join_rtbl  = 'r_sects' 
 join_rtbl  = 'r_persons' 
@@ -220,6 +209,207 @@ person.email person_email ,person.remark person_remark ,person.expiredate person
 person.update_ip person_update_ip ,person.created_at person_created_at ,person.updated_at person_updated_at
  from persons person ,r_usergroups  usergroup,r_sects  sect,r_persons  person_upd
  where  usergroup.usergroup_id = person.usergroups_id and  sect.sect_id = person.sects_id and  person_upd.person_id = person.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.tcode screen_tcode ,screen.tcode_view screen_tcode_view ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
+ from screens screen ,r_persons  person_upd
+ where  person_upd.person_id = screen.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.tcode screen_tcode ,screen.tcode_view screen_tcode_view ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
+ from screens screen ,r_persons  person_upd
+ where  person_upd.person_id = screen.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.tcode screenfield_tcode ,screenfield.screens_id screenfield_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_ymlcode screen_ymlcode,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.rubycode screenfield_rubycode ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
+ from screenfields screenfield ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
+join_rtbl  = 'r_persons' 
+create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.tcode screen_tcode ,screen.tcode_view screen_tcode_view ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
+ from screens screen ,r_persons  person_upd
+ where  person_upd.person_id = screen.persons_id_upd 
+join_rtbl  = 'r_usergroups' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_usergroups as  select usergroup.id ,usergroup.id usergroup_id ,usergroup.code usergroup_code ,usergroup.name usergroup_name ,usergroup.remark usergroup_remark ,usergroup.persons_id_upd usergroup_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+usergroup.update_ip usergroup_update_ip ,usergroup.created_at usergroup_created_at ,usergroup.updated_at usergroup_updated_at ,usergroup.expiredate usergroup_expiredate
+ from usergroups usergroup ,r_persons  person_upd
+ where  person_upd.person_id = usergroup.persons_id_upd 
+join_rtbl  = 'r_usergroups' 
+join_rtbl  = 'r_sects' 
+join_rtbl  = 'r_locas' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_locas as  select loca.id ,loca.id loca_id ,loca.code loca_code ,loca.name loca_name ,loca.abbr loca_abbr ,loca.zip loca_zip ,loca.country loca_country ,loca.prfct loca_prfct ,loca.addr1 loca_addr1 ,loca.addr2 loca_addr2 ,loca.tel loca_tel ,loca.fax loca_fax ,loca.mail loca_mail ,loca.remark loca_remark ,loca.expiredate loca_expiredate ,loca.persons_id_upd loca_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+loca.update_ip loca_update_ip ,loca.created_at loca_created_at ,loca.updated_at loca_updated_at
+ from locas loca ,r_persons  person_upd
+ where  person_upd.person_id = loca.persons_id_upd 
+join_rtbl  = 'r_locas' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_sects as  select sect.id ,sect.id sect_id ,sect.locas_id_sects sect_loca_id_sects , loca_sects.loca_code loca_code_sects,
+ loca_sects.loca_name loca_name_sects,
+ loca_sects.loca_abbr loca_abbr_sects,
+ loca_sects.loca_zip loca_zip_sects,
+ loca_sects.loca_country loca_country_sects,
+ loca_sects.loca_prfct loca_prfct_sects,
+ loca_sects.loca_addr1 loca_addr1_sects,
+ loca_sects.loca_addr2 loca_addr2_sects,
+ loca_sects.loca_tel loca_tel_sects,
+ loca_sects.loca_fax loca_fax_sects,
+ loca_sects.loca_mail loca_mail_sects,
+ loca_sects.loca_remark loca_remark_sects,
+sect.remark sect_remark ,sect.expiredate sect_expiredate ,sect.persons_id_upd sect_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+sect.update_ip sect_update_ip ,sect.created_at sect_created_at ,sect.updated_at sect_updated_at
+ from sects sect ,r_locas  loca_sects,r_persons  person_upd
+ where  loca_sects.loca_id = sect.locas_id_sects and  person_upd.person_id = sect.persons_id_upd 
+join_rtbl  = 'r_usergroups' 
+join_rtbl  = 'r_sects' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_persons as  select person.id ,person.id person_id ,person.code person_code ,person.name person_name ,person.usergroups_id person_usergroup_id , usergroup.usergroup_code usergroup_code,
+ usergroup.usergroup_name usergroup_name,
+ usergroup.usergroup_remark usergroup_remark,
+person.sects_id person_sect_id , sect.loca_code_sects loca_code_sects,
+ sect.loca_name_sects loca_name_sects,
+ sect.loca_abbr_sects loca_abbr_sects,
+ sect.loca_zip_sects loca_zip_sects,
+ sect.loca_country_sects loca_country_sects,
+ sect.loca_prfct_sects loca_prfct_sects,
+ sect.loca_addr1_sects loca_addr1_sects,
+ sect.loca_addr2_sects loca_addr2_sects,
+ sect.loca_tel_sects loca_tel_sects,
+ sect.loca_fax_sects loca_fax_sects,
+ sect.loca_mail_sects loca_mail_sects,
+ sect.loca_remark_sects loca_remark_sects,
+ sect.sect_remark sect_remark,
+person.email person_email ,person.remark person_remark ,person.expiredate person_expiredate ,person.persons_id_upd person_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+person.update_ip person_update_ip ,person.created_at person_created_at ,person.updated_at person_updated_at
+ from persons person ,r_usergroups  usergroup,r_sects  sect,r_persons  person_upd
+ where  usergroup.usergroup_id = person.usergroups_id and  sect.sect_id = person.sects_id and  person_upd.person_id = person.persons_id_upd 
+join_rtbl  = 'r_pobjects' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.tcode pobject_tcode ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at
+ from pobjects pobject ,r_persons  person_upd
+ where  person_upd.person_id = pobject.persons_id_upd 
+join_rtbl  = 'r_pobjects' 
+join_rtbl  = 'r_usergroups' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_pobjgrps as  select pobjgrp.id ,pobjgrp.id pobjgrp_id ,pobjgrp.pobjects_id pobjgrp_pobject_id , pobject.pobject_objecttype pobject_objecttype,
+ pobject.pobject_tcode pobject_tcode,
+ pobject.pobject_contens pobject_contens,
+ pobject.pobject_remark pobject_remark,
+ pobject.pobject_rubycode pobject_rubycode,
+pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_code usergroup_code,
+ usergroup.usergroup_name usergroup_name,
+ usergroup.usergroup_remark usergroup_remark,
+pobjgrp.name pobjgrp_name ,pobjgrp.remark pobjgrp_remark ,pobjgrp.persons_id_upd pobjgrp_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+pobjgrp.update_ip pobjgrp_update_ip ,pobjgrp.created_at pobjgrp_created_at ,pobjgrp.expiredate pobjgrp_expiredate ,pobjgrp.updated_at pobjgrp_updated_at
+ from pobjgrps pobjgrp ,r_pobjects  pobject,r_usergroups  usergroup,r_persons  person_upd
+ where  pobject.pobject_id = pobjgrp.pobjects_id and  usergroup.usergroup_id = pobjgrp.usergroups_id and  person_upd.person_id = pobjgrp.persons_id_upd 
+join_rtbl  = 'r_screens' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_buttons as  select button.id ,button.id button_id ,button.screens_id button_screen_id , screen.screen_tcode screen_tcode,
+ screen.screen_tcode_view screen_tcode_view,
+ screen.screen_strselect screen_strselect,
+ screen.screen_strwhere screen_strwhere,
+ screen.screen_strgrouporder screen_strgrouporder,
+ screen.screen_ymlcode screen_ymlcode,
+ screen.screen_cdrflayout screen_cdrflayout,
+ screen.screen_remark screen_remark,
+button.icon button_icon ,button.title button_title ,button.proc button_proc ,button.expiredate button_expiredate ,button.remark button_remark ,button.persons_id_upd button_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+button.update_ip button_update_ip ,button.created_at button_created_at ,button.updated_at button_updated_at
+ from buttons button ,r_screens  screen,r_persons  person_upd
+ where  screen.screen_id = button.screens_id and  person_upd.person_id = button.persons_id_upd 
+join_rtbl  = 'r_units' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_units as  select unit.id ,unit.id unit_id ,unit.code unit_code ,unit.name unit_name ,unit.remark unit_remark ,unit.persons_id_upd unit_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+unit.expiredate unit_expiredate ,unit.update_ip unit_update_ip ,unit.created_at unit_created_at ,unit.updated_at unit_updated_at
+ from units unit ,r_persons  person_upd
+ where  person_upd.person_id = unit.persons_id_upd 
+join_rtbl  = 'r_units' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_itms as  select itm.id ,itm.id itm_id ,itm.code itm_code ,itm.name itm_name ,itm.itmtype itm_itmtype ,itm.consumtype itm_consumtype ,itm.units_id itm_unit_id , unit.unit_code unit_code,
+ unit.unit_name unit_name,
+ unit.unit_remark unit_remark,
+itm.std itm_std ,itm.model itm_model ,itm.material itm_material ,itm.design itm_design ,itm.weight itm_weight ,itm.length itm_length ,itm.wide itm_wide ,itm.deth itm_deth ,itm.packqty itm_packqty ,itm.minqty itm_minqty ,itm.remark itm_remark ,itm.expiredate itm_expiredate ,itm.persons_id_upd itm_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+itm.update_ip itm_update_ip ,itm.created_at itm_created_at ,itm.updated_at itm_updated_at
+ from itms itm ,r_units  unit,r_persons  person_upd
+ where  unit.unit_id = itm.units_id and  person_upd.person_id = itm.persons_id_upd 
+join_rtbl  = 'r_units' 
+join_rtbl  = 'r_persons' 
+create or replace view  r_itms as  select itm.id ,itm.id itm_id ,itm.code itm_code ,itm.name itm_name ,itm.itmtype itm_itmtype ,itm.consumtype itm_consumtype ,itm.units_id itm_unit_id , unit.unit_code unit_code,
+ unit.unit_name unit_name,
+ unit.unit_remark unit_remark,
+itm.std itm_std ,itm.model itm_model ,itm.material itm_material ,itm.design itm_design ,itm.weight itm_weight ,itm.length itm_length ,itm.wide itm_wide ,itm.deth itm_deth ,itm.packqty itm_packqty ,itm.minqty itm_minqty ,itm.remark itm_remark ,itm.expiredate itm_expiredate ,itm.persons_id_upd itm_person_id_upd , person_upd.person_code person_code_upd,
+ person_upd.person_name person_name_upd,
+ person_upd.person_email person_email_upd,
+ person_upd.person_remark person_remark_upd,
+ person_upd.usergroup_code usergroup_code_upd,
+ person_upd.usergroup_name usergroup_name_upd,
+itm.update_ip itm_update_ip ,itm.created_at itm_created_at ,itm.updated_at itm_updated_at
+ from itms itm ,r_units  unit,r_persons  person_upd
+ where  unit.unit_id = itm.units_id and  person_upd.person_id = itm.persons_id_upd 
 join_rtbl  = 'r_persons' 
 create or replace view  r_usergroups as  select usergroup.id ,usergroup.id usergroup_id ,usergroup.code usergroup_code ,usergroup.name usergroup_name ,usergroup.remark usergroup_remark ,usergroup.persons_id_upd usergroup_person_id_upd , person_upd.person_code person_code_upd,
  person_upd.person_name person_name_upd,
@@ -230,547 +420,3 @@ create or replace view  r_usergroups as  select usergroup.id ,usergroup.id userg
 usergroup.update_ip usergroup_update_ip ,usergroup.created_at usergroup_created_at ,usergroup.updated_at usergroup_updated_at ,usergroup.expiredate usergroup_expiredate
  from usergroups usergroup ,r_persons  person_upd
  where  person_upd.person_id = usergroup.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_units as  select unit.id ,unit.id unit_id ,unit.code unit_code ,unit.name unit_name ,unit.remark unit_remark ,unit.persons_id_upd unit_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-unit.expiredate unit_expiredate ,unit.update_ip unit_update_ip ,unit.created_at unit_created_at ,unit.updated_at unit_updated_at
- from units unit ,r_persons  person_upd
- where  person_upd.person_id = unit.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.listoptions screenfield_listoptions ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
-join_rtbl  = 'r_locas' 
-join_rtbl  = 'r_itms' 
-join_rtbl  = 'r_persons' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_custords as  select custord.id ,custord.id custord_id ,custord.locas_id_cust custord_loca_id_cust , loca_cust.loca_code loca_code_cust,
- loca_cust.loca_name loca_name_cust,
- loca_cust.loca_abbr loca_abbr_cust,
- loca_cust.loca_zip loca_zip_cust,
- loca_cust.loca_country loca_country_cust,
- loca_cust.loca_prfct loca_prfct_cust,
- loca_cust.loca_addr1 loca_addr1_cust,
- loca_cust.loca_addr2 loca_addr2_cust,
- loca_cust.loca_tel loca_tel_cust,
- loca_cust.loca_fax loca_fax_cust,
- loca_cust.loca_mail loca_mail_cust,
- loca_cust.loca_remark loca_remark_cust,
-custord.itms_id custord_itm_id , itm.itm_code itm_code,
- itm.itm_name itm_name,
- itm.itm_itmtype itm_itmtype,
- itm.itm_consumtype itm_consumtype,
- itm.unit_code unit_code,
- itm.unit_name unit_name,
- itm.unit_remark unit_remark,
- itm.itm_std itm_std,
- itm.itm_model itm_model,
- itm.itm_material itm_material,
- itm.itm_design itm_design,
- itm.itm_weight itm_weight,
- itm.itm_length itm_length,
- itm.itm_deth itm_deth,
- itm.itm_packqty itm_packqty,
- itm.itm_minqty itm_minqty,
- itm.itm_remark itm_remark,
-custord.persons_id_chrg custord_person_id_chrg , person_chrg.person_code person_code_chrg,
- person_chrg.person_name person_name_chrg,
- person_chrg.person_email person_email_chrg,
- person_chrg.person_remark person_remark_chrg,
- person_chrg.usergroup_code usergroup_code_chrg,
- person_chrg.usergroup_name usergroup_name_chrg,
-custord.duedate custord_duedate ,custord.toduedate custord_toduedate ,custord.isudate custord_isudate ,custord.qty custord_qty ,custord.price custord_price ,custord.amt custord_amt ,custord.orderno custord_orderno ,custord.sno custord_sno ,custord.lineno custord_lineno ,custord.infomation custord_infomation ,custord.remark custord_remark ,custord.expiredate custord_expiredate ,custord.persons_id_upd custord_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-custord.update_ip custord_update_ip ,custord.created_at custord_created_at ,custord.updated_at custord_updated_at
- from custords custord ,r_locas  loca_cust,r_itms  itm,r_persons  person_chrg,r_persons  person_upd
- where  loca_cust.loca_id = custord.locas_id_cust and  itm.itm_id = custord.itms_id and  person_chrg.person_id = custord.persons_id_chrg and  person_upd.person_id = custord.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_reports as  select report.id ,report.id report_id ,report.code report_code ,report.name report_name ,report.filename report_filename ,report.screens_id report_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-report.usergroups_id report_usergroup_id , usergroup.usergroup_code usergroup_code,
- usergroup.usergroup_name usergroup_name,
- usergroup.usergroup_remark usergroup_remark,
-report.usergroups_id_pare report_usergroup_id_pare , usergroup_pare.usergroup_code usergroup_code_pare,
- usergroup_pare.usergroup_name usergroup_name_pare,
- usergroup_pare.usergroup_remark usergroup_remark_pare,
-report.expiredate report_expiredate ,report.remark report_remark ,report.persons_id_upd report_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-report.update_ip report_update_ip ,report.created_at report_created_at ,report.updated_at report_updated_at
- from reports report ,r_screens  screen,r_usergroups  usergroup,r_usergroups  usergroup_pare,r_persons  person_upd
- where  screen.screen_id = report.screens_id and  usergroup.usergroup_id = report.usergroups_id and  usergroup_pare.usergroup_id = report.usergroups_id_pare and  person_upd.person_id = report.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.code screen_code ,screen.viewname screen_viewname ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
- from screens screen ,r_persons  person_upd
- where  person_upd.person_id = screen.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjgrps as  select pobjgrp.id ,pobjgrp.id pobjgrp_id ,pobjgrp.pobjects_id pobjgrp_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_code usergroup_code,
- usergroup.usergroup_name usergroup_name,
- usergroup.usergroup_remark usergroup_remark,
-pobjgrp.name pobjgrp_name ,pobjgrp.remark pobjgrp_remark ,pobjgrp.persons_id_upd pobjgrp_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobjgrp.update_ip pobjgrp_update_ip ,pobjgrp.created_at pobjgrp_created_at ,pobjgrp.expiredate pobjgrp_expiredate ,pobjgrp.updated_at pobjgrp_updated_at
- from pobjgrps pobjgrp ,r_pobjects  pobject,r_usergroups  usergroup,r_persons  person_upd
- where  pobject.pobject_id = pobjgrp.pobjects_id and  usergroup.usergroup_id = pobjgrp.usergroups_id and  person_upd.person_id = pobjgrp.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg ,pobject.chartype pobject_chartype
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_units' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_itms as  select itm.id ,itm.id itm_id ,itm.code itm_code ,itm.name itm_name ,itm.itmtype itm_itmtype ,itm.consumtype itm_consumtype ,itm.units_id itm_unit_id , unit.unit_code unit_code,
- unit.unit_name unit_name,
- unit.unit_remark unit_remark,
-itm.std itm_std ,itm.model itm_model ,itm.material itm_material ,itm.design itm_design ,itm.weight itm_weight ,itm.length itm_length ,itm.wide itm_wide ,itm.deth itm_deth ,itm.packqty itm_packqty ,itm.minqty itm_minqty ,itm.remark itm_remark ,itm.expiredate itm_expiredate ,itm.persons_id_upd itm_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-itm.update_ip itm_update_ip ,itm.created_at itm_created_at ,itm.updated_at itm_updated_at
- from itms itm ,r_units  unit,r_persons  person_upd
- where  unit.unit_id = itm.units_id and  person_upd.person_id = itm.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.chartype fieldcode_chartype ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.chartype fieldcode_chartype ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at ,fieldcode.fieldlength fieldcode_fieldlength
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.chartype fieldcode_chartype ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at ,fieldcode.fieldlength fieldcode_fieldlength
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_detailfields as  select detailfield.id ,detailfield.id detailfield_id ,detailfield.code detailfield_code ,detailfield.screens_id detailfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-detailfield.selection detailfield_selection ,detailfield.hideflg detailfield_hideflg ,detailfield.seqno detailfield_seqno ,detailfield.rowpos detailfield_rowpos ,detailfield.colpos detailfield_colpos ,detailfield.paragraph detailfield_paragraph ,detailfield.width detailfield_width ,detailfield.type detailfield_type ,detailfield.dataprecision detailfield_dataprecision ,detailfield.datascale detailfield_datascale ,detailfield.indisp detailfield_indisp ,detailfield.subindisp detailfield_subindisp ,detailfield.editable detailfield_editable ,detailfield.edoptsize detailfield_edoptsize ,detailfield.edoptinputsize detailfield_edoptinputsize ,detailfield.edoptmaxlength detailfield_edoptmaxlength ,detailfield.edoptvalue detailfield_edoptvalue ,detailfield.edoptmultiple detailfield_edoptmultiple ,detailfield.edoptrow detailfield_edoptrow ,detailfield.edoptcols detailfield_edoptcols ,detailfield.editablehide detailfield_editablehide ,detailfield.listoptions detailfield_listoptions ,detailfield.tblkey detailfield_tblkey ,detailfield.sumkey detailfield_sumkey ,detailfield.crtfield detailfield_crtfield ,detailfield.expiredate detailfield_expiredate ,detailfield.remark detailfield_remark ,detailfield.persons_id_upd detailfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-detailfield.update_ip detailfield_update_ip ,detailfield.created_at detailfield_created_at ,detailfield.updated_at detailfield_updated_at
- from detailfields detailfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = detailfield.screens_id and  person_upd.person_id = detailfield.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at ,fieldcode.fieldlength fieldcode_fieldlength
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg ,pobject.chartype pobject_chartype
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg ,pobject.chartype pobject_chartype
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg ,pobject.chartype pobject_chartype
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.fieldlength pobject_fieldlength ,pobject.datapresion pobject_datapresion ,pobject.datascale pobject_datascale ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at ,pobject.ukeyflg pobject_ukeyflg ,pobject.chartype pobject_chartype
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screens as  select screen.id ,screen.id screen_id ,screen.code screen_code ,screen.viewname screen_viewname ,screen.strselect screen_strselect ,screen.strwhere screen_strwhere ,screen.strgrouporder screen_strgrouporder ,screen.ymlcode screen_ymlcode ,screen.cdrflayout screen_cdrflayout ,screen.expiredate screen_expiredate ,screen.remark screen_remark ,screen.persons_id_upd screen_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screen.update_ip screen_update_ip ,screen.created_at screen_created_at ,screen.updated_at screen_updated_at
- from screens screen ,r_persons  person_upd
- where  person_upd.person_id = screen.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.listoptions screenfield_listoptions ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.listoptions screenfield_listoptions ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.fieldlength fieldcode_fieldlength ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_fieldlength pobject_fieldlength,
- pobject.pobject_datapresion pobject_datapresion,
- pobject.pobject_datascale pobject_datascale,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
- pobject.pobject_ukeyflg pobject_ukeyflg,
- pobject.pobject_chartype pobject_chartype,
-fieldcode.ftype fieldcode_ftype ,fieldcode.fieldlength fieldcode_fieldlength ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjects as  select pobject.id ,pobject.id pobject_id ,pobject.objecttype pobject_objecttype ,pobject.code pobject_code ,pobject.contens pobject_contens ,pobject.remark pobject_remark ,pobject.rubycode pobject_rubycode ,pobject.persons_id_upd pobject_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobject.update_ip pobject_update_ip ,pobject.created_at pobject_created_at ,pobject.expiredate pobject_expiredate ,pobject.updated_at pobject_updated_at
- from pobjects pobject ,r_persons  person_upd
- where  person_upd.person_id = pobject.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_usergroups' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_pobjgrps as  select pobjgrp.id ,pobjgrp.id pobjgrp_id ,pobjgrp.pobjects_id pobjgrp_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
-pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_code usergroup_code,
- usergroup.usergroup_name usergroup_name,
- usergroup.usergroup_remark usergroup_remark,
-pobjgrp.name pobjgrp_name ,pobjgrp.remark pobjgrp_remark ,pobjgrp.persons_id_upd pobjgrp_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-pobjgrp.update_ip pobjgrp_update_ip ,pobjgrp.created_at pobjgrp_created_at ,pobjgrp.expiredate pobjgrp_expiredate ,pobjgrp.updated_at pobjgrp_updated_at
- from pobjgrps pobjgrp ,r_pobjects  pobject,r_usergroups  usergroup,r_persons  person_upd
- where  pobject.pobject_id = pobjgrp.pobjects_id and  usergroup.usergroup_id = pobjgrp.usergroups_id and  person_upd.person_id = pobjgrp.persons_id_upd 
-join_rtbl  = 'r_pobjects' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_fieldcodes as  select fieldcode.id ,fieldcode.id fieldcode_id ,fieldcode.pobjects_id fieldcode_pobject_id , pobject.pobject_objecttype pobject_objecttype,
- pobject.pobject_code pobject_code,
- pobject.pobject_contens pobject_contens,
- pobject.pobject_remark pobject_remark,
- pobject.pobject_rubycode pobject_rubycode,
-fieldcode.ftype fieldcode_ftype ,fieldcode.fieldlength fieldcode_fieldlength ,fieldcode.datapresion fieldcode_datapresion ,fieldcode.datascale fieldcode_datascale ,fieldcode.contens fieldcode_contens ,fieldcode.remark fieldcode_remark ,fieldcode.rubycode fieldcode_rubycode ,fieldcode.persons_id_upd fieldcode_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-fieldcode.update_ip fieldcode_update_ip ,fieldcode.created_at fieldcode_created_at ,fieldcode.expiredate fieldcode_expiredate ,fieldcode.updated_at fieldcode_updated_at
- from fieldcodes fieldcode ,r_pobjects  pobject,r_persons  person_upd
- where  pobject.pobject_id = fieldcode.pobjects_id and  person_upd.person_id = fieldcode.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.listoptions screenfield_listoptions ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
-join_rtbl  = 'r_units' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_itms as  select itm.id ,itm.id itm_id ,itm.code itm_code ,itm.name itm_name ,itm.itmtype itm_itmtype ,itm.consumtype itm_consumtype ,itm.units_id itm_unit_id , unit.unit_code unit_code,
- unit.unit_name unit_name,
- unit.unit_remark unit_remark,
-itm.std itm_std ,itm.model itm_model ,itm.material itm_material ,itm.design itm_design ,itm.weight itm_weight ,itm.length itm_length ,itm.wide itm_wide ,itm.deth itm_deth ,itm.packqty itm_packqty ,itm.minqty itm_minqty ,itm.remark itm_remark ,itm.expiredate itm_expiredate ,itm.persons_id_upd itm_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-itm.update_ip itm_update_ip ,itm.created_at itm_created_at ,itm.updated_at itm_updated_at
- from itms itm ,r_units  unit,r_persons  person_upd
- where  unit.unit_id = itm.units_id and  person_upd.person_id = itm.persons_id_upd 
-join_rtbl  = 'r_persons' 
-create or replace view  r_locas as  select loca.id ,loca.id loca_id ,loca.code loca_code ,loca.name loca_name ,loca.abbr loca_abbr ,loca.zip loca_zip ,loca.country loca_country ,loca.prfct loca_prfct ,loca.addr1 loca_addr1 ,loca.addr2 loca_addr2 ,loca.tel loca_tel ,loca.fax loca_fax ,loca.mail loca_mail ,loca.remark loca_remark ,loca.expiredate loca_expiredate ,loca.persons_id_upd loca_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-loca.update_ip loca_update_ip ,loca.created_at loca_created_at ,loca.updated_at loca_updated_at
- from locas loca ,r_persons  person_upd
- where  person_upd.person_id = loca.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.rubycode screenfield_rubycode ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 
-join_rtbl  = 'r_screens' 
-join_rtbl  = 'r_persons' 
-create or replace view  r_screenfields as  select screenfield.id ,screenfield.id screenfield_id ,screenfield.code screenfield_code ,screenfield.screens_id screenfield_screen_id , screen.screen_code screen_code,
- screen.screen_viewname screen_viewname,
- screen.screen_strselect screen_strselect,
- screen.screen_strwhere screen_strwhere,
- screen.screen_strgrouporder screen_strgrouporder,
- screen.screen_ymlcode screen_ymlcode,
- screen.screen_cdrflayout screen_cdrflayout,
- screen.screen_remark screen_remark,
-screenfield.selection screenfield_selection ,screenfield.hideflg screenfield_hideflg ,screenfield.seqno screenfield_seqno ,screenfield.rowpos screenfield_rowpos ,screenfield.colpos screenfield_colpos ,screenfield.paragraph screenfield_paragraph ,screenfield.width screenfield_width ,screenfield.type screenfield_type ,screenfield.dataprecision screenfield_dataprecision ,screenfield.datascale screenfield_datascale ,screenfield.indisp screenfield_indisp ,screenfield.subindisp screenfield_subindisp ,screenfield.editable screenfield_editable ,screenfield.maxvalue screenfield_maxvalue ,screenfield.minvalue screenfield_minvalue ,screenfield.edoptsize screenfield_edoptsize ,screenfield.edoptmaxlength screenfield_edoptmaxlength ,screenfield.rubycode screenfield_rubycode ,screenfield.edoptmultiple screenfield_edoptmultiple ,screenfield.edoptrow screenfield_edoptrow ,screenfield.edoptcols screenfield_edoptcols ,screenfield.edoptvalue screenfield_edoptvalue ,screenfield.tblkey screenfield_tblkey ,screenfield.sumkey screenfield_sumkey ,screenfield.crtfield screenfield_crtfield ,screenfield.expiredate screenfield_expiredate ,screenfield.remark screenfield_remark ,screenfield.persons_id_upd screenfield_person_id_upd , person_upd.person_code person_code_upd,
- person_upd.person_name person_name_upd,
- person_upd.person_email person_email_upd,
- person_upd.person_remark person_remark_upd,
- person_upd.usergroup_code usergroup_code_upd,
- person_upd.usergroup_name usergroup_name_upd,
-screenfield.update_ip screenfield_update_ip ,screenfield.created_at screenfield_created_at ,screenfield.updated_at screenfield_updated_at
- from screenfields screenfield ,r_screens  screen,r_persons  person_upd
- where  screen.screen_id = screenfield.screens_id and  person_upd.person_id = screenfield.persons_id_upd 

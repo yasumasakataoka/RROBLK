@@ -13,29 +13,56 @@ class AddScreen
      
     ##   viewにspaceが入っているとspaceがカットされる。 
     @crt_screen_name = <<-SQL1
-      insert into screens(id,ViewName,Expiredate,Remark,
-                    code,Persons_id_Upd,created_at,Updated_at)
+      insert into screens(id,tcode_view,Expiredate,Remark,
+                    tcode,Persons_id_Upd,created_at,Updated_at)
       select screens_seq.nextval,view_name,'2099/12/31','auto_crt',
-              view_name,0, sysdate,sysdate from   user_views a 
+              lower(view_name),0, sysdate,sysdate from   user_views a 
       where not exists   
-       (select 1 from screens b where a.view_name = b.viewname)
+       (select 1 from screens b where lower(a.view_name) = b.tcode_view)
       SQL1
 
-   @crt_pobject_code_tbl = <<-SQL2
+   @crt_pobject_code_view = <<-SQL2
       insert into pobjects(id,objecttype,Expiredate,Remark,
-                    code,Persons_id_Upd,created_at,Updated_at)
+                    tcode,Persons_id_Upd,created_at,Updated_at)
       select pobjects_seq.nextval,'V','2099/12/31','auto_crt',
-              code,0, sysdate,sysdate from   screens a 
+              tcode,0, sysdate,sysdate from   screens a 
       where not exists   
-       (select 1 from pobjects b where a.code = b.code and objecttype = 'V')
+       (select 1 from pobjects b where a.tcode_view = b.tcode and objecttype = 'view')
     SQL2
+       @crt_pobject_code_screen = <<-SQL23
+      insert into pobjects(id,objecttype,Expiredate,Remark,
+                    tcode,Persons_id_Upd,created_at,Updated_at)
+      select pobjects_seq.nextval,'A','2099/12/31','auto_crt',
+              tcode,0, sysdate,sysdate from   screens a 
+      where not exists   
+       (select 1 from pobjects b where a.tcode_view = b.tcode and objecttype = 'screen')
+    SQL23
+
+
+       @crt_pobject_code_tbl = <<-SQL25
+      insert into pobjects(id,objecttype,Expiredate,Remark,
+                    tcode,Persons_id_Upd,created_at,Updated_at)
+      select pobjects_seq.nextval,'tbl','2099/12/31','auto_crt',
+              replace(tcode,'r_',''),0, sysdate,sysdate from   screens a 
+      where not exists   
+       (select 1 from pobjects b where replace(a.tcode,'r_','') = b.tcode and objecttype = 'tbl')
+    SQL25
+
+   @crt_blktables = <<-SQL28
+      insert into blktables(id,tcode,Expiredate,Remark,
+                    Persons_id_Upd,created_at,Updated_at)
+      select blktables_seq.nextval,tcode,'2099/12/31','auto_crt',
+              0, sysdate,sysdate from  pobjects a 
+      where a.objecttype = 'tbl' and  not exists   
+       (select 1 from blktables b where a.tcode = b.tcode and a.objecttype = 'tbl')
+   SQL28
 
     @crt_screen_dtl = <<-SQL3
        B.ID SCREENS_ID,COLUMN_NAME,
        DATA_TYPE ,TABLE_NAME,
        DATA_LENGTH,DATA_PRECISION,DATA_SCALE
        FROM USER_TAB_COLUMNS A,SCREENS B
-       WHERE TABLE_NAME = VIEWNAME
+       WHERE TABLE_NAME = tcode_view
     SQL3
  end ## initialize   
 
@@ -43,30 +70,30 @@ class AddScreen
     ###テーブル画面は大文字　項目は小文字
     @crt_pobject_code_field = <<-SQL4
       insert into pobjects(id,objecttype,Expiredate,Remark,
-                    code,Persons_id_Upd,created_at,Updated_at)
-      select pobjects_seq.nextval,'1','2099/12/31','auto_crt',
-              code,0, sysdate,sysdate
-     from (select code from   screenfields  group by code) a 
+                    tcode,Persons_id_Upd,created_at,Updated_at)
+      select pobjects_seq.nextval,'view_field','2099/12/31','auto_crt',
+              tcode,0, sysdate,sysdate
+     from (select tcode from   screenfields  group by tcode) a 
       where not exists   
-       (select 1 from pobjects b where a.code = b.code and objecttype = '1')
+       (select 1 from pobjects b where a.tcode = b.tcode and objecttype = 'view_field')
     SQL4
 
     @crt_pobject_code_field1 = <<-SQL5
       insert into pobjects(id,objecttype,Expiredate,Remark,
-                    code,Persons_id_Upd,created_at,Updated_at)
-      select pobjects_seq.nextval,'1','2099/12/31','auto_crt',
+                    tcode,Persons_id_Upd,created_at,Updated_at)
+      select pobjects_seq.nextval,'view_field','2099/12/31','auto_crt',
               lower(column_name),0, sysdate,sysdate from   USER_TAB_COLUMNS a 
       where not exists   
-       (select 1 from pobjects b where lower(a.column_name) = b.code and objecttype = '1' ) and table_name = '#{@tblnamex.split("_")[1]}'
+       (select 1 from pobjects b where lower(a.column_name) = b.tcode and objecttype = 'view_field' ) and table_name = '#{@tblnamex.split("_")[1]}'
     SQL5
 
      @crt_pobject_code_field2 = <<-SQL6
       insert into pobjects(id,objecttype,Expiredate,Remark,
-                    code,Persons_id_Upd,created_at,Updated_at)
-      select pobjects_seq.nextval,'1','2099/12/31','auto_crt',
-              '#{@tblnamex.split("_")[1].chop.downcase}',0, sysdate,sysdate from   dual 
+                    tcode,Persons_id_Upd,created_at,Updated_at)
+      select pobjects_seq.nextval,'view_field','2099/12/31','auto_crt',
+              '#{@tblnamex.split("_")[1].chop}',0, sysdate,sysdate from   dual 
       where not exists   
-       (select 1 from pobjects b where  b.code = '#{@tblnamex.split("_")[1].chop.downcase}'   and objecttype = '1' )
+       (select 1 from pobjects b where  b.tcode = '#{@tblnamex.split("_")[1].chop}'   and objecttype = 'view_field' )
     SQL6
  end
 
@@ -97,24 +124,26 @@ end   ##fprnt str
 def addmain tblname     ### tblname = "R_xxxxxxx"
     @tblnamex = tblname
     plsql.execute  @crt_screen_name   ## list 用メニュー作成
-    plsql.execute   @crt_pobject_code_tbl    ## 画面の名前の元ネタ作成
+    plsql.execute   @crt_pobject_code_view    ##pobject view
+    plsql.execute   @crt_pobject_code_tbl     ## pobject tbl
+    plsql.execute   @crt_pobject_code_screen   ## pobject screen
+    plsql.execute   @crt_blktables   ## pobject screen
     ### p @crt_screen_name.gsub("@type@",screen_type)
     ##tmp_screen_dtl = "SELECT " + @crt_screen_dtl  + " AND TABLE_NAME = '#{@tblnamex}' order by column_name "
     tsqlstr = "delete from  screenfields where (id  in ( select id from  r_screenfields "
-    tsqlstr << " where  screen_code = '#{tblname}'  and Expiredate > sysdate )"
+    tsqlstr << " where  screen_tcode = '#{tblname}'  and Expiredate > sysdate )"
     tsqlstr << " and created_at = updated_at ) or " ##自動作成分のみ削除
-    tsqlstr << " not exists(select 1 from  USER_TAB_COLUMNS where table_name =  '#{tblname}' and code = lower(column_name))" 
-    tsqlstr << " and screens_id =  (select id from  screens  where  code = '#{tblname}'  and Expiredate > sysdate  and rownum <2)"
+    tsqlstr << " not exists(select 1 from  USER_TAB_COLUMNS where lower(table_name) =  '#{tblname}' and tcode = lower(column_name))" 
+    tsqlstr << " and screens_id =  (select id from  screens  where  tcode = '#{tblname}'  and Expiredate > sysdate  and rownum <2)"
     plsql.execute tsqlstr
     fields = plsql.__send__(tblname).columns  ###select(:all,tmp_screen_dtl)   ###テーブルの項目をセット  R_xxxx
     @row_cnt = 0
     @code_pos = {}
     @editable_code_name = []
-    screen_id = plsql.screens.first("where code = '#{tblname}' and Expiredate > sysdate ")[:id]
+    screen_id = plsql.screens.first("where tcode = '#{tblname}' and Expiredate > sysdate ")[:id]
     fields.each  do |ii,jj|
        setscreenfields ii.to_s,jj,tblname,screen_id,fields  ## iiの中はscreens_id 「s」がつくよ
-    end
-    
+    end    
    crttype                     ##interface用　ｓｉｏ作成
    set_sql
    fprnt "@crt_pobject_code_field2 = #{@crt_pobject_code_field2}"
@@ -125,7 +154,7 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
  def setscreenfields   ii,jj,tblname,screen_id,fields
        init_screenfields
        indisp = 0 
-       indisp = sub_indisp(ii,tblname)  if (ii =~ /_code/ or ii =~ /_name/) and  ii !~ /_upd$/  and ii.split(/_/)[0].upcase != tblname.split("_")[1].chop
+       indisp = sub_indisp(ii,tblname)  if (ii =~ /_code/ or ii =~ /_name/) and  ii !~ /_upd$/  and ii.split(/_/)[0] != tblname.split("_")[1].chop
        ### indisp = sub_indisp(ii,tblname,"_NAME")  if ii[:column_name] =~ /_NAME/ and  ii[:column_name] != "PERSON_NAME_UPD"  and ii[:column_name].split(/_NAME/)[0] != tblname[2..-2]
         ##@screenfields[:editable] =  0
         ##@screenfields[:editable] = indisp  
@@ -142,7 +171,7 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
               end                          
          end
         @screenfields[:hideflg]   = if ii =~ /_id/  or ii =="id" then 1 else 0 end 
-        @screenfields[:code]   = ii
+        @screenfields[:tcode]   = ii
 	if jj[:data_length] > 100  then
 	   @screenfields[:type]   =  "textarea" 
 	   @screenfields[:edoptrow]  = if (jj[:data_length] / 80).ceil > 10 then 10 else (jj[:data_length] / 80).ceil end
@@ -162,7 +191,7 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
          @screenfields[:width] =   60 if jj[:data_type] == "DATE"
          ## p "ii[:table_name] : #{ii[:table_name]}"
          ## p "ii[:column_name].split(/_/)[0] #{ii[:column_name].split(/_/)[0]}"
-         if  tblname.split(/_/)[1].chop.downcase  == ii.split(/_/)[0] then   ##同一テーブルの項目のみ変更可
+         if  tblname.split(/_/)[1].chop  == ii.split(/_/)[0] then   ##同一テーブルの項目のみ変更可
              @screenfields[:editable] =  1                  
              @screenfields[:editable] =  0 if /_ip$/ =~ ii     ##  
              @screenfields[:editable] =  0 if /_id/ =~ ii   ## 更新者と更新時間          
@@ -180,8 +209,8 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
          @screenfields[:seqno] = 999 
          @screenfields[:seqno] = 888 if  @screenfields[:editable] == 1 
          ##@screenfields[:rowpos] = 999   if @screenfields[:editable] ==  1 
-         if (@screenfields[:editable] ==  1 or indisp == 1) and  ( @screenfields[:code] =~ /_code/ or  @screenfields[:code] =~ /_name/) then 
-	    key = @screenfields[:code].sub(@screenfields[:code].split("_")[1],"").to_sym
+         if (@screenfields[:editable] ==  1 or indisp == 1) and  ( @screenfields[:tcode] =~ /_code/ or  @screenfields[:tcode] =~ /_name/) then 
+	    key = @screenfields[:tcode].sub(@screenfields[:tcode].split("_")[1],"").to_sym
 	    @screenfields[:rowpos] =  @row_cnt  += 1 if @code_pos[key].nil?
             @code_pos[key] = @row_cnt if @code_pos[key].nil?
 	    @screenfields[:rowpos] = @code_pos[key]  if @code_pos[key]
@@ -191,11 +220,11 @@ def addmain tblname     ### tblname = "R_xxxxxxx"
 	     @screenfields[:rowpos] =  @row_cnt  += 1   if @screenfields[:editable] ==  1 or indisp == 1
 	 end
 	 @screenfields[:colpos] = 1     if @screenfields[:editable] ==  1 
-	 @screenfields[:colpos] = 2     if @screenfields[:editable] ==  1  and  @screenfields[:code] =~ /_name/
+	 @screenfields[:colpos] = 2     if @screenfields[:editable] ==  1  and  @screenfields[:tcode] =~ /_name/
 	 ### 他の同一テーブルに必須項目は　codeとNAMEだけ 項目別にソート済
-	 ##@screenfields[:rowpos] = @row_cnt     if @screenfields[:editable] ==  1  and  @screenfields[:code] =~ /_name/
+	 ##@screenfields[:rowpos] = @row_cnt     if @screenfields[:editable] ==  1  and  @screenfields[:tcode] =~ /_name/
          fprnt " @screenfields = #{@screenfields}"
-         plsql.screenfields.insert @screenfields unless  plsql.screenfields.first("where code = '#{@screenfields[:code]}' and screens_id = #{@screenfields[:screens_id]} and to_char(EXPIREDATE,'yyyy/mm/dd') = '#{@screenfields[:expiredate].strftime("%Y/%m/%d")}'") 
+         plsql.screenfields.insert @screenfields unless  plsql.screenfields.first("where tcode = '#{@screenfields[:tcode]}' and screens_id = #{@screenfields[:screens_id]} and to_char(EXPIREDATE,'yyyy/mm/dd') = '#{@screenfields[:expiredate].strftime("%Y/%m/%d")}'") 
          @strsql << " ,"
          @strsql << ii + " " + jj[:data_type]
          @strsql << "(" +  jj[:data_length].to_s + ")" if jj[:data_type] =~ /CHAR/
@@ -307,26 +336,26 @@ end #crttype
 ## 全テーブルに対応は中止した。
     tblarea = {}  
     notextview = {}
-    strsql = " where screen_viewname =  '#{tblname}' and screenfield_Expiredate > sysdate "
+    strsql = " where screen_tcode_view =  '#{tblname}' and screenfield_Expiredate > sysdate "
        fields = plsql.R_screenfields.all(strsql)
        ## p "strsql : #{strsql}"
     ## p fields   
 ##    p "addmain2"
     fields.each  do |tbldata|
-       if tbldata[:screenfield_code]  =~ /_id/ then
-          pare_tbl_sym = (tbldata[:screenfield_code].split(/_id/)[0] + "S").to_sym
+       if tbldata[:screenfield_tcode]  =~ /_id/ then
+          pare_tbl_sym = (tbldata[:screenfield_tcode].split(/_id/)[0] + "S").to_sym
           tblarea[pare_tbl_sym] = tblname
        end
     end
     
-    y = plsql.screens.first("WHERE ViewName = '#{tblname}' ")
+    y = plsql.screens.first("WHERE tcode_view = '#{tblname}' ")
     tblarea.each_key  do |i|
-        x = plsql.screens.first("WHERE ViewName = 'R_#{i.to_s}' ")
+        x = plsql.screens.first("WHERE tcode_view = 'r_#{i.to_s}' ")
         next if x.nil?
-        ## p "i " + "WHERE ViewName like '%#{i.to_s.upcase}' "
+        ## p "i " + "WHERE tcode_view like '%#{i.to_s}' "
         tmp_area = tblarea[i] 
               next if x.nil?
-              ## p "WHERE ViewName like '%#{j.to_s.upcase}' "
+              ## p "WHERE tcode_view like '%#{j.to_s}' "
                  chil_r = plsql.ChilScreens.first("where screens_id = :1 and screens_id_chil = :2",x[:id],y[:id])
                  ##  p  "where screens_id_Pare = :1 and screens_id = :2"
                  if chil_r.nil? then
