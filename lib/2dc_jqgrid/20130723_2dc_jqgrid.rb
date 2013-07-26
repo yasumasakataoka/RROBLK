@@ -7,8 +7,8 @@ module Jqgrid
 
     def jqgrid_javascripts
       locale = I18n.locale rescue :en
-      js = javascript_include_tag('jquery-1.10.2.min.js') + "\n"
-      js << javascript_include_tag('jquery-1.10.3.ui.js') + "\n"
+      js = javascript_include_tag('jquery.min.js') + "\n"
+      js << javascript_include_tag('jqgrid/jquery-ui-1.10.3.custom.min.js') + "\n"
       js << javascript_include_tag("jqgrid/i18n/grid.locale-#{locale}.js") + "\n"
       js << javascript_include_tag('jrails.js') + "\n"
       js << javascript_include_tag('rails.js') + "\n"
@@ -191,12 +191,8 @@ module Jqgrid
             if(cellname.match(/_code/i)){ 
               if(window.opener){
 	                      jQuery("#"+ pare_cellname[0], window.opener.document).val(value); 
-			      var screen_name = pare_cellname[0].replace("_code","_name");
-			      org_name = screen_name.split("_name")[0] + "_name";
-     			      var rowdata = jQuery("##{id}").getRowData(rowid);
-			      jQuery("#"+ screen_name, window.opener.document).val(rowdata[org_name]);
-			       window.close();
-	  }
+			      window.close();
+					   }
 	   }
           } 
         },|

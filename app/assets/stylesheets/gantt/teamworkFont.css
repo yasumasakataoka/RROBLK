@@ -1,12 +1,12 @@
 
 @font-face {
     font-family: 'TeamworkRegular';
-    src: image-url('teamwork-regular-webfont.eot');
-    src: image-url('teamwork-regular-webfont.eot?#iefix') format('embedded-opentype'),
-    image-url('teamwork-regular-webfont.woff') format('woff'),
-    image-url('teamwork-regular-webfont.ttf') format('truetype'),
-    image-url('teamwork-regular-webfont.otf') format('opentype'),
-    image-url('teamwork-regular-webfont.svg#TeamworkRegular') format('svg');
+    src: url('teamwork-regular-webfont.eot');
+    src: url('teamwork-regular-webfont.eot?#iefix') format('embedded-opentype'),
+    url('teamwork-regular-webfont.woff') format('woff'),
+    url('teamwork-regular-webfont.ttf') format('truetype'),
+    url('teamwork-regular-webfont.otf') format('opentype'),
+    url('teamwork-regular-webfont.svg#TeamworkRegular') format('svg');
     font-weight: normal;
     font-style: normal;
 

@@ -57,7 +57,7 @@ GanttMaster.prototype.init = function(place) {
   var self=this;
 
   //load templates
-  jQuery("#gantEditorTemplates").loadTemplates().remove();  // TODO: Remove inline jquery, this should be injected
+  $("#gantEditorTemplates").loadTemplates().remove();  // TODO: Remove inline jquery, this should be injected
 
   //create editor
   this.editor = new GridEditor(this);
@@ -68,14 +68,14 @@ GanttMaster.prototype.init = function(place) {
   this.gantt = new Ganttalendar("m", new Date().getTime() - 3600000 * 24 * 2, new Date().getTime() + 3600000 * 24 * 15, this, place.width() * .6);
 
   //setup splitter
-  var splitter = jQuery.splittify.init(place, this.editor.element, this.gantt.element, 70);
+  var splitter = $.splittify.init(place, this.editor.element, this.gantt.element, 70);
   splitter.secondBox.css("overflow-y", "auto").scroll(function() {
     splitter.firstBox.scrollTop(splitter.secondBox.scrollTop());
   });
 
 
   //prepend buttons
-  place.before(jQuery.JST.createFromTemplate({}, "GANTBUTTONS"));
+  place.before($.JST.createFromTemplate({}, "GANTBUTTONS"));
 
 
   //bindings

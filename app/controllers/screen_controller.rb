@@ -46,7 +46,7 @@ class ScreenController < ApplicationController
    @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
    respond_with @tbldata
   end  ##disp
-  def nst  ###子画面　link
+  def nst  ###子画面　link   xxxS_IDでリンクする時と　ctlXXXでリンクする時で分かれる。
      rcd_id  =  params[:id]  ### 親画面テーブル内の子画面へのkeyとなるid
      pare_tcode =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのtcode
      chil_tcode =   params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのtcode
@@ -69,6 +69,8 @@ class ScreenController < ApplicationController
       ### set_detail でセットされた@jqgrid_id
       pkey = "#{chil_view.split("_")[1].chop}_#{pare_view.split("_")[1].chop}_id"
       hash_rcd = {}
+      hash_rcd[:rcd_id_val] = rcd_id
+      hash_rcd[:rcd_id_key] = pkey.to_sym
       if show_data[:allfields].index(pkey.to_sym) then
 	  hash_rcd[:strsql] = "(select * from #{chil_view} where #{pkey} = #{rcd_id} )  a "
 	 else
@@ -119,7 +121,7 @@ class ScreenController < ApplicationController
           ##tmp_isnr =  sub_set_fields_from_allfields
           ##fprnt " class #{self} : LINE #{__LINE__}  hash_rcd  #{hash_rcd}"  unless hash_rcd.nil?
           ##fprnt " class #{self} : LINE #{__LINE__} hash_rcd  nil nil"  if hash_rcd.nil?
-          tmp_isnr.merge! hash_rcd unless hash_rcd.nil?
+          command_r[hash_rcd[:rcd_id_key]] =  hash_rcd[:rcd_id_val] unless hash_rcd.nil?
           command_r[:sio_classname] = "plsql_blk_insert"
           sub_insert_sio_c    command_r  ###更新要求
           ## command_r[:id_tbl] = nil
@@ -180,7 +182,9 @@ class ScreenController < ApplicationController
       ###debugger ## 画面の項目
       case 
           when params[:action]  == "index"   then 
-               @screen_tcode = @jqgrid_id  = params[:id]   ## listからの初期画面の時
+               @jqgrid_id  = params[:id]   ## listからの初期画面の時 とcodeを求める時
+	       @screen_tcode = params[:id]  if params[:id].split('_div_')[1].nil?    ##pop up無
+	       @screen_tcode = params[:id].split("_div_")[1] if params[:id].split('_div_')[1] 
           when params[:q]   then ##disp
                @jqgrid_id   =  params[:q]
 	       @screen_tcode = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
@@ -275,7 +279,7 @@ class ScreenController < ApplicationController
    def set_aftershowform screen_tcode_view,show_data
       ###外部テーブルのリンクに関係ない項目は　enable == true and require == false
       ## 変更項目の修正不可は固定にはしないで、関数で対応
-       	javascript_edit = %Q|function(formid) { 
+       	javascript_edit = %Q@function(formid) { 
                                 jQuery("input",formid).change(function(){ 
       		                        var chgname = jQuery(this).attr("name");
      					var chgval  = jQuery(this).val();
@@ -290,12 +294,17 @@ class ScreenController < ApplicationController
 	                        jQuery("input",formid).click(function(){ 
       		                        var chgname = jQuery(this).attr("name");
      					var viewval  = chgname.split("_");
+					var newwin;
       					if(chgname.match(/_code/i)){ if(chgname.match(/^#{screen_tcode_view.split(/_/,2)[1].chop}/i)){}
-      					  else{ url = "/screen/index?id=r_" + viewval[0] + "s";
-					  window.open(url,"","width=800, height=300, menubar=no, toolbar=no, scrollbars=yes");
+      					  else{ url = "/screen/index?id="  + chgname + "_div_r_" + viewval[0] + "s";
+					       if(!newwin||newwin.closed){
+					           newwin = window.open(url,"blkpopup","width=800,height=300,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+						   else{
+                                                       newwin.focus();}
+
 					  }
       					}
-      				})|
+      				})@
 	##tmp = plsql.pobjects.all("where expiredate > sysdate and objecttype = '1' and code like '#{screen_tcode.split("_")[1].chop}%'  ")
 	strtmp = ""
         keysfield = []
@@ -305,7 +314,7 @@ class ScreenController < ApplicationController
 	    ##keysfield << i[:code]
 	##end  tmp_columns
         show_data[:gridcolumns].each do |tmp_columns|
-            ##debugger
+            ###debugger
             if tmp_columns[:field].split("_")[0] != screen_tcode_view.split("_")[1].chop  and tmp_columns[:editrules][:required] == false and  	 tmp_columns[:editable] == true   then 
                javascript_edit << %Q|;jQuery("##{tmp_columns[:field]}",formid).attr("disabled",true)|
 	       ##javascript_add  << %Q|;jQuery("##{i.to_s}",formid).removeAttr("disabled")|

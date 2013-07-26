@@ -237,7 +237,7 @@
 }
 
 .taskBox .layout.extDep{
-  background-image:image-url(hasExternalDeps.png);
+  background-image:url(hasExternalDeps.png);
 }
 
 

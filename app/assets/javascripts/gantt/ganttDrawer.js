@@ -124,14 +124,14 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
   }
 
   function createHeadCell(lbl, span, additionalClass) {
-    var th = jQuery("<th>").html(lbl).attr("colSpan", span);
+    var th = $("<th>").html(lbl).attr("colSpan", span);
     if (additionalClass)
       th.addClass(additionalClass);
     return th;
   }
 
   function createBodyCell(span, isEnd, additionalClass) {
-    var ret = jQuery("<td>").html("&nbsp;").attr("colSpan", span).addClass("ganttBodyCell");
+    var ret = $("<td>").html("&nbsp;").attr("colSpan", span).addClass("ganttBodyCell");
     if (isEnd)
       ret.addClass("end");
     if (additionalClass)
@@ -140,9 +140,9 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
   }
 
   function createGantt(zoom, startPeriod, endPeriod) {
-    var tr1 = jQuery("<tr>").addClass("ganttHead1");
-    var tr2 = jQuery("<tr>").addClass("ganttHead2");
-    var trBody = jQuery("<tr>").addClass("ganttBody");
+    var tr1 = $("<tr>").addClass("ganttHead1");
+    var tr2 = $("<tr>").addClass("ganttHead2");
+    var trBody = $("<tr>").addClass("ganttBody");
 
     function iterate(renderFunction1, renderFunction2) {
       var start = new Date(startPeriod);
@@ -255,21 +255,21 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
     //set a minimal width
     computedTableWidth = Math.max(computedTableWidth, self.minGanttSize);
 
-    var table = jQuery("<table cellspacing=0 cellpadding=0>");
+    var table = $("<table cellspacing=0 cellpadding=0>");
     table.append(tr1).append(tr2).append(trBody).addClass("ganttTable").css({width:computedTableWidth});
     table.height(self.master.editor.element.height());
 
-    var box = jQuery("<div>");
+    var box = $("<div>");
     box.addClass("gantt unselectable").attr("unselectable","true").css({position:"relative",width:computedTableWidth});
     box.append(table);
 
     //highlightBar
-    var hlb = jQuery("<div>").addClass("ganttHighLight");
+    var hlb = $("<div>").addClass("ganttHighLight");
     box.append(hlb);
     self.highlightBar = hlb;
 
     //create link container
-    var links = jQuery("<div>");
+    var links = $("<div>");
     links.addClass("ganttLinks").css({position:"absolute",top:0,width:computedTableWidth,height:"100%"});
     box.append(links);
 
@@ -280,7 +280,7 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
     // drawTodayLine
     if (new Date().getTime() > self.startMillis && new Date().getTime() < self.endMillis) {
       var x = Math.round(((new Date().getTime()) - self.startMillis) * self.fx);
-      var today = jQuery("<div>").addClass("ganttToday").css("left", x);
+      var today = $("<div>").addClass("ganttToday").css("left", x);
       box.append(today);
     }
 
@@ -319,7 +319,7 @@ Ganttalendar.prototype.drawTask = function (task) {
   editorRow = task.rowElement;
   var top = editorRow.position().top+self.master.editor.element.parent().scrollTop();
   var x = Math.round((task.start - self.startMillis) * self.fx);
-  var taskBox = jQuery.JST.createFromTemplate(task, "TASKBAR");
+  var taskBox = $.JST.createFromTemplate(task, "TASKBAR");
 
 
 
@@ -341,7 +341,7 @@ Ganttalendar.prototype.drawTask = function (task) {
 
       resize:function(event, ui) {
         //console.debug(ui)
-        jQuery(".taskLabel[taskId=" + ui.helper.attr("taskId") + "]").css("width", ui.position.left);
+        $(".taskLabel[taskId=" + ui.helper.attr("taskId") + "]").css("width", ui.position.left);
         event.stopImmediatePropagation();
         event.stopPropagation();
       },
@@ -361,10 +361,10 @@ Ganttalendar.prototype.drawTask = function (task) {
   }
 
   taskBox.dblclick(function() {
-    self.master.showTaskEditor(jQuery(this).closest("[taskId]").attr("taskId"));
+    self.master.showTaskEditor($(this).closest("[taskId]").attr("taskId"));
 
   }).mousedown(function() {
-    var task = self.master.getTask(jQuery(this).attr("taskId"));
+    var task = self.master.getTask($(this).attr("taskId"));
     task.rowElement.click();
   });
 
@@ -374,11 +374,11 @@ Ganttalendar.prototype.drawTask = function (task) {
     taskBox.css("position", "absolute").draggable({
       axis:'x',
       drag:function (event, ui) {
-        jQuery(".taskLabel[taskId=" + jQuery(this).attr("taskId") + "]").css("width", ui.position.left);
+        $(".taskLabel[taskId=" + $(this).attr("taskId") + "]").css("width", ui.position.left);
       },
       stop:function(event, ui) {
-        //console.debug(ui,jQuery(this))
-        var task = self.master.getTask(jQuery(this).attr("taskId"));
+        //console.debug(ui,$(this))
+        var task = self.master.getTask($(this).attr("taskId"));
         var s = Math.round((ui.position.left / self.fx) + self.startMillis);
 
         self.master.beginTransaction();
@@ -386,7 +386,7 @@ Ganttalendar.prototype.drawTask = function (task) {
         self.master.endTransaction();
       }/*,
       start:function(event, ui) {
-        var task = self.master.getTask(jQuery(this).attr("taskId"));
+        var task = self.master.getTask($(this).attr("taskId"));
         var s = Math.round((ui.position.left / self.fx) + self.startMillis);
         console.debug("start",new Date(s));
       }*/
@@ -394,7 +394,7 @@ Ganttalendar.prototype.drawTask = function (task) {
   }
 
 
-  var taskBoxSeparator=jQuery("<div class='ganttLines'></div>");
+  var taskBoxSeparator=$("<div class='ganttLines'></div>");
   taskBoxSeparator.css({top:top+taskBoxSeparator.height()});
 //  taskBoxSeparator.css({top:top+18});
 
@@ -426,7 +426,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
    * A representation of a Horizontal line
    */
   HLine = function(width, top, left) {
-    var hl = jQuery("<div>").addClass("taskDepLine");
+    var hl = $("<div>").addClass("taskDepLine");
     hl.css({
       height: lineSize,
       left: left,
@@ -440,7 +440,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
    * A representation of a Vertical line
    */
   VLine = function(height, top, left) {
-    var vl = jQuery("<div>").addClass("taskDepLine");
+    var vl = $("<div>").addClass("taskDepLine");
     vl.css({
       height: height,
       left:left - lineSize / 2,
@@ -470,7 +470,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
   function drawStartToEnd(rectFrom, rectTo, peduncolusSize) {
     var left, top;
 
-    var ndo = jQuery("<div>").attr({
+    var ndo = $("<div>").attr({
       from: from.id,
       to: to.id
     });
@@ -550,7 +550,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
     }
 
     //arrow
-    var arr = jQuery("<img src='linkArrow.png'>").css({
+    var arr = $("<img src='../assets/linkArrow.png'>").css({
       position: 'absolute',
       top: rectTo.top + rectTo.height / 2 - 5,
       left: rectTo.left - 5
@@ -569,7 +569,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
   function drawStartToStart(rectFrom, rectTo, peduncolusSize) {
     var left, top;
 
-    var ndo = jQuery("<div>").attr({
+    var ndo = $("<div>").attr({
       from: from.id,
       to: to.id
     });
@@ -649,7 +649,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
     }
 
     //arrow
-    var arr = jQuery("<img src='linkArrow.png'>").css({
+    var arr = $("<img src='linkArrow.png'>").css({
       position: 'absolute',
       top: rectTo.top + rectTo.height / 2 - 5,
       left: rectTo.left - 5

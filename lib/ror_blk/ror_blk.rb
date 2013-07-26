@@ -24,7 +24,7 @@
          orgname = plsql.select(:first,fstrsql)[:pobjgrp_name]  if plsql.select(:first,fstrsql)
          ##p "orgname #{orgname}"
          ##p "tcode #{tcode}"
-         if (orgname.empty? or orgname.nil?) and ptype == "1" then  ###view項目の時はテーブル項目まで
+         if (orgname.empty? or orgname.nil?) and ptype == "view_field" then  ###view項目の時はテーブル項目まで
             orgname = ""
             tcode.split('_').each_with_index do |value,index|
 		    fstrsqly =  basesql +  "   POBJECT_TCODE = '#{if index == 0 then value + "s" else value end}'  and POBJECT_OBJECTTYPE = '#{if index == 0 then  'tbl' else 'tbl_field' end}' "

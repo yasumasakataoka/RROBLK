@@ -216,7 +216,7 @@
   top:0px;
   position:absolute;
   width:16px;
-  background: image-url(milestone.png) no-repeat;
+  background: url(milestone.png) no-repeat;
   height:16px;
   display:none;
 }
