@@ -6,5 +6,3 @@ V082::Application.config.session_store :cookie_store, key: '_v082_session'
 # which shouldn't be used to store highly confidential information
 # (create the session table with "rails generate session_migration")
 # V082::Application.config.session_store :active_record_store
-plsql.activerecord_class = ActiveRecord::Base
-

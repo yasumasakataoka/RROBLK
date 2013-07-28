@@ -63,8 +63,8 @@ class ScreenController < ApplicationController
      pare_view = plsql.screens.first("where tcode = '#{pare_tcode}' and Expiredate > sysdate order by expiredate ")[:tcode_view]  ## set @gridcolumns 
      view_item_set    ###画面項目セット
      ##debugger 
-     ## p "chil_view : #{chil_view}  : #{@jqgrid_id} : "#{@disp_screenname_name} "
-     ## p "{pare_view}{chil_view} : #{pare_view}#{chil_view}   :xxx: #{ params[:nst_tbl_val].split(";")[2]}" 
+     ##p "chil_view : #{chil_view}  : #{@jqgrid_id} : "#{@disp_screenname_name} "
+     ##p "{pare_view}{chil_view} : #{pare_view}#{chil_view}   :xxx: #{ params[:nst_tbl_val].split(";")[2]}" 
       rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @jqgrid_id 
       ### set_detail でセットされた@jqgrid_id
       pkey = "#{chil_view.split("_")[1].chop}_#{pare_view.split("_")[1].chop}_id"
@@ -133,7 +133,7 @@ class ScreenController < ApplicationController
 	 ###debugger
 	 ##sub_set_fields_from_allfields ###画面の内容をcommand_rへ
          command_r[:sio_classname] = "plsql_blk_update"
-         sub_insert_sio_c     command_r  ### p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
+         sub_insert_sio_c     command_r  ###p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
        else     
        ##debugger ## textは表示できないのでメッセージの変更要
        render :text => "return to menu because session loss params:#{params[:oper]} "

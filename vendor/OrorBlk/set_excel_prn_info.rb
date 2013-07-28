@@ -227,7 +227,7 @@ def  chng_tblfield
      @sortkey = {}
      @pagekey = []
      ##tmp = plsql.USER_TAB_COLUMNS.all("where table_name = '#{@sheetname}'")
-     tmp = plsql.r_detailfields.all("where screen_code = '#{@sheetname}'")
+     tmp = plsql.r_screenfields.all("where screen_tcode = '#{@sheetname}'")
      @rtype = {}
      @rscale = {}
      tmp.each do |k|
@@ -422,7 +422,7 @@ def crt_prwan_tst_pdf
 	     end 
 	     ###ページ替えでない時
 	      ppdf.to_pdf record,rcnt,sum998,sum999 do
-  	        eval(str.encode)
+  	        eval(str) if str.encoding == "#<Encoding:UTF-8>"
               end
 	  end
 	  break if cnt > @max_rcnt * 2     ###テスト印刷では3ページ迄
