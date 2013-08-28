@@ -1,0 +1,34 @@
+ cmdstr << "data = {}" 
+        cmdstr << "next_screen_data = {}"
+        ymlsrc = rs[:ymlcode].split(/\n/)
+        ymlsrc.each do |yml|
+              if   yml =~ /call_next_screen .* do / then
+		     ###cmdstr << "\n ##debugger"
+		     cmdstr << "\n" + "record_auto #{from_screen_code},from_screen_data,"
+		     next_screen_code = yml.split("call_next_screen")[1].split(" do ")[0] 
+                     cmdstr << next_screen_code +  ","
+                     frmf =  rs[:pobject_code_view].split("_")[1].chop
+                     show_data = get_show_data(next_screen_code)
+                     nxtf = show_data[:screen_code_view].split("_")[1].chop
+                     cmdstr << frmf + "," + nxtf
+	        else
+                    if yml =~ /=/ then
+                       yml.split("_").each do |fl|
+                           if fl.gsub(" ","") =~ /^::/ then
+                         
+                          cmdstr << " next_screen_data[" + yml.split("=>")[0].gsub(" ","") + "] => "
+                         else 
+                          cmdstr << yml.split("=>")[0] + " => "
+                       end
+                       if yml.split("=>")[1].gsub(" ","") =~ /^:/ then
+                          cmdstr << " from_screen_data[" + yml.split("=>")[0].gsub(" ","") + "] "
+                         else 
+                          cmdstr << yml.split("=>")[0] 
+                       end
+                      else
+                        cmdstr << yml
+                    end ##  if yml =~ /=>
+	       end	## end if yml =~ /call_  
+	    end ##end do ymlsrc
+    end  ## if rs
+

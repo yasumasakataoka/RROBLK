@@ -209,10 +209,10 @@ GanttMaster.messages = {
 };
 
 
-GanttMaster.prototype.createTask = function (id, level, start, duration,mlevel,loca_code,loca_name,itm_code,itm_name,pare_num,chil_num) {
+GanttMaster.prototype.createTask = function (id, name, code, level, start, duration,mlevel) {
   var factory = new TaskFactory();
 
-  return factory.build(id, level, start, duration,mlevel,loca_code,loca_name,itm_code,itm_name,pare_num,chil_num);
+  return factory.build(id, name, code, level, start, duration,mlevel);
 };
 
 
@@ -329,7 +329,7 @@ GanttMaster.prototype.loadTasks = function(tasks, selectedRow) {
   for (var i=0;i<tasks.length;i++){
     var task = tasks[i];
     if (!(task instanceof Task)) {
-      var t = factory.build(task.id, task.name, task.code, task.level, task.start, task.duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.pare_num,task.chil_num);
+      var t = factory.build(task.id, task.name, task.code, task.level, task.start, task.duration,task.mlevel);
       for (var key in task) {
         if (key!="end" && key!="start")
           t[key] = task[key]; //copy all properties

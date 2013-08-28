@@ -1,5 +1,8 @@
-<%=  javascript_include_tag('jquery.min.js')  %>
-<%   javascript_include_tag('jqgrid/jquery-ui-1.10.3.custom.min.js')  %>
+<!DOCTYPE HTML>
+<html>
+<head>
+<%= javascript_include_tag "jquery-1.7.2.min.js" %>
+<%= javascript_include_tag "jquery-ui.min1.8.js" %>
 <%= javascript_include_tag "gantt/libs/jquery.livequery.min.js" %>
  <%= javascript_include_tag "gantt/libs/jquery.timers.js" %>
  <%= javascript_include_tag "gantt/libs/platform.js" %>
@@ -14,10 +17,12 @@
  <%= javascript_include_tag "gantt/ganttGridEditor.js" %>
  <%= javascript_include_tag "gantt/ganttMaster.js" %>
 
- <%= stylesheet_link_tag("jqgrid/themes/default/jquery-ui-1.10.3.custom.css") %>
 <%= stylesheet_link_tag "gantt/platform.css"  %>
 <%= stylesheet_link_tag "gantt/libs/dateField/jquery.dateField.css"  %>
 <%= stylesheet_link_tag "gantt/gantt.css"  %>
+<%= stylesheet_link_tag "gantt/gantt_compact.css"  %>
+<%= stylesheet_link_tag "gantt/teamworkFont.css"  %>
+
 
 <meta http-equiv="content-type" content="text/html;charset=UTF-8" />  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -30,7 +35,9 @@
             
 </head>
 <h5> <center><%= @disp_screenname_name           %>  </center></h5>
-<div id="gantEditorTemplates" style="display:none;">
+<body style="background-color: #fff;">
+
+<div id="gantEditorTemplates" >
   <div class="__template__" type="GANTBUTTONS"><!--
 <div class="ganttButtonBar">
 <h1 style="float:left">task tree/gantt</h1>
@@ -110,7 +117,7 @@
 <div class="taskBox" taskId="(#=obj.id#)" >
 <div class="layout (#=obj.hasExternalDep?'extDep':''#)">
 <div class="taskStatus" status="(#=obj.status#)"></div>
-<div class="taskProgress" style="width:(#=obj.progress>100?100:obj.progress#)%; background-color:(#=obj.progress>100?'red':'rgb(153,255,51);'#);"></div>
+<div class="taskProgress" style="width:100%; background-color:(#=obj.progress>100?'red':'rgb(153,255,51);'#);"></div>
 <div class="milestone (#=obj.startIsMilestone?'active':''#)" ></div>
 
 <div class="taskLabel"></div>
@@ -191,8 +198,8 @@
 </tr>
 --></div>
 
-</div><body>
- <%=   yield %>
+</div>
+<%=   yield %>
 <br>
 <div class="headright"> 
  <%= render :partial => "devise/login_logout" %>

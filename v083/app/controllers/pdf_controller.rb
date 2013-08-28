@@ -150,7 +150,7 @@ def index
    def get_pdfscreen_code 
        @screen_code =  params[:q].to_s.upcase 
        screen_code
-       @show_data = get_show_data(screen_code, @nst_screenname_id )
+       @show_data = get_show_data(screen_code )
        show_data
    end
 end  ###class

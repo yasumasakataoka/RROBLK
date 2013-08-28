@@ -48,6 +48,7 @@
         wherestr = "\n where "   ##joinが条件
         fromstr = "\n from " + i + " " + i.chop + " ,"   ## 最後のSはとる。
         sub_rtbl = "r_" + i   ##create view name
+        ##p "subfields #{subfields}"
         subfields.each do |j|
 	   js = j.to_s
            if  js =~ /_id/  then
@@ -62,10 +63,13 @@
                ##    wherestr << rtblname + "." +  js.split(/s_id/)[0]  + "_id = " 
                ##end   
 	       wherestr << i.chop + "." + js  + " and " 
+               ##p " #{__LINE__} #{selectstr}"
                selectstr << i.chop + "." +  js + " " + i.chop + "_" +  js.sub("s_id","_id") + " ,"
+               ##p "#{__LINE__}  #{selectstr}"
                subtblcrt  js,rtblname do |k|
                  selectstr << k
                end
+               ##p "#{__LINE__} #{selectstr}"
              else
                fprnt "table:" + i + " field:" +  js + " length:" + (i.chop.length + js.length).to_s if  (i.chop.length + js.length) > 30
                ###if js == 'id'  then
@@ -78,7 +82,7 @@
         end   ##subfields
         ##  p "rtblw: " + i
         strsql = "create or replace view  r_" + i + " as "   
-        strsql << selectstr[0..-3] +  fromstr[0..-2] + wherestr[0..-5]
+        strsql << selectstr.chop +  fromstr.chop + wherestr[0..-5]
         subprint strsql
         plsql.execute  strsql  
      ## end    ## tblarea do 
@@ -105,7 +109,7 @@
            ##subfields = plsql.USER_TAB_COLUMNS.all("WHERE TABLE_NAME = :1",join_rtbl)
          #  subfields  = plsql.__send__(join_rtbl).column_names
         #end  
-        ##subprint " #{__LINE__} subfields #{subfields}"
+        ##p " #{__LINE__}  join_rtbl #{ join_rtbl}  subfields #{subfields}"
         subfields.each do |j|
           js = j.to_s
           xfield =  js  
@@ -118,17 +122,19 @@
                      xfield = "" if js.upcase.match(x)
                end
                if   xfield  != "" then 
-                    sfx = ""
+                    ##sfx = ""
                     ##sfx = subrtbl.split(/s_id/)[0] + "_" if xfield == "id" 
 
-                    xfield = rtblname + "." + xfield + " " + sfx + xfield +  subrtbl.split(/_id/)[1] if subrtbl.split(/_id/)[1]
-                    xfield = rtblname + "." + xfield + " "  + sfx + xfield  if subrtbl.split(/_id/)[1].nil?
-                    k <<  " " +  xfield   + ",\n" 
+                    xfield = rtblname + "." + xfield + " " + xfield +  subrtbl.split(/_id/)[1] if subrtbl.split(/_id/)[1]
+                    xfield = rtblname + "." + xfield + " "  + xfield  if subrtbl.split(/_id/)[1].nil?
+                    k <<  " " +  xfield   + "," 
                     lngerrfield = xfield.split(" ")[1]
-                    p "sub table:" + join_rtbl + " field:" + lngerrfield  + " length:" + (lngerrfield.length).to_s if (lngerrfield.length) > 29
+                    ###p " 127 #{xfield}"
+                    p "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  if ( lngerrfield.length) > 29
                end  
             end  ## subfields.each
             ### p "subtblcrt " + k
+           ##p "#{__LINE__} #{k}"
          yield k           
  end 
  ## ナマテーブルの時
@@ -153,7 +159,9 @@
                    wherestr << rtblname + "." +  js.split(/s_id/)[0]  + "_id = " 
                end   
                wherestr << i.chop + "." + js  + " and " 
+                 p "#{__LINE__} #{selectstr}"
                selectstr << i.chop + "." +  js + " " + i.chop + "_" +  js + "," 
+                   p "#{__LINE__} #{selectstr}"
                ### rtblname    alter sub_rtbl view
                ## joinfields = plsql.USER_TAB_COLUMNS.all("WHERE TABLE_NAME = :1",join_rtbl)
 	       joinfields  = plsql.__send__(join_rtbl).column_names
@@ -180,12 +188,14 @@
                     xfield = rtblname + "." + xfield + " " + sfx + xfield 
                     xfield <<   js.split(/s_id/)[1]  if js.split(/s_id/)[1]
                     selectstr <<  " " +  xfield  + ",\n" 
+                     p " 184 #{xfield}"
                     lngerrfield = xfield.split(" ")[1]
-                    p "sub table:" + join_rtbl + " field:" + lngerrfield  + " length:" + (lngerrfield.length).to_s if (lngerrfield.length) > 29
+                    p "sub table: #{join_rtbl} field:  #{lngerrfield}  length: #{(lngerrfield.length).to_s} " if (lngerrfield.length) > 30
                  end    
                end  ## joinfields.each
            ##  p "subtblcrt "
             else 
+                 p "#{__LINE__} #{selectstr}"
                p "table:" + i + " field:" +  js + " length:" + (i.chop.length + js.length).to_s if  (i.chop.length + js.length) > 30
                if js == 'id'  then
                   selectstr << i.chop + "." +  js  + " ,"
@@ -193,6 +203,7 @@
 	 	  selectstr << i.chop + "." +  js + " " + i.chop + "_" +  js + " ," 
 	        end 
                ## p  j[:column_name]
+               p "#{__LINE__} #{selectstr}"
               end      ## if tbldata[:column_name] =~ /_ID/
         end  ## subfields.each  
         p "subcrtrtbl a_rtblw: " + i

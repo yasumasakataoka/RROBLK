@@ -113,17 +113,14 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   var row = task.rowElement;
 
   row.find(".taskRowIndex").html(task.getRow() + 1);
-  row.find(".indentCell").css("padding-left", task.mlevel * 10); //add mlevel
-  row.find("[name=loca_name]").val(task.loca_name); //add
-  row.find("[name=loca_code]").val(task.loca_code); //add
-  row.find("[name=itm_name]").val(task.itm_name);  //add
-  row.find("[name=itm_code]").val(task.itm_code);  //add
+  row.find(".indentCell").css("padding-left", task.mlevel * 10);
+  row.find("[name=name]").val(task.name);
+  row.find("[name=code]").val(task.code);
   row.find("[status]").attr("status", task.status);
-  row.find("[name=pare_num]").val(task.pare_num);  //add
-  row.find("[name=chil_num]").val(task.chil_num);  //add
+
   row.find("[name=duration]").val(task.duration);
-  row.find("[name=start]").val(new Date(task.start).format("yyyy/MM/dd")).updateOldValue(); // called on dates only because for other field is called on focus event
-  row.find("[name=end]").val(new Date(task.end).format("yyyy/MM/dd")).updateOldValue();
+  row.find("[name=start]").val(new Date(task.start).format()).updateOldValue(); // called on dates only because for other field is called on focus event
+  row.find("[name=end]").val(new Date(task.end).format()).updateOldValue();
   row.find("[name=depends]").val(task.depends);
   row.find(".taskAssigs").html(task.getAssigsString());
 

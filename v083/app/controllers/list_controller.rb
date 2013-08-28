@@ -19,7 +19,7 @@ before_filter :authenticate_user!
 	 else ##
 	  @vlist = {}
 	  plsql.r_screens.all.each do |i|
-                   @vlist[i[:screen_tcode].downcase.to_sym] = sub_blkgetpobj(i[:screen_tcode],"screen") ## 
+                   @vlist[i[:pobject_code_scr].downcase.to_sym] = sub_blkgetpobj(i[:pobject_code_scr],"screen") ## 
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
           end 
