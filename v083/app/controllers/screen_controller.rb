@@ -53,7 +53,7 @@ class ScreenController < ApplicationController
      @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[2],"screen")   ### 子の画面
      #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
      get_screen_code
-     ##########
+    ##debugger 
      @jqgrid_id = "#{pare_code}_div_#{chil_code}"   ### 親テーブルと子テーブルを_div_で分けた。
      @scriptopt = {}
      @options ={}
@@ -313,7 +313,6 @@ class ScreenController < ApplicationController
 	    ##keysfield << i[:code]
 	##end  tmp_columns
         show_data[:gridcolumns].each do |tmp_columns|
-            ###debugger
             if tmp_columns[:field].split("_")[0] != screen_code_view.split("_")[1].chop  and tmp_columns[:editrules][:required] == false and  	 tmp_columns[:editable] == true   then 
                javascript_edit << %Q|;jQuery("##{tmp_columns[:field]}",formid).attr("disabled",true)|
 	       ##javascript_add  << %Q|;jQuery("##{i.to_s}",formid).removeAttr("disabled")|

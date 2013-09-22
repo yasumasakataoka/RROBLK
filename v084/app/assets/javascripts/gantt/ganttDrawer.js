@@ -649,7 +649,11 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
     }
 
     //arrow
+<<<<<<< HEAD
     var arr = $("<img src='../assets/linkArrow.png'>").css({
+=======
+    var arr = $("<img src='linkArrow.png'>").css({
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
       position: 'absolute',
       top: rectTo.top + rectTo.height / 2 - 5,
       left: rectTo.left - 5

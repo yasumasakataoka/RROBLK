@@ -6,6 +6,7 @@ CREATE TABLE Persons
   ,Code varchar(10)
   ,Name VARCHAR(50)
   ,UserGroups_id numeric(38)
+  ,ScreenLevels_id numeric(38)
   ,Sects_id numeric(38)
   ,Email VARCHAR(50)
   ,Remark VARCHAR(100)
@@ -22,8 +23,8 @@ drop sequence Persons_seq
 ;  
 create sequence Persons_seq
 ;
-insert into  Persons(id,code,name, UserGroups_id,Sects_id,email,Expiredate,Persons_id_Upd)
-values(0,'0','system',0,0,'yasumasa_kataoka@voice.ocn.ne.jp','2099/12/31',0)
+insert into  Persons(id,code,name, UserGroups_id,Sects_id,email,Expiredate,Persons_id_Upd,ScreenLevels_id)
+values(0,'0','system',0,0,'yasumasa_kataoka@voice.ocn.ne.jp','2099/12/31',0,0)
 ; 
 DROP TABLE UserGroups
 ;

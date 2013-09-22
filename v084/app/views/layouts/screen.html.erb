@@ -11,6 +11,7 @@
            
 </head>
 <body style="background-color: #fff;" >
+<<<<<<< HEAD
 <div id="nstid">
  <%=   yield %>
 <br>
@@ -19,6 +20,16 @@
 <%=raw  render :partial =>"gantt/divgantt" %>
 </div>
 <%=raw yield :ganttchart %>
+=======
+ <%=   yield %>
+<br>
+<div id="ganttcharthtml">
+<%=raw  render :partial =>"gantt/divgantt" %>
+</div>
+<div id="ganttchartid">
+</div>
+
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
 <div class="headright"> 
  <%= render :partial => "devise/login_logout" %>
 </div>

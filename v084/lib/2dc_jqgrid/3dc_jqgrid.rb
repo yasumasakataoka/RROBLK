@@ -199,6 +199,7 @@ module JqgridFilter
 	 edoptvalue =  edoptvalue.sub(j,sub_blkgetpobj(j,"fix_char"))
      end
      return edoptvalue
+<<<<<<< HEAD
   end
   def sub_gantt_chart screen_code,id
       ngantts = []
@@ -293,4 +294,7 @@ module JqgridFilter
      end
      return ngantts
  end
+=======
+  end 
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
 end

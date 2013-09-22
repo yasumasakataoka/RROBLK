@@ -61,8 +61,13 @@ require "ruby-plsql"
    ngantts = []
   time_now =  Time.now 
   ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
+<<<<<<< HEAD
   itm = plsql.itms.first("where code = '#{ARGV[0]}' and Expiredate > sysdate ")
   r = plsql.opeitms.first("where itms_id = '#{itm[:id]}' and Expiredate > sysdate   order by processseq desc,priority desc")
+=======
+  itm = plsql.itms.first("where code = '#{ARGV[0]}' and Expiredate > sysdate AND ROWNUM <2 ")
+  r = plsql.opeitms.first("where itms_id = '#{itm[:id]}' and Expiredate > sysdate AND ROWNUM <2   order by processseq desc,priority desc")
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
   if r then 
      ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>r[:itms_id],:loca_id=>r[:locas_id],:processseq=>r[:processseq],:priority=>r[:priority],:endtime=>time_now}
      cnt = 0

@@ -343,7 +343,11 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
               rowList:[#{screen_options[:screen_rowlist]}],
               imgpath: "/images/jqgrid",
               viewrecords: true,
+<<<<<<< HEAD
               width:#{screen_options[:screen_width] ||= 1800},
+=======
+              width:#{screen_options[:screen_width] ||= 1900},
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
               height: #{screen_options[:screen_height]},
               sortname: "#{screen_options[:screen_sort_column]}",
               sortorder: "",
@@ -425,6 +429,10 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
   end
   public
   def crtgantt ganttdata
+<<<<<<< HEAD
    %Q|<div id="ganttchartid"><script type="text/javascript">    jQuery(document).ready(function(){jQuery("#ganttcharthtml").show("fast");var ge = new GanttMaster();   ge.init(jQuery("#workSpace"));var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 20,height:jQuery(window).height() - 250}); ge.loadProject( #{ganttdata}); })     </script></div>|.gsub(/\n/," ")
+=======
+       %Q|<div id="ganttchartid"><p>aaa</p><script type="text/javascript">    jQuery(document).ready(function(){   var ge = new GanttMaster();    ge.init(jQuery("#workSpace"));    var workSpace = jQuery("#workSpace");    workSpace.css({width:jQuery(window).width() - 20,height:jQuery(window).height() - 250});    ge.loadProject( #{ganttdata});    });     </script></div>|.gsub(/\n/," ")
+>>>>>>> 30f97172d06078e511be82b23917b4cf8fafaf24
   end 
 end

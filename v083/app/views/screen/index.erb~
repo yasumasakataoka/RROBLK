@@ -1,2 +1,0 @@
-<%=raw jqgrid("#{@disp_screenname_name}", "#{@nst_screenname_id}", "/screen/disp",  @yscreendetail, @options,@scriptopt,@extbutton,@extdiv_id,nil) %>
-
