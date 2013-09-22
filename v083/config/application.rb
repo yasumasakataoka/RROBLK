@@ -58,6 +58,10 @@ module V083
     ##config.assets.version = '1.0'
     ## for pdf prawn
     config.autoload_paths << "#{Rails.root}/app/reports"
+    # Custom directories with classes and modules you want to be autoloadable.
+    # config.autoload_paths += %W(#{config.root}/extras)
+    ##  config.autoload_paths += %W(#{config.root}/lib)  # ’Ç‰Á
+    ##  config.autoload_paths += Dir["#{config.root}/lib/**/*.rb"] if Rails.env.development? # ’Ç‰Á
   end
 end
 

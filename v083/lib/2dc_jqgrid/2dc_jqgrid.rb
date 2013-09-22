@@ -48,6 +48,7 @@ module Jqgrid
           :autowidth           => 'false',
           :shrinkToFit          => 'false',
           :div_repl_id         => '',          ###別画面にリンクする時
+          :grp_search_form     => 'false',          ###group seach_form
           :max_width           =>  '1500',     ### resize 幅
           :max_height          =>  '700',      ###  reize 高さ
           :text_indent         =>   '2',       ### footerの横位置
@@ -167,6 +168,9 @@ module Jqgrid
         },
         /
       end
+      ### group search form 
+           grp_search_form = %Q| jQuery("#grpsrc#{id}").filterGrid("##{id}",{ gridModel:true, gridNames:true, formtype:"vertical", enableSearch: true, enableClear: true, autosearch: false });|
+
       editable = ""
       if options[:edit] && options[:inline_edit] == 'true'
         editable = %Q/
@@ -210,7 +214,11 @@ module Jqgrid
                            }, position:"right" })|
          end
       end                   
-
+      # Enable subgrids
+      subgrid = ""
+      subgrid_enabled = "subGrid:false,"
+      # Generate required Javascript & html to create the jqgrid
+      ##
       a = %Q( #{init_jq}
          <script type="text/javascript">
           #{error_handler}
@@ -245,18 +253,15 @@ module Jqgrid
               caption: "#{title}"
               })
             .navGrid("##{id}_pager",
-            {refresh:true,view:false,edit:false,add:false,del:false,search:false },
+            {refresh:true,view:#{options[:view]},edit:#{edit_button},add:#{options[:add]},del:#{options[:delete]},search:false },
 {editCaption:"edit  #{title}",#{form_ps},afterShowForm:#{scriptopt[:aftershowform_edit]},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {addCaption:"add  #{title}",#{form_ps},afterShowForm:#{scriptopt[:aftershowform_add]},editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}},
 {caption:"delete  #{title}",#{form_ps},delData:{q:"#{id}",authenticity_token:"#{authenticity_token}"}})
             #{search}\n
-            .navButtonAdd("##{id}_pager",{ caption:"",title:"Add",buttonicon:"ui-icon-plus",
-              onClickButton: function(){ jQuery("##{id}").editGridRow("new",{editCaption:"ADD",editData:{q:"#{id}",authenticity_token:"#{authenticity_token}"},afterShowForm:#{scriptopt[:aftershowform_add]}})}   , position:"right"})
-            .navButtonAdd("##{id}_pager",{ caption:"",title:"Copy  & Add",buttonicon:"ui-icon-copy",
+            .navButtonAdd("##{id}_pager",{ caption:"",title:"copy and add",buttonicon:"ui-icon-copy",
               onClickButton: function(){ var gsr = jQuery("##{id}").getGridParam("selrow");
                               if(gsr){ jQuery("##{id}").editGridRow(gsr,{editCaption:"COPY & ADD",editData:{q:"#{id}",copy:"yes",authenticity_token:"#{authenticity_token}"},afterShowForm:#{scriptopt[:aftershowform_add]}}); } else { alert("Please select Row") } } , position:"right"})
-
-           .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
+   .navButtonAdd("##{id}_pager",{ caption:"",title:"export_to_xlsx",buttonicon:"ui-icon-arrowthickstop-1-s",
               onClickButton: function() { document.location = "/excelexport/index?q=#{id}"; } , position:"right" })
            .navButtonAdd("##{id}_pager",{ caption:"",title:"import_from_xlsx",buttonicon:"ui-icon-arrowthickstop-1-n",
               onClickButton: function() { document.location = "/importfmxlsx/index?q=#{id}"; } , position:"right" })
@@ -273,6 +278,7 @@ module Jqgrid
             #{pdf_link if options[:div_repl_id] == ''}
     #{filter_toolbar}
             #{'})' unless options[:omit_ready]=='true'}; 
+            #{grp_search_form  if  options[:grp_search_form] == true} 
     #{nst_div}
         <p>  #{scriptopt[:pare_contents]}</p>        
         <p  id="grpsrc#{id}"  ></p> 
@@ -285,7 +291,7 @@ module Jqgrid
      #{replace_end} 
       ).gsub(/\s+/," ")
       a.gsub(".nav","\n.nav") if  options[:div_repl_id] == ''  ###repacewithが \nだと変換してくれない。
-      ##fprnt " jqgrid #{a} "
+      fprnt " jqgrid #{a} "
       return a
     end
     private

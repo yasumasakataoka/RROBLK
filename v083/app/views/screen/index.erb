@@ -1,5 +1,5 @@
 <style> .prntclass {display: none} </style>
 <%=raw %Q|<div id="#{@jqgrid_id}_printid" class="prntclass">|%>
 <p><form></form></p></div>
-<%=raw jqgrid("#{@disp_screenname_name}", "#{@jqgrid_id}", "/screen/disp",  @gridcolumns, @options,@scriptopt,@extbutton,@extdiv_id,form_authenticity_token.to_s) %>
+<%=raw jqgrid("#{@disp_screenname_name}", "#{@jqgrid_id}", "/screen/disp",@gridcolumns, @options,@scriptopt,@extbutton,@extdiv_id,form_authenticity_token.to_s) %>
 

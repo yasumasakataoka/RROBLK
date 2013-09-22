@@ -5,4 +5,4 @@ ActionView::Base.send :include,Ror_blk
 Array.send :include, JqgridJson
 ActionView::Base.send :include, Jqgrid
 ActionController::Base.send :include,JqgridFilter
-
+RELOAD_LIBS = Dir[Rails.root + 'lib/**/*.rb'] if Rails.env.development?
