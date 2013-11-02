@@ -58,7 +58,7 @@ module V084
     ##config.assets.version = '1.0'
     ## for pdf prawn
     config.autoload_paths << "#{Rails.root}/app/reports"
-    config.autoload_paths += Dir["#{config.root}/lib/2dc_jqgrid/2dc_jqgrid.rb"]
+    ##config.autoload_paths += Dir["#{config.root}/lib/2dc_jqgrid/2dc_jqgrid.rb"]
   end
 end
 

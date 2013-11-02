@@ -863,7 +863,7 @@ function openBlackPopup(url,width,height,onCloseCallBack,iframeId){
   bg.find("iframe:first").attr("src",url).css({width:width, height:height,top:100,border:'8px solid #909090', backgroundColor:'#ffffff'});
 
   var bdiv= $("<div>").css({width:width,position:"relative",height:"5px", textAlign:"right", margin:"auto" });
-  bdiv.append("<img src=\"'../assets/closeBig.png\" style='cursor:pointer;position:absolute;right:-40px;top:30px;'>");
+  bdiv.append("<img src=\"closeBig.png\" style='cursor:pointer;position:absolute;right:-40px;top:30px;'>");
   bdiv.find("img:first").click( function(){
     bg.trigger("close");
 
@@ -878,14 +878,13 @@ function openBlackPopup(url,width,height,onCloseCallBack,iframeId){
 function createBlackPage(width,height,onCloseCallBack){
   if (!width)
     width='900px';
- // if (!height)   blk comment
-    height='650px';
+  if (!height)
+    height='730px';
 
   $("#__blackpopup__").remove();
 
   var bg=$("<div>").attr("id","__blackpopup__");
-  bg.css({position:'fixed',top:"0px",paddingTop:"50px", left:0,width:'100%',
-height:'100%',  backgroundImage:"url('../assets/black_70.png')"});
+  bg.css({position:'fixed',top:"0px",paddingTop:"50px", left:0,width:'100%',height:'100%',  backgroundImage:"url('../assets/black_70.png')"});
   bg.append("<div id='bwinPopupd' name='bwinPopupd'></div>");
   bg.bringToFront();
 
@@ -893,7 +892,7 @@ height:'100%',  backgroundImage:"url('../assets/black_70.png')"});
   ret.css({width:width, height:height,top:10, "-moz-box-shadow":'1px 1px 6px #333333',overflow:'auto',"-webkit-box-shadow":'1px 1px 6px #333333', border:'8px solid #777', backgroundColor:"#fff", margin:"auto" });
 
   var bdiv= $("<div>").css({width:width,position:"relative",height:"0px", textAlign:"right", margin:"auto" });
-  var img=$("<img src=''../assets/closeBig.png' style='cursor:pointer;position:absolute;right:-40px;top:5px;' title='close'>");
+  var img=$("<img src='closeBig.png' style='cursor:pointer;position:absolute;right:-40px;top:5px;' title='close'>");
   bdiv.append(img);
   img.click( function(){
     bg.trigger("close");

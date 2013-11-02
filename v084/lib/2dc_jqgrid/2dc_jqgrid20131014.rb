@@ -5,13 +5,11 @@ include  JqgridFilter
     def jqgrid_stylesheets
       css  = stylesheet_link_tag("jqgrid/themes/default/jquery-ui-1.10.3.custom.css") + "\n"
       css << stylesheet_link_tag('jqgrid/ui.jqgrid.css') + "\n"
-   end
-   def gantt_stylesheets
-      css1 = stylesheet_link_tag('gantt/platform.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/libs/dateField/jquery.dateField.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/gantt.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/gantt_compact.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/teamworkFont.css') + "\n"
+      css << stylesheet_link_tag('gantt/platform.css') + "\n"
+      css << stylesheet_link_tag('gantt/libs/dateField/jquery.dateField.css') + "\n"
+      css << stylesheet_link_tag('gantt/gantt.css') + "\n"
+      css << stylesheet_link_tag('gantt/gantt_compact.css') + "\n"
+      css << stylesheet_link_tag('gantt/teamworkFont.css') + "\n"
     end
 
     def jqgrid_javascripts
@@ -24,20 +22,18 @@ include  JqgridFilter
       js << javascript_include_tag('jqgrid/jquery.jqGrid.min.js') + "\n"
       js << javascript_include_tag('jqgrid/plugins/grid.addons.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentenc"
       js << javascript_include_tag('jqgrid/plugins/grid.postext.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentene
-    end
-    def gantt_javascripts
-      js1 = javascript_include_tag('gantt/libs/jquery.livequery.min.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/jquery.timers.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/platform.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/date.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/i18nJs.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/dateField/jquery.dateField.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/JST/jquery.JST.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttUtilities.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttTask.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttDrawer.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttGridEditor.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/jquery.livequery.min.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/jquery.timers.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/platform.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/date.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/i18nJs.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/dateField/jquery.dateField.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/JST/jquery.JST.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttUtilities.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttTask.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttDrawer.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttGridEditor.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
     end
     def jqgrid(title, id, screen_code,options = {},authenticity_token)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
@@ -56,24 +52,9 @@ include  JqgridFilter
       ##edit form_posion_size 
       #####form_ps = "top:100,left:50,width:1200,height:600,dataheight:500" ←
       init_jq = ''
-      nst_div = ''
-      if id =~ /^gantt/ then
-         nst_div  << ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
+      nst_div  = ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
             var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
-            function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
-       end      
-         nst_div <<  '});function getUrlVars()
-                            {
-                             var vars = [], hash;
-                             var hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
-                             for(var i = 0; i < hashes.length; i++)
-                             {
-                               hash = hashes[i].split("=");
-                               vars.push(hash[0]);
-                               vars[hash[0]] = hash[1];
-                             }
-                            return vars;
-                            }</script> ' 
+            }); function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}</script> <div id="pare_div">' 
       replace_end = ""
       unless options[:div_repl_id] == ''
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
@@ -107,8 +88,7 @@ include  JqgridFilter
        screen << id_data[:screen_html]
        screen <<  replace_end
        fprnt screen
-       screen.gsub!(/\s+/," ") 
-       screen.gsub!("\n"," ") if  options[:div_repl_id] == '' ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
+       ## screen.gsub!(/\n/," ")
      return screen 
     end  ## 
     def sub_get_select_list_value edoptvalue   ##固定文字を個別文字に
@@ -253,7 +233,7 @@ include  JqgridFilter
      					var viewval  = chgname.split("_");
 					var newwin;
       					if(chgname.match(/_code/i)){ if(chgname.match(/^#{screen_code_view.split(/_/,2)[1].chop}/i)){}
-      					  else{ url = "/screen/index?id=r_" + viewval[0] + "s&grid_key="+chgname;
+      					  else{ url = "/screen/index?id="  + chgname + "_div_r_" + viewval[0] + "s";
 					       if(!newwin||newwin.closed){
 					           newwin = window.open(url,"blkpopup","width=800,height=300,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
 						   else{
@@ -272,8 +252,6 @@ include  JqgridFilter
 	    end
         end
        javascript_edit << "}"
-       
-      
        ##javascript_edit <<   ";}})(jQuery);"
  end
  def set_pdf_item screen_code
@@ -337,29 +315,24 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
      # Enable direct selection (when a row in the table is clicked)
       # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
       return_cod = ""
-     return_code = %Q@onCellSelect:function(rowid, iCol,value,e){ 
-         var pare_cellname  = getUrlVars()["grid_key"];
-	 if(pare_cellname){
-            var cellname = cellNames[iCol];
+      return_code = %Q|
+        onCellSelect:function(rowid, iCol,value,e){ 
+	 var cellname = cellNames[iCol];
+	 var pare_cellname = "#{id}".split("_div_");
+	 if(pare_cellname[1]){
             if(cellname.match(/_code/i)){ 
               if(window.opener){
-                                 var nameofcode = pare_cellname.replace("_code","_name");
-                                 var rowdata = jQuery("##{id}").getRowData(rowid);
-                                 var taskId = getUrlVars()["taskid"];
-                                 if(taskId)
-                                    {
-                                     jQuery("tr[taskId="+taskId+"] input[name="+pare_cellname+"]", window.opener.document).val(value).change();
-			            }
-                                  else
-                                    {
-                                     jQuery("#"+ pare_cellname, window.opener.document).val(value); 
-                                     var tnamefields = nameofcode.split("_");
-                                     var namefield = tnamefields[0]+"_"+tnamefields[1];
-			             jQuery("#"+ nameofcode ,window.opener.document).val(rowdata[namefield]);
-                                    }
-			           window.close();}}}},@
-#### #{set_aftershowform(screen_code_view,gridcolumns)}  ###コメントにした
-### jQuery("[taskId="+taskId+"][name="+pare_cellname+"]"   は　NG スペースが必要
+	                      jQuery("#"+ pare_cellname[0], window.opener.document).val(value); 
+			      var screen_name = pare_cellname[0].replace("_code","_name");
+			      org_name = screen_name.split("_name")[0] + "_name";
+     			      var rowdata = jQuery("##{id}").getRowData(rowid);
+			      jQuery("#"+ screen_name, window.opener.document).val(rowdata[org_name]);
+			       window.close();
+	  }
+	   }
+          } 
+        },|
+   #### #{set_aftershowform(screen_code_view,gridcolumns)}  ###コメントにした
    screen_javascript = %Q|  var lastsel;
 	  #{cellnames}
           jQuery(document).ready(function(){
@@ -401,13 +374,14 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
         <p id="#{id}_select_button">  #{extbutton} </p>
         </div>
      #{extdiv_id}|
-     ##screen_javascript.gsub!(/\s+/," ")
+     screen_javascript.gsub!(/\s+/," ")
+     #screen_javascript.gsub!(".nav","\n.nav") if  options[:div_repl_id] == ''  ###repacewithが \nだと変換してくれない。
       ##debugger
       ##fprnt " jqgrid #{a} "
       id_cache_key =  "id " + id +  sub_blkget_grpcode
       id_data = {}
-      id_data[:screen_javascript] = screen_javascript
-      id_data[:screen_html] = screen_html
+      id_data[:screen_javascript] = screen_javascript.gsub(/\n/," ")
+      id_data[:screen_html] = screen_html.gsub(/\n/," ")
       Rails.cache.write(id_cache_key,id_data) 
 
       return id_data

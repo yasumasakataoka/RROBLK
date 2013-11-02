@@ -32,10 +32,10 @@ function TaskFactory() {
    */
   this.build = function(id, subtblid, paretblcode, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) {
     // Set at beginning of day
-    var adjusted_end = computeEnd(end);    //blk modify
-    var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration);
+    var adjusted_start = computeStart(start);
+    var calculated_end = computeEndByDuration(adjusted_start, opeitm_duration);
 
-    return new Task(id, subtblid, paretblcode, level, calculated_start, adjusted_end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum);
+    return new Task(id, subtblid, paretblcode, level, adjusted_start, calculated_end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum);
   };
 
 }

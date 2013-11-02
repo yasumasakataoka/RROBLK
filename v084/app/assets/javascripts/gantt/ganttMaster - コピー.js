@@ -140,7 +140,7 @@ GanttMaster.prototype.init = function(place) {
     if (self.currentTask) {
       row = self.currentTask.getRow() + 1;
       var inftask =  self.tasks[row-1];
-      ch = factory.build("gantttmp_" + self.currentTask.id + new Date().getTime(), self.currentTask.subtblid.split("_")[0],self.currentTask.subtblid, self.currentTask.level,"",self.currentTask.start,1, self.currentTask.mlevel+1);  //blk modify
+      ch = factory.build("gantttmp_" + new Date().getTime(), "",self.currentTask.subtblid, self.currentTask.level, self.currentTask.start - 24 * 60 * 60 * 1000, 1,self.currentTask.mlevel+1);  //blk modify
     } else {
       return;    //blk modify
     } 
@@ -180,9 +180,9 @@ GanttMaster.prototype.init = function(place) {
       //cannot add brothers to root
       if (self.currentTask.level<=0) 
         return;
-// ch = factory.build("gantttmp_" + self.currentTask.id + new Date().getTime(), "",self.currentTask.subtblid, self.currentTask.level,"",self.currentTask.start,1, self.currentTask.mlevel+1); 
+// factory.build(id, subtblid,paretblcode,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,pare_num,chil_num,sno,snoline);
 
-      ch = factory.build("gantttmp_"+ self.currentTask.id +  + new Date().getTime(),  self.currentTask.subtblid.split("_")[0],inftask.id, self.currentTask.level,"", inftask.start - 24 * 60 * 60 * 1000, 1,self.currentTask.mlevel);
+      ch = factory.build("gantttmp_" + new Date().getTime(), "",infTask[0].to.subtblid, self.currentTask.level, inftask.start - 24 * 60 * 60 * 1000, 1,self.currentTask.mlevel);
       row = self.currentTask.getRow()+1;
     } else {
       return;
@@ -272,7 +272,7 @@ GanttMaster.messages = {
 };
 
 
-GanttMaster.prototype.createTask = function (id, subtblid,paretblcode,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum) {
+GanttMaster.prototype.createTask = function (id, subtblid,code,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum) {
   var factory = new TaskFactory();
 
   return factory.build(id,subtblid,paretblcode, level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum);
@@ -392,7 +392,7 @@ GanttMaster.prototype.loadTasks = function(tasks, selectedRow) {
   for (var i=0;i<tasks.length;i++){
     var task = tasks[i];
     if (!(task instanceof Task)) {  
-      var t = factory.build(task.id, task.subtblid, task.paretblcode, task.level, task.start,task.end, task.opeitm_duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.nditm_parenum,task.nditm_chilnum);
+      var t = factory.build(task.id, task.subtblid, "", task.level, task.start, task.opeitm_duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.nditm_parenum,task.nditm_chilnum);
       for (var key in task) {
         if (key!="end" && key!="start")  
           t[key] = task[key]; //copy all properties

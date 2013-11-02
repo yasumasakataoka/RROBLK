@@ -58,7 +58,7 @@ GridEditor.prototype.fillEmptyLines = function() {
       });
       master.endTransaction();
       lastTask.rowElement.click();
-      lastTask.rowElement.find("[name=name]").focus()//focus to "name" input
+      lastTask.rowElement.find("[name=tm_code]").focus()//focus to "name" input
               .blur(function() { //if name not inserted -> undo -> remove just added lines
         var imp = $(this);
         if (!imp.isValueChanged())
@@ -119,15 +119,15 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   row.find("[name=itm_name]").val(task.itm_name);  //add
   row.find("[name=itm_code]").val(task.itm_code);  //add
   row.find("[status]").attr("status", task.status);
-  row.find("[name=pare_num]").val(task.pare_num);  //add
-  row.find("[name=chil_num]").val(task.chil_num);  //add
+  row.find("[name=nditm_parenum]").val(task.nditm_parenum);  //add
+  row.find("[name=nditm_chilnum]").val(task.nditm_chilnum);  //add
   row.find("[name=sno]").val(task.sno);  //add
   row.find("[name=snoline]").val(task.snoline);  //add
-  row.find("[name=duration]").val(task.duration);
+  row.find("[name=opeitm_duration]").val(task.opeitm_duration);
   row.find("[name=start]").val(new Date(task.start).format("yyyy/MM/dd")).updateOldValue(); // called on dates only because for other field is called on focus event
   row.find("[name=end]").val(new Date(task.end).format("yyyy/MM/dd")).updateOldValue();
   row.find("[name=depends]").val(task.depends);
-  row.find(".taskAssigs").html(task.getAssigsString());
+  row.find(".taskAssigs").html(task.getAssigsString());  //modify
 
   //profiler.stop();
 };
@@ -191,7 +191,7 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
             lstart = date.getTime();
             if (lstart >= lend) {
               var end_as_date = new Date(lstart);
-              lend = end_as_date.add('d', task.duration).getTime();
+              lend = end_as_date.add('d', task.opeitm_duration).getTime();
             }
 
             //update task from editor
@@ -203,7 +203,7 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
             var end_as_date = new Date(date.getTime());
             lend = end_as_date.getTime();
             if (lstart >= lend) {
-              end_as_date.add('d', -1 * task.duration);
+              end_as_date.add('d', -1 * task.opeitm_duration);
               lstart = end_as_date.getTime();
             }
 
@@ -255,14 +255,14 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
           self.master.changeTaskDates(task, task.start, task.end);
         }
 
-      } else if (field == "duration") {
-        var dur = task.duration;
+      } else if (field == "opeitm_duration") {
+        var dur = task.opeitm_duration;
         dur = parseInt(el.val()) || 1;
         el.val(dur);
-        var newEnd = computeEndByDuration(task.start, dur);
-        self.master.changeTaskDates(task, task.start, newEnd);
+        var newStart = computeStartByDuration(task.end, dur); //blk
+        self.master.changeTaskDates(task, newStart,task.end);  //blk
 
-      } else {
+      } else  {
         task[field] = el.val();
       }
       self.master.endTransaction();
@@ -335,8 +335,37 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
     }
   });
 
+//blk add
+taskRow.find("input:[name=itm_code]").blur(function () {
+  if(this.readOnly){}
+    else{
+    var el  = $(this);
+    var row = el.closest("tr");
+    var taskId = row.attr("taskId");
+    var task = self.master.getTask(taskId);
+     //update task from editor
+    self.master.beginTransaction();
+    task.itm_code =  el.val();     
+    jQuery.ajaxSetup({ async: false }); 	
+    jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code},function(data){task.itm_name = data.name;});
+    jQuery.ajaxSetup({ async: true }); 
+    self.master.endTransaction();}
+  });
+taskRow.find("input:[name=itm_code]").click(function () {
+        if(this.readOnly){}
+          else{
+               var el  = $(this);
+               var row = el.closest("tr");
+               var taskId = row.attr("taskId");
+               var newwin;
+               var url = "/screen/index?id=r_itms&grid_key=itm_code&taskid="+taskId;
+        	if(!newwin||newwin.closed){
+				  newwin = window.open(url,"blkpopup","width=800,height=300,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+			else{
+                                  newwin.focus();}
+               }
+  });
 };
-
 
 
 GridEditor.prototype.openFullEditor = function (task, taskRow) {
@@ -347,12 +376,23 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   var taskId = taskRow.attr("taskId");
   //console.debug(task);
 
+
   //make task editor
   var taskEditor = $.JST.createFromTemplate({}, "TASK_EDITOR");
 
-  taskEditor.find("#name").val(task.name);
+  taskEditor.find("#subtblid").val(task.subtblid);
+  //add blk
+  taskEditor.find("#itm_name").val(task.itm_name);
+  taskEditor.find("#itm_code").val(task.itm_code);
+  taskEditor.find("#loca_name").val(task.loca_name);
+  taskEditor.find("#loca_code").val(task.loca_code);
+  taskEditor.find("#sno").val(task.sno);
+  taskEditor.find("#snoline").val(task.snoline);
+  taskEditor.find("#nditm_parenum").val(task.nditm_parenum);
+  taskEditor.find("#nditm_chilnum").val(task.nditm_chilnum);
+  //
   taskEditor.find("#description").val(task.description);
-  taskEditor.find("#code").val(task.code);
+  taskEditor.find("#paretblcode").val(task.paretblcode);
   taskEditor.find("#progress").val(task.progress ? parseFloat(task.progress) : 0);
   taskEditor.find("#status").attr("status", task.status);
 
@@ -361,7 +401,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   if (task.endIsMilestone)
     taskEditor.find("#endIsMilestone").attr("checked", true);
 
-  taskEditor.find("#duration").val(task.duration);
+  taskEditor.find("#opeitm_duration").val(task.opeitm_duration);
   taskEditor.find("#start").val(new Date(task.start).format());
   taskEditor.find("#end").val(new Date(task.end).format());
 
@@ -387,7 +427,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       $(this).dateField({
         inputField:$(this),
         callback:  function (date) {
-          var dur = parseInt(taskEditor.find("#duration").val());
+          var dur = parseInt(taskEditor.find("#opeitm_duration").val());
           date.clearTime();
           taskEditor.find("#end").val(new Date(computeEndByDuration(date.getTime(), dur)).format());
         }
@@ -403,24 +443,33 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
           end.setHours(23, 59, 59, 999);
 
           if (end.getTime() < start.getTime()) {
-            var dur = parseInt(taskEditor.find("#duration").val());
+            var dur = parseInt(taskEditor.find("#opeitm_duration").val());
             start = incrementDateByWorkingDays(end.getTime(), -dur);
             taskEditor.find("#start").val(new Date(computeStart(start)).format());
           } else {
-            taskEditor.find("#duration").val(recomputeDuration(start.getTime(), end.getTime()));
+            taskEditor.find("#opeitm_duration").val(recomputeDuration(start.getTime(), end.getTime()));  
           }
         }
       });
     });
 
-    //bind blur on duration
-    taskEditor.find("#duration").change(function () {
-      var start = Date.parseString(taskEditor.find("#start").val());
+    //bind blur on opeitm_duration
+//    taskEditor.find("#opeitm_duration").change(function () {
+//      var start = Date.parseString(taskEditor.find("#start").val());
+//      var el = $(this);
+//      var dur = parseInt(el.val());
+ //     dur = dur <= 0 ? 1 : dur;
+ //     el.val(dur);
+ //     taskEditor.find("#end").val(new Date(computeEndByDuration(start.getTime(), dur)).format());
+ //   });
+    //bind blur on opeitm_duration   blk modify
+    taskEditor.find("#opeitm_duration").change(function () {
+      var end = Date.parseString(taskEditor.find("#end").val());
       var el = $(this);
       var dur = parseInt(el.val());
       dur = dur <= 0 ? 1 : dur;
       el.val(dur);
-      taskEditor.find("#end").val(new Date(computeEndByDuration(start.getTime(), dur)).format());
+      taskEditor.find("#start").val(new Date(computeStartByDuration(end.getTime(), dur)).format());
     });
 
     //bind add assignment
@@ -452,11 +501,22 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       var task = self.master.getTask(taskId); // get task again because in case of rollback old task is lost
 
       self.master.beginTransaction();
-      task.name = taskEditor.find("#name").val();
+      task.subtblid = taskEditor.find("#subtblid").val();
+      //blk add
+      task.itm_name = taskEditor.find("#itm_name").val();
+      task.itm_code = taskEditor.find("#itm_code").val();
+      task.loca_name = taskEditor.find("#loca_name").val();
+      task.loca_code = taskEditor.find("#loca_code").val();
+      task.nditm_parenum = taskEditor.find("#nditm_parenum").val();
+      task.nditm_chilnum = taskEditor.find("#nditm_chilnum").val();
+      task.sno = taskEditor.find("#itm_sno").val();
+      task.snoline = taskEditor.find("#snoline").val();
+
+      task.depends = taskEditor.find("#depends").val();
       task.description = taskEditor.find("#description").val();
-      task.code = taskEditor.find("#code").val();
+      task.paretblcode = taskEditor.find("#paretblcode").val();
       task.progress = parseFloat(taskEditor.find("#progress").val());
-      task.duration = parseInt(taskEditor.find("#duration").val());
+      task.opeitm_duration = parseInt(taskEditor.find("#opeitm_duration").val());
       task.startIsMilestone = taskEditor.find("#startIsMilestone").is(":checked");
       task.endIsMilestone = taskEditor.find("#endIsMilestone").is(":checked");
 
@@ -516,8 +576,12 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       }
 
     });
+       //cancel frame
+    taskEditor.find("#cancelButton").click(function () {
+                      $("#__blackpopup__").trigger("close")});
   }
-
+  
   var ndo = createBlackPage(800, 500).append(taskEditor);
 
 };
+

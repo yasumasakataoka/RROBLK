@@ -4,10 +4,7 @@
 <meta http-equiv="content-type" content="text/html;charset=UTF-8" />  
 <%=jqgrid_javascripts%>
 <%=jqgrid_stylesheets%>
-<% if @screen_code =~ /gantt/ then  %>
-<%=gantt_javascripts%>
-<%=gantt_stylesheets%>
-<% end %>
+
 <head>
  <title>Start: <%= controller.action_name %></title>
            
@@ -18,9 +15,7 @@
 <br>
 </div>
 <div id="ganttcharthtml" style="display:none;">
-<% if @screen_code =~ /gantt/ then  %>
 <%=raw  render :partial =>"gantt/divgantt" %>
-<% end %>
 </div>
 <div class="headright"> 
  <%= render :partial => "devise/login_logout" %>

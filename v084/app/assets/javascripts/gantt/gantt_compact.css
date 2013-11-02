@@ -4,12 +4,13 @@
   border-spacing: 0;
 }
 
+
 .gdfTable td, .gdfTable th {
   vertical-align: middle;
   overflow: hidden;
   text-overflow: clip;
   white-space: nowrap;
-  font-size: 10px
+  font-size: 14px
 }
 
 .gdfCell {
@@ -267,8 +268,8 @@
 
 .taskEditRow input{
   border: 0 none;
-  font-size: 10px;
-  height: 14px;
+  font-size: 12px;
+  height: 15px;
   margin: 0;
   padding: 0;
   width: 100%;

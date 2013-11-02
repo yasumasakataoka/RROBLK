@@ -22,7 +22,13 @@ class ScreenController < ApplicationController
    params[:rows] ||= 50
    @screen_code,@jqgrid_id = get_screen_code
     ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
-   show_data = get_show_data(@screen_code)
+   show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+   if Rails.cache.exist?(show_cache_key) then
+           show_data = Rails.cache.read(show_cache_key)
+          else 
+	   ### create_def screen_code
+	   show_data = set_detail(screen_code )  ## set gridcolumns
+   end
    command_r = set_fields_from_allfields(show_data) ###画面の内容をcommand_rへ
    command_r[:sio_strsql] = get_strsql  ##親画面情報引継
    rdata =  []
@@ -34,9 +40,11 @@ class ScreenController < ApplicationController
    command_r[:sio_search] = params[:_search] 
    command_r[:sio_sidx]  = params[:sidx]
    command_r[:sio_code]  = @screen_code
-   rdata = subpaging(command_r)     ## rdata[データの中身,レコード件数]
+   rdata = subpaging(command_r)     ## subpaging  
    ##debugger ##fprnt "class #{self} : LINE #{__LINE__} @tbldata #{@tbldata}"
    plsql.commit
+   tcnt = rdata[1]
+
    @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
    respond_with @tbldata
   end  ##disp
@@ -47,7 +55,13 @@ class ScreenController < ApplicationController
      @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
      #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
      @screen_code,@jqgrid_id = get_screen_code
-     show_data = get_show_data(@screen_code)
+     show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+     if Rails.cache.exist?(show_cache_key) then
+         show_data = Rails.cache.read(show_cache_key)
+     else 
+	 ### create_def screen_code
+	 show_data = set_detail(@screen_code )  ## set gridcolumns
+     end
      ##########
      @options ={}
      @options[:div_repl_id] = "#{pare_code}_div_#{chil_code}"  ### 親画面内の子画面表示のための　div のid
@@ -96,11 +110,16 @@ class ScreenController < ApplicationController
  ##fprnt " class #{self} : LINE #{__LINE__}  nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
  end    ### def set_pare_contents pare_view,rcd_id
  ### formで矢印がきかない
- def add_upd_del    ##  add update delete  
+ def add_upd_del    ##  add update delete
      params[:oper] = "add" if  params[:copy] == "yes"   ### copy and add
      screen_code,jqgrid_id = get_screen_code
+     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+     if Rails.cache.exist?(show_cache_key) then
+           show_data = Rails.cache.read(show_cache_key)
+          else 
+	   show_data = set_detail(screen_code )  ## set gridcolumns
+     end
      ##debugger
-     show_data = get_show_data(screen_code)
      command_r  = set_fields_from_allfields(show_data)
      command_r[:sio_viewname]  = show_data[:screen_code_view] 
      command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
@@ -150,49 +169,15 @@ class ScreenController < ApplicationController
   end
   def set_fields_from_allfields show_data ###画面の内容をcommand_rへ
      command_r = {}
-     show_data[:evalstr].each do |key,rubycode|   ###既定値等セット　画面からの入力優先
-         ##debugger
-         command_r[key] = eval(rubycode)
-     end
+     eval( show_data[:evalstr] ) unless   show_data[:evalstr]  == ""   ###既定値等セット　画面からの入力優先
      show_data[:allfields].each do |j|
 	## nilは params[j] にセットされない。
         command_r[j] = params[j]  if params[j]  ##unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
         ##command_r[:id_tbl] = params[j].to_i if j.to_s == "id"          
      end ##
+    ##fprnt " class #{self} : LINE #{__LINE__}  show_data : #{  show_data }"
+    ##char_to_number_data      ##parmsの文字型を数字・日付に
     return command_r
-  end  
-  def set_fields_from_gantt tblid,value ###画面の内容をcommand_r for gantt screen     
-      command_r = {}
-      rid = if value[:id].split("_")[1] then value[:id].split("_")[1].to_i else nil end
-      command_r[:id] = rid
-      command_r[(tblid.chop+"_id").to_sym] = rid
-      case tblid
-           when "opeitms" then
-                command_r[:opeitm_duration] = value[:opeitm_duration]
-                command_r[:loca_code] = value[:loca_code]
-                command_r[:itm_code] = value[:itm_code]
-                command_r[:opeitm_priority] = 999
-                command_r[:opeitm_processseq] = 999
-                command_r[:opeitm_expiredate] = Time.parse("2099/12/31")
-                if value[:paretblcode] then
-                   if value[:paretblcode].split("_")[0] == "opeitms" then
-                        paretbl = plsql.opeitms.first("where id = #{ value[:paretblcode].split("_")[1]} ")
-                        command_r[:opeitm_priority] = paretbl[:priority]
-                        command_r[:opeitm_unit_id_lttime] = paretbl[:units_id_lttime]
-                        expiredate = plsql.r_opeitms.first("where loca_code = '#{value[:loca_code]}' and itm_code = '#{value[:itm_code]}' and opeitm_expiredate > sysdate  and opeitm_priority =  #{paretbl[:priority]} order by opeitm_expiredate")
-                        command_r[:opeitm_expiredate] =  if expiredate then expiredate[:opeitm_expiredate]  else Time.parse("2099/12/31") end 
-                   end
-               end
-           when "nditms" then
-                command_r[:nditm_parenum] = value[:nditm_parenum]
-                command_r[:nditm_chilnum] = value[:nditm_chilnum]
-                command_r[:loca_code_nditm] = value[:loca_code]
-                command_r[:itm_code_nditm] = value[:itm_code]
-                command_r[:loca_code_nditm] = value[:loca_code]
-                command_r[:nditm_opeitm_id] = value[:paretblcode].split("_")[1].to_i if  value[:paretblcode].split("_")[0] == "opeitms"
-                command_r[:nditm_expiredate] = Time.parse("2099/12/31")
-      end
-     return command_r
   end  
   def screen_code
       @screen_code
@@ -216,8 +201,9 @@ class ScreenController < ApplicationController
      render :json => @getname
   end  #code_to_name
   def preview_prnt
-      screen_code,jqgrid_id = get_screen_code
-      show_data = get_show_data(screen_code)
+       screen_code,jqgrid_id = get_screen_code
+       show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+       show_data = Rails.cache.read(show_cache_key)
       command_r ={}
       command_r[:sio_totalcount] = 0
       rdata =  []
@@ -247,54 +233,15 @@ class ScreenController < ApplicationController
  end
  def gantt
      @ganttdata = sub_gantt_chart(params[:screen_code],params[:id])
-     @xnum1 = "parent_number"
-     @xnum1witdth = 30   
      ###debugger
-     fprnt("@ganttdata :#{@ganttdata}")
+    fprnt("@ganttdata :#{@ganttdata}")
      render :json =>@ganttdata
  end
  def uploadgantt
-     ##debugger
-     params[:tasks].each do |key,value|
-       tblid = value[:id].split("_")[0]
-       case tblid 
-          when  "0" then
-                ##top record
-               next
-          when "gantttmp"  then ### レコード追加
-                tblid = value[:id].split("_")[1]
-                command_r = set_fields_from_gantt(tblid,value)
-                command_r[:sio_classname] = "plsql_blk_insert"
-           else
-              command_r = set_fields_from_gantt(tblid, value)
-              command_r[:sio_classname] = "plsql_blk_update"
-         end
-      screen_code  = jqgrid_id = "r_" + tblid
-      command_r[:sio_viewname]  = screen_code
-      command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-      command_r[:sio_code] = screen_code
-      sub_insert_sio_c     command_r  ##
-      plsql.commit
-      dbcud = DbCud.new
-      dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-      unless  value[:subtblid].empty?  then
-          subtblname = value[:subtblid].split("_")[0] 
-          screen_code  = jqgrid_id = "r_" + subtblname
-          value[:id] = value[:subtblid]
-          command_r = set_fields_from_gantt(subtblname, value)
-          if  value[:subtblid].split("_")[1] then command_r[:sio_classname] = "plsql_blk_update"   else command_r[:sio_classname] = "plsql_blk_insert" end 
-          command_r[:sio_viewname]  = screen_code
-          command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-          command_r[:sio_code] = screen_code
-          sub_insert_sio_c     command_r  ##
-          plsql.commit
-          dbcud = DbCud.new
-          dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-       end
-     end
+     #JSON.parse(params)[:task]
      @ganttreturn = "retrurn ok"
  end
- def sub_gantt_chart screen_code,id
+  def sub_gantt_chart screen_code,id
       ngantts = []
       time_now =  Time.now 
       ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
@@ -305,43 +252,43 @@ class ScreenController < ApplicationController
       end
      ##debugger
      if r then 
-        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>r[:itms_id],:loca_id=>r[:locas_id],:processseq=>r[:processseq],:priority=>r[:priority],:endtime=>time_now,:id=>"opeitms_"+r[:id].to_s}
+        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>r[:itms_id],:loca_id=>r[:locas_id],:processseq=>r[:processseq],:priority=>r[:priority],:endtime=>time_now}
         cnt = 0
         @bgantts = {}
-        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:opeitm_duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>0}
+        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>""}
         until ngantts.size == 0
           cnt += 1
           ngantts = psub_get_itms_locas ngantts
-          break if cnt >= 500
+          break if cnt >= 5
         end
       else
          return ""
      end
+     id = 0
      min_starttime = time_now
-     dp_id = 1
-     ##fprnt("#{__LINE__} @bgantts :#{@bgantts}"),
+     maxmlevel = 1  ##for level
      @bgantts.sort.each  do|key,value|
+        id += 1
+        @bgantts[key].merge! :id=>id
         if key.to_s.size > 3 then
-           @bgantts[key.to_s[0..-4].to_sym][:depends] << dp_id.to_s + "," 
+           @bgantts[key.to_s[0..-4].to_sym][:depends] << id.to_s + "," 
+           maxmlevel = @bgantts[key][:mlevel]  if @bgantts[key][:mlevel] > maxmlevel
         end
         min_starttime = @bgantts[key][:starttime] if  min_starttime > (@bgantts[key][:starttime]||= time_now)
-        dp_id += 1
      end
      @bgantts[:"000"][:starttime] = min_starttime 
-     @bgantts[:"000"][:opeitm_duration] =   ((@bgantts[:"000"][:endtime]  - min_starttime).divmod(24*60*60))[0]
+     @bgantts[:"000"][:duration] =   ((@bgantts[:"000"][:endtime]  - min_starttime).divmod(24*60*60))[0]
      strgantt = '{"tasks":['
      @bgantts.sort.each  do|key,value|
-     strgantt << %Q%{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}","loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}","nditm_parenum":"#{value[:nditm_parenum]}","nditm_chilnum":"#{value[:nditm_chilnum]}","start":#{value[:starttime].to_i.*1000},"opeitm_duration":#{value[:opeitm_duration]},"end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},%
+     strgantt << %Q%{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}","loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}","pare_num":"#{value[:pare_num]}","chil_num":"#{value[:chil_num]}","start":#{value[:starttime].to_i.*1000},"duration":#{value[:duration]},"end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else (maxmlevel - value[:mlevel] ) end},"mlevel":#{value[:mlevel]}},%
      end
-     ## opeitmのsubtblidのopeitmは子のinsert用
      ##debugger
-     ##fprnt("#{__LINE__} strgantt :#{strgantt}")
      strgantt = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
      return strgantt
  end  
  def psub_get_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック
      ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
-     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
+     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:pare_num,:chil_num,:duration,:assigs,}}
      n0 = ngantts.shift
      #p "n0:#{n0}"
      r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
@@ -355,11 +302,11 @@ class ScreenController < ApplicationController
      end
      return ngantts
  end  ##  psub_get_itms_locas 
- def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
+ def psub_get_contents(n0,r0)
      bgantt = {}
      itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
      loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
-     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),:assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],:subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
+     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:duration=>(r0[:lt]||=0),:assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:lt]||=0)*24*60*60,:depends=>"",:pare_num=>n0[:pare_num],:chil_num=>n0[:chil_num]}
     ##p " Line #{__LINE__} #{bgantt}"
      @bgantts.merge! bgantt
      return bgantt[n0[:seq].to_sym][:starttime]
@@ -368,9 +315,10 @@ class ScreenController < ApplicationController
      ngantts = []
      rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
      if rnditms.size > 0 then
-        mlevel = n0[:mlevel] + 1
+        mlevel = n0[:mlevel]
+        mlevel += 1
         rnditms.each.with_index(1)  do |i,cnt|
-           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:loca_id=>i[:locas_id_nditm],:priority=>r0[:priority],:endtime=>endtime,:nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
+           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:loca_id=>i[:locas_id_nditm],:priority=>r0[:priority],:endtime=>endtime,:pare_num=>i[:parenum],:chil_num=>i[:chilnum]}
         end         
      end
      return ngantts
@@ -381,8 +329,8 @@ class ScreenController < ApplicationController
      if ropeitms.size > 0 then
         nseq = n0[:seq][0..-3]
         ropeitms..each.with_index(2)  do |i,cnt|
-           ngantts << {:seq=>(nseq + sprintf("%02d", cnt)),:mlevel=>n0[:mlevel],:itm_id=>i[:itms_id],:loca_id=>i[:locas_id],:endtime=>endtime,:id=>"opeitms_"+i[:id].to_s}
-           endtime = endtime - i[:duration]*24*60*60
+           ngantts << {:seq=>(nseq + sprintf("%02d", cnt)),:mlevel=>n0[:mlevel],:itm_id=>i[:itms_id],:loca_id=>i[:locas_id],:endtime=>endtime}
+           endtime = endtime - i[:lt]*24*60*60
         end         
      end
      return ngantts

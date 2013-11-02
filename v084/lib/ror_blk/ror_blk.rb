@@ -291,9 +291,7 @@
   def char_to_number_data command_r   ###   
        ##rubyXl マッキントッシュ excel windows excel not perfect
        @date1904 = nil
-       show_cache_key =  "show " + command_r[:sio_code] +  sub_blkget_grpcode
-       show_data = Rails.cache.read(show_cache_key)
-
+       show_data = get_show_data(command_r[:sio_code])
        show_data[:allfields].each do |i|
 	   if command_r[i] then
              case show_data[:alltypes][i]
@@ -352,8 +350,7 @@
          sub_insert_sio_r(command_r)
 	  all_sub_command_r[0] =  command_r
     else 
-        show_cache_key =  "show " + command_r[:sio_code] +  sub_blkget_grpcode
-        show_data = Rails.cache.read(show_cache_key)
+         show_data = get_show_data(command_r[:sio_code])
          strsql = "select #{sub_getfield(show_data)} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
          strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
@@ -383,17 +380,14 @@
     return all_sub_command_r
   end   ##sub_plsql_blk_paging
   def  sub_strwhere command_r
-       show_cache_key =  "show " +  command_r[:sio_code]  +  sub_blkget_grpcode
-       show_data = Rails.cache.read(show_cache_key)
-
-	## is not nul と is null 対応
+       show_data = get_show_data(command_r[:sio_code])
 	  #日付　/ - 固定にしないようにできないか?
        if command_r[:sio_strsql] then
           strwhere = unless command_r[:sio_strsql].downcase.split(")")[-1] =~ /where/ then  " where "  else " and " end
           else
            strwhere = " WHERE "
        end
-       fprnt "class #{self} : LINE #{__LINE__} : command_r= '#{command_r}"
+       ##fprnt "class #{self} : LINE #{__LINE__} : command_r= '#{command_r}"
        ###params.each  do |i,j|  ##xparams gridの生
        command_r.each  do |i,j|  ##xparams gridの生
 	   ###debugger
@@ -428,6 +422,7 @@
 	       #when  "textarea"
                #       tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
                 end   ##show_data[:alltypes][i]
+           tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/ 
 	   strwhere << tmpwhere  if  tmpwhere 
         end ### params.each  do |i,j|###
        return strwhere[0..-7]
@@ -458,8 +453,7 @@
   end
   def subpaging  command_r
       ###debugger
-       show_cache_key =  "show " + command_r[:sio_code]  +  sub_blkget_grpcode
-       show_data = Rails.cache.read(show_cache_key)
+      show_data = get_show_data(command_r[:sio_code])
       tbldata = []
       command_r[:sio_viewname]  = show_data[:screen_code_view] 
       sub_insert_sio_c command_r     ###ページング要求
@@ -479,5 +473,14 @@
   def  sub_getfield show_data
        show_data[:allfields].join(",").to_s
   end   ##  sub_getfield
+  def get_show_data screen_code
+     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+     if Rails.cache.exist?(show_cache_key) then
+           show_data = Rails.cache.read(show_cache_key)
+          else 
+	   show_data = set_detail(screen_code )  ## set gridcolumns
+     end
+     return show_data
+  end
 end   ##module Ror_blk
 

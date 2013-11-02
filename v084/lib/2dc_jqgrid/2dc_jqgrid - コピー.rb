@@ -58,11 +58,11 @@ include  JqgridFilter
       init_jq = ''
       nst_div = ''
       if id =~ /^gantt/ then
-         nst_div  << ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
+         nst_div  = ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
             var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
-            function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
+            }); function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
        end      
-         nst_div <<  '});function getUrlVars()
+         nst_div <<  'function getUrlVars()
                             {
                              var vars = [], hash;
                              var hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
@@ -73,7 +73,7 @@ include  JqgridFilter
                                vars[hash[0]] = hash[1];
                              }
                             return vars;
-                            }</script> ' 
+                            }});</script> <div id="pare_div">' 
       replace_end = ""
       unless options[:div_repl_id] == ''
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
@@ -373,7 +373,7 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
               rowNum:#{screen_options[:screen_rows_per_page]},
               rowList:[#{screen_options[:screen_rowlist]}],
               imgpath: "/images/jqgrid",
-              viewrecords: true,
+              viewrecords: false,
               width:#{screen_options[:screen_width] ||= 1800},
               height: #{screen_options[:screen_height]},
               sortname: "#{screen_options[:screen_sort_column]}",

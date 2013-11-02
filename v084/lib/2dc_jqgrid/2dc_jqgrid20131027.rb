@@ -5,13 +5,11 @@ include  JqgridFilter
     def jqgrid_stylesheets
       css  = stylesheet_link_tag("jqgrid/themes/default/jquery-ui-1.10.3.custom.css") + "\n"
       css << stylesheet_link_tag('jqgrid/ui.jqgrid.css') + "\n"
-   end
-   def gantt_stylesheets
-      css1 = stylesheet_link_tag('gantt/platform.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/libs/dateField/jquery.dateField.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/gantt.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/gantt_compact.css') + "\n"
-      css1 << stylesheet_link_tag('gantt/teamworkFont.css') + "\n"
+      css << stylesheet_link_tag('gantt/platform.css') + "\n"
+      css << stylesheet_link_tag('gantt/libs/dateField/jquery.dateField.css') + "\n"
+      css << stylesheet_link_tag('gantt/gantt.css') + "\n"
+      css << stylesheet_link_tag('gantt/gantt_compact.css') + "\n"
+      css << stylesheet_link_tag('gantt/teamworkFont.css') + "\n"
     end
 
     def jqgrid_javascripts
@@ -24,20 +22,18 @@ include  JqgridFilter
       js << javascript_include_tag('jqgrid/jquery.jqGrid.min.js') + "\n"
       js << javascript_include_tag('jqgrid/plugins/grid.addons.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentenc"
       js << javascript_include_tag('jqgrid/plugins/grid.postext.js') + "\n"    ###when upgrade v3.8 to v4.5 ,add this sentene
-    end
-    def gantt_javascripts
-      js1 = javascript_include_tag('gantt/libs/jquery.livequery.min.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/jquery.timers.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/platform.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/date.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/i18nJs.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/dateField/jquery.dateField.js') + "\n"  
-      js1 << javascript_include_tag('gantt/libs/JST/jquery.JST.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttUtilities.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttTask.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttDrawer.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttGridEditor.js') + "\n"  
-      js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/jquery.livequery.min.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/jquery.timers.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/platform.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/date.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/i18nJs.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/dateField/jquery.dateField.js') + "\n"  
+      js << javascript_include_tag('gantt/libs/JST/jquery.JST.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttUtilities.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttTask.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttDrawer.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttGridEditor.js') + "\n"  
+      js << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
     end
     def jqgrid(title, id, screen_code,options = {},authenticity_token)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
@@ -56,13 +52,10 @@ include  JqgridFilter
       ##edit form_posion_size 
       #####form_ps = "top:100,left:50,width:1200,height:600,dataheight:500" ←
       init_jq = ''
-      nst_div = ''
-      if id =~ /^gantt/ then
-         nst_div  << ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
+      nst_div  = ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
             var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
-            function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
-       end      
-         nst_div <<  '});function getUrlVars()
+            }); function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}
+                function getUrlVars()
                             {
                              var vars = [], hash;
                              var hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
@@ -73,7 +66,7 @@ include  JqgridFilter
                                vars[hash[0]] = hash[1];
                              }
                             return vars;
-                            }</script> ' 
+                            }</script> <div id="pare_div">' 
       replace_end = ""
       unless options[:div_repl_id] == ''
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
@@ -373,7 +366,7 @@ url = "/pdf/index?"+strparam;window.open(url);};jQuery(function() {jQuery(".#{id
               rowNum:#{screen_options[:screen_rows_per_page]},
               rowList:[#{screen_options[:screen_rowlist]}],
               imgpath: "/images/jqgrid",
-              viewrecords: true,
+              viewrecords: false,
               width:#{screen_options[:screen_width] ||= 1800},
               height: #{screen_options[:screen_height]},
               sortname: "#{screen_options[:screen_sort_column]}",

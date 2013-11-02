@@ -197,6 +197,22 @@ $.splittify = {
     return d.getTime();
   }
 
+//blk add
+  function computeStartByDuration(end, duration) {
+    var d = new Date(end);
+    //console.debug("computeStartByDuration end ",d,duration)
+    var q = duration ;
+    while (q > 0) {
+      d.setDate(d.getDate() - 1);
+      if (!isHoliday(d))
+        q--;
+    }
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  }
+
+
+
   function incrementDateByWorkingDays(date, days) {
     var d = new Date(date);
     d.incrementDateByWorkingDays(days);

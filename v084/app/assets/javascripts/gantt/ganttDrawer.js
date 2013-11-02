@@ -301,7 +301,7 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
   //console.debug(new Date(period.start) + "   " + new Date(period.end));
   self.startMillis = period.start; //real dimension of gantt
   self.endMillis = period.end;
-  self.originalStartMillis = originalStartmillis; //minimal dimension required by user or by task duration
+  self.originalStartMillis = originalStartmillis; //minimal dimension required by user or by task opeitm_duration
   self.originalEndMillis = originalEndMillis;
 
   var table = createGantt(zoom, period.start, period.end);
@@ -312,7 +312,7 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
 
 //<%-------------------------------------- GANT TASK GRAPHIC ELEMENT --------------------------------------%>
 Ganttalendar.prototype.drawTask = function (task) {
-  //console.debug("drawTask", task.name,new Date(task.start));
+  //console.debug("drawTask", task.subtblid,new Date(task.start));
   var self = this;
   //var prof = new Profiler("ganttDrawTask");
   //var editorRow = self.master.editor.element.find("tr[taskId=" + task.id + "]");
@@ -550,7 +550,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
     }
 
     //arrow
-    var arr = $("<img src='../assets/linkArrow.png'>").css({
+    var arr = jQuery("<img src='/assets/linkArrow.png'>").css({
       position: 'absolute',
       top: rectTo.top + rectTo.height / 2 - 5,
       left: rectTo.left - 5
@@ -649,7 +649,7 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
     }
 
     //arrow
-    var arr = $("<img src='../assets/linkArrow.png'>").css({
+    var arr = jQuery("<img src='/assets/linkArrow.png'>").css({
       position: 'absolute',
       top: rectTo.top + rectTo.height / 2 - 5,
       left: rectTo.left - 5

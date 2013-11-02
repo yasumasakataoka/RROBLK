@@ -4,6 +4,7 @@ class DbCud  < ActionController::Base
    def command_r
       @command_r
   end
+###  一セッション　一コミットにしたい
   def perform(sio_session_counter,sio_view_name)
       begin
      @command_r = {}
@@ -22,16 +23,18 @@ class DbCud  < ActionController::Base
                 j_to_s = j.to_s
 	        ## fprnt"class #{self} : LINE #{__LINE__} j_to_s: #{j_to_s} xtblname: #{xtblname}"
 	        ###debugger
-                if j_to_s.split(/_/,2)[0] == xtblname then  ##本体の更新
+                if j_to_s.split("_",2)[0] == xtblname then  ##本体の更新
 	           ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
-                   else  ### link先のidを求める
-			 ##CODEでユニークにならなかった時の考慮が漏れている。
-	            unless   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"  or j_to_s =~ /^sio_/ then
-			 tmp_key[j] = k  ###mandatory field  
+                      to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = nil  if k  == '#{nil}'  ##画面項目クリアー
+                   else  ### link先のidを求める 自分のテーブル以外の項目は該当テーブルのidを求めるための項目
+                         ### 画面では必要項目のみ変更可能にする。
+	            unless   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"   then
+                         tkey = xtblname + j_to_s.split("_")[1] + "_id" + if j_to_s.split("_",3)[2] then "_" + j_to_s.split("_",3)[2] else "" end
+			 itmp_key[j] = k  if i.key?(tkey.to_sym)  ###mandatory field  
                    end  ## unless j_to_s
                 end   ## if j_to_s.
-          end ## j,k
+          end ## j,
 	  tmp_key.each do |key,value|
 	      #if key !~/_code/  then ###chil_screenで必要
 	         rvalue = []
@@ -46,7 +49,7 @@ class DbCud  < ActionController::Base
 	   ##  fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{i[:person_id_upd]}"
 	   to_cr[:persons_id_upd] = i[:sio_user_code]
 	   if to_cr[:sio_message_contents].nil?
-              to_cr[:ymlcode] = ymlcode(i[:sio_code],to_cr[:ymlcode]) if to_cr[:ymlcode]
+              to_cr[:ymlcode] = ymlcode(i[:sio_code],to_cr[:ymlcode]) if to_cr[:ymlcode] 
 	      case i[:sio_classname]
                 when "plsql_blk_insert" then
                     to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
@@ -56,7 +59,7 @@ class DbCud  < ActionController::Base
 		    plsql.__send__(tblname).insert to_cr
 		    chlctltbl(to_cr) if tblname == "chilscreen"
 		when "plsql_blk_update" then
-                    to_cr[:where] = {:id => i[:id]}             ##update deleteの時はテーブル_idにはなにもセットされない。
+                    to_cr[:where] = {:id => i[:id]}             ##変更分のみ更新
                     ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
 		    ##debugger
                     to_cr[:updated_at] = Time.now
@@ -267,7 +270,7 @@ def record_auto from_screen_code,from_screen_data,next_screen_code,frmf,nxtf
       cache_key =  "show" 
       Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
   end
-  def reset_show_data_screenlist
+  def reset_show_data_screenlist   ###casheは消えるけどうまくいかない　2013/11/2
       ##debugger
       cache_key = "listindex" 
       Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbat

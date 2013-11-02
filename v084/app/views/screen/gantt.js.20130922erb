@@ -1,0 +1,2 @@
+<%=raw %Q|jQuery("#ganttchartid").replaceWith('<div id="ganttchartid"><script type="text/javascript"> jQuery(document).ready(function(){if(jQuery("#ganttcharthtml").is(":hidden")){jQuery("#ganttcharthtml").show("fast");}else{jQuery(".ganttButtonBar").remove();jQuery(".splitterContainer").remove();}var ge = new GanttMaster();   ge.init(jQuery("#workSpace"));var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() -10,height:jQuery(window).height() - 250}); ge.loadProject( #{@ganttdata});})  </script></div>')| %>
+
