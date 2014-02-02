@@ -1,4 +1,4 @@
-  require "rubygems"
+##  require "rubygems"
   require 'time'
   require "ruby-plsql"
   plsql.connection = OCI8.new("rails","rails","xe")
@@ -85,14 +85,13 @@
 
 	subfields = plsql.__send__(join_rtbl).column_names
         subfields.each do |j|
-          js = j.to_s
-          xfield =  j.to_s  
+          js = xfield = j.to_s   ###  2014/1/4
           if join_rtbl == "r_persons"
                  xfield  = "" if js.match("_upd")
                 else
                  xfield  = "" if js.match("person")
            end   ## if join_rtbl  
-            ["_ID","EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT","USERGROUP_CODE_UPD","USERGROUP_NAME_UPD","USERGROUP_CODE_CHRG","USERGROUP_NAME_CHRG"].each do |x|
+            ["EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT","USERGROUP_CODE_UPD","USERGROUP_NAME_UPD","USERGROUP_CODE_CHRG","USERGROUP_NAME_CHRG"].each do |x|    ##2014/1/4
                      xfield = "" if js.upcase.match(x)
              end
               xfield = "" if js.upcase == "ID" 

@@ -492,6 +492,25 @@ drop sequence ProcNames_seq
 ; 
 create sequence ProcNames_seq
 ; 
+DROP TABLE BlkUkys
+;
+CREATE TABLE BlkUkys
+ ( id numeric(38)
+ ,PObjects_id_tbl numeric(38)
+ ,Ctlblktables_id numeric(38)
+ ,Remark VARCHAR(200)
+ ,Persons_id_Upd numeric(38)
+ ,Update_IP varchar(40)
+ ,created_at date
+ ,Expiredate date
+ ,Updated_at date
+ , CONSTRAINT BlkUkys_id_pk PRIMARY KEY (id)
+)
+;
+drop sequence BlkUkys_seq
+; 
+create sequence BlkUkys_seq
+; 
 DROP TABLE Pobjects
 ;
 CREATE TABLE Pobjects
@@ -554,21 +573,6 @@ drop sequence BottonRules_seq
 ; 
 create sequence BottonRules_seq
 ; 
-DROP TYPE TypOptionAiasName force 
-; 
-CREATE TYPE TypOptionAiasName AS OBJECT 
- ( id numeric(38)
- ,UserGroups_id numeric(38)
- ,Code varchar(30)
- ,AliasName VARCHAR(100)
- ,Remark VARCHAR(100)
- ,ExpireDate date
- ,Persons_id_Upd numeric(38)
- ,Update_IP varchar(40)
- ,created_at date
- ,updated_at date
-)
-;
 DROP TABLE OptionAiasNames
 ;
 CREATE TABLE OptionAiasNames OF  TypOptionAiasName
@@ -579,50 +583,6 @@ drop sequence OptionAiasNames_seq
 ; 
 create sequence OptionAiasNames_seq
 ; 
-DROP TABLE TblRelas
-;
-CREATE TABLE TblRelas
- ( id NUMBER(38)
- ,code varchar(40)
- ,BaseTblView varchar(30)
- ,TargetTbl varchar(30)
- ,Remark varchar(200)
- ,Expiredate date
- ,Persons_id_Upd NUMBER(38)
- ,Update_IP Varchar(40)
- ,created_at timestamp
- ,Updated_at timestamp
- , CONSTRAINT TblRelas_id_pk PRIMARY KEY (id)
- , CONSTRAINT TblRelas_212_uk UNIQUE (code,Expiredate)
-)
-;
-drop sequence TblRelas_seq
-; 
-create sequence TblRelas_seq
-; 
-; 
-DROP TABLE fieldRelas
-;
-CREATE TABLE fieldRelas
- ( id NUMBER(38)
- ,TblRelas_id NUMBER(38)
- ,TargetField varchar(30)
- ,Function varchar(256)
- ,Remark varchar(200)
- ,Expiredate date
- ,Persons_id_Upd NUMBER(38)
- ,Update_IP Varchar(40)
- ,created_at timestamp
- ,Updated_at timestamp
- , CONSTRAINT fieldRelas_id_pk PRIMARY KEY (id)
- , CONSTRAINT fieldRelas_231_uk UNIQUE (TblRelas_id,TargetField,Expiredate)
-)
-;
-drop sequence fieldRelas_seq
-; 
-create sequence fieldRelas_seq
-; 
-; 
 DROP TABLE Fieldcodes
 ;
 CREATE TABLE Fieldcodes
@@ -632,7 +592,6 @@ CREATE TABLE Fieldcodes
  ,Fieldlength NUMBER(4) 
  ,DataPresion NUMBER(2) 
  ,DataScale NUMBER(2) 
- ,Contens VARCHAR(200)
  ,Remark VARCHAR(200)
  ,Persons_id_Upd numeric(38)
  ,Update_IP varchar(40)
@@ -640,18 +599,19 @@ CREATE TABLE Fieldcodes
  ,Expiredate date
  ,Updated_at date
  , CONSTRAINT Fieldcodes_id_pk PRIMARY KEY (id)
+ , CONSTRAINT Fieldcodes_254_uk UNIQUE (PObjects_id_fld)
 )
 ;
 drop sequence Fieldcodes_seq
 ; 
 create sequence Fieldcodes_seq
 ; 
+; 
 DROP TABLE BlkTables
 ;
 CREATE TABLE BlkTables
  ( id numeric(38)
  ,PObjects_id_tbl numeric(38)
- ,Tabletype VARCHAR(15)
  ,Remark VARCHAR(200)
  ,Persons_id_Upd numeric(38)
  ,Update_IP varchar(40)
@@ -883,7 +843,7 @@ CREATE TABLE OpeItms
  ,Itms_id number(38)
  ,PackQTY number(10)
  ,MinQTY number(10,6)
- ,LT number(10,2)
+ ,duration number(10,2)
  ,Units_id_LTTime number(38)
  ,ProcNames_id char(3)
  ,Expiredate date
@@ -979,7 +939,7 @@ CREATE TABLE Itms
  ,created_at date
  ,Updated_at date
  , CONSTRAINT Itms_id_pk PRIMARY KEY (id)
- , CONSTRAINT Itms_181_uk UNIQUE (Code,Expiredate)
+ , CONSTRAINT Itms_181_uk UNIQUE (Code)
 )
 ;
 drop sequence Itms_seq
@@ -1182,7 +1142,7 @@ CREATE TABLE screenfields
  ,created_at date
  ,updated_at date
  , CONSTRAINT screenfields_id_pk PRIMARY KEY (id)
- , CONSTRAINT screenfields_41_uk UNIQUE (Pobjects_id_sfd,screens_id,Expiredate)
+ , CONSTRAINT screenfields_41_uk UNIQUE (Pobjects_id_sfd,screens_id)
 )
 ;
 drop sequence screenfields_seq
@@ -1204,7 +1164,7 @@ CREATE TABLE UseButtons
  ,created_at date
  ,updated_at date
  , CONSTRAINT UseButtons_id_pk PRIMARY KEY (id)
- , CONSTRAINT UseButtons_78_uk UNIQUE (screens_id,Expiredate,icon)
+ , CONSTRAINT UseButtons_78_uk UNIQUE (pobjects_id_scr,screenlevels_id,buttons_id)
 )
 ;
 drop sequence UseButtons_seq
@@ -1219,8 +1179,8 @@ CREATE TABLE Buttons
  ,code varchar(30)
  ,SeqNo NUMBER(3)
  ,caption varchar(20)
- ,title varchar(20)
- ,buttonicon varchar(20)
+ ,title varchar(30)
+ ,buttonicon varchar(40)
  ,onClickButton varchar(4000)
  ,getGridParam varchar(10)
  ,editGridRow varchar(4000)
@@ -1232,7 +1192,7 @@ CREATE TABLE Buttons
  ,created_at date
  ,updated_at date
  , CONSTRAINT Buttons_id_pk PRIMARY KEY (id)
- , CONSTRAINT Buttons_103_uk UNIQUE (screens_id,Expiredate,icon)
+ , CONSTRAINT Buttons_103_uk UNIQUE (code)
 )
 ;
 drop sequence Buttons_seq
@@ -1254,7 +1214,7 @@ CREATE TABLE Reports
  ,created_at date
  ,Updated_at date
  , CONSTRAINT Reports_id_pk PRIMARY KEY (id)
- , CONSTRAINT Reports_134_uk UNIQUE (Pobjects_id_lst,expiredate)
+ , CONSTRAINT Reports_134_uk UNIQUE (Pobjects_id_lst)
 )
 ;
 drop sequence Reports_seq
@@ -1324,7 +1284,7 @@ CREATE TABLE Screens
  ,created_at date
  ,Updated_at date
  , CONSTRAINT Screens_id_pk PRIMARY KEY (id)
- , CONSTRAINT Screens_71_uk UNIQUE (code,Expiredate)
+ , CONSTRAINT Screens_71_uk UNIQUE (code)
 )
 ;
 drop sequence Screens_seq
@@ -1354,5 +1314,3 @@ drop sequence HisOfRprts_seq
 ; 
 create sequence HisOfRprts_seq
 ; 
-; 
-/

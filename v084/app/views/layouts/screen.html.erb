@@ -1,6 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="jp" lang="jp">
+<head>
 <meta http-equiv="content-type" content="text/html;charset=UTF-8" />  
 <%=jqgrid_javascripts%>
 <%=jqgrid_stylesheets%>
@@ -8,15 +9,15 @@
 <%=gantt_javascripts%>
 <%=gantt_stylesheets%>
 <% end %>
-<head>
- <title>Start: <%= controller.action_name %></title>
+
+<title> <%= @disp_screenname_name %></title>
            
 </head>
-<body style="background-color: #fff;" >
-<div id="nstid">
+<body >
+
  <%=   yield %>
 <br>
-</div>
+
 <div id="ganttcharthtml" style="display:none;">
 <% if @screen_code =~ /gantt/ then  %>
 <%=raw  render :partial =>"gantt/divgantt" %>
@@ -29,4 +30,5 @@
       <p class="notice"><%= notice %> <class="alert"><%= alert %></p>
 </div>
 </body>
+<style> .prntclass {display: none} </style>
 </html>

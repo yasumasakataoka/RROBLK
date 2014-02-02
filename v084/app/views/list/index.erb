@@ -1,7 +1,28 @@
-<h1> <一覧表　　グループ毎のタイトル  0.84> </h1>
-<% @vlist.each_key do |i | %>
-<p>
-<%=  button_to   "#{@vlist[i]}",{:controller  =>  'screen', :id => i.to_s},
-     :method => 'get'   %>
-</p>
+
+ <div >
+<table border=3 width=1250 align=center id="radio_button" >
+ <caption>【機能一覧】 　　　　実行環境 :<%= ENV["RACK_ENV"]   %> <%= if ENV["RACK_ENV"] == "development" then  ENV["BUNDLE_GEMFILE"] else "" end %>　</caption>
+ <tr bgcolor="#FFA500">
+  <th>分類<br></th>
+  <th colspan="9" >機能</th>
+ </tr>
+<% @cate_list.each do |i| %>
+ <tr align=left>
+  <td> <%= i[1] %></td> 
+       <% index =1 %>
+       <% i[2].each do |key,val| %>
+     <td   id="radio_list<%=key.to_s%>" >
+     <input type="radio" name="radio_nlist" 
+         value="<%=key.to_s%>"/>  <label for="radio_list<%=key.to_s%>"><%=val%></label>
+      </td>
+      <% index +=1 %>
+      <% end %> 
+     <% for i in  index..@max_cnt %>
+       <td></td>
+     <%end%>
+ </tr>
 <% end %>
+</table>
+</div>
+
+

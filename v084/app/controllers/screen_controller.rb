@@ -4,147 +4,72 @@
 ### show_data   画面の対するviewとその項目をユーザー毎にセット
 class ScreenController < ApplicationController
   before_filter :authenticate_user!  
-  respond_to :html ,:xml, :json
-  def index
-      ###  @screenname_name  将来　タイトルに変更
-     @pare_class = "online"
-     @scriptopt ={}
-     @options = {}
-     @options[:div_repl_id] = ""
-     @screen_code,@jqgrid_id  = get_screen_code
-     @disp_screenname_name = sub_blkgetpobj(@screen_code,"screen")
-    ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
-    ##debugger ## 詳細項目の確認
+  respond_to :html ,:xml ##  将来　タイトルに変更
+def index
+      @pare_class = "online"
+      @scriptopt = @options = {}
+      @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
+      @screen_code,@jqgrid_id  = get_screen_code
+      @disp_screenname_name = sub_blkgetpobj(@screen_code,"screen")
+      ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
+      ##debugger ## 詳細項目の確認
   end  ##index
   def disp   ##  jqgrid返り
-   ##debugger ## 詳細項目セット
-   params[:page] ||= 1 
-   params[:rows] ||= 50
-   @screen_code,@jqgrid_id = get_screen_code
-    ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
-   show_data = get_show_data(@screen_code)
-   command_r = set_fields_from_allfields(show_data) ###画面の内容をcommand_rへ
-   command_r[:sio_strsql] = get_strsql  ##親画面情報引継
-   rdata =  []
-   ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
-   command_r[:sio_classname] = "plsql_blk_paging"
-   command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
-   command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
-   command_r[:sio_sord] = params[:sord]
-   command_r[:sio_search] = params[:_search] 
-   command_r[:sio_sidx]  = params[:sidx]
-   command_r[:sio_code]  = @screen_code
-   rdata = subpaging(command_r)     ## rdata[データの中身,レコード件数]
-   ##debugger ##fprnt "class #{self} : LINE #{__LINE__} @tbldata #{@tbldata}"
-   plsql.commit
-   @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
-   respond_with @tbldata
-  end  ##disp
-  def nst  ###子画面　link   xxxS_IDでリンクする時と　ctlXXXでリンクする時で分かれる。
-     rcd_id  =  params[:id]  ### 親画面テーブル内の子画面へのkeyとなるid
-     pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
-     chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
-     @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
-     #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
-     @screen_code,@jqgrid_id = get_screen_code
-     show_data = get_show_data(@screen_code)
-     ##########
-     @options ={}
-     @options[:div_repl_id] = "#{pare_code}_div_#{chil_code}"  ### 親画面内の子画面表示のための　div のid
-     @options[:autowidth] = "true"  
-     chil_view = plsql.r_screens.first("where pobject_code_scr = '#{chil_code}' and screen_Expiredate > sysdate order by screen_expiredate ")[:pobject_code_view]  ## set @gridcolumns 
-     pare_view = plsql.r_screens.first("where pobject_code_scr = '#{pare_code}' and screen_Expiredate > sysdate order by screen_expiredate ")[:pobject_code_view]  ## 
-     ##debugger 
-     ##p "chil_view : #{chil_view}  : #{@jqgrid_id} : "#{@disp_screenname_name} "
-     ##p "{pare_view}{chil_view} : #{pare_view}#{chil_view}   :xxx: #{ params[:nst_tbl_val].split(";")[2]}" 
-      rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @jqgrid_id 
-      ### set_detail でセットされた@jqgrid_id
-      pkey = "#{chil_view.split("_")[1].chop}_#{pare_view.split("_")[1].chop}_id"
+      ##debugger ## 詳細項目セット
+      params[:page] ||= 1 
+      params[:rows] ||= 50
+      @screen_code,@jqgrid_id = get_screen_code
+      ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
+      show_data = get_show_data(@screen_code)
+      command_r = set_fields_from_allfields(show_data) ###画面の内容をcommand_rへ
+      command_r[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
+      rdata =  []
+      ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
+      command_r[:sio_classname] = "plsql_blk_paging"
+      command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
+      command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
+      command_r[:sio_sord] = params[:sord]
+      command_r[:sio_search] = params[:_search] 
+      command_r[:sio_sidx]  = params[:sidx]
+      command_r[:sio_code]  = @screen_code
+      rdata = subpaging(command_r)     ## rdata[データの中身,レコード件数]
+      ##debugger ##fprnt "class #{self} : LINE #{__LINE__} @tbldata #{@tbldata}"
+      plsql.commit
+      @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
+      respond_with @tbldata
+    end  ##disp
+    def nst  ###子画面　
+      pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
+      chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
+      @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
+      #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
+      @screen_code,@jqgrid_id = get_screen_code
+      show_data = get_show_data(@screen_code)
+      ##########
+      @options ={}
+      @options[:div_repl_id] = "#{pare_code}_div_#{chil_code}"  ### 親画面内の子画面表示のための　div のid
+      @options[:autowidth] = "false"  
+      chilf = plsql.r_chilscreens.first("where pobject_code_scr_ch = '#{chil_code}' and pobject_code_scr = '#{pare_code}' and chilscreen_Expiredate > sysdate order by chilscreen_expiredate ")
+      ##debugger 
+      rcd_id  =  params[:data][chilf[:pobject_code_sfd].to_sym]  ### 親画面テーブル内の子画面へのkeyとなるid
+      @ss_id = user_parescreen_nextval( current_user[:id]).to_s   ###子画面に引き継ぐセッションid
+      rcdkey = "RCD_ID" + current_user[:id].to_s + @jqgrid_id + @ss_id
+      pkey = chilf[:pobject_code_sfd_ch]
+      chil_view = chilf[:pobject_code_view_ch]
       hash_rcd = {}
-      hash_rcd[:rcd_id_val] = rcd_id
-      hash_rcd[:rcd_id_key] = pkey.to_sym
-      if show_data[:allfields].index(pkey.to_sym) then
-	  hash_rcd[:strsql] = "(select * from #{chil_view} where #{pkey} = #{rcd_id} )  a "
-	 else
-	     show_data[:allfields].each do |k|
-		 if k.to_s[0,pkey.size - 1] == pkey then
-	            pkey = k.to_s
-		    hash_rcd[:strsql] = "(select * from #{chil_view} where #{pkey} = #{rcd_id} )  a "
-		 end
-             end
-	     if hash_rcd[:strsql].nil?
-		 hash_rcd[:strsql] = "(select * from  #{chil_view} where id in(select ctblid from CTL#{pare_view.split("_")[1]} where ptblid = #{rcd_id} and ctblname ='#{chil_view.split("_")[1]}')) a "
-	     end
-	 end
-      Rails.cache.write(rcd_id_cache_key,hash_rcd)   ### add で受け取るための親　id save
-      set_pare_contents pare_view,rcd_id      ## 
-     ##debugger 
+      hash_rcd[:rcd_id_val] = rcd_id ##### rcd_id:親画面テーブル内の子画面へのkeyとなるid
+      hash_rcd[:strsql] = "(select * from #{chil_view} where #{pkey} = #{rcd_id} )  a "  
+      sub_parescreen_insert rcdkey,hash_rcd
       render :layout=>false 
-     plsql.commit
- end   ### nst
-
-#####  親の項目をテーブルの上に表示
- def set_pare_contents pare_view,rcd_id
-     @options[:pare_contents] = ""
-     pare_data = plsql.__send__(pare_view).first("where id = #{rcd_id}")
-     pare_data.each do |key,value|
-       skey = key.to_s
-       if (skey =~ /_code/ or skey =~ /_name/) and  skey !~ /_upd/  then
-          @options[:pare_contents] << " <span> #{key.to_s} :  #{value}    ; </span> "   if value
-       end
-     end
- ##fprnt " class #{self} : LINE #{__LINE__}  nst @scriptopt[:pare_contents]  : #{@scriptopt[:pare_contents]}"
- end    ### def set_pare_contents pare_view,rcd_id
- ### formで矢印がきかない
- def add_upd_del    ##  add update delete  
-     params[:oper] = "add" if  params[:copy] == "yes"   ### copy and add
-     screen_code,jqgrid_id = get_screen_code
-     ##debugger
-     show_data = get_show_data(screen_code)
-     command_r  = set_fields_from_allfields(show_data)
-     command_r[:sio_viewname]  = show_data[:screen_code_view] 
-     command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-     command_r[:sio_code] = screen_code
-     case params[:oper] 
-       when "add"
-          rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s +  params[:q]  ### :q -->@jqgrid_id
-          hash_rcd = Rails.cache.read(rcd_id_cache_key)  
-          command_r[hash_rcd[:rcd_id_key]] =  hash_rcd[:rcd_id_val] unless hash_rcd.nil?
-          command_r[:sio_classname] = "plsql_blk_insert"
-          sub_insert_sio_c    command_r  ###更新要求
-          ## command_r[:id_tbl] = nil
-       when "del"
-	  command_r[:sio_classname] = "plsql_blk_delete"
-          sub_insert_sio_c command_r
-       when "edit"
-	 ###debugger
-         command_r[:sio_classname] = "plsql_blk_update"
-         sub_insert_sio_c     command_r  ###p "tblfields[:id_tbl] : #{tblfields[:id_tbl]}"
-       else     
-       ##debugger ## textは表示できないのでメッセージの変更要
-       render :text => "return to menu because session loss params:#{params[:oper]} "
-     end ## case parems[:oper]
-     ##debugger
-     plsql.commit
-    dbcud = DbCud.new
-    dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-   render :nothing=>true
- end  ## add_upd_del
- #####
-  def get_strsql 
-      rcd_id_cache_key = "RCD_ID" + current_user[:id].to_s + @jqgrid_id 
-      if Rails.cache.exist?(rcd_id_cache_key)   then  ### 
-         strsql =  Rails.cache.read(rcd_id_cache_key)[:strsql]   ### 親からのidで子を表示
-        else
-         tmp_str = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and screen_Expiredate > sysdate order by screen_expiredate ")
-         if tmp_str then
-           strsql = " ( "  if tmp_str[:screen_strselect]
-           strsql << tmp_str[:screen_strselect] if tmp_str[:screen_strselect]
-           strsql << tmp_str[:screen_strwhere] if tmp_str[:screen_strwhere]
-           strsql << tmp_str[:screen_strgrouporder] if tmp_str[:screen_strgrouporder]
-           strsql << " ) a "  if tmp_str[:strselect]
-         end
-      end
+      plsql.commit
+    end   ### nst
+#####
+    def get_strsql 
+       strsql = ""
+       hash_rcd = plsql.__send__("parescreen#{current_user[:id].to_s}s").first("where id = #{params[:ss_id]} and expiredate > sysdate")
+      ##debugger
+      ##if Rails.cache.exist?(rcdkey)   then  ### 
+      if hash_rcd   then   strsql =  hash_rcd[:strsql]  end  ### 親からのidで子を表示
      strsql = nil if strsql == ""
      return strsql
   end
@@ -161,61 +86,128 @@ class ScreenController < ApplicationController
      end ##
     return command_r
   end  
-  def set_fields_from_gantt tblid,value ###画面の内容をcommand_r for gantt screen     
-      command_r = {}
-      rid = if value[:id].split("_")[1] then value[:id].split("_")[1].to_i else nil end
-      command_r[:id] = rid
-      command_r[(tblid.chop+"_id").to_sym] = rid
-      case tblid
-           when "opeitms" then
-                command_r[:opeitm_duration] = value[:opeitm_duration]
-                command_r[:loca_code] = value[:loca_code]
-                command_r[:itm_code] = value[:itm_code]
-                command_r[:opeitm_priority] = 999
-                command_r[:opeitm_processseq] = 999
-                command_r[:opeitm_expiredate] = Time.parse("2099/12/31")
-                if value[:paretblcode] then
-                   if value[:paretblcode].split("_")[0] == "opeitms" then
-                        paretbl = plsql.opeitms.first("where id = #{ value[:paretblcode].split("_")[1]} ")
-                        command_r[:opeitm_priority] = paretbl[:priority]
-                        command_r[:opeitm_unit_id_lttime] = paretbl[:units_id_lttime]
-                        expiredate = plsql.r_opeitms.first("where loca_code = '#{value[:loca_code]}' and itm_code = '#{value[:itm_code]}' and opeitm_expiredate > sysdate  and opeitm_priority =  #{paretbl[:priority]} order by opeitm_expiredate")
-                        command_r[:opeitm_expiredate] =  if expiredate then expiredate[:opeitm_expiredate]  else Time.parse("2099/12/31") end 
-                   end
-               end
-           when "nditms" then
-                command_r[:nditm_parenum] = value[:nditm_parenum]
-                command_r[:nditm_chilnum] = value[:nditm_chilnum]
-                command_r[:loca_code_nditm] = value[:loca_code]
-                command_r[:itm_code_nditm] = value[:itm_code]
-                command_r[:loca_code_nditm] = value[:loca_code]
-                command_r[:nditm_opeitm_id] = value[:paretblcode].split("_")[1].to_i if  value[:paretblcode].split("_")[0] == "opeitms"
-                command_r[:nditm_expiredate] = Time.parse("2099/12/31")
-      end
-     return command_r
-  end  
-  def screen_code
+    def screen_code
       @screen_code
-  end
+    end
+    def  get_url_from_code  ###params[:q]  screen_code   ,params[:fieldname] page downが押された項目
+      akeyfs,viewname,delm =  get_ary_search_field params[:q],params[:fieldname]
+      if   viewname then   
+          @getname = {:viewname => viewname}
+          render :json => @getname
+         else
+           render :nothing => true
+      end
+    end
+    def  code_to_name  ### 必須keyとして登録された_codeが変化したときcall
+      ##debugger
+      keyfields = {}
+      tblnamechop,field,delm = params[:chgname].split("_",3)
+      exit if  tblnamechop == params[:q].split("_")[1].chop and params[:code_to_name_oper] != "add" and params[:code_to_name_oper] != "copyandadd" 
+      ###既定値のセット
+      d_valuefms =  plsql.r_screenfields.all("where  pobject_code_scr = '#{params[:q]}'  and  screenfield_rubycode is not null AND screenfield_expiredate > sysdate")
+      d_valuefms.each do |rec|             
+            if  params[rec[:pobject_code_sfd].to_sym].nil? then params[rec[:pobject_code_sfd].to_sym] = eval(rec[:screenfield_rubycode])  end
+      end
+      case tblnamechop
+           when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック
+                sw = same_tbl_code_to_name tblnamechop,field
+           else
+                sw = oth_tbl_code_to_name tblnamechop
+      end
+      if sw == "ON" then render :json => @getname else   render :nothing => true end
+    end
+    def get_ary_search_field screen_code,field   ###excel importでも使用
+      strwhere = "where pobject_code_sfd = '#{field}' and screenfield_paragraph > '0'  "    ##検索元のテーブルを求める。
+      strwhere  << " and pobject_code_scr = '#{screen_code}' AND screenfield_expiredate > sysdate" 
+      v = plsql.r_screenfields.first(strwhere)
+      viewname =  rec = delm = nil
+      akeyfs = []
+      if   v then   ###グループを求める。
+           viewname,delm =  v[:screenfield_paragraph].split(":_")
+           strwhere = "where screenfield_paragraph = '#{v[:screenfield_paragraph]}' "
+           strwhere  << " and pobject_code_scr = '#{screen_code}' AND screenfield_expiredate > sysdate" 
+           keyfs = plsql.r_screenfields.all(strwhere)
+           keyfs.each do |rec|
+              akeyfs << rec[:pobject_code_sfd]
+           end
+      end
+      return akeyfs,viewname,delm
+    end	
+    def    oth_tbl_code_to_name tblnamechop
+      akeyfs,viewname,delm =  get_ary_search_field params[:q],params[:chgname]
+      if   viewname.nil? or viewname == ""  then 
+         sw = "OFF"
+         exit
+      end
+      keyfields = {}
+      sw = "ON"
+      params.each do |key,val|
+           if  akeyfs.index(key.to_s) then
+               if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
+           end
+      end
+       ##debugger
+      rec = get_item_from_code keyfields,viewname,delm  if sw == "ON" 
+      @getname ={}
+      if   rec then
+             mytbl = params[:q].split("_")[1].chop
+             rec.each do |key,val|
+                  if  delm then nkey = (key.to_s+"_"+delm).to_sym else nkey = key end
+                  if  nkey.to_s != "id" then  @getname[nkey] = rec[key].to_s end  ### 
+             end
+           else
+      end
+       ##debugger
+      return sw
+    end
 
- def code_to_name
-      chgname = params[:chgname]
-      chgval  = params[:chgval]
-     if chgname then
-       getrecord = plsql.__send__(chgname.split(/_/)[0]+"s").first("where code = '#{chgval}'  and expiredate > sysdate  order by expiredate")
-       if getrecord.nil? then
-          @getname =  {"name" => "!!! no record"}
-	 else
-	  if getrecord[:name].nil? then
-	     @getname = {"name" => "!!! no record"}
-	   else
-             @getname = {"name" => "#{getrecord[:name]}"}
-          end ##getrecord[:name].nil? 
-	 end ## getrecord
-     end ##chgcode
-     render :json => @getname
-  end  #code_to_name
-  def preview_prnt
+    def  same_tbl_code_to_name tblnamechop,field
+      sw = "ON"
+      strwhere = %Q%where pobject_code_tbl = '#{tblnamechop+"s"}' and pobject_code_fld = '#{field}' and blkuky_expiredate > sysdate%
+      grp = plsql.r_blkukys.first strwhere
+      if  grp then
+          strwhere = %Q%where pobject_code_tbl = '#{tblnamechop+"s"}' and blkuky_grp = '#{grp[:blkuky_grp]}' and blkuky_expiredate > sysdate%
+          keyfs = plsql.r_blkukys.all strwhere
+          akeyfs = []
+          keyfs.each do |rec|
+             akeyfs << rec[:pobject_code_fld]
+          end
+          keyfields = {}
+          params.each do |key,val|
+             if  key.to_s.split("_")[0]  == tblnamechop and akeyfs.index(key.to_s.split("_")[1]) then
+                 if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
+             end
+          end
+         else
+           sw = "OFF"
+       end 
+       ##debugger
+       rec = nil
+       rec = get_item_from_code keyfields,"r_"+tblnamechop+"s",nil  if sw == "ON" 
+       @getname ={}
+       if rec then
+             rec.each do |key,val|
+                  if  key.to_s != "id" then  @getname[key] = rec[key].to_s end  ### 
+             end
+             @getname[:errmsg] = " #{keyfields.values.join(',')}.....already exists"
+          else
+             @getname.delete(params[:chgname].to_sym)
+                 ##debugger
+        end
+        return sw
+ end
+    def get_item_from_code keys,viewname,delm
+      strwhere = " where "
+      tblname = viewname.split("_")[1].chop
+      keys.each do |key,val|
+           if  delm then nkey = key.to_s.sub("_#{delm}","") else nkey = key.to_s end
+           strwhere << nkey + " = '" + val  + "'    and "
+      end
+      strwhere << "#{tblname}_expiredate > sysdate order by #{tblname}_expiredate "
+      ##debugger
+      rec = plsql.__send__(viewname).first(strwhere)
+    end
+ def preview_prnt
       screen_code,jqgrid_id = get_screen_code
       show_data = get_show_data(screen_code)
       command_r ={}
@@ -237,156 +229,13 @@ class ScreenController < ApplicationController
        @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
        respond_with @tbldata
   end  #select _opt
-
 ##  def xparams
 ##      @xparams
 ##  end
  ####### ajaxでは xls,xlsxはdownloadできない?????
- def blk_print
+    def blk_print
      render :nothing=> true
- end
- def gantt
-     @ganttdata = sub_gantt_chart(params[:screen_code],params[:id])
-     @xnum1 = "parent_number"
-     @xnum1witdth = 30   
-     ###debugger
-     fprnt("@ganttdata :#{@ganttdata}")
-     render :json =>@ganttdata
- end
- def uploadgantt
-     ##debugger
-     params[:tasks].each do |key,value|
-       tblid = value[:id].split("_")[0]
-       case tblid 
-          when  "0" then
-                ##top record
-               next
-          when "gantttmp"  then ### レコード追加
-                tblid = value[:id].split("_")[1]
-                command_r = set_fields_from_gantt(tblid,value)
-                command_r[:sio_classname] = "plsql_blk_insert"
-           else
-              command_r = set_fields_from_gantt(tblid, value)
-              command_r[:sio_classname] = "plsql_blk_update"
-         end
-      screen_code  = jqgrid_id = "r_" + tblid
-      command_r[:sio_viewname]  = screen_code
-      command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-      command_r[:sio_code] = screen_code
-      sub_insert_sio_c     command_r  ##
-      plsql.commit
-      dbcud = DbCud.new
-      dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-      unless  value[:subtblid].empty?  then
-          subtblname = value[:subtblid].split("_")[0] 
-          screen_code  = jqgrid_id = "r_" + subtblname
-          value[:id] = value[:subtblid]
-          command_r = set_fields_from_gantt(subtblname, value)
-          if  value[:subtblid].split("_")[1] then command_r[:sio_classname] = "plsql_blk_update"   else command_r[:sio_classname] = "plsql_blk_insert" end 
-          command_r[:sio_viewname]  = screen_code
-          command_r[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-          command_r[:sio_code] = screen_code
-          sub_insert_sio_c     command_r  ##
-          plsql.commit
-          dbcud = DbCud.new
-          dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-       end
-     end
-     @ganttreturn = "retrurn ok"
- end
- def sub_gantt_chart screen_code,id
-      ngantts = []
-      time_now =  Time.now 
-      ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
-      case screen_code
-      when /^r_itms/   ##r_opeitm とcpo　procordがまだ
-          itm = plsql.itms.first("where id = '#{id}'  ")
-          r = plsql.opeitms.first("where itms_id = #{id} and Expiredate > sysdate   order by processseq desc,priority desc, Expiredate ")
-      end
-     ##debugger
-     if r then 
-        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>r[:itms_id],:loca_id=>r[:locas_id],:processseq=>r[:processseq],:priority=>r[:priority],:endtime=>time_now,:id=>"opeitms_"+r[:id].to_s}
-        cnt = 0
-        @bgantts = {}
-        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:opeitm_duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>0}
-        until ngantts.size == 0
-          cnt += 1
-          ngantts = psub_get_itms_locas ngantts
-          break if cnt >= 500
-        end
-      else
-         return ""
-     end
-     min_starttime = time_now
-     dp_id = 1
-     ##fprnt("#{__LINE__} @bgantts :#{@bgantts}"),
-     @bgantts.sort.each  do|key,value|
-        if key.to_s.size > 3 then
-           @bgantts[key.to_s[0..-4].to_sym][:depends] << dp_id.to_s + "," 
-        end
-        min_starttime = @bgantts[key][:starttime] if  min_starttime > (@bgantts[key][:starttime]||= time_now)
-        dp_id += 1
-     end
-     @bgantts[:"000"][:starttime] = min_starttime 
-     @bgantts[:"000"][:opeitm_duration] =   ((@bgantts[:"000"][:endtime]  - min_starttime).divmod(24*60*60))[0]
-     strgantt = '{"tasks":['
-     @bgantts.sort.each  do|key,value|
-     strgantt << %Q%{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}","loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}","nditm_parenum":"#{value[:nditm_parenum]}","nditm_chilnum":"#{value[:nditm_chilnum]}","start":#{value[:starttime].to_i.*1000},"opeitm_duration":#{value[:opeitm_duration]},"end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},%
-     end
-     ## opeitmのsubtblidのopeitmは子のinsert用
-     ##debugger
-     ##fprnt("#{__LINE__} strgantt :#{strgantt}")
-     strgantt = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
-     return strgantt
- end  
- def psub_get_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック
-     ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
-     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
-     n0 = ngantts.shift
-     #p "n0:#{n0}"
-     r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
-     if r0 then
-         endtime = psub_get_contents(n0,r0)
-         ngantts.concat(psub_get_chil_itms(n0,r0,endtime))
-         ngantts.concat(psub_get_next_process(n0,r0,endtime))
-        else
-           psub_get_contents(n0,{})
-          #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
-     end
-     return ngantts
- end  ##  psub_get_itms_locas 
- def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
-     bgantt = {}
-     itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
-     loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
-     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),:assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],:subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
-    ##p " Line #{__LINE__} #{bgantt}"
-     @bgantts.merge! bgantt
-     return bgantt[n0[:seq].to_sym][:starttime]
- end
- def psub_get_chil_itms(n0,r0,endtime)
-     ngantts = []
-     rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
-     if rnditms.size > 0 then
-        mlevel = n0[:mlevel] + 1
-        rnditms.each.with_index(1)  do |i,cnt|
-           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:loca_id=>i[:locas_id_nditm],:priority=>r0[:priority],:endtime=>endtime,:nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
-        end         
-     end
-     return ngantts
- end
- def psub_get_next_process(n0,r0,endtime)
-     ngantts = []
-     ropeitms = plsql.opeitms.all("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   itms_id, processseq ")
-     if ropeitms.size > 0 then
-        nseq = n0[:seq][0..-3]
-        ropeitms..each.with_index(2)  do |i,cnt|
-           ngantts << {:seq=>(nseq + sprintf("%02d", cnt)),:mlevel=>n0[:mlevel],:itm_id=>i[:itms_id],:loca_id=>i[:locas_id],:endtime=>endtime,:id=>"opeitms_"+i[:id].to_s}
-           endtime = endtime - i[:duration]*24*60*60
-        end         
-     end
-     return ngantts
- end
-
+    end
 end ## ScreenController
+
 

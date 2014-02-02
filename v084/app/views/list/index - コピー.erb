@@ -1,0 +1,29 @@
+<%=raw @javascript %>
+<form>
+ <div class="radio_button">
+<table border=3 width=1250 align=center >
+ <caption>【機能一覧】 　　　　実行環境 :<%= ENV["RACK_ENV"]   %> <%= if ENV["RACK_ENV"] == "development" then  ENV["BUNDLE_GEMFILE"] else "" end %>　</caption>
+ <tr bgcolor="#FFA500">
+  <th>分類<br></th>
+  <th colspan=9>機能</th>
+ </tr>
+<% @cate_list.each do |i| %>
+ <tr align=left>
+  <td> <%= i[1] %></td>
+      <% index =0 %>
+      <% i[2].each do |key,val| %>
+      <td>
+     <input type="radio" id="radio_list<%=key.to_s%>"  name="radio_nlist" 
+       <% index += 1%>
+         value="<%=key.to_s%>">  <label for="radio_list<%=key.to_s%>"><%=val%></label>
+       </td>
+      <% end %>
+      <% for i  in index..@max_cnt-1 %>
+      <td></td>
+       <%end%>
+ </tr>
+<% end %>
+</table>
+</div>
+</form>
+

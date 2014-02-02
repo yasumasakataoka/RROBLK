@@ -14,13 +14,14 @@ class ExcelexportController < ApplicationController
       show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
       ##debugger
       @gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
-      @tblname =  sub_blkgetpobj( plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and pobject_objecttype_view = 'view' and screen_expiredate > sysdate order by  screen_expiredate")[:pobject_code_view] ,"view")
-  end
-  def export
-     ##@fields =   plsql.__send__(params[:id]).column_names  ##show_dataのfieldに変更
+      @viewname =  sub_blkgetpobj("r_#{@screen_code.split("_")[1]}","view")
+    end
+    def export
+      ##@fields =   plsql.__send__(params[:id]).column_names  ##show_dataのfieldに変更
 	  #該当データなしの時処理　
-     @screen_code = params[:export][:exportscreen_code]
-     screen_code 
+      @screen_code = params[:export][:exportscreen_code]
+      screen_code 
+      tblidsym = (screen_code.split("_")[1].chop + "_id").to_sym
      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
      @show_data =  Rails.cache.read(show_cache_key)
      show_data
@@ -49,9 +50,11 @@ class ExcelexportController < ApplicationController
 	      ### column毎に文字、数量、日付の指定をする。
 	   fcolors = []
 	   fcolors1 = []
+           fields[tblidsym] = tblidsym.to_s
+            fcolors << (wb.styles.add_style :bg_color =>  'ffc6b2')
 	   show_data[:gridcolumns].each do |i|
-               if  i[:hidden] == false and i[:editrules]              ### omit :msg_ok_ng
-	           fields[i[:field].to_sym] = i[:label] 
+               if  i[:hidden] == false and i[:editrules]           ### omit :msg_ok_ng
+	           fields[i[:field].to_sym] = if i[:label]  then i[:label] else "" end
 		   if i[:editable] == true then
 		      if i[:editrules][:required]  == true then
                           fcolors << (wb.styles.add_style :bg_color =>  'ffc6b2')

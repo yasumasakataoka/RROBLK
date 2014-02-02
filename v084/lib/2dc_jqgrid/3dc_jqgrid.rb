@@ -1,6 +1,5 @@
 module JqgridJson
   include ActionView::Helpers::JavaScriptHelper
-
   def to_jqgrid_json(attributes, current_page, per_page, total)
     json = %Q({"page":"#{current_page}","total":#{total/per_page.to_i+1},"records":"#{total}")
     if total > 0
@@ -28,6 +27,7 @@ module JqgridJson
         attributes.each do |atr|
           value =elem[atr]
           value = escape_javascript(value) if value and value.is_a? String
+          value.gsub!("\\n","\n")  if value and value.is_a? String
           array << %Q(<cell>#{value}</cell>)
         end
         array << "</row>"
@@ -39,12 +39,7 @@ module JqgridJson
     ##fprnt array
     array
   end
-  def fprnt str
-    foo = File.open("#{Rails.root}/log/blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
-    foo.puts str
-    foo.close
-  end   ##fprnt str
-  
+
   private
   
   def get_atr_value(elem, atr, couples)
@@ -124,7 +119,12 @@ module JqgridFilter
                    tmp_columns = {}
                    tmp_editrules[:required] = true  if i[:screenfield_indisp] == 1
                    tmp_editrules[:number] = true if i[:screenfield_type] == "number"
-                   tmp_editrules[:date] = true  if i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/
+                   if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
+                       tmp_editrules[:date] = true 
+                       tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
+                       tmp_columns[:datefmt] = "Y/m/d h:i"  if  i[:screenfield_type]  =~ /^timestamp/ 
+                       tmp_columns[:datefmt] = "Y/m/d h:i:s"  if  tmp_columns[:editable] = false  
+                   end
 		   tmp_editrules[:required] = false  if tmp_editrules == {} 
                    tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
                    tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
@@ -132,8 +132,7 @@ module JqgridFilter
                    tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
                    tmp_columns[:editrules] = tmp_editrules 
                    tmp_columns[:width] = i[:screenfield_width]
-                   tmp_columns[:search] = if i[:screenfield_paragraph]  == 0 and  screen_code =~ /^H\d_/   then false else true end 
-		   if i[:screenfield_editable] == 1 then
+		   if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
 		      tmp_columns[:editable] = true
 		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  if i[:screenfield_type] == "text"
 		     else
@@ -141,13 +140,16 @@ module JqgridFilter
 		   end
 		   tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox","text"].index(i[:screenfield_type]) 
 		   if i[:screenfield_type] == "select" or  i[:screenfield_type] == "checkbox" then
-		      strselect = get_select_list_value(i[:screenfield_edoptvalue])
+		      strselect = i[:screenfield_edoptvalue]
 		      tmp_columns[:editoptions] = {:value => eval(strselect) } 
 		      tmp_columns[:formatter] = "select"
 		      tmp_columns[:searchoptions] = {:value => eval(strselect) } 
 		   end
 		   if i[:screenfield_type] == "textarea" then
 		      tmp_columns[:editoptions] =  {:rows =>"#{i[:screenfield_edoptrow]}",:cols =>"#{i[:screenfield_edoptcols]}"}
+		   end
+                   if i[:screenfield_formatter]  then
+		      tmp_columns[:formatter] = i[:screenfield_formatter] 
 		   end
                    if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
                    ## tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox"].index(i[:screenfield_type]) 
@@ -191,12 +193,5 @@ module JqgridFilter
                screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
 	end
      return screen_code,jqgrid_id
-  end
-  def get_select_list_value edoptvalue 
-     edoptvalue.scan(/'\w*'/).each do |i|
-	 j = i.gsub("'","")
-	 edoptvalue =  edoptvalue.sub(j,sub_blkgetpobj(j,"fix_char"))
-     end
-     return edoptvalue
   end
  end

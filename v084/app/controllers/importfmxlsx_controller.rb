@@ -1,134 +1,146 @@
-class ImportfmxlsxController < ApplicationController
+class ImportfmxlsxController < ScreenController
   before_filter :authenticate_user!  
   ####  roo:char exlel数字だと 1.0になる。
-  ####  rubyXL: 漢字が混在すると項目の位置がずれる。
-  def index
+  ####  rubyXL: 漢字が混在すると項目の位置がずれる。 2014/1 解決されている模様
+  ###   public/rubyxl/  のrubyxlディレクトリーを作成済のこと。
+    def index
      @screen_code,jqgrid_id = get_screen_code 
-      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
-      @gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
-      @tblname =  sub_blkgetpobj( plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and pobject_objecttype_view = 'view' and screen_expiredate > sysdate order by  screen_expiredate")[:pobject_code_view] ,"view")
-
-      dupchk
-  end
- def import
-     @screen_code = params[:dump][:screen_code]
-     dupchk 
-     ##debugger
-     render :index and exit unless @errmsg == ""
-     temp = params[:dump][:excel_file].tempfile
-     file = File.join("public",params[:dump][:excel_file].original_filename)
-     FileUtils.cp temp.path, file
-    ##debugger
-     spt = SimpleXlsxReader.open file
-     ##debugger
+      #show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+      #@gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
+      @tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
+      #dupchk
+    end
+###By default, cell load errors (ex. if a date cell contains the string 'hello')
+### result in a SimpleXlsxReader::CellLoadError.
+###If you would like to provide better error feedback to your users, you can set 
+###SimpleXlsxReader.configuration.catch_cell_load_errors = true, and load errors will instead be inserted into Sheet#load_errors keyed by [rownum, colnum].
+    def import
+      ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
+      @screen_code = params[:dump][:screen_code]
+      if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and exit end
+      file = File.join("public/rubyxl",params[:dump][:excel_file].original_filename)
+      FileUtils.cp temp.path, file
+      ##debugger
+      ws = RubyXL::Parser.parse file
       FileUtils.rm file
-      @command_r = {}
-      command_r
-      command_r[:sio_viewname]  = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")[:pobject_code_view]
-      spt.sheets.each do |sh|
-      s_cnt = nil               ####session_counter
-         sh.rows.each_with_index do |rowdata,count|
-	   if count == 0
-	      ##debugger
-	      nchk rowdata,sh.name if count == 0
-	       ##debugger
-               break  unless  @errmsg == ""
-             else
-	      rowdata.each_with_index do |cell,cellcnt|
-                 command_r[ @row0[cellcnt]] = cell  if @row0[cellcnt] and cell
-	      end  ##column
-	      ##debugger
-	      command_r[:sio_session_counter]  = s_cnt
-	      ##	 char_to_number_data  ####type 変換
-        	case sh.name.upcase
-	            when "INSERT"
-                          sub_insert_sio_c(command_r) do    ###更新要???
-                              command_r[:sio_classname] = "plsql_blk_insert"
-                         end
-         	   when "UPDATE"
-			 sub_insert_sio_c(command_r)   do
-                            command_r[:sio_classname] = "plsql_blk_update"
-			    command_r[:id] = get_id_from_code if command_r[:id].nil?
-                         end
-	           when "DELETE"
-			 sub_insert_sio_c(command_r)  do
-                           command_r[:sio_classname] = "plsql_blk_delete"
-			    command_r[:id] = get_id_from_code if command_r[:id].nil?
-                         end
-        	   else
+      command_c = {}
+      command_c[:sio_viewname]  = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")[:pobject_code_view]
+      command_c[:sio_code] = @screen_code
+      command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
+      tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
+      for iws in 0..9
+           break if ws[iws].nil?
+           command_c[:sio_session_counter]  = user_seq_nextval(command_c[:sio_user_code] )   ###シート毎にこみっと
+           ##maxj = sh.UsedRange.CoLumns.Count
+           ##maxi = sh.UsedRange.Rows.Count
+           dupchk  ws[iws].sheet_name
+           render :index and exit unless @errmsg == ""
+           for count in 0..99999
+	      if  count == 0
+	         ##debugger
+	         nchk ws[iws][count] if count == 0
+	         ##debugger
+                 break  unless  @errmsg == ""
+                else
+                 ##debugger
+                 break  if  ws[iws][count].nil?
+                 break  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
+                 @inxrow0.each do |key,cnt|
+                      command_c[key] = ws[iws][count][cnt].value  if  ws[iws][count][cnt]
+	         end  ##column
+                 case ws[iws].sheet_name.upcase
+	            when "INSERT" then
+                            command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
+                            command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
+                            command_c[:sio_classname] = "plsql_blk_insert"
+                    when "UPDATE" then
+                            command_c[:sio_classname] = "plsql_blk_update"
+                            command_c[:id] = command_c[tblidsym]
+	            when "DELETE" then
+                           command_c[:sio_classname] = "plsql_blk_delete"
+                           command_c[:id] = command_c[tblidsym]
+        	    when nil then
+                         break
+                    else
 			@errmsg = "sheet name err must be insert or update"
 			break
-	       end  ##case
-	       s_cnt = command_r[:sio_session_counter]  
-	    end  ## if count
-         end ## row
+	         end  ##case
+                 ###   更新前のエラーチェックがまだ
+	         ##debugger
+	         ##	 char_to_number_data  ####type 変換
+                 @hkeys.each do |inx,field|
+                    viewname,delm = inx.to_s.split(":")
+                    keys = {}
+                    field.each do |f|  
+                      keys[f] = command_c[f.to_sym]
+                    end 
+                    rec = get_item_from_code keys,viewname,delm
+                    ##debugger
+                    idsym = (@screen_code.split("_")[1].chop+ "_"+ viewname.split("_")[1].chop+"_id" + if delm then "_" + delm else "" end).to_sym
+                    command_c[idsym] = rec[:id] if rec
+                 end
+                 sub_insert_sio_c(command_c)
+	      end  ## if count
+           end ## row
+           if  @errmsg == ""
+              sub_userproc_insert command_c
+              plsql.commit
+              dbcud = DbCud.new
+              dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code])
+           end
       end  ##end sheet
-     ##debugger
-    if @errmsg == ""
-       plsql.commit
-       dbcud = DbCud.new
-       dbcud.perform(command_r[:sio_session_counter],"SIO_#{command_r[:sio_viewname]}")
-     end
-    render :index
- end
-  def dupchk
-       @fields = {}
-       @rfields = {}
-       errfield  = []
-       @errmsg = ""
-       @nfields = []   ## 更新???目
-       @indispfs = []   ## ???須???目
-       @keyfs = []   ## key???須???目
-       show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
-       @show_data = Rails.cache.read(show_cache_key)
-       show_data
-       ##debugger
-       show_data[:gridcolumns].each do |i|
-	    @fields[i[:label].to_sym] = i[:field] if i[:hidden] == false
-	    @rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false
-	 if i[:editable] == true   ###更新可能???目
-	     @nfields << i[:field].to_sym 
-             @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
-          end
-       end
-     @errmsg = "#{errfield.join(',').encode('utf-8')}" unless errfield == []
-  end
-  def nchk spt,sheet_name
+      ##debugger
+      render :index
+    end
+    def dupchk  sheet_name
+      @fields = {}
+      @rfields = {}
+      @errmsg = ""
+      @nfields = []   ## 更新項目
+      @indispfs = []   ## 項須項目
+      @keyfs = []   ## key項須項目
+      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+      show_data = get_show_data(@screen_code)
+      tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
+      ##debugger
+      show_data[:gridcolumns].each do |i|
+	   @fields[i[:label].to_sym] = i[:field] if i[:hidden] == false  and  i[:label]
+	   @rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false and  i[:label]
+	   if  i[:editable] == true   ###更新可能項目
+	       @nfields << i[:field].to_sym 
+               @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
+           end
+      end
+      if  sheet_name.downcase == "update" or  sheet_name.downcase == "delete" then
+           @fields[tblidsym] = @rfields[tblidsym] = tblidsym.to_s
+           @nfields << tblidsym
+           @indispfs << tblidsym
+      end
+    end
+    def nchk spt
       errfield  = []
       @row0 = []
-      spt.each do |cell|   ##一行目は???目
+      @inxrow0 = {}
+      for cellcnt in 0..(@fields.size-1)   ##一行目は項目
 	   ##p cell
 	   ##debugger
-           @row0 <<  @fields[cell.encode("utf-8").to_sym].to_sym if cell and @fields[cell.encode("utf-8").to_sym]
+           if  spt[cellcnt] and @fields[spt[cellcnt].value.encode("utf-8").to_sym] then
+              row0sym =  @fields[spt[cellcnt].value.encode("utf-8").to_sym].to_sym
+              @row0 << row0sym
+              @inxrow0[row0sym] = cellcnt 
+           end
       end
-      if   sheet_name.upcase == "INSERT"
-           @indispfs.each do |i|
-	     ##errfield << "???須???目な???".encode("utf-8")  + i  + ":" + @rfields[i].encode("utf-8") if @row0.index(i).nil? 
-	     errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
-           end
-       end
-       if   sheet_name.upcase == "UPDATE"
-           @keyfs.each do |i|
-	     ###errfield << "key???目な???" + i  + ":" + @rfields[i] if @row0.index(i).nil? 
-	     errfield <<  i.to_s  + ":" + @rfields[i] if @row0.index(i).nil? 
-           end
-	   ###errfield << "更新???目な???"  if @row0.size <2
-	   errfield << "no field for update "  if @row0.size <2
-       end  
-      @errmsg
+      @indispfs.each do |i|
+	   ##errfield << "項須項目な項".encode("utf-8")  + i  + ":" + @rfields[i].encode("utf-8") if @row0.index(i).nil? 
+	   errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
+      end
       @errmsg = "#{errfield.join(',')}" unless errfield == []
-  end
-  def get_id_from_code
       ##debugger
-      tbln_code_sym = (command_r[:sio_viewname].split("_")[1].chop.downcase + "_code").to_sym
-      tbln_id_sym = (command_r[:sio_viewname].split("_")[1].downcase + "_id").to_sym
-      ##debugger
-      sub_code_to_id({tbln_code_sym=>command_r[tbln_code_sym]})[tbln_id_sym] if command_r[tbln_code_sym]
-  end
-  def show_data
-      @show_data
-  end
-  def command_r
-      @command_r
-  end
+       @hkeys = {}
+       @row0.each do |field|
+          akeys,viewname,delm =  get_ary_search_field @screen_code,field
+          delm ||= ""
+          @hkeys[(viewname+":"+delm).to_sym] = akeys if viewname
+       end
+    end
 end

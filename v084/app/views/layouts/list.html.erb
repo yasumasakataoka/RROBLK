@@ -1,18 +1,56 @@
-<%=javascript_include_tag("jquery.js")%>
-<meta http-equiv="content-type" content="text/html;charset=UTF-8" />  <%= javascript_include_tag 'rails' %>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
-<html>
-  <%= stylesheet_link_tag 'scaffold' %>
 <head>
-  <title>Start: <%= controller.action_name %></title>
-          
-  <%= yield  :layout %>
-                 
+
+<meta http-equiv="content-type" content="text/html;charset=UTF-8" > 
+
+<script src="/assets/jquery-1.7.2.min.js?body=1" type="text/javascript"></script>
+<script src="/assets/jquery-ui.min1.8.js?body=1" type="text/javascript"></script>
+<script src="/assets/jrails.js?body=1" type="text/javascript"></script>
+<script src="/assets/rails.js?body=1" type="text/javascript"></script>
+<script src="/assets/jquery-1.7.2.min.js?body=1" type="text/javascript"></script>
+<script src="/assets/jquery-ui.min1.8.js?body=1" type="text/javascript"></script>
+<script src="/assets/jrails.js?body=1" type="text/javascript"></script>
+<script src="/assets/rails.js?body=1" type="text/javascript"></script>
+<link href="/assets/jqgrid/themes/default/jquery-ui-1.10.3.custom.css?body=1" media="screen" rel="stylesheet" type="text/css" >
+<title>Start: <%= controller.action_name %></title>
 </head>
-<body>  
+
+<body>
+ <script type="text/javascript"> 
+       jQuery(document).ready(function(){
+                 var screen;
+                 var ascreens = new Array();
+                 jQuery("#radio_button td").on('click', function(){ 
+                   var p_id = jQuery("#radio_button :checked").val(); 
+                   if(screen){if(screen.id!=p_id&&screen.id){if(ascreens[p_id]){ascreens[p_id].close();}
+                                                             if(p_id){screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);  
+                                                                      ascreens[p_id]=screen;  
+                                                                       jQuery("#radio_list"+p_id).css('background-color', '#00ff00');
+                                                                       return false;}
+                                                             }
+                                        else{if(screen.id=p_id){screen.close();screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);
+                                                                               ascreens[p_id]=screen;  
+                                                                                jQuery("#radio_list"+p_id).css('background-color', '#00ff00');
+                                                                               return false; }}
+                               }
+                      else{if(p_id){screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);
+                                                ascreens[p_id]=screen;  
+                                                 jQuery("#radio_list"+p_id).css('background-color', '#00ff00'); 
+                                                return false; }} });
+                   jQuery("table#radio_button").on('click',function(){
+                           jQuery("table#radio_button td").css('background-color', '#ffffff');
+                           for ( var key in ascreens ) {
+                                if(ascreens[key].closed){
+                                            delete ascreens[key];}                                                
+                                     else{  jQuery("#radio_list"+key).css('background-color', '#00ff00');}
+                           }                            
+                   })
+          })
+</script>
+  
+  <%= yield  %>
+       
  <%= render :partial => "devise/login_logout" %>
 </body>
 </html>

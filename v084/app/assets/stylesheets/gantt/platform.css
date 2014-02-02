@@ -24,16 +24,9 @@
   body styles
   -------------------------------------------------------
   */
-BODY, TBODY {
-  font-family: arial;
-  font-size: 10px;
-  margin: 0;
-  color: #000000;
-  text-decoration: none;
-}
 
 BODY {
-  background-color: #91B4B7; 
+  background-color: #FFFFFF; 
 }
 
 a {
@@ -288,7 +281,7 @@ span.separator {
 .button.add .teamworkIcon {
   color:#009E94;
 }
-
+.ui-button-text {font-size:12px;}
 
 form {
   margin: 0;
