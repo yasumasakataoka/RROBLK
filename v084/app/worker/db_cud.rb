@@ -123,6 +123,46 @@ class DbCud  < ActionController::Base
     end
     private
     ## linkの追加・削除機能が必要
+    def  new_stkhists_add command_r,prevstk 
+       stk_command_r = {}
+      command_r.each do|key,val|
+          stl_command_r[key] = val if key.to_s =~ /^sio_/
+          case key.to_s
+               when /loca_id$/
+                    stk_command_r[:stkhist_locas_id] = val
+               when /itm_id/
+                     stk_command_r[:stkhist_itm_id] = val
+               when /depdate/
+                     stk_command_r[:stkhist_strdate] = val
+                when /arvdate/
+                     stk_command_r[:stkhist_strdate] = val
+               when /person_id_upd/
+                     stk_command_r[:stkhist_person_id_upd] = val
+          end
+      end
+      if  prevstk then
+         stk_command_r[:stkhist_qty] = prevstk[:qty]
+         stk_command_r[:stkhist_qty_sch] =  prevstk[:qty_sch] 
+         stk_command_r[:stkhist_qty_ord] =  prevstk[:qty_ord]
+         stk_command_r[:stkhist_qty_inst] =  prevstk[:qty_inst]
+         stk_command_r[:stkhist_amt] =  prevstk[:amt]
+         stk_command_r[:stkhist_amt_sch] =  prevstk[:amt_sch] 
+         stk_command_r[:stkhist_amt_ord] =  prevstk[:amt_ord]
+         stk_command_r[:stkhist_amt_inst] =  prevstk[:amt_inst]
+       else
+         stk_command_r[:stkhist_qty] = 0
+         stk_command_r[:stkhist_qty_sch] = 0 
+         stk_command_r[:stkhist_qty_ord] = 0
+         stk_command_r[:stkhist_qty_inst] = 0
+         stk_command_r[:stkhist_amt] = 0
+         stk_command_r[:stkhist_amt_sch] = 0 
+         stk_command_r[:stkhist_amt_ord] = 0
+         stk_command_r[:stkhist_amt_inst] = 0
+      end
+      stk_command_r[:sio_classname] = "stk_insert"
+      stk_command_r[:sio_viewname] = "r_stkhists"
+      stk_command_r[:id] = stk_command_r[:stkhist_id] = plsql.stkhists_seq.nextval
+    end
     def update_schs_by_ord command_r,tbl
       schsid_sym = (tbl.sub("ords","schs")+"_id").to_sym
       if command_r[:schsid_sym] then  ### schs :ords = 1:n
@@ -144,8 +184,8 @@ class DbCud  < ActionController::Base
            plsql.__send__(tbl.sub("ords","schs")).update schsrec
            crt_sio_for_sch(tbl.sub("ords","schs"),schsrec[:id],command_r)
        else   ### schs :ords = n:1  n:mは認めない
-          ordsid_sym = (tbl+"_id").to_sym
-          schrecs =  plsql.__send__(tbl.sub("ords","schs")).first(%Q% where #{ordsid_sym} =  command_r[:id] %)
+          sno_sym = (tbl.chop+"_sno").to_sym
+          schrecs =  plsql.__send__(tbl.sub("ords","schs")).first(%Q% where sno =  '#{command_r[sno_sym]}' %)
           qty_sum = command_r[(tbl.chop+"_qty").to_sym]
           amt_sum = command_r[(tbl.chop+"_amt").to_sym]
           schsrecs.each do |rec|
@@ -206,8 +246,8 @@ class DbCud  < ActionController::Base
            plsql.__send__(tbl.sub("insts","ords")).update ordsrec
            update_schs_by_ords crt_sio_for_sch(tbl.sub("insts","ords"),ordsrec[:id],command_r)
        else   ### ords:insts = n:1  n:mは認めない
-          instsid_sym = (tbl+"_id").to_sym
-          ordrecs =  plsql.__send__(tbl.sub("insts","ords")).all(%Q% where #{instsid_sym.to_s} =  #{command_r[:id]} %)
+          sno_sym = (tbl.chop+"_sno").to_sym
+          ordrecs =  plsql.__send__(tbl.sub("insts","ords")).all(%Q% where sno =  '#{command_r[sno_sym]}' %)
           qty_sum = command_r[(tbl.chop+"_qty").to_sym]
           amt_sum = command_r[(tbl.chop+"_amt").to_sym]
           ordrecs.each do |rec|
