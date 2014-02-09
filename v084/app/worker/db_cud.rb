@@ -2,10 +2,10 @@ class DbCud  < ActionController::Base
  ## @queue = :default
  ## def self.perform(sio_id,sio_view_name)
     def perform(sio_session_counter,user_id)
-      crt_def   unless respond_to?("dummy_def")
       begin
            ###plsql.execute "SAVEPOINT before_perform"
            plsql.connection.autocommit = false
+           crt_def  unless respond_to?("dummy_def")
            @pare_class = "batch"
            target_sio_tbl = plsql.__send__("userproc#{user_id.to_s}s").first("where id = #{sio_session_counter}")[:tblname]
            command_cs = plsql.__send__(target_sio_tbl).all("where sio_user_code = #{user_id} and  sio_session_counter = #{sio_session_counter} and sio_command_response = 'C' ")
@@ -18,7 +18,7 @@ class DbCud  < ActionController::Base
               (sioarray,i  = __send__("sub_tbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_tbl_"+i[:sio_viewname].split("_")[1])
               (sioarray =    __send__("sub_screen_"+i[:sio_code],sioarray,i))  if  respond_to?("sub_screen_"+i[:sio_code])
                ### command_cs.each do |i|  ##テーブル、画面の追加処理
-               ##debugger
+              debugger
               sioarray.each  do |sio| ## before update
                  new_cmds =  plsql.__send__(sio).all(strsql)   
                  tblname = sio.split(/_/,3)[2]
@@ -26,7 +26,11 @@ class DbCud  < ActionController::Base
                      update_table rec,tblname
                  end
               end   ##sioarray.each
-              update_table i ### 本体
+              tblname = i[:sio_viewname].split(/_/,3)[1]
+              update_table i,tblname ### 本体
+              reset_show_data_screen if tblname =~ /screen/   ###キャッシュを削除
+              reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
+              
               sioarray = []
               (sioarray  = __send__("sub_aftertbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_aftertbl_"+i[:sio_viewname].split("_")[1])
               (sioarray =    __send__("sub_afterscreen_"+i[:sio_code],sioarray,i))  if  respond_to?("sub_afterscreen_"+i[:sio_code])
@@ -36,7 +40,7 @@ class DbCud  < ActionController::Base
                  new_cmds =  plsql.__send__(sio).all(strsql)   ###
                  tblname = sio.split(/_/,3)[2]
                  new_cmds.each do |rec|
-                     update_table rec
+                     update_table rec,tblname
                  end
               end   ##sioarray.each
            end ##command_r
@@ -62,19 +66,21 @@ class DbCud  < ActionController::Base
     end
     def reset_show_data_screenlist   ###casheは消えるけどうまくいかない　2013/11/2
       ##debugger
-      cache_key = "listindex" 
-      Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbat
-      chcache_key =  "show+"
-      Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
+      cache_keys =["listindex","show","id"] 
+      cache_keys.each do |key|
+         Rails.cache.delete_matched(key) ###delay_jobからcallされるので、grp_codeはbat
+      end
     end
-    def sub_set_inout  sioarray,command_c,reqtbl,locasid,strdate
-       ##日付変更時は、 call する側で マイナスのデータも作成のこと。
+    def sub_set_inout  sioarray,command_c,reqtbl,locasid,fm_or_to_locaid,strdate
        ##  親で　sub_get_ship_date(command_c[:custord_duedate],req_command_c[:shpsch_locas_id_asstwh] ,nil)を求めておくこと
       req_command_c = {}
+      req_command_c = command_c.dup
       newtbl = reqtbl.chop
       oldtbl = command_c[:sio_viewname].split("_")[1].chop
       req_command_c[(newtbl+"_qty").to_sym] = command_c[(oldtbl+"_qty").to_sym]
       req_command_c[(newtbl+"_amt").to_sym] = command_c[(oldtbl+"_amt").to_sym]
+      req_command_c[(newtbl+"_price").to_sym] = command_c[(oldtbl+"_price").to_sym]
+      req_command_c[(newtbl+"_tax").to_sym] = command_c[(oldtbl+"_tax").to_sym]
       req_command_c[(newtbl+"_itm_id").to_sym] = command_c[(oldtbl+"_itm_id").to_sym]
       req_command_c[(newtbl+"_remark").to_sym] = "auto create from #{oldtbl}"
       req_command_c[(newtbl+"_tblid").to_sym] = command_c[(oldtbl+"_id").to_sym]
@@ -83,9 +89,32 @@ class DbCud  < ActionController::Base
       req_command_c[(newtbl+"_id").to_sym] =  command_c[(oldtbl+"_id").to_sym] ###新規と更新または削除
       strdatesym = (newtbl + if newtbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym
       req_command_c[strsymdate] = strdate
-      sio_copy_insert req_command_c
-
-      sioarray << "sio_r_#{reqtbl}"
+      fmtolocasym = (newtbl + if newtbl =~ /^shp/ then "_loca_id_to" else "_loca_id_from" end).to_sym
+      req_command_c[fmtolocasym] = fm_or_to_locaid
+      case rec[:sio_classname]
+          when  /insert/ then
+               sio_copy_insert req_command_c
+               sioarray << "sio_r_#{reqtbl}"
+	  when /update/ then
+               oldrec = plsql.__send__("r_#{reqtbl}").first("where id = #{req_command_c[:id]} for update ")
+               old_command_c = {}
+               old_command_c = req_command_c.dup
+               old_command_c[(newtbl+"_qty").to_sym] = 0
+               old_command_c[(newtbl+"_amt").to_sym] = 0
+               old_command_c[strsymdate] = oldrec[strdatesym]
+               sio_copy_insert old_command_c
+               rec[:sio_classname] = "shparv_update_chgupdold"
+               sio_copy_insert old_command_c
+               rec[:sio_classname] = "shparv_insert_chgupdnew"
+               sio_copy_insert req_command_c
+               sioarray << "sio_r_#{reqtbl}"
+          when  /delete/ then 
+               req_command_c[(newtbl+"_qty").to_sym] = 0
+               req_command_c[(newtbl+"_amt").to_sym] = 0
+               rec[:sio_classname] = "shparv_update_chgdel"
+               sio_copy_insert req_command_c
+               sioarray << "sio_r_#{reqtbl}"
+         end   ## case iud 
       return sioarray,command_c
     end
     def sub_update_stkhists command_r
@@ -94,14 +123,14 @@ class DbCud  < ActionController::Base
       lc_id = command_r[(tbl + "_loca_id").to_sym]
       it_id = command_r[(tbl + "_itm_id").to_sym]
       tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym]
-      prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < #{tm_time}  order by strdate  desc ")
-      nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate = #{tm_time} ")
+      prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < #{tm_time}  order by strdate  desc for update ")
+      nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate = #{tm_time} for update ")
       if  prevstk then
           new_stkhists_add(command_r,prevstk)  if nstk.nil? ####以前のデータの引き継ぎ
        else
           new_stkhists_add(command_r,nil) if nstk.nil? ####初期値
       end 
-      fstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= #{tm_time}  order by strdate ")
+      fstk = plsql.stkhists.all("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= #{tm_time}  order by strdate for update ")
       fstk.each do |stk|
          update_stkhist_rec stk,command_r
       end
@@ -118,11 +147,8 @@ class DbCud  < ActionController::Base
               update_schs_by_ord command_r,tbl
       end
     end   
-    def undefined
-      nil   
-    end
     private
-    ## linkの追加・削除機能が必要
+    ## linkの追加・削除機能が必要 2014/2/8 不要　 snoで対応
     def  new_stkhists_add command_r,prevstk 
        stk_command_r = {}
       command_r.each do|key,val|
@@ -163,46 +189,6 @@ class DbCud  < ActionController::Base
       stk_command_r[:sio_viewname] = "r_stkhists"
       stk_command_r[:id] = stk_command_r[:stkhist_id] = plsql.stkhists_seq.nextval
     end
-    def update_schs_by_ord command_r,tbl
-      schsid_sym = (tbl.sub("ords","schs")+"_id").to_sym
-      if command_r[:schsid_sym] then  ### schs :ords = 1:n
-           schrec = plsql.__send__(tbl.sub("ords","schs")).first("where id =  command_r[schsid_sym] ")
-           ordrecs = plsql.__send__(tbl).all(%Q% where #{schsid_sym.to_s} =  command_r[schsid_sym] %)
-           schsrec[:qty_act] = schsrec[:amt_act] = 0
-           schsrec[:qty_inst] = schsrec[:amt_inst] = 0
-           schsrec[:qty_ord] = schsrec[:amt_ord] = 0
-           ordsrecs.each do |rec|
-               schsrec[:qty_ord] += rec[:qty]
-               schsrec[:amt_ord] += rec[:amt]
-               schsrec[:qty_inst] += rec[:qty_inst]
-               schsrec[:amt_inst] += rec[:amt_inst]
-               schsrec[:qty_act] += rec[:qty_act]
-               schsrec[:amt_act] += rec[:amt_act]
-           end
-           schsrec[:status] = set_sch_status schrec
-           schsrec[:where] = {:id =>schsrec[:id]}
-           plsql.__send__(tbl.sub("ords","schs")).update schsrec
-           crt_sio_for_sch(tbl.sub("ords","schs"),schsrec[:id],command_r)
-       else   ### schs :ords = n:1  n:mは認めない
-          sno_sym = (tbl.chop+"_sno").to_sym
-          schrecs =  plsql.__send__(tbl.sub("ords","schs")).first(%Q% where sno =  '#{command_r[sno_sym]}' %)
-          qty_sum = command_r[(tbl.chop+"_qty").to_sym]
-          amt_sum = command_r[(tbl.chop+"_amt").to_sym]
-          schsrecs.each do |rec|
-              schsrec[:qty_inst] = schsrec[:qty]
-              schsrec[:amt_inst] = schsrec[:amt]
-              schsrec[:qty_act] = schsrec[:qty]
-              schsrec[:amt_act] = schsrec[:amt]
-              schsrec[:where] = {:id =>rec[:id]}
-              schsrec[:status] = set_sch_status schrec
-              plsql.__send__(tbl.sub("ords","schs")).update rec
-              crt_sio_for_sch(tbl.sub("ords","schs"),ordsrec[:id],command_r)
-              qty_sum -=  ordsrec[:qty]
-              amt_sum -=  ordsrec[:amt]
-          end
-          raise  if qty_sum < 0 or amt_sum <0
-      end
-    end
     def  set_sch_status schsrec
       case
          when  schsrec[:qty] >0
@@ -229,11 +215,82 @@ class DbCud  < ActionController::Base
              end
       end
     end
+    
+    def update_schs_by_ord command_r,tbl
+      schsno_sym = ("sno_#{tbl.sub('ords','sch')}").to_sym
+      if command_r[:schsno_sym] then  ### schs :ords = 1:n
+           schrec = plsql.__send__(tbl.sub("ords","schs")).first("where sno =  '#{command_r[schsno_sym]}' ")
+           ordsrecs = plsql.__send__(tbl).all(%Q% where sno_#{schsno_sym.to_s} =  '#{command_r[schsno_sym]}' %)
+           schrec[:qty_act] = schrec[:amt_act] = 0
+           schrec[:qty_inst] = schrec[:amt_inst] = 0
+           schrec[:qty_ord] = schrec[:amt_ord] = 0
+           ordsrecs.each do |rec|
+               schrec[:qty_ord] += rec[:qty]
+               schrec[:amt_ord] += rec[:amt]
+               schrec[:qty_inst] += rec[:qty_inst]
+               schrec[:amt_inst] += rec[:amt_inst]
+               schrec[:qty_act] += rec[:qty_act]
+               schrec[:amt_act] += rec[:amt_act]
+           end
+           schrec[:status] = set_sch_status schrec
+           schsrec[:where] = {:id =>schrec[:id]}
+           plsql.__send__(tbl.sub("ords","schs")).update schrec
+           crt_sio_for_sch(tbl.sub("ords","schs"),schrec[:id],command_r)
+       else   ### schs :ords = n:1  n:mは認めない
+          sno_sym = ("sno_#{tbl.chop}").to_sym
+          schrecs =  plsql.__send__(tbl.sub("ords","schs")).first(%Q% where sno_#{tbl} =  '#{command_r[sno_sym]}' order by lineno_#{tbl} %)
+          qty_sum = command_r[(tbl.chop+"_qty").to_sym]
+          amt_sum = command_r[(tbl.chop+"_amt").to_sym]
+          qty_insts_sum = command_r[(tbl.chop+"_qty_inst").to_sym]
+          amt_insts_sum = command_r[(tbl.chop+"_amt_inst").to_sym]
+          qty_acts_sum = command_r[(tbl.chop+"_qty_act").to_sym]
+          amt_acts_sum = command_r[(tbl.chop+"_amt_act").to_sym]
+          schrecs.each do |schrec|
+              if  qty_insts_sum >=  schrec[:qty] then
+                 schrec[:qty_inst] =  schrec[:qty]
+                  qty_insts_sum   -=  schrec[:qty]
+                else 
+                  schrec[:qty_inst] =  qty_insts_sum
+                  qty_insts_sum     = 0
+              end
+              if  amt_insts_sum >=  schrec[:amt] then
+                 schrec[:amt_inst] =  schrec[:amt]
+                 amt_insts_sum   -=  schrec[:amt]
+                else 
+                  schrec[:amt_inst] =  amt_insts_sum
+                  amt_insts_sum     = 0
+              end
+              if  qty_act_sum >=  schrec[:qty] then
+                 schrec[:qty_act] =  schrec[:qty]
+                  qty_acts_sum   -=  schrec[:qty]
+                else 
+                  schrec[:qty_act] =  qty_act_sum
+                  qty_acts_sum     = 0
+              end
+              if  amt_insts_sum >=  schrec[:amt] then
+                 schrec[:amt_act] =  schrec[:amt]
+                 amt_acts_sum   -=  schrec[:amt]
+                else 
+                  schrec[:amt_inst] =  amt_acts_sum
+                  amt_acts_sum     = 0
+              end
+
+              schrec[:where] = {:id =>rec[:id]}
+              schrec[:status] = set_sch_status schrec
+              plsql.__send__(tbl.sub("ords","schs")).update schrec
+              crt_sio_for_sch(tbl.sub("ords","schs"),schrec[:id],command_r)
+              qty_sum -=  schrec[:qty]
+              amt_sum -=  schrec[:amt]
+          end
+          raise  if qty_sum < 0 or amt_sum <0
+      end
+    end
+
     def update_schs_by_insts command_r,tbl
-      ordsid_sym = (tbl.sub("insts","ords")+"_id").to_sym
-      if command_r[:ordsid_sym] then  ### ords:insts = 1:n
-           ordsrec = plsql.__send__(tbl.sub("insts","ords")).first("where id =  command_r[ordsid_sym] ")
-           instsrecs = plsql.__send__(tbl).all("where #{ordsid_sym.to_s} =  command_r[ordsid_sym] ")
+      ordssno_sym = ("sno_#{tbl.sub('insts','ord')}").to_sym
+      if command_r[:ordssno_sym] then  ### ords:insts = 1:n
+           ordsrec = plsql.__send__(tbl.sub("insts","ords")).first("where  sno =  '#{command_r[ordssno_sym]}' ")
+           instsrecs = plsql.__send__(tbl).all("where  sno_#{ordssno_sym.to_s} =  '#{command_r[ordssno_sym]}' ")
            ordsrec[:qty_act] = ordsrec[:amt_act] = 0
            ordsrec[:qty_inst] = ordsrec[:amt_inst] = 0
            instsrecs.each do |rec|
@@ -246,16 +303,27 @@ class DbCud  < ActionController::Base
            plsql.__send__(tbl.sub("insts","ords")).update ordsrec
            update_schs_by_ords crt_sio_for_sch(tbl.sub("insts","ords"),ordsrec[:id],command_r)
        else   ### ords:insts = n:1  n:mは認めない
-          sno_sym = (tbl.chop+"_sno").to_sym
-          ordrecs =  plsql.__send__(tbl.sub("insts","ords")).all(%Q% where sno =  '#{command_r[sno_sym]}' %)
+          sno_sym = ("sno_#{tbl.chop}").to_sym
+          ordrecs =  plsql.__send__(tbl.sub("insts","ords")).all(%Q% where sno_#{tbl} =  '#{command_r[sno_sym]}' %)
           qty_sum = command_r[(tbl.chop+"_qty").to_sym]
           amt_sum = command_r[(tbl.chop+"_amt").to_sym]
-          ordrecs.each do |rec|
-              ordsrec[:qty_inst] = ordsrec[:qty]
-              ordsrec[:amt_inst] = ordsrec[:amt]
-              ordsrec[:qty_act] = ordsrec[:qty]
-              ordsrec[:amt_act] = ordsrec[:amt]
-              ordsrec[:where] = {:id =>rec[:id]}
+          qty_acts_sum = command_r[(tbl.chop+"_qty_act").to_sym]
+          amt_acts_sum = command_r[(tbl.chop+"_amt_act").to_sym]
+          ordrecs.each do |ordrec|
+              if  qty_act_sum >=  ordrec[:qty] then
+                 ordrec[:qty_act] =  ordrec[:qty]
+                  qty_acts_sum   -=  ordrec[:qty]
+                else 
+                  ordrec[:qty_act] =  qty_act_sum
+                  qty_acts_sum     = 0
+              end
+              if  amt_insts_sum >=  ordrec[:amt] then
+                 ordrec[:amt_act] =  ordrec[:amt]
+                 amt_acts_sum   -=  ordrec[:amt]
+                else 
+                  ordrec[:amt_inst] =  amt_acts_sum
+                  amt_acts_sum     = 0
+              end
               plsql.__send__(tbl.sub("insts","ords")).update rec
               update_schs_by_ords crt_sio_for_sch(tbl.sub("insts","ords"),ordsrec[:id],command_r)
               qty_sum -=  ordsrec[:qty]
@@ -264,11 +332,12 @@ class DbCud  < ActionController::Base
           raise  if qty_sum < 0 or amt_sum <0
       end
     end
+
     def update_schs_by_acts command_r,tbl
-      instsid_sym = (tbl.sub("act","inst")+"_id").to_sym
+      actssno_sym = ("sno_#{tbl.sub('acts','inst')}").to_sym
       ### insts :acts = 1:n  n:1はない。
-      instsrec = plsql.__send__(tbl.sub("acts","insts")).first("where id =  command_r[instsid_sym] ")
-      actsrecs = plsql.__send__(tbl).all("where #{instsid_sym.to_s} =  command_r[instsid_sym] ")
+      instsrec = plsql.__send__(tbl.sub("acts","insts")).first("where sno =  #{command_r[actssno_sym]}' ")
+      actsrecs = plsql.__send__(tbl).all("where sno_#{actssno_sym.to_s} =  '#{command_r[actssno_sym]}' ")
       instsrec[:qty_act] = instsrec[:amt_act] = 0
       actsrecs.each do |rec|
          instsrec[:qty_act] = rec[:qty]
@@ -278,6 +347,7 @@ class DbCud  < ActionController::Base
       plsql.__send__(tbl.sub("acts","insts")).update instsrec
       update_schs_by_insts crt_sio_for_sch(tbl.sub("acts","insts"),instsrec[:id],command_r)
     end
+
     def crt_sio_for_sch tbl,id,org_command_r
       command_r = org_command_r.dup
       show_data = get_show_data("r_#{tbl}")
@@ -346,11 +416,20 @@ class DbCud  < ActionController::Base
               command_r[i] = j if i == :id
       end
       command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
+      crt_def if  tblname == "pobjects"  
       sub_update_stkhists command_r if tblname =~ /^shp|^arv/   ###在庫の更新
       sub_insert_sio_r   command_r    ## 結果のsio書き込み
-      reset_show_data_screen if sio =~ /screen/   ###キャッシュを削除
-      reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
-      undef dummy_def if tblname == "pobjects" and respond_to?("dummy_def")
       ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
     end
+    def undefined
+      nil   
+    end
+    def crt_def
+      eval("def dummy_def \n end")
+      crt_defs = plsql.pobjects.all("where rubycode is not null and expiredate > sysdate")
+      crt_defs.each do |i|
+           eval(i[:rubycode])
+      end
+    end
+
 end ## class

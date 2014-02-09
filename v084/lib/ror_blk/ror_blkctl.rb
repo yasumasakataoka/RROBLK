@@ -372,13 +372,6 @@
 	 raise "error"
      end
  end
- def crt_def
-    crt_defs = plsql.pobjects.all("where rubycode is not null and expiredate > sysdate")
-    crt_defs.each do |i|
-      eval(i[:rubycode])
-    end
-    eval("def dummy_def \n end")
- end
 
  def sub_sio sio,chk_cmn     
      tblname = sio.split(/_/,3)[2]
@@ -465,6 +458,17 @@
 	  3.times{ p " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
           exit ###画面にメッセージをだす方法 バッチ処理だよ
        end
+    end
+    def sub_cal_date(loca_id,ops_loca_id,dueday) 
+        dueday
+    end
+    
+    def  sub_get_bilcode(loca_id_custs)
+         loca_id_custs
+    end
+        
+    def  sub_get_pay_incomming_day(loca_id,dueday)
+         dueday
     end
 end   ##module Ror_blk
 
