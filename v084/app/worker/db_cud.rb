@@ -124,12 +124,13 @@ class DbCud  < ActionController::Base
       lc_id = command_r[(tbl + "_loca_id").to_sym]
       it_id = command_r[(tbl + "_itm_id").to_sym]
       tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym]
-      ##debugger
+      debugger
       prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate  desc for update ")
       nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate =  to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')for update ")
       if  prevstk then
           new_stkhists_add(command_r,prevstk)  if nstk.nil? ####以前のデータの引き継ぎ
        else
+          ### arv又はshpの　locas_id itms_id のセットを忘れている。
           new_stkhists_add(command_r,nil) if nstk.nil? ####初期値
       end 
       fstk = plsql.stkhists.all("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate for update ")
