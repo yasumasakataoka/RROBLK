@@ -356,15 +356,11 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
     @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
     @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
  ###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/18
-
     plsql.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
-
-    
-
-
     fields = plsql.__send__(viewname).columns  ###select(:all,tmp_screen_dtl)   ###テーブルの項目をセット  R_xxxx
-    ##debugger
+    ###debugger
     screen_ids = plsql.screens.all(" where pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') ")
+     @errmsg << "_______missing screen code #{viewname}"  if screen_ids.empty?
     screen_ids.each do |rec|
        screen_id = rec[:id]
        row_cnt ||= 1
@@ -389,10 +385,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
                plsql.screenfields.update tmp_rec
            end
        end
-       
-
-
-crttype    viewname                 ##interface用　ｓｉｏ作成
+       crttype    viewname                 ##interface用　ｓｉｏ作成
     end
  end  ##create_screenfields 
  def setscreenfields   ii,jj,viewname,screen_id,fields,row_cnt

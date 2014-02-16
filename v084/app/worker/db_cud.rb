@@ -18,7 +18,7 @@ class DbCud  < ActionController::Base
               (sioarray,i  = __send__("sub_tbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_tbl_"+i[:sio_viewname].split("_")[1])
               (sioarray =    __send__("sub_screen_"+i[:sio_code],sioarray,i))  if  respond_to?("sub_screen_"+i[:sio_code])
                ### command_cs.each do |i|  ##テーブル、画面の追加処理
-              debugger
+              ##debugger
               sioarray.each  do |sio| ## before update
                  new_cmds =  plsql.__send__(sio).all(strsql)   
                  tblname = sio.split(/_/,3)[2]
@@ -77,6 +77,7 @@ class DbCud  < ActionController::Base
       req_command_c = command_c.dup
       newtbl = reqtbl.chop
       oldtbl = command_c[:sio_viewname].split("_")[1].chop
+      req_command_c[:sio_viewname] = req_command_c[:sio_code] =  "r_#{reqtbl}"
       req_command_c[(newtbl+"_qty").to_sym] = command_c[(oldtbl+"_qty").to_sym]
       req_command_c[(newtbl+"_amt").to_sym] = command_c[(oldtbl+"_amt").to_sym]
       req_command_c[(newtbl+"_price").to_sym] = command_c[(oldtbl+"_price").to_sym]
@@ -88,10 +89,10 @@ class DbCud  < ActionController::Base
       req_command_c[(newtbl+"_tblname").to_sym] = command_c[:sio_viewname].split("_")[1]
       req_command_c[(newtbl+"_id").to_sym] =  command_c[(oldtbl+"_id").to_sym] ###新規と更新または削除
       strdatesym = (newtbl + if newtbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym
-      req_command_c[strsymdate] = strdate
+      req_command_c[strdatesym] = strdate
       fmtolocasym = (newtbl + if newtbl =~ /^shp/ then "_loca_id_to" else "_loca_id_from" end).to_sym
       req_command_c[fmtolocasym] = fm_or_to_locaid
-      case rec[:sio_classname]
+      case req_command_c[:sio_classname]
           when  /insert/ then
                sio_copy_insert req_command_c
                sioarray << "sio_r_#{reqtbl}"
@@ -123,14 +124,15 @@ class DbCud  < ActionController::Base
       lc_id = command_r[(tbl + "_loca_id").to_sym]
       it_id = command_r[(tbl + "_itm_id").to_sym]
       tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym]
-      prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < #{tm_time}  order by strdate  desc for update ")
-      nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate = #{tm_time} for update ")
+      ##debugger
+      prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate  desc for update ")
+      nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate =  to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')for update ")
       if  prevstk then
           new_stkhists_add(command_r,prevstk)  if nstk.nil? ####以前のデータの引き継ぎ
        else
           new_stkhists_add(command_r,nil) if nstk.nil? ####初期値
       end 
-      fstk = plsql.stkhists.all("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= #{tm_time}  order by strdate for update ")
+      fstk = plsql.stkhists.all("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate for update ")
       fstk.each do |stk|
          update_stkhist_rec stk,command_r
       end
@@ -152,10 +154,10 @@ class DbCud  < ActionController::Base
     def  new_stkhists_add command_r,prevstk 
        stk_command_r = {}
       command_r.each do|key,val|
-          stl_command_r[key] = val if key.to_s =~ /^sio_/
+          stk_command_r[key] = val if key.to_s =~ /^sio_/
           case key.to_s
                when /loca_id$/
-                    stk_command_r[:stkhist_locas_id] = val
+                    stk_command_r[:stkhist_loca_id] = val
                when /itm_id/
                      stk_command_r[:stkhist_itm_id] = val
                when /depdate/
@@ -188,6 +190,7 @@ class DbCud  < ActionController::Base
       stk_command_r[:sio_classname] = "stk_insert"
       stk_command_r[:sio_viewname] = "r_stkhists"
       stk_command_r[:id] = stk_command_r[:stkhist_id] = plsql.stkhists_seq.nextval
+      update_table stk_command_r,"stkhists"
     end
     def  set_sch_status schsrec
       case
