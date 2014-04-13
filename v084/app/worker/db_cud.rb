@@ -123,14 +123,14 @@ class DbCud  < ActionController::Base
       sub_update_schs command_c  if tbl !~ /sch$/
       lc_id = command_r[(tbl + "_loca_id").to_sym]
       it_id = command_r[(tbl + "_itm_id").to_sym]
-      tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym]
-      debugger
+      tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym].strftime("%Y/%m/%d %H:%M:%S")
+      ##debugger
       prevstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate < to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate  desc for update ")
       nstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate =  to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')for update ")
       if  prevstk then
           new_stkhists_add(command_r,prevstk)  if nstk.nil? ####以前のデータの引き継ぎ
        else
-          ### arv又はshpの　locas_id itms_id のセットを忘れている。
+          ### a
           new_stkhists_add(command_r,nil) if nstk.nil? ####初期値
       end 
       fstk = plsql.stkhists.all("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and strdate >= to_date('#{tm_time}','yyyy/mm/dd hh24:mi:ss')  order by strdate for update ")
@@ -153,10 +153,12 @@ class DbCud  < ActionController::Base
     private
     ## linkの追加・削除機能が必要 2014/2/8 不要　 snoで対応
     def  new_stkhists_add command_r,prevstk 
-       stk_command_r = {}
+      stk_command_r = {}
+      tblname = command_r[:sio_viewname].split("_")[1].chop
       command_r.each do|key,val|
           stk_command_r[key] = val if key.to_s =~ /^sio_/
-          case key.to_s
+          if key.to_s =~ /^#{tblname}/ then
+             case key.to_s
                when /loca_id$/
                     stk_command_r[:stkhist_loca_id] = val
                when /itm_id/
@@ -167,6 +169,7 @@ class DbCud  < ActionController::Base
                      stk_command_r[:stkhist_strdate] = val
                when /person_id_upd/
                      stk_command_r[:stkhist_person_id_upd] = val
+             end
           end
       end
       if  prevstk then
@@ -191,8 +194,47 @@ class DbCud  < ActionController::Base
       stk_command_r[:sio_classname] = "stk_insert"
       stk_command_r[:sio_viewname] = "r_stkhists"
       stk_command_r[:id] = stk_command_r[:stkhist_id] = plsql.stkhists_seq.nextval
+      ##debugger
       update_table stk_command_r,"stkhists"
     end
+    def  update_stkhist_rec stk,command_r
+      tblname = command_r[:sio_viewname].split("_")[1].chop
+      if  tblname =~ /^shp/ then
+          case tblname 
+               when /sch$/
+                    stk[:qty_sch] +=  command_r[(tblname+"_qty").to_sym] 
+                    stk[:amt_sch] += command_r[(tblname+"_amt").to_sym] 
+               when /ord$/
+                    stk[:qty_ord] += command_r[(tblname+"_qty").to_sym]
+                     stk[:amt_ord] +=  command_r[(tblname+"_amt").to_sym]
+               when /inst$/
+                    stk[:qty_inst] +=  command_r[(tblname+"_qty").to_sym]
+                    stk[:amt_inst] += command_r[(tblname+"_amt").to_sym]
+               when /act$/
+                    stk[:amt] +=  command_r[(tblname+"_amt").to_sym]
+                    stk[:qty] += command_r[(tblname+"_qty").to_sym]
+           end
+        else
+         case tblname 
+               when /sch$/
+                    stk[:qty_sch] -=  command_r[(tblname+"_qty").to_sym] 
+                    stk[:amt_sch] -= command_r[(tblname+"_amt").to_sym] 
+               when /ord$/
+                    stk[:qty_ord] -= command_r[(tblname+"_qty").to_sym]
+                     stk[:amt_ord] -=  command_r[(tblname+"_am").to_sym]
+               when /inst$/
+                    stk[:qty_inst] -=  command_r[(tblname+"_qty").to_sym]
+                    stk[:amt_inst] -= command_r[(tblname+"_amt").to_sym]
+               when /act$/
+                    stk[:amt] -=  command_r[(tblname+"_amt").to_sym]
+                    stk[:qty] -= command_r[(tblname+"_qty").to_sym]
+           end
+       end
+      stk[:where] = {:id =>stk[:id]}
+      ##debugger
+      plsql.stkhists.update stk
+    end
+
     def  set_sch_status schsrec
       case
          when  schsrec[:qty] >0

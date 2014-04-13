@@ -352,15 +352,7 @@
   def  sub_getfield show_data
        show_data[:allfields].join(",").to_s
   end   ##  sub_getfield
-  def get_show_data screen_code
-     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
-     if Rails.cache.exist?(show_cache_key) then
-           show_data = Rails.cache.read(show_cache_key)
-          else 
-	   show_data = set_detail(screen_code )  ## set gridcolumns
-     end
-     return show_data
- end
+
  def sub_set_chil_tbl_info next_screen_data
      strwhere = "where ptblid = #{next_screen_data[:sio_org_tblid]} and "
      strwhere << "ctblname = '#{next_screen_data[:sio_viewname].split("_")[1]}'  "

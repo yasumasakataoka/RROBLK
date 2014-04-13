@@ -75,7 +75,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                               strsql = %Q%where pobject_code_sfd = '#{key[:column_name].split("_")[0].downcase.chop}_#{sk[:column_name].downcase}%
                               strsql << %Q%#{if key[:column_name].split("_ID_",2)[1] then  key[:column_name].split("_ID",2)[1].downcase else "" end}'%
                               strsql << %Q% and pobject_code_scr = 'r_#{pobject_code_tbl.downcase}' and screenfield_expiredate > sysdate %
-                              prv_code_to_name_key_set strsql
+                              prv_code_to_name_key_set strsql,"r_#{pobject_code_tbl.downcase}"
                          end
                       end
                     end
@@ -83,24 +83,26 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                     if  key[:column_name] == "CODE" or  key[:column_name] == "SNO"  then
                         strsql = "where pobject_code_sfd = '#{pobject_code_tbl.chop.downcase}_#{key[:column_name].downcase}'  "
                         strsql << " and pobject_code_scr = 'r_#{pobject_code_tbl.downcase}'  and screenfield_expiredate > sysdate "
-                        prv_code_to_name_key_set strsql
+                        prv_code_to_name_key_set strsql,"r_#{pobject_code_tbl.downcase}"
                    end
               end
           end
       end
   end
-  def prv_code_to_name_key_set strsql
+  def prv_code_to_name_key_set strsql,screen_code
       ##debugger
       update_rec = plsql.r_screenfields.first(strsql)
       if  update_rec then
           tmp_rec = {}
-          tmp_rec[:paragraph] = '1'
+          tmp_rec[:paragraph] = screen_code
           tmp_rec[:updated_at] = Time.now
           tmp_rec[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
-          if   update_rec[:screenfield_remark] !~ /set paragraph = '1'  by crtviewscreen/ 
-               tmp_rec[:remark] = if update_rec[:screenfield_remark] then  update_rec[:screenfield_remark] else "" end  +  " set paragraph = '1'  by crtviewscreen"
+          if   update_rec[:screenfield_remark] !~ /set paragraph = '#{screen_code}'  by crtviewscreen/ 
+               tmp_rec[:remark] = if update_rec[:screenfield_remark] then  update_rec[:screenfield_remark] else "" end  + 
+                     if update_rec[:screenfield_remark].size < 120  then " set paragraph = '#{screen_code}'  by crtviewscreen" else "" end
           end
           tmp_rec[:where] = {:id => update_rec[:id]}
+          ##debugger
           plsql.screenfields.update tmp_rec
       end 
   end
@@ -131,7 +133,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
           rec0[:id] = plsql.blktbsfieldcodes_seq.nextval
           ##debugger
           rec0[:fieldcodes_id] = plsql.fieldcodes.first("where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
-                                                   and objecttype = 'tbl_field' and expiredate  > sysdate)")[:id]
+                                                   and objecttype = 'tbl_field' and CONSTRAINe  > sysdate)")[:id]
           plsql.blktbsfieldcodes.insert rec0
        end
        ##debugger

@@ -3,10 +3,12 @@ before_filter :authenticate_user!
 ## 全ユーザ共通
 ## SCREENLEVELで表示画面を制限すること。
     def index
-     ##debugger  ##debugger  の位置を変更するとエラーになる。???
-	grpcode = sub_blkget_grpcode 
+     ###debugger  ##debugger  の位置を変更するとエラーになる。???
+	   grpcode = sub_blkget_grpcode 
        if grpcode  then
-	       crtcachelist(grpcode)
+	        crtcachelist(grpcode)
+        else
+          render :text=>"error"
        end
     ##debugger
     end

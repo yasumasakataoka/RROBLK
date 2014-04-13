@@ -85,6 +85,15 @@ module JqgridFilter
     end
     conditions.chomp("AND ")
   end
+  def get_show_data screen_code
+     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+     if Rails.cache.exist?(show_cache_key) then
+           show_data = Rails.cache.read(show_cache_key)
+          else 
+           show_data = set_detail(screen_code )  ## set gridcolumns
+     end
+     return show_data
+  end
   def set_detail screen_code
       show_data = {}  
       det_screen = plsql.r_screenfields.all(

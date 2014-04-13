@@ -247,24 +247,24 @@ class ImportfieldsfromoracleController < ApplicationController
         subfields.each do |rec|
            js = rec[:pobject_code_fld]
            if  js =~ /_id/  then
-               if  js =~  /persons_id_/ then
-                   join_rtbl = " persons " ##JOINするテーブル名
-                   rtblname =  "person" + (js.split(/_id/)[1] ||= "")
-                   fromstr << join_rtbl + "  " + rtblname + ','    
-                   wherestr << " #{rtblname}.id = " 
-	           wherestr << tblname.chop + "." + "persons_id" + (js.split(/_id/)[1] ||= "") + " and "   ## i table name
-                   selectstr << "#{rtblname}.code person_code" + (js.split(/_id/)[1] ||= "") + " ,#{rtblname}.name person_name" + (js.split(/_id/)[1] ||= "")  + "," 
-                 else ## not person_id
-                  join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
-                  rtblname =  js.sub(/s_id/,"")
-                  fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
-                  wherestr << " #{rtblname}.#{rtblname.split("_")[0]}_id = "  ##相手側のテーブルのid
-	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
-                  selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
-                  subtblcrt  js,rtblname do |k|   ###相手側の項目セット
+              case  js
+                  when /persons_id_upd/ then  ##person は特殊
+                        join_rtbl = "upd_persons" 
+                  when /persons_id_chrg/ then
+                       join_rtbl = "chrg_persons" 
+                  when "perons_id"
+                        next
+                   else
+                       join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
+              end 
+              rtblname =  js.sub(/s_id/,"")
+              fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
+              wherestr << " #{rtblname}.#{rtblname.split("_")[0]}_id = "  ##相手側のテーブルのid
+	            wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
+              selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
+              subtblcrt  join_rtbl,rtblname,sub_rtbl do |k|   ###相手側の項目セット
                       selectstr << k
-                  end
-               end ##person_id
+              end
              else ##not _id
                ##debugger
                @errmsg << "length over table:" + tblname + " field:" +  js + " length:" + (tblname.chop.length + js.length).to_s if  (tblname.chop.length + js.length) > 30
@@ -272,42 +272,33 @@ class ImportfieldsfromoracleController < ApplicationController
                   selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ," 
            end      ##if  js =~ /_id/   
         end   ##subfields
-        @strsql1 = "create or replace view  r_" + tblname + " as "   
+        @strsql1 = "create or replace view  " + sub_rtbl + " as "   
         @strsql1 << selectstr.chop +  fromstr.chop + wherestr[0..-5]
         plsql.execute  @strsql1   
- end  #end create_or_replace_view 
- def  subtblcrt  subrtbl ,rtblname   ## sub_rtbl:テーブル名,rtblname:省略形
+ end  #end create_or_replace_view  
+
+
+ def  subtblcrt  join_rtbl ,rtblname,sub_rtbl   ## :view名,rtblname:省略形
         k = ""
-        join_rtbl = "r_" + subrtbl.split(/_id/)[0] 
-        ##subfields = plsql.USER_TAB_COLUMNS.all("WHERE TABLE_NAME = :1",join_rtbl)
-	if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
+	      if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
            @errmsg << "create view #{ join_rtbl }"
            raise 
            ### create_or_replace_view  tblid,tblname
-	end  
-
-	subfields = plsql.__send__(join_rtbl).column_names
+	      end
+	      subfields = plsql.__send__(join_rtbl).column_names
         subfields.each do |j|
-          js = j.to_s
-          xfield =  j.to_s  
-          if join_rtbl == "r_persons"
-                 xfield  = "" if js.match("_upd")
-                else
-                 xfield  = "" if js.match("person")
-           end   ## if join_rtbl  
-            ["EXPIREDATE","UPDATE_IP","CREATED_AT","UPDATED_AT","USERGROUP_CODE_UPD","USERGROUP_NAME_UPD","USERGROUP_CODE_CHRG","USERGROUP_NAME_CHRG"].each do |x|
-                     xfield = "" if js.upcase.match(x)
-             end
-              xfield = "" if js.upcase == "ID" 
+          js = xfield =  j.to_s  
+          xfield = "" if js.upcase == "ID" 
+          xfield = "" if join_rtbl != sub_rtbl  and  js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP/ and join_rtbl  !~ /person/
                if   xfield  != "" then 
-                    xfield = rtblname + "." + xfield + " " + xfield +  subrtbl.split(/_id/)[1] if subrtbl.split(/_id/)[1]
-                    xfield = rtblname + "." + xfield + " "  + xfield  if subrtbl.split(/_id/)[1].nil?
+                    xfield = rtblname + "." + xfield + " " + xfield +  "_" + rtblname.split(/_/,2)[1] if rtblname.split(/_/,2)[1]
+                    xfield = rtblname + "." + xfield + " "  + xfield  if rtblname.split(/_/,2)[1].nil?
                     k <<  " " +  xfield   + "," 
                     lngerrfield = xfield.split(" ")[1]
                     ###p " 127 #{xfield}"
                    @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  if ( lngerrfield.length) > 29
                end  
-            end  ## subfields.each           
+        end  ## subfields.each           
          yield k           
  end 
       ##

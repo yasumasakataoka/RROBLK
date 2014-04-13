@@ -85,9 +85,9 @@ include  JqgridFilter
 
      if Rails.cache.exist?(show_cache_key) then
          @show_data = Rails.cache.read(show_cache_key)
-     else 
-	 ### create_def screen_code
-	 @show_data = set_detail(screen_code )  ## set gridcolumns
+       else 
+	       ### create_def screen_code
+	       @show_data = set_detail(screen_code )  ## set gridcolumns
      end
      render :text =>"Create ScreenFields #{screen_code} by crt_r_view_sql.rb" and return   if @show_data.nil?
      @gridcolumns = @show_data[:gridcolumns]
@@ -229,28 +229,29 @@ include  JqgridFilter
                   t_extbutton << %Q| <label for="radio#{pare_screen_code}#{k.to_s}">  #{sub_blkgetpobj(i[:pobject_code_scr_ch],"screen")} </label> |   ##"screen"画面
                   t_extdiv_id << %Q|<div id="div_#{i[:pobject_code_scr]}_div_#{i[:pobject_code_scr_ch]}"> </div> |   #**
            end   ### rad_screen.each
-	return  t_extbutton,t_extdiv_id
+	    return  t_extbutton,t_extdiv_id
     end    ## set_extbutton pare_screen  
-    def get_return_name_val setview,screen_code
+    def get_return_name_val scrfield,screen_code
        ##debugger
       tmp_val = ""
       viewname = nil
-      delm ||= (setview.split("_",3)[2]) 
-      v = plsql.r_screenfields.first("where pobject_code_scr = '#{screen_code}' and pobject_code_sfd = '#{setview}' and screenfield_paragraph  > '0' AND screenfield_expiredate > sysdate")
+      delm ||= (scrfield.split("_",3)[2]) 
+      v = plsql.r_screenfields.first("where pobject_code_scr = '#{screen_code}' and pobject_code_sfd = '#{scrfield}' and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate")
       if  v then  viewname,delm =  v[:screenfield_paragraph].split(":_") end
-      if  viewname.nil? or viewname == ""  then viewname = ("r_"+setview.split("_")[0]+"s") end 
-       ###p "viewname #{viewname}"
+      if  viewname.nil? or viewname == ""  then viewname = ("r_"+scrfield.split("_")[0]+"s") end 
+       ##p "viewname #{viewname}"
       secgridc = get_show_data(viewname)[:allfields]
       sfields  = @show_data[:allfields]
-      if  delm then
-           sfields = []
-           @show_data[:allfields].each do |f|
-               sfields << f.to_s.sub("_#{delm}","").to_sym
-           end
-      end
+      ##if  delm then
+      ##     sfields = []
+      ##     @show_data[:allfields].each do |f|
+      ##         sfields << f.to_s.sub("_#{delm}","").to_sym
+      ##    end
+      ##end
       secgridc.each do |tcolm|
-          if  sfields.index(tcolm)  and  tcolm.to_s !~ /^id/ then 
-              if  delm.nil? then  field = tcolm.to_s    else   field = tcolm.to_s+ "_"+delm  end   ###delm.nil?
+          field = tcolm.to_s
+          if  sfields.index(tcolm)  and  field !~ /^id/ then 
+              ##if  delm.nil? then  field = tcolm.to_s    else   field = tcolm.to_s+ "_"+delm  end   ###delm.nil?
               tmp_val  << "if(data.#{field}){"   if screen_code.split("_")[1] == viewname.split("_")[1]
               tmp_val  << %Q%jQuery("##{field}",formid).val(data.#{field});%
               tmp_val  << "}"   if screen_code.split("_")[1] == viewname.split("_")[1]

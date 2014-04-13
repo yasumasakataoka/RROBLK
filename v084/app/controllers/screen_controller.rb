@@ -5,7 +5,7 @@
 class ScreenController < ApplicationController
   before_filter :authenticate_user!  
   respond_to :html ,:xml ##  将来　タイトルに変更
-def index
+  def index
       @pare_class = "online"
       @scriptopt = @options = {}
       @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
@@ -37,8 +37,8 @@ def index
       plsql.commit
       @tbldata = rdata[0].to_jqgrid_xml(show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
       respond_with @tbldata
-    end  ##disp
-    def nst  ###子画面　
+  end  ##disp
+  def nst  ###子画面　
       pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
       chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
       @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
@@ -62,9 +62,9 @@ def index
       sub_parescreen_insert rcdkey,hash_rcd
       render :layout=>false 
       plsql.commit
-    end   ### nst
+  end   ### nst
 #####
-    def get_strsql 
+  def get_strsql 
        strsql = ""
        hash_rcd = plsql.__send__("parescreen#{current_user[:id].to_s}s").first("where id = #{params[:ss_id]} and expiredate > sysdate")
       ##debugger
@@ -117,7 +117,7 @@ def index
       if sw == "ON" then render :json => @getname else   render :nothing => true end
     end
     def get_ary_search_field screen_code,field   ###excel importでも使用
-      strwhere = "where pobject_code_sfd = '#{field}' and screenfield_paragraph > '0'  "    ##検索元のテーブルを求める。
+      strwhere = "where pobject_code_sfd = '#{field}' and screenfield_paragraph is not null "    ##検索元のテーブルを求める。
       strwhere  << " and pobject_code_scr = '#{screen_code}' AND screenfield_expiredate > sysdate" 
       v = plsql.r_screenfields.first(strwhere)
       viewname =  rec = delm = nil
@@ -196,7 +196,7 @@ def index
         end
         return sw
  end
-    def get_item_from_code keys,viewname,delm
+ def get_item_from_code keys,viewname,delm
       strwhere = " where "
       tblname = viewname.split("_")[1].chop
       keys.each do |key,val|
@@ -206,7 +206,7 @@ def index
       strwhere << "#{tblname}_expiredate > sysdate order by #{tblname}_expiredate "
       ##debugger
       rec = plsql.__send__(viewname).first(strwhere)
-    end
+ end
  def preview_prnt
       screen_code,jqgrid_id = get_screen_code
       show_data = get_show_data(screen_code)
@@ -233,9 +233,9 @@ def index
 ##      @xparams
 ##  end
  ####### ajaxでは xls,xlsxはdownloadできない?????
-    def blk_print
+  def blk_print
      render :nothing=> true
-    end
+  end
 end ## ScreenController
 
 
