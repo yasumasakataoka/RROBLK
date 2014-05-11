@@ -6,8 +6,6 @@ class  AddupddelController < ScreenController
    before_filter :authenticate_user!  
    respond_to :html ,:xml ##  将来　タイトルに変更
    def index    ##  add update delete  
-      params[:oper] = "add" if  params[:copy] == "copyandadd"   ### copy and add
-      params[:oper] = "add" if  params[:copy] == "inlineadd"
       screen_code,jqgrid_id = get_screen_code
       ##debugger
       show_data = get_show_data(screen_code)
@@ -20,13 +18,13 @@ class  AddupddelController < ScreenController
       ##hash_rcd = Rails.cache.read(rcdkey) ||{} 
       hash_rcd = plsql.__send__("parescreen#{current_user[:id].to_s}s").first("where rcdkey = '#{rcdkey}' and expiredate > sysdate")
       @errmsg = ""
-      case params[:oper] 
-          when "add"
+      case  params[:copy]  
+          when /add/
            ###command_c[hash_rcd[:rcd_id_key]] =  hash_rcd[:rcd_id_val] unless hash_rcd.nil?
              updatechk_add command_c
              if  @errmsg == "" then
 
-                 command_c[:sio_classname] = "plsql_blk_insert"
+                 command_c[:sio_classname] = "plsql_blk_insert_"
                  if  hash_rcd   then ##ctltblによる親子関係
                      if  hash_rcd[:ctltbl] 
                          command_c[:sio_ctltbl] =  hash_rcd[:ctltbl] 
@@ -39,11 +37,11 @@ class  AddupddelController < ScreenController
                      command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                  end
              end 
-          when "del"
-	     command_c[:sio_classname] = "plsql_blk_delete"
+          when /delete/
+	           command_c[:sio_classname] = "plsql_blk_delete_"
              command_c[:sio_ctltbl] =  hash_rcd[:ctltbl] if hash_rcd 
-          when "edit"
-             command_c[:sio_classname] = "plsql_blk_update"
+          when /edit/
+             command_c[:sio_classname] = "plsql_blk_update_"
           else     
           ##debugger ## textは表示できないのでメッセージの変更要
           render :text => "return to menu because session loss params:#{params[:oper]} "

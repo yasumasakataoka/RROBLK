@@ -138,12 +138,15 @@ class   GanttController  <  ScreenController
           #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
      end
      return ngantts
-   end  ##  psub_get_itms_locas 
+   end  ##  psub_get_itms_locas に登録されたitmsは削除
    def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
      bgantt = {}
+     ###debugger  ###opeitmsに登録さ
      itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
      loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
-     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),:assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],:subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
+     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),
+                                 :assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],
+                                 :subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
     ##p " Line #{__LINE__} #{bgantt}"
      @bgantts.merge! bgantt
      return bgantt[n0[:seq].to_sym][:starttime]

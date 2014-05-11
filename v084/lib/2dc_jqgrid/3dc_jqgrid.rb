@@ -131,8 +131,8 @@ module JqgridFilter
                    if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
                        tmp_editrules[:date] = true 
                        tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
-                       tmp_columns[:datefmt] = "Y/m/d h:i"  if  i[:screenfield_type]  =~ /^timestamp/ 
-                       tmp_columns[:datefmt] = "Y/m/d h:i:s"  if  tmp_columns[:editable] = false  
+                       tmp_columns[:datefmt] = "Y-m-d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
+                       tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
                    end
 		   tmp_editrules[:required] = false  if tmp_editrules == {} 
                    tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**

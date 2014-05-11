@@ -1,4 +1,6 @@
 class ImportfieldsfromoracleController < ApplicationController
+  ###  created_at updated_at remark は必須
+  ###  _idは自動的に外部keyを作成する。
   before_filter :authenticate_user!  
   def index
       @tsqlstr = ""

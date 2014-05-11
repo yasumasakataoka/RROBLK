@@ -111,6 +111,7 @@
       end
       new_command_c[:sio_id] =  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}_SEQ").nextval
       #####new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval   矛盾
+      #### insertの時idの関係が有る時があるとの無条件にセットできない。
       new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval  if new_command_c[:id].nil?
       sym_id = (req_command_c[:sio_viewname].split('_')[1].chop+"_id").to_sym
       new_command_c[sym_id] = new_command_c[:id]
@@ -400,27 +401,27 @@
 	      ##fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{rec[:person_id_upd]}"
 	      to_cr[:persons_id_upd] = rec[:sio_user_code]
 	      if to_cr[:sio_message_contents].nil?
-		 to_cr[:updated_at] = Time.now
-	         case rec[:sio_classname]
-                    when  /insert/ then
+		        to_cr[:updated_at] = Time.now
+	          case rec[:sio_classname]
+                    when  /_insert_/ then
                           ##to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
-		          ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
+		                      ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
                           to_cr[:created_at] = Time.now                 
-		          plsql.__send__(tblname).insert to_cr
-		          chlctltbl(to_cr) if tblname == "chilscreens"
-		    when /update/ then
+		                      plsql.__send__(tblname).insert to_cr
+		                      chlctltbl(to_cr) if tblname == "chilscreens"
+		                when /_update_/ then
                           to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
                           ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
-		         ##debugger
+		                      ##debugger
                          to_cr[:updated_at] = Time.now
                          plsql.__send__(tblname).update  to_cr
-                   when  /delete/ then 
+                   when  /_delete_/ then 
                          plsql.__send__(tblname).delete(:id => rec[:id])
-	        end   ## case iud 
-	     end  ##to_cr[:sio_message_contents].nil?
+	          end   ## case iud 
+	      end  ##to_cr[:sio_message_contents].nil?
 
-	   r_cnt += 1
-	   ##debugger 
+	      r_cnt += 1
+	         ##debugger 
            command_r = {}
            command_r = rec
            command_r[:sio_recordcount] = r_cnt
@@ -428,26 +429,27 @@
            command_r[:sio_message_contents] = nil
            to_cr.each do |i,j| 
               if i.to_s =~ /s_id/  and i.to_s != "persons_id_upd" then   ###変更は　sio_user_codeを使用
-		     newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
-		     command_r[newi] = j if j
+		             newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
+		             command_r[newi] = j if j
               end
            command_r[i] = j if i == :id
            end
            command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
-	   sub_insert_sio_r   command_r    ## 結果のsio書き込み
+	         sub_insert_sio_r   command_r    ## 結果のsio書き込み
            ##fprnt " LINE #{__LINE__} i #{i} } "
-          end  ##chk_cmn.each
-	   reset_show_data_screen if sio =~ /screenfields|chilscreens/   ###キャッシュを削除
+           end  ##chk_cmn.each
+	         reset_show_data_screen if sio =~ /screenfields|chilscreens/   ###キャッシュを削除
            reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
     end
     def sub_get_ship_locas_frm_itm_id itms_id
-       ##debugger
-      rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate ) and Priority = (select max(Priority) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate )  order by expiredate")
+        ##debugger
+      rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate ) 
+                               and Priority = (select max(Priority) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate )  order by expiredate")
        if rs then
 	  return rs[:locas_id]
          else
           3.times{ fprnt " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
-	  3.times{ p " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
+	        3.times{ p " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
           exit ###画面にメッセージをだす方法 バッチ処理だよ
        end
     end
@@ -462,5 +464,8 @@
     def  sub_get_pay_incomming_day(loca_id,dueday)
          dueday
     end
+    def sub_get_to_locaid(custord_loca_id,itm_id)
+        custord_loca_id
+    end  
 end   ##module Ror_blk
 

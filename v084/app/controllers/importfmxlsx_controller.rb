@@ -3,6 +3,10 @@ class ImportfmxlsxController < ScreenController
   ####  roo:char exlel数字だと 1.0になる。
   ####  rubyXL: 漢字が混在すると項目の位置がずれる。 2014/1 解決されている模様
   ###   public/rubyxl/  のrubyxlディレクトリーを作成済のこと。
+  ###   入力がシートがフォーマット間違いの時、エラーで落ちる。　4/12
+   ###   更新前のエラーチェックがまだ
+   ##  excelのタイプチェック　がまだできてない。　例　excel 日付　db char
+   ##insertの時idは無視される
     def index
      @screen_code,jqgrid_id = get_screen_code 
       #show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
@@ -30,41 +34,41 @@ class ImportfmxlsxController < ScreenController
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
       for iws in 0..9
            break if ws[iws].nil?
-           command_c[:sio_session_counter]  = user_seq_nextval(command_c[:sio_user_code] )   ###シート毎にこみっと
+           command_c[:sio_session_counter]  = user_seq_nextval(command_c[:sio_user_code] )   ###シート毎にCOMMIT
            ##maxj = sh.UsedRange.CoLumns.Count
            ##maxi = sh.UsedRange.Rows.Count
            dupchk  ws[iws].sheet_name
            render :index and exit unless @errmsg == ""
            for count in 0..99999
-	      if  count == 0
-	         ##debugger
-	         nchk ws[iws][count] if count == 0
-	         ##debugger
-                 break  unless  @errmsg == ""
-                else
-                 ##debugger
-                 break  if  ws[iws][count].nil?
-                 break  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
-                 @inxrow0.each do |key,cnt|
-                      command_c[key] = ws[iws][count][cnt].value  if  ws[iws][count][cnt]
-	         end  ##column
-                 case ws[iws].sheet_name.upcase
-	            when "INSERT" then
+	            if  count == 0
+	                 ##debugger
+	                 nchk ws[iws][count] if count == 0
+	                  ##debugger
+                    break  unless  @errmsg == ""
+                  else
+                    ##debugger
+                    break  if  ws[iws][count].nil?
+                    break  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
+                    @inxrow0.each do |key,cnt|
+                        command_c[key] = ws[iws][count][cnt].value  if  ws[iws][count][cnt]
+	                  end  ##column
+                    case ws[iws].sheet_name.upcase
+	                  when "INSERT" then
                             command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                             command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
-                            command_c[:sio_classname] = "plsql_blk_insert"
+                            command_c[:sio_classname] = "plsql_blk_insert_"
                     when "UPDATE" then
-                            command_c[:sio_classname] = "plsql_blk_update"
+                            command_c[:sio_classname] = "plsql_blk_update_"
                             command_c[:id] = command_c[tblidsym]
-	            when "DELETE" then
-                           command_c[:sio_classname] = "plsql_blk_delete"
+	                  when "DELETE" then
+                           command_c[:sio_classname] = "plsql_blk_delete_"
                            command_c[:id] = command_c[tblidsym]
-        	    when nil then
+        	          when nil then
                          break
                     else
-			@errmsg = "sheet name err must be insert or update"
-			break
-	         end  ##case
+		                    	@errmsg = "sheet name err must be insert or update"
+			                    break
+	                  end  ##case
                  ###   更新前のエラーチェックがまだ
 	         ##debugger
 	         ##	 char_to_number_data  ####type 変換
@@ -81,7 +85,7 @@ class ImportfmxlsxController < ScreenController
                  end
                  sub_insert_sio_c(command_c)
 	      end  ## if count
-           end ## row
+        end ## row
            if  @errmsg == ""
               sub_userproc_insert command_c
               plsql.commit
