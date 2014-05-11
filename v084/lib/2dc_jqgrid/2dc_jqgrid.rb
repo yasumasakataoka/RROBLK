@@ -591,6 +591,7 @@ include  JqgridFilter
                                                         "new"
                                                         ,{#{br_screen[:screen_form_ps]}
                                                         ,editCaption:"#{button[:button_title]}"
+                                                        ,bSubmit: "#{button[:button_editgridrow]}", recreateForm: true 
                                                         ,editData:{q:"#{id}",copy:"#{ button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                                         ,afterShowForm:#{set_aftershowform(screen_code,"add")}
                                                         ,beforeShowForm:#{set_onInitializeForm}
@@ -599,7 +600,7 @@ include  JqgridFilter
                                       str_navbuttonadd << %Q%
                              ,onClickButton: function(){ btn = "#{ button[:button_editgridrow]}";var gsr = jQuery("##{id}").getGridParam("selrow");
                               if(gsr){ jQuery("##{id}").editGridRow(gsr,{#{br_screen[:screen_form_ps]},editCaption:"#{button[:button_title]}",
-                                bSubmit: "Delete",modal:true,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",
+                                bSubmit: "#{button[:button_editgridrow]}", recreateForm: true ,modal:true,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",
                                 authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                  ,checkOnSubmit:true  
                                  ,afterShowForm:#{del_fields_protect("delete")}})} else { alert("Please select Row") } }%                             
@@ -613,6 +614,7 @@ include  JqgridFilter
                                                                  gsr
                                                                 ,{#{br_screen[:screen_form_ps]}
                                                                 ,editCaption:"#{button[:button_title]}"
+                                                                ,bSubmit: "#{button[:button_editgridrow]}" ,recreateForm: true 
                                                                 ,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                                                 ,afterShowForm:#{set_aftershowform(screen_code,button[:button_editgridrow])}
                                                                 ,beforeShowForm:#{set_onInitializeForm}
