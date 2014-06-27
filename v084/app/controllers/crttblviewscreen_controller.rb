@@ -1,14 +1,19 @@
 class CrttblviewscreenController < ImportfieldsfromoracleController
 #### 残作業
 ### 開発環境でしか動かないようにすること。
-### テーブルに項目を追加すると　railsの再起動が必要
+### テーブルに項目を追加すると　railsの再起動が必要　　plsqlのlogoff connnectで解決　2014/6/25
+### id等の必須key check
+###  xxx_idの重複チェック
 
   before_filter :authenticate_user!  
   def index
       tblid  = params[:q].to_i
       if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
           if rec[:blktb_expiredate] > Time.now then
+		     plsql.logoff
+			 plsql.connect! "rails", "rails", :host => "localhost", :port => 1521, :database => "xe"
              sub_crt_tbl_view_screen rec[:pobject_code_tbl],rec[:id]
+			 ##Rails.cache.clear(nil)
             else
              @errmsg = "out of expiredate"
           end
@@ -46,6 +51,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
      ctblspec = PLSQL::Table.find(plsql, pobject_code_tbl.to_sym)
      prv_chk_field_seq allrecs,ctblspec.columns
      create_or_replace_view   rec_id,pobject_code_tbl
+	 Rails.cache.clear(nil)
      create_screenfields "r_"+pobject_code_tbl
      create_code_to_name        pobject_code_tbl.upcase
      chk_index  pobject_code_tbl,ctblspec.columns
@@ -133,8 +139,8 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
           rec0[:id] = plsql.blktbsfieldcodes_seq.nextval
           ##debugger
           rec0[:fieldcodes_id] = plsql.fieldcodes.first("where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
-                                                   and objecttype = 'tbl_field' and CONSTRAINe  > sysdate)")[:id]
-          plsql.blktbsfieldcodes.insert rec0
+                                                   and objecttype = 'tbl_field' and expiredate  > sysdate)")[:id]
+          plsql.blktbsfieldcodes.insert rec0 if rec0
        end
        ##debugger
        tmpstrsql.sort.each do |key,value|
@@ -187,8 +193,9 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
      end 
      ##debugger
      if  @strsql0.size > 1 then
-         bk_sql = "create table bk_#{tblname}_#{Time.now.strftime("%m%d%H%M")} as select * from #{tblname}"
-          plsql.execute bk_sql
+	     ###同一日のbkは一回のみ
+         bk_sql = "create table bk_#{tblname}_#{Time.now.strftime("%m%d")} as select * from #{tblname}"
+         plsql.execute bk_sql  unless PLSQL::Table.find(plsql, "bk_#{tblname}_#{Time.now.strftime("%m%d")}".to_sym) 
      end
      @strsql0.split(";").each do |i|
         ##debugger
@@ -240,9 +247,10 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
  end
  def crt_chil_screen viewname
 ##    p "addmain1"
-##  対象となるテーブルは　idをフィールドに持つこと
+##  対象となるテーブルは　idをフィールドに持つこと　　
+### id create
 ## tablenameS_ID_xxx_xxxのレイアウトであること。
-## viewの名前は R_xxxx のようにすること。
+## viewの名前は R_xxxx になる
 ## 全テーブルに対応は中止した。
     tblarea = {}  
     notextview = {}

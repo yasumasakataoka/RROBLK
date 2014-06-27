@@ -28,6 +28,8 @@ module JqgridJson
           value =elem[atr]
           value = escape_javascript(value) if value and value.is_a? String
           value.gsub!("\\n","\n")  if value and value.is_a? String
+          value.gsub!("<","&lt;")   if value and value.is_a? String ###xml 禁止文字対策
+          value.gsub!(">","&gt;")   if value and value.is_a? String ###xml 禁止文字対策
           array << %Q(<cell>#{value}</cell>)
         end
         array << "</row>"
@@ -143,7 +145,7 @@ module JqgridFilter
                    tmp_columns[:width] = i[:screenfield_width]
 		   if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
 		      tmp_columns[:editable] = true
-		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  if i[:screenfield_type] == "text"
+		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  
 		     else
 		      tmp_columns[:editable] = false
 		   end
@@ -157,29 +159,29 @@ module JqgridFilter
 		   if i[:screenfield_type] == "textarea" then
 		      tmp_columns[:editoptions] =  {:rows =>"#{i[:screenfield_edoptrow]}",:cols =>"#{i[:screenfield_edoptcols]}"}
 		   end
-                   if i[:screenfield_formatter]  then
+       if i[:screenfield_formatter]  then
 		      tmp_columns[:formatter] = i[:screenfield_formatter] 
 		   end
-                   if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
+       if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
                    ## tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox"].index(i[:screenfield_type]) 
 		   ##debugger
-                   if  i[:screenfield_rowpos]     then
-			if  i[:screenfield_rowpos]  < 999
-                            tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] }
-			    icnt = i[:screenfield_rowpos] if icnt <  i[:screenfield_rowpos] 
-		          else
-			    tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
-			end
-		       else
-                           tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
+      if  i[:screenfield_rowpos]     then
+			    if  i[:screenfield_rowpos]  < 999
+              tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] ,:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize]}
+			        icnt = i[:screenfield_rowpos] if icnt <  i[:screenfield_rowpos] 
+		        else
+			        tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
+			    end
+		     else
+              tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
 		   end 	      
 		   gridcolumns << tmp_columns 
                    allfields << i[:pobject_code_sfd].to_sym  #**
 
                    alltypes [i[:pobject_code_sfd].to_sym] =  i[:screenfield_type].downcase
-		   evalstr[i[:pobject_code_sfd].to_sym] = i[:screenfield_rubycode] if i[:screenfield_rubycode] 
+		               evalstr[i[:pobject_code_sfd].to_sym] = i[:screenfield_rubycode] if i[:screenfield_rubycode] 
            end   ## screenfields.each
-	   show_data[:allfields] =  allfields  
+	         show_data[:allfields] =  allfields  
            show_data[:alltypes]  =  alltypes  
            show_data[:screen_code_view] = screen_code_view
            show_data[:gridcolumns] = gridcolumns
@@ -193,14 +195,17 @@ module JqgridFilter
       case
          when params[:q]   then ##disp
                jqgrid_id   =  params[:q]
-	       screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
+	           screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
                screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
           when params[:action]  == "index"  then 
                jqgrid_id  = screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
           when params[:nst_tbl_val] then
                jqgrid_id   =  params[:nst_tbl_val]
                screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
+		  when params[:dump] then  ### import by excel
+               screen_code = params[:dump][:screen_code]
 	end
      return screen_code,jqgrid_id
   end
  end
+ 

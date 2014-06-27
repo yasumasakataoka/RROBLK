@@ -94,7 +94,7 @@
       command_c[:sio_session_id] = params[:q]
       command_c[:sio_command_response] = "C"
       command_c[:sio_add_time] = Time.now
-      #command_r.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
+      #command_c.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
       ### remark とcodeがnumberになっていた。原因不明　2011-09-19
        plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
   end   ## sub_insert_sio_c
@@ -158,22 +158,22 @@
        @date1904 = nil
        show_data = get_show_data(command_r[:sio_code])
        show_data[:allfields].each do |i|
-	   if command_r[i] then
+	     if command_r[i] then
              case show_data[:alltypes][i]
-                  when "date","timestamp(6)","timestamp" then
-			 begin
-                           command_r[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
-			   command_r[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
-			  rescue
-                            command_r[i] = Time.now
-			  end
+                  when "date",/^timestamp/ then
+			        begin
+                       command_r[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
+			           command_r[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
+			        rescue
+                       command_r[i] = Time.now
+			        end
                   when "number" then
-                         command_r[i] = command_r[i].gsub(/\W/,"").to_f if command_r[i].class == String
-                  when "varchar2","char"
+                        command_r[i] = command_r[i].gsub(/\W/,"").to_f if command_r[i].class == String
+                  when /char/
                        command_r[i] = command_r[i].to_i.to_s if command_r[i].class == Fixnum
              end  #case show_data
-	  end  ## if command_r
-      end  ## sho_data.each
+	      end  ## if command_r
+       end  ## sho_data.each
      return command_r
   end ## defar_to....
 
@@ -188,53 +188,54 @@
       compare_date - 1 + num
   end
 
-  def sub_plsql_blk_paging  command_r
+  def sub_plsql_blk_paging  command_c,screen_code
     ### strsqlにコーディングしてないときは、viewをしよう
     ### strdql はupdate insertには使用できない。
-    ### command_r[:sio_strsql] = (select  ・・・・) a
-    if  command_r[:sio_strsql]  then   ## 親からの情報があるときは対象外
-       tmp_sql =  command_r[:sio_strsql] 
+    ### command_c[:sio_strsql] = (select  ・・・・) a
+    if  command_c[:sio_strsql]  then   ## 親からの情報があるときは対象外
+        tmp_sql =  command_c[:sio_strsql] 
       else
         tmp_str = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and screen_Expiredate > sysdate order by screen_expiredate ")
-       if  tmp_str and  command_r[:sio_search]  == "false" and command_r[:sio_sidx] == "" then
-           if tmp_str[:screen_strselect]  then tmp_sql = "(#{tmp_str[:screen_strselect]}" else tmp_sql =  command_r[:sio_viewname]  + " a " end 
+        if  tmp_str and  command_c[:sio_search]  == "false" and command_c[:sio_sidx] == "" then
+           if tmp_str[:screen_strselect]  then tmp_sql = "(#{tmp_str[:screen_strselect]}" else tmp_sql =  command_c[:sio_viewname]  + " a " end 
            tmp_sql << tmp_str[:screen_strselect] if tmp_str[:screen_strselect]
-           tmp_sql << tmp_str[:screen_strwhere] if tmp_str[:screen_strwhere] and  command_r[:sio_search]  == "false"
+           tmp_sql << tmp_str[:screen_strwhere] if tmp_str[:screen_strwhere] and  command_c[:sio_search]  == "false"
            tmp_sql << tmp_str[:screen_strgrouporder] if tmp_str[:screen_strgrouporder] 
            tmp_sql << " ) a "  if tmp_str[:screen_strselect]
           else 
-            tmp_sql =  command_r[:sio_viewname]  + " a " 
+            tmp_sql =  command_c[:sio_viewname]  + " a " 
         end
     end
     strsql = "SELECT id FROM " + tmp_sql
-    tmp_sql << sub_strwhere(command_r)  if command_r[:sio_search]  == "true"
+    tmp_sql << sub_strwhere(command_c)  if command_c[:sio_search]  == "true"
     sort_sql = ""
-    unless command_r[:sio_sidx].nil? or command_r[:sio_sidx] == "" then 
-	    sort_sql = " ROW_NUMBER() over (order by " +  command_r[:sio_sidx] + " " +  command_r[:sio_sord]  + " ) " 
+    unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == "" then 
+	    sort_sql = " ROW_NUMBER() over (order by " +  command_c[:sio_sidx] + " " +  command_c[:sio_sord]  + " ) " 
 	  else
-	     sort_sql = "rownum "
+	    sort_sql = "rownum "
     end
     cnt_strsql = "SELECT 1 FROM " + tmp_sql 
     ##debugger
-    command_r[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
-    case  command_r[:sio_totalcount]
+    command_c[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
+    case  command_c[:sio_totalcount]
     when nil,0   ## 該当データなし　　回答
          ## insert_sio_r recodcount,result_f,contents
-	 contents = "not find record"    ### 将来usergroup毎のメッセージへ
-	 command_r[:sio_recordcount] = 0
-         command_r[:sio_result_f] = "1"
-         command_r[:sio_message_contents] = contents
-	  all_sub_command_r = []
-         sub_insert_sio_r(command_r)
-	  all_sub_command_r[0] =  command_r
+	    contents = "not find record"    ### 将来usergroup毎のメッセージへ
+	    command_c[:sio_recordcount] = 0
+        command_c[:sio_result_f] = "1"
+        command_c[:sio_message_contents] = contents
+	    all_sub_command_r = []
+        sub_insert_sio_r(command_c)
+	    all_sub_command_r[0] =  command_c
     else 
-         show_data = get_show_data(command_r[:sio_code])
+         show_data = get_show_data(command_c[:sio_code])
          strsql = "select #{sub_getfield(show_data)} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
-         strsql  <<    " WHERE  cnt <= #{command_r[:sio_end_record]}  and  cnt >= #{command_r[:sio_start_record]} "
+         strsql  <<    " WHERE  cnt <= #{command_c[:sio_end_record]}  and  cnt >= #{command_c[:sio_start_record]} "
         #fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
          pagedata = plsql.select(:all, strsql)
-	 all_sub_command_r  = []
+	     all_sub_command_r  = []
+		 command_r = command_c.dup
          pagedata.each do |j|
            r_cnt += 1
            ##   command_r.merge j なぜかうまく動かない。
@@ -243,14 +244,14 @@
              ## command_r[:id_tbl] = j_val if j_key.to_s == "id"
            end  
            ##debugger
-	   command_r[:sio_recordcount] = r_cnt
+	       command_r[:sio_recordcount] = r_cnt
            command_r[:sio_result_f] = "0"
            command_r[:sio_message_contents] = nil
-	   tmp = {}
+	       tmp = {}
            sub_insert_sio_r(command_r)     ###回答
-	   ##debugger
-	   tmp.merge! command_r
-	   all_sub_command_r <<  tmp   ### all_sub_command_r << command_r にすると以前の全ての配列が最新に変わってしまう
+	       ##debugger
+	       tmp.merge! command_r
+	       all_sub_command_r <<  tmp   ### all_sub_command_r << command_r にすると以前の全ての配列が最新に変わってしまう
 	 end  ##pagedata
 	 ##    plsql.select(:all, "#{strsql}").each do |j|
     end   ## case
@@ -258,56 +259,57 @@
     return all_sub_command_r
   end   ##sub_plsql_blk_paging
 
-  def  sub_strwhere command_r
-       show_data = get_show_data(command_r[:sio_code])
+  def  sub_strwhere command_c
+       show_data = get_show_data(command_c[:sio_code])
 	  #日付　/ - 固定にしないようにできないか?
-       if command_r[:sio_strsql] then
-          strwhere = unless command_r[:sio_strsql].downcase.split(")")[-1] =~ /where/ then  " where "  else " and " end
+       if command_c[:sio_strsql] then
+          strwhere =  if command_c[:sio_strsql].downcase.split(")")[-1] =~ /where/ then   " and " else  " where "  end
           else
            strwhere = " WHERE "
        end
-       ##fprnt "class #{self} : LINE #{__LINE__} : command_r= '#{command_r}"
-       ###params.each  do |i,j|  ##xparams gridの生
-       command_r.each  do |i,j|  ##xparams gridの生
-	   ###debugger
-           next if j.nil?
-	   case show_data[:alltypes][i.to_sym]
-	      when "number"
-                     tmpwhere = " #{i} = #{j.to_i}     AND " 
+       ##fprnt "class #{self} : LINE #{__LINE__} : command_c = '#{command_c}"
+       ##debugger ###command_c.each  do |i,j|  ##xparams gridの生 
+       params.each  do |i,j|  ##xparams gridの生
+	   ##debugger
+          next if j.nil?
+	      case show_data[:alltypes][i.to_sym]
+	        when "number"
+             tmpwhere = " #{i} = #{j.to_i}     AND " 
 		     tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
 		     tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
-	       when "date",/^timestamp/
+	        when "date",/^timestamp/
 		     js = j.to_s
 		     case  js.size  
-			when 7
-			  tmpwhere = " to_char( #{i},'yyyy/mm') = '#{js}'       AND "  if Date.valid_date?(js.split("/")[0].to_i,js.split("/")[1].to_i,01)
-			when 8
-			  tmpwhere = " to_char( #{i},'yyyy-mm') #{js[0]} '#{js[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
-                        when 9 
-			  tmpwhere = " to_char( #{i},'yyyy-mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
-			when 10
-			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)
-			when 11
-			  tmpwhere = " to_char( #{i},'yyyy-mm-dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
-                        when 12 
-			  tmpwhere = " to_char( #{i},'yyyy/mm/dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
-                    end ## j.size  
-	       when nil
-	       else
-                     tmpwhere = " #{i} = '#{j}'         AND "
+			    when 7
+			        tmpwhere = " to_char( #{i},'yyyy/mm') = '#{js}'       AND "  if Date.valid_date?(js.split("/")[0].to_i,js.split("/")[1].to_i,01)
+			    when 8
+			        tmpwhere = " to_char( #{i},'yyyy-mm') #{js[0]} '#{js[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
+                when 9 
+			        tmpwhere = " to_char( #{i},'yyyy-mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
+			    when 10
+			        tmpwhere = " to_char( #{i},'yyyy-mm-dd') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)
+			    when 11
+			        tmpwhere = " to_char( #{i},'yyyy-mm-dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
+                when 12 
+			        tmpwhere = " to_char( #{i},'yyyy/mm/dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
+             end ## j.size  
+	        when /char|text/
+             tmpwhere = " #{i} = '#{j}'         AND "
 		     tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/ 
 		     tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
 		     tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
 	       #when  "textarea"
                #       tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ ) 
-                end   ##show_data[:alltypes][i]
+	        when "select"
+             tmpwhere = " #{i} = '#{j}'         AND "
+           end   ##show_data[:alltypes][i]
            tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/ 
-	   strwhere << tmpwhere  if  tmpwhere 
+	    strwhere << tmpwhere  if  tmpwhere 
         end ### params.each  do |i,j|###
        return strwhere[0..-7]
   end   ## sub_strwhere
-  def  sub_pdfwhere viewname,reports_id,command_r
-      tmpwhere = sub_strwhere command_r
+  def  sub_pdfwhere viewname,reports_id,command_c
+      tmpwhere = sub_strwhere command_c
        case  params[:initprnt] 
        when  "1"  then
 	    tmpwhere <<  if tmpwhere.size > 1 then " and " else " where " end
@@ -331,13 +333,13 @@
        return tmpwhere
   end
 
-  def subpaging  command_r
+  def subpaging  command_c,screen_code
       ###debugger
-      show_data = get_show_data(command_r[:sio_code])
+      show_data = get_show_data(command_c[:sio_code])
       tbldata = []
-      command_r[:sio_viewname]  = show_data[:screen_code_view] 
-      sub_insert_sio_c command_r    ###ページング要求
-      rcd = sub_plsql_blk_paging command_r
+      command_c[:sio_viewname]  = show_data[:screen_code_view] 
+      sub_insert_sio_c command_c    ###ページング要求
+      rcd = sub_plsql_blk_paging command_c,screen_code
       rcd.each do |j|
           tmp_data = {}
           show_data[:allfields].each do |k|
@@ -346,7 +348,7 @@
              tmp_data[k] = j[k].strftime("%Y/%m/%d") if  show_data[:alltypes][k] == "date" and  !j[k].nil?
              tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M") if  show_data[:alltypes][k] =~ /^time/ and  !j[k].nil?
           end 
-	 tbldata << tmp_data
+	  tbldata << tmp_data
       end ## for
       return [tbldata,rcd[0][:sio_totalcount]]    ###[データの中身,レコード件数]
   end  ##subpagi

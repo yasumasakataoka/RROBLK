@@ -1,0 +1,14 @@
+<% if @rendererrmsg %>
+<table>
+  <tr>
+    <th>LINE NO</th>
+    <th>ERROR MSG</th>
+  </tr>
+<% @rendererrmsg.each do |err| %>
+  <tr>
+    <td><%= err[0] %></td>
+    <td><%= err[1] %></td>
+  </tr>
+<% end %>
+</table>
+<% end %>

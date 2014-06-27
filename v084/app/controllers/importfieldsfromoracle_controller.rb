@@ -7,7 +7,10 @@ class ImportfieldsfromoracleController < ApplicationController
       tblid  = params[:q].to_i
       if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
           if rec[:blktb_expiredate] > Time.now then
+		     plsql.logoff
+			 plsql.connect! "rails", "rails",  :database => "xe"
              sub_import_fields_from_oracle rec[:pobject_code_tbl],rec[:id]
+			 ##Rails.cache.clear(nil)
             else
              @errmsg = "out of expiredate"
           end
@@ -252,8 +255,8 @@ class ImportfieldsfromoracleController < ApplicationController
               case  js
                   when /persons_id_upd/ then  ##person は特殊
                         join_rtbl = "upd_persons" 
-                  when /persons_id_chrg/ then
-                       join_rtbl = "chrg_persons" 
+                  ##when /persons_id_chrg/ then
+                  ##     join_rtbl = "chrg_persons" 
                   when "perons_id"
                         next
                    else
@@ -261,10 +264,10 @@ class ImportfieldsfromoracleController < ApplicationController
               end 
               rtblname =  js.sub(/s_id/,"")
               fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
-              wherestr << " #{rtblname}.#{rtblname.split("_")[0]}_id = "  ##相手側のテーブルのid
-	            wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
+              wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
+	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
               selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
-              subtblcrt  join_rtbl,rtblname,sub_rtbl do |k|   ###相手側の項目セット
+              subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
                       selectstr << k
               end
              else ##not _id
@@ -280,25 +283,25 @@ class ImportfieldsfromoracleController < ApplicationController
  end  #end create_or_replace_view  
 
 
- def  subtblcrt  join_rtbl ,rtblname,sub_rtbl   ## :view名,rtblname:省略形
+ def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:省略形
         k = ""
 	      if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
            @errmsg << "create view #{ join_rtbl }"
            raise 
            ### create_or_replace_view  tblid,tblname
 	      end
-	      subfields = plsql.__send__(join_rtbl).column_names
+	    subfields = plsql.__send__(join_rtbl).column_names
         subfields.each do |j|
           js = xfield =  j.to_s  
           xfield = "" if js.upcase == "ID" 
-          xfield = "" if join_rtbl != sub_rtbl  and  js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP/ and join_rtbl  !~ /person/
+          xfield = "" if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP/ and  join_rtbl  !=  "upd_persons"
+          ##xfield = "" if join_rtbl != sub_rtbl  and  join_rtbl  =~ /upd_person/
                if   xfield  != "" then 
-                    xfield = rtblname + "." + xfield + " " + xfield +  "_" + rtblname.split(/_/,2)[1] if rtblname.split(/_/,2)[1]
-                    xfield = rtblname + "." + xfield + " "  + xfield  if rtblname.split(/_/,2)[1].nil?
+                    xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] then  "_" + rtblname.split(/_/,2)[1] else "" end 
                     k <<  " " +  xfield   + "," 
                     lngerrfield = xfield.split(" ")[1]
                     ###p " 127 #{xfield}"
-                   @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  if ( lngerrfield.length) > 29
+                    if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
                end  
         end  ## subfields.each           
          yield k           
@@ -330,7 +333,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 
     plsql.execute @tsqlstr
 
-       @tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
+    @tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
     @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
     @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
     @tsqlstr << "  USER_TAB_COLUMNS where table_name = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
@@ -340,7 +343,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 
     chktb =  plsql.select(:all, @tsqlstr)  ###子テーブルに該当データがあるとき
 
-     @errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
+    @errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
     @tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
     @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
     @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
@@ -353,7 +356,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
     fields = plsql.__send__(viewname).columns  ###select(:all,tmp_screen_dtl)   ###テーブルの項目をセット  R_xxxx
     ###debugger
     screen_ids = plsql.screens.all(" where pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') ")
-     @errmsg << "_______missing screen code #{viewname}"  if screen_ids.empty?
+    @errmsg << "_______missing screen code #{viewname}"  if screen_ids.empty?
     screen_ids.each do |rec|
        screen_id = rec[:id]
        row_cnt ||= 1
@@ -422,8 +425,8 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 	 screenfields[:width] =  if jj[:data_length] * 6 > 300 then 300  else jj[:data_length] * 6 end 
          screenfields[:width] =  60 if  /_upd$/ =~ ii      or  /_ip$/ =~ ii 
 	 ##screenfields[:edoptsize]  =  screenfields[:edoptmaxlength]  
-         ##screenfields[:edoptsize]  =  10 if jj[:data_type] == "date"  or  j[:data_type] =~ /timestamp/ 
-         screenfields[:width] =   100 if jj[:data_type] == "date" or  jj[:data_type] =~ /timestamp/ 
+         screenfields[:edoptsize]  =  10  ## if jj[:data_type] == "date"  or  j[:data_type] =~ /timestamp/ 
+         screenfields[:width] =   80 if jj[:data_type] == "date" or  jj[:data_type] =~ /timestamp/ 
          if  viewname.split(/_/)[1].chop  == ii.split(/_/)[0] then   ##同一テーブルの項目のみ変更可
              screenfields[:editable] =  1                  
              screenfields[:editable] =  0 if /_ip$/ =~ ii     ##  
@@ -502,14 +505,14 @@ def crttype   viewname
      @tsqlstr <<  "          ,sio_search varchar(10)\n"
      @tsqlstr <<  "          ,sio_sidx varchar(256)\n"
      @tsqlstr  <<  @strsql
-     @tsqlstr <<  "          ,sio_ctltbl varchar(4000)\n"
+     @tsqlstr <<  "          ,sio_errline varchar(4000)\n"
      @tsqlstr <<  "          ,sio_org_tblname varchar(30)\n"
      @tsqlstr <<  "          ,sio_org_tblid numeric(38)\n"
      @tsqlstr <<  "          ,sio_add_time date\n"
      @tsqlstr <<  "          ,sio_replay_time date\n"
      @tsqlstr <<  "          ,sio_result_f char(1)\n"
      @tsqlstr <<  "          ,sio_message_code char(10)\n"
-     @tsqlstr <<  "          ,sio_message_contents varchar(256)\n"
+     @tsqlstr <<  "          ,sio_message_contents varchar(4000)\n"
      @tsqlstr <<  "          ,sio_chk_done char(1)\n"
      @tsqlstr <<  ")\n"
      ##fprnt @tsqlstr 

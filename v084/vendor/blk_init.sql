@@ -13,8 +13,8 @@ CREATE TABLE Persons
   ,Expiredate date
   ,Persons_id_Upd numeric(38)
   ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
+  ,created_at timestamp(6)
+  ,Updated_at timestamp(6)
   , CONSTRAINT Persons_id_pk PRIMARY KEY (id)
   , CONSTRAINT Persons_16_uk  UNIQUE (Code)
 )
@@ -36,8 +36,8 @@ CREATE TABLE UserGroups
   ,Persons_id_Upd numeric(38)
   ,Update_IP varchar(40)
   ,created_at date
-  ,Updated_at date
-  ,Expiredate date
+  ,Updated_at timestamp(6)
+  ,Expiredate timestamp(6)
   , CONSTRAINT UserGroups_id_pk PRIMARY KEY (id)
   , CONSTRAINT UserGroups_41_uk  UNIQUE (Code,Expiredate)
 )
@@ -70,8 +70,8 @@ CREATE TABLE Locas
   ,Expiredate date
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
+  ,created_at timestamp(6)
+  ,Updated_at timestamp(6)
   , CONSTRAINT Locas_id_pk PRIMARY KEY (id)
   , CONSTRAINT Locas_23_uk  UNIQUE (Code,Expiredate)
 )
@@ -92,8 +92,8 @@ CREATE TABLE Sects
   ,Expiredate varchar(40)
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
-  ,created_at date
-  ,Updated_at date
+  ,created_at timestamp(6)
+  ,Updated_at timestamp(6)
   , CONSTRAINT Sects_id_pk PRIMARY KEY (id)
 )
 ;
@@ -112,8 +112,8 @@ CREATE TABLE ScreenLEVELS
  ,Remark VARCHAR(200)
  ,Persons_id_Upd NUMBER(38)
  ,Update_IP varchar(40)
- ,created_at date
- ,Updated_at date
+ ,created_at timestamp(6)
+ ,Updated_at timestamp(6)
  , CONSTRAINT ScreenLEVELS_id_pk PRIMARY KEY (id)
 )
 ;
@@ -122,24 +122,6 @@ create sequence ScreenLEVELS_seq
 insert into  screenlevels(id,code, persons_id_upd,Expiredate)
 values(0,'0',0,'2099/12/31')
 ;
-
-create or replace view  r_persons as 
- select person.id,person.id person_id ,person.code person_code ,person.name person_name ,person.email person_email ,
- person.remark person_remark ,person.expiredate person_expiredate ,person.update_ip person_update_ip ,
- person.created_at person_created_at ,person.updated_at person_updated_at,person.persons_id_upd person_id_upd,
- usergroup.code usergroup_code,usergroup.name usergroup_name,
- screenlevel.code screenlevel_code
- from persons person ,usergroups usergroup,screenlevels screenlevel
- where person.UserGroups_id= usergroup.id and person.screenlevels_id = screenlevel.id
-;
-require "rubygems"
-require "ruby-plsql"
-plsql.connection = OCI8.new("rails","rails","xe")
-require File.dirname(__FILE__) +  "/vendor/OrorBlk/screen_names_set.rb
-doaddsrn = AddScreen.new
-doaddsrn.addmain "R_PERSONS"
-
-
 
 drop table "RAILS"."SIO_R_PERSONS" 
 ;
@@ -169,9 +151,10 @@ CREATE TABLE "RAILS"."SIO_R_PERSONS"
 	"PERSON_REMARK" VARCHAR2(100), 
 	"PERSON_EXPIREDATE" DATE, 
 	"PERSON_UPDATE_IP" VARCHAR2(40), 
-	"PERSON_ID_UPD" NUMBER,
-	"PERSON_CREATED_AT" DATE, 
-	"PERSON_UPDATED_AT" DATE, 
+	"PERSON_ID_UPD" NUMBER,  
+	"PERSON_PERSON_ID_UPD" NUMBER,
+	"PERSON_CREATED_AT" timestamp(6), 
+	"PERSON_UPDATED_AT" timestamp(6), 
         "SCREENLEVEL_CODE" VARCHAR(30),     -------- SCREENLEVELÇÃíËã`ÇÇÌÇ∑ÇÍÇ»Ç¢Ç±Ç∆ÅB
         "SCREENLEVEL_NAME" VARCHAR(30),
 	"USERGROUP_CODE" VARCHAR2(30), 
@@ -195,3 +178,56 @@ CREATE TABLE "RAILS"."SIO_R_PERSONS"
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"
 ;
+CREATE OR REPLACE FORCE VIEW "RAILS"."R_LOCAS" 
+("ID", "LOCA_ID", "LOCA_CODE", "LOCA_NAME", "LOCA_ABBR", "LOCA_ZIP", "LOCA_COUNTRY", "LOCA_PRFCT", "LOCA_ADDR1", 
+"LOCA_ADDR2", "LOCA_TEL", "LOCA_FAX", "LOCA_MAIL", "LOCA_REMARK", "LOCA_EXPIREDATE", "LOCA_PERSON_ID_UPD", 
+"PERSON_ID_UPD","PERSON_CODE_UPD", "PERSON_NAME_UPD", "PERSON_EMAIL_UPD",
+"LOCA_UPDATE_IP", "LOCA_CREATED_AT", "LOCA_UPDATED_AT") AS 
+  select loca.id ,loca.id loca_id ,loca.code loca_code ,loca.name loca_name ,loca.abbr loca_abbr ,loca.zip loca_zip ,
+  loca.country loca_country ,loca.prfct loca_prfct ,loca.addr1 loca_addr1 ,loca.addr2 loca_addr2 ,loca.tel loca_tel ,
+  loca.fax loca_fax ,loca.mail loca_mail ,loca.remark loca_remark ,loca.expiredate loca_expiredate ,loca.persons_id_upd loca_person_id_upd ,
+   person_upd.id person_id_upd, 
+   person_upd.code person_code_upd,
+ person_upd.name person_name_upd,
+ person_upd.email person_email_upd,
+loca.update_ip loca_update_ip ,loca.created_at loca_created_at ,loca.updated_at loca_updated_at
+ from locas loca ,persons  person_upd
+ where  person_upd.id = loca.persons_id_upd
+;
+
+
+CREATE OR REPLACE FORCE VIEW "RAILS"."R_SECTS" ("ID", "SECT_ID", "LOCA_ID_SECTS", "LOCA_CODE_SECTS", "LOCA_NAME_SECTS",
+ "LOCA_ABBR_SECTS", "LOCA_ZIP_SECTS", "LOCA_COUNTRY_SECTS", "LOCA_PRFCT_SECTS", "LOCA_ADDR1_SECTS", "LOCA_ADDR2_SECTS", "LOCA_TEL_SECTS", 
+ "LOCA_FAX_SECTS", "LOCA_MAIL_SECTS", "LOCA_REMARK_SECTS", "SECT_REMARK", "SECT_EXPIREDATE", "SECT_PERSON_ID_UPD", "PERSON_CODE_UPD", 
+ "PERSON_NAME_UPD", "PERSON_EMAIL_UPD",  "SECT_UPDATE_IP", "SECT_CREATED_AT", "SECT_UPDATED_AT") AS 
+  select sect.id ,sect.id sect_id ,sect.locas_id_sects sect_loca_id_sects , loca_sects.loca_code loca_code_sects,
+ loca_sects.loca_name loca_name_sects,
+ loca_sects.loca_abbr loca_abbr_sects,
+ loca_sects.loca_zip loca_zip_sects,
+ loca_sects.loca_country loca_country_sects,
+ loca_sects.loca_prfct loca_prfct_sects,
+ loca_sects.loca_addr1 loca_addr1_sects,
+ loca_sects.loca_addr2 loca_addr2_sects,
+ loca_sects.loca_tel loca_tel_sects,
+ loca_sects.loca_fax loca_fax_sects,
+ loca_sects.loca_mail loca_mail_sects,
+ loca_sects.loca_remark loca_remark_sects,
+sect.remark sect_remark ,sect.expiredate sect_expiredate ,sect.persons_id_upd sect_person_id_upd ,
+ person_upd.code person_code_upd,
+ person_upd.name person_name_upd,
+ person_upd.email person_email_upd,
+sect.update_ip sect_update_ip ,sect.created_at sect_created_at ,sect.updated_at sect_updated_at
+ from sects sect ,r_locas  loca_sects,persons  person_upd
+ where  loca_sects.loca_id = sect.locas_id_sects and  person_upd.id = sect.persons_id_upd
+;
+ CREATE OR REPLACE FORCE VIEW "RAILS"."UPD_PERSONS"
+ ("ID", "PERSON_ID","PERSON_CODE","PERSON_NAME","PERSON_EXPIREDATE") AS 
+  select  person.id, person.id person_id ,person.code person_code,person.name person_name,person.EXPIREDATE person_EXPIREDATE
+ from persons person
+ ;
+CREATE OR REPLACE FORCE VIEW "RAILS"."R_PERSONS" ("PERSON_CODE", "PERSON_EXPIREDATE", "PERSON_UPDATED_AT", "PERSON_NAME", "PERSON_REMARK", "PERSON_CREATED_AT", "PERSON_UPDATE_IP", "PERSON_USERGROUP_ID", "USERGROUP_NAME", "USERGROUP_CODE", "USERGROUP_EXPIREDATE", "USERGROUP_REMARK", "USERGROUP_ID", "PERSON_EMAIL", "ID", "PERSON_ID", "PERSON_PERSON_ID_UPD", "PERSON_ID_UPD", "PERSON_CODE_UPD", "PERSON_NAME_UPD", "PERSON_EXPIREDATE_UPD", "PERSON_SCREENLEVEL_ID", "SCREENLEVEL_ID", "SCREENLEVEL_REMARK", "SCREENLEVEL_EXPIREDATE", "SCREENLEVEL_CODE", "PERSON_SECT_ID", "SECT_ID", "LOCA_ID_SECTS", "LOCA_CODE_SECTS", "LOCA_NAME_SECTS", "LOCA_ABBR_SECTS", "LOCA_ZIP_SECTS", "LOCA_COUNTRY_SECTS", "LOCA_PRFCT_SECTS", "LOCA_ADDR1_SECTS", "LOCA_ADDR2_SECTS", "LOCA_TEL_SECTS", "LOCA_FAX_SECTS", "LOCA_MAIL_SECTS", "LOCA_REMARK_SECTS", "SECT_REMARK", "SECT_EXPIREDATE") AS 
+  select person.code person_code ,person.expiredate person_expiredate ,person.updated_at person_updated_at ,person.name person_name ,person.remark person_remark ,person.created_at person_created_at ,person.update_ip person_update_ip ,person.usergroups_id person_usergroup_id , usergroup.usergroup_name usergroup_name, usergroup.usergroup_code usergroup_code, usergroup.usergroup_expiredate usergroup_expiredate, usergroup.usergroup_remark usergroup_remark, usergroup.usergroup_id usergroup_id,person.email person_email ,person.id id,person.id person_id ,person.persons_id_upd person_person_id_upd , person_upd.person_id person_id_upd, person_upd.person_code person_code_upd, person_upd.person_name person_name_upd, person_upd.person_expiredate person_expiredate_upd,person.screenlevels_id person_screenlevel_id , screenlevel.screenlevel_id screenlevel_id, screenlevel.screenlevel_remark screenlevel_remark, screenlevel.screenlevel_expiredate screenlevel_expiredate, screenlevel.screenlevel_code screenlevel_code,person.sects_id person_sect_id , sect.sect_id sect_id, sect.loca_id_sects loca_id_sects, sect.loca_code_sects loca_code_sects, sect.loca_name_sects loca_name_sects, sect.loca_abbr_sects loca_abbr_sects, sect.loca_zip_sects loca_zip_sects, sect.loca_country_sects loca_country_sects, sect.loca_prfct_sects loca_prfct_sects, sect.loca_addr1_sects loca_addr1_sects, sect.loca_addr2_sects loca_addr2_sects, sect.loca_tel_sects loca_tel_sects, sect.loca_fax_sects loca_fax_sects, sect.loca_mail_sects loca_mail_sects, sect.loca_remark_sects loca_remark_sects, sect.sect_remark sect_remark, sect.sect_expiredate sect_expiredate
+ from persons person ,r_usergroups  usergroup,upd_persons  person_upd,r_screenlevels  screenlevel,r_sects  sect
+ where  usergroup.id = person.usergroups_id and  person_upd.id = person.persons_id_upd and  screenlevel.id = person.screenlevels_id and  sect.id = person.sects_id 
+  ;
+

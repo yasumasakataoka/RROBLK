@@ -4,11 +4,12 @@ class ImportfmxlsxController < ScreenController
   ####  rubyXL: 漢字が混在すると項目の位置がずれる。 2014/1 解決されている模様
   ###   public/rubyxl/  のrubyxlディレクトリーを作成済のこと。
   ###   入力がシートがフォーマット間違いの時、エラーで落ちる。　4/12
-   ###   更新前のエラーチェックがまだ
    ##  excelのタイプチェック　がまだできてない。　例　excel 日付　db char
    ##insertの時idは無視される
+   ### 事前チックokかどうかexcelで返す
     def index
-     @screen_code,jqgrid_id = get_screen_code 
+	  init_from_screen 
+      ##@screen_code,jqgrid_id = get_screen_code 
       #show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
       #@gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
       @tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
@@ -19,30 +20,33 @@ class ImportfmxlsxController < ScreenController
 ###If you would like to provide better error feedback to your users, you can set 
 ###SimpleXlsxReader.configuration.catch_cell_load_errors = true, and load errors will instead be inserted into Sheet#load_errors keyed by [rownum, colnum].
     def import
+	  @rendererrmsg = []
+	  command_c = init_from_screen 
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
-      @screen_code = params[:dump][:screen_code]
-      if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and exit end
+      if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
+      if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
       file = File.join("public/rubyxl",params[:dump][:excel_file].original_filename)
       FileUtils.cp temp.path, file
       ##debugger
       ws = RubyXL::Parser.parse file
       FileUtils.rm file
-      command_c = {}
-      command_c[:sio_viewname]  = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")[:pobject_code_view]
-      command_c[:sio_code] = @screen_code
-      command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
+      #command_c[:sio_viewname]  = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")[:pobject_code_view]
+      #command_c[:sio_code] = @screen_code
+      #command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
-      for iws in 0..9
+      for iws in 0..99
            break if ws[iws].nil?
            command_c[:sio_session_counter]  = user_seq_nextval(command_c[:sio_user_code] )   ###シート毎にCOMMIT
            ##maxj = sh.UsedRange.CoLumns.Count
            ##maxi = sh.UsedRange.Rows.Count
            dupchk  ws[iws].sheet_name
-           render :index and exit unless @errmsg == ""
+		   commit_flg = true
+		   keys = set_keys_get_id_from_code(command_c)
            for count in 0..99999
+		        @errmsg == ""
 	            if  count == 0
 	                 ##debugger
-	                 nchk ws[iws][count] if count == 0
+	                 nchk ws[iws][count] if count == 0  ###先頭は項目名
 	                  ##debugger
                     break  unless  @errmsg == ""
                   else
@@ -50,50 +54,53 @@ class ImportfmxlsxController < ScreenController
                     break  if  ws[iws][count].nil?
                     break  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
                     @inxrow0.each do |key,cnt|
-                        command_c[key] = ws[iws][count][cnt].value  if  ws[iws][count][cnt]
-	                  end  ##column
+                        if  ws[iws][count][cnt] then command_c[key] = ws[iws][count][cnt].value  else command_c[key] = nil end
+	                end  ##column
+					##debugger
+					command_c = get_id_from_code keys,command_c
                     case ws[iws].sheet_name.upcase
-	                  when "INSERT" then
-                            command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
-                            command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
-                            command_c[:sio_classname] = "plsql_blk_insert_"
-                    when "UPDATE" then
+	                    when /^INSERT/ then
+							updatechk_add command_c  ###同一レコード内での重複チェックができてない。
+			                updatechk_foreignkey command_c  if  @errmsg == ""
+                            if  @errmsg == "" then
+                                command_c[:sio_classname] = "plsql_blk_insert_"
+                                command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
+                                command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
+                            end 
+                        when  /^UPDATE/ then
                             command_c[:sio_classname] = "plsql_blk_update_"
                             command_c[:id] = command_c[tblidsym]
-	                  when "DELETE" then
+					        updatechk_edit command_c
+			                updatechk_foreignkey command_c if  @errmsg == ""
+	                    when /^DELETE/ then
                            command_c[:sio_classname] = "plsql_blk_delete_"
                            command_c[:id] = command_c[tblidsym]
-        	          when nil then
-                         break
-                    else
-		                    	@errmsg = "sheet name err must be insert or update"
-			                    break
-	                  end  ##case
-                 ###   更新前のエラーチェックがまだ
-	         ##debugger
-	         ##	 char_to_number_data  ####type 変換
-                 @hkeys.each do |inx,field|
-                    viewname,delm = inx.to_s.split(":")
-                    keys = {}
-                    field.each do |f|  
-                      keys[f] = command_c[f.to_sym]
-                    end 
-                    rec = get_item_from_code keys,viewname,delm
-                    ##debugger
-                    idsym = (@screen_code.split("_")[1].chop+ "_"+ viewname.split("_")[1].chop+"_id" + if delm then "_" + delm else "" end).to_sym
-                    command_c[idsym] = rec[:id] if rec
-                 end
-                 sub_insert_sio_c(command_c)
-	      end  ## if count
-        end ## row
-           if  @errmsg == ""
+						   updatechk_del command_c
+        	            when nil then
+                           break
+                        else
+		                   @errmsg = "sheet name err must be insert or update or delete"
+			                break
+	                 end  ##case
+					 if @errmsg == "" and commit_flg
+                        sub_insert_sio_c(command_c)
+					   else
+					     commit_flg = false
+						 @rendererrmsg << [(count + 1).to_s,@errmsg]  if @errmsg != ""
+						 @errmsg = ""
+                     end
+	             end  ## if count
+           end ## row
+           if  commit_flg
               sub_userproc_insert command_c
               plsql.commit
               dbcud = DbCud.new
               dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code])
+			  else
+			   plsql.rollback
            end
       end  ##end sheet
-      ##debugger
+      if  @rendererrmsg == []	then   @rendererrmsg  = nil end
       render :index
     end
     def dupchk  sheet_name
@@ -139,12 +146,31 @@ class ImportfmxlsxController < ScreenController
 	   errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
       end
       @errmsg = "#{errfield.join(',')}" unless errfield == []
-      ##debugger
-       @hkeys = {}
-       @row0.each do |field|
-          akeys,viewname,delm =  get_ary_search_field @screen_code,field
-          delm ||= ""
-          @hkeys[(viewname+":"+delm).to_sym] = akeys if viewname
-       end
+
     end
+	def set_keys_get_id_from_code command_c
+	      strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > sysdate and "
+		  strsql << "screenfield_paragraph is not null group by screenfield_paragraph,pobject_code_sfd"
+	      tmpkeys = plsql.select(:all,strsql)
+		  keys = {}
+		  tmpkeys.each do |rec|
+		    keys[rec[:screenfield_paragraph]] = [] if keys[rec[:screenfield_paragraph]].nil?
+			keys[rec[:screenfield_paragraph]] << rec[:pobject_code_sfd] 
+		  end
+		  return keys
+	end
+	def get_id_from_code keys,command_c
+	    keys.each do |key,vals|
+		    strwhere = " where "
+			vals.each do |val|
+			    strwhere << " #{val} = '#{command_c[val.to_sym]}' and "
+			end
+			##debugger
+			strwhere << %Q% #{key.to_s.split("_")[1].chop + "_expiredate" } > sysdate %
+			get_id = plsql.__send__(key.to_s.split(":_")[0]).first(strwhere)
+			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_"+key.to_s.split("_")[1].chop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
+			if get_id then command_c[sym_key] = get_id[:id] else command_c[sym_key] = -1 end
+		end
+		return command_c
+	end
 end

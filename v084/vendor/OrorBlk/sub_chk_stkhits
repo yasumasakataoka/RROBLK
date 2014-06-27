@@ -1,0 +1,22 @@
+def sub_chk_stkhits sch_ord_inst,ids=[]
+       strselect = "select  stk.locas_id,stk.itms_id,qty_#{sch_ord_inst},minqty,ope.opcode from stkhists stk,opeitms ope where "
+       symid = "qty_#{sch_ord_inst}".to_sym
+       save_locas_id = -1
+       save_itms_od = -1
+       ids.each do |rid|
+           if rid[:itms_id] then strselect.concat "  stk.itms_id = #{rid[:itms_id]}     and " end
+           if rid[:locas_id] then strselect.concat "  stk.locas_id = #{rid[:locas_id]}     and " end
+          strselect.concat " stk.itms_id = ope.itms_id and stk.locas_id = ope.locas_id and "
+          strselect.concat  " stk.strdate lt  case when chkterm is null  then   (sysdate + 999)  else sysdate + ope.chkterm end   "
+          strselect.concat "  order by stk.locas_id,stk.itms_id,stk.strdate desc "
+          recs = plsql.select.(:all,strselect)
+          recs.each do |rec|
+               if  rec[symid]  <　(rec[:minqty] ||= 0)
+                   next if save_locas_id == rec[:locas_id] and save_itms_id  == rec[:itms_id]
+                   save_locas_id = rec[:locas_id]
+                   save_itms_id[:itms_id]
+                   __send__("sub_auto_tbl_#{rec[:opecode]+sch_ord_inst}", rec[:locas_id],rec[:itms_id],(rec[symid] - (rec[:minqty] ||= 0)))
+               end
+          end
+       end
+end

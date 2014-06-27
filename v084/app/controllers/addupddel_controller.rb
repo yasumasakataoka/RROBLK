@@ -2,46 +2,39 @@
 #### v084
 ## 同一login　userではviewとscreenは一対一
 ### show_data   画面の対するviewとその項目をユーザー毎にセット
+### insert  ==> add,update ==> edit に統一
 class  AddupddelController < ScreenController
    before_filter :authenticate_user!  
    respond_to :html ,:xml ##  将来　タイトルに変更
    def index    ##  add update delete  
-      screen_code,jqgrid_id = get_screen_code
+      #@screen_code,@jqgrid_id = get_screen_code
       ##debugger
-      show_data = get_show_data(screen_code)
-      command_c  = set_fields_from_allfields(show_data)
-      command_c[:sio_viewname]  = show_data[:screen_code_view] 
-      command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER  
-      command_c[:sio_code] = screen_code
+	  command_c = init_from_screen 
+      #show_data = get_show_data(@screen_code)
+      #command_c  = set_fields_from_allfields
+      ##command_c[:sio_viewname]  = show_data[:screen_code_view] 
+      #command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
+	  #command_c[:person_id_upd] = command_c[:sio_user_code]
+	  ##command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
+      #command_c[:sio_code] = @screen_code
       command_c[:sio_session_counter] =   user_seq_nextval(command_c[:sio_user_code]) if command_c[:sio_session_counter].nil?   ##
-      rcdkey = "RCD_ID" + current_user[:id].to_s +  params[:q] +  params[:ss_id]  ### :q -->@jqgrid_id
-      ##hash_rcd = Rails.cache.read(rcdkey) ||{} 
-      hash_rcd = plsql.__send__("parescreen#{current_user[:id].to_s}s").first("where rcdkey = '#{rcdkey}' and expiredate > sysdate")
       @errmsg = ""
       case  params[:copy]  
           when /add/
-           ###command_c[hash_rcd[:rcd_id_key]] =  hash_rcd[:rcd_id_val] unless hash_rcd.nil?
              updatechk_add command_c
+			 updatechk_foreignkey command_c if  @errmsg == ""
              if  @errmsg == "" then
-
                  command_c[:sio_classname] = "plsql_blk_insert_"
-                 if  hash_rcd   then ##ctltblによる親子関係
-                     if  hash_rcd[:ctltbl] 
-                         command_c[:sio_ctltbl] =  hash_rcd[:ctltbl] 
-                       else 
-                         command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
-                         command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
-                     end
-                   else
-                     command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
-                     command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
-                 end
+                 command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
+                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
              end 
           when /delete/
-	           command_c[:sio_classname] = "plsql_blk_delete_"
-             command_c[:sio_ctltbl] =  hash_rcd[:ctltbl] if hash_rcd 
+	         command_c[:sio_classname] = "plsql_blk_delete_"
+			 updatechk_del command_c
           when /edit/
              command_c[:sio_classname] = "plsql_blk_update_"
+			 updatechk_edit command_c
+			 updatechk_foreignkey command_c  if  @errmsg == ""
           else     
           ##debugger ## textは表示できないのでメッセージの変更要
           render :text => "return to menu because session loss params:#{params[:oper]} "
@@ -53,47 +46,23 @@ class  AddupddelController < ScreenController
           plsql.commit
           dbcud = DbCud.new
           dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code])
-          render :nothing=>true
-       else
-          p "err #{@errmsg} "
-          render :text=>@errmsg
+		  ###  line画面の時
+          sym_code = (command_c[:sio_viewname].split("_")[1].chop+"_code").to_sym
+		  sym_sno = (command_c[:sio_viewname].split("_")[1].chop+"_sno").to_sym
+		  Rails.cache.clear(nil) if command_c[:sio_viewname] =~ /screen/  ###db_cudではクリされた結果がscreenのクラスでは反映されない模様
+		  if command_c[sym_code]||command_c[sym_sno]
+		     scode =  if  command_c[sym_code] then   command_c[sym_code] else command_c[sym_sno]  end
+			else
+			  command_c.each do |key,value|
+			      scode = value if key.to_s == /_code_#{command_c[:sio_viewname].split("_")[1].chop}/
+			  end
+		  end
+		  if  params[:copy] == "add" then jstxt = %Q%jQuery("form input").val("");jQuery("form textarea").val("");% else jstxt = "" end 
+          jstxt << %Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'>sent code:#{scode} to server</p>");%
+		  render :js=>jstxt
+         else
+		  render :js=>%Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'><font color='#ff0000'>#{@errmsg} </font></p>");%
       end
    end  ## add_upd_del
-   def updatechk_add command_c
-      ## addのとき
-      ## ukeyの重複はエラー
-      constr = plsql.blk_constraints.all("where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'U' ")
-      orakeyarray = {}
-      constr.each do |rec|
-         if  orakeyarray[rec[:constraint_name].to_sym] then
-             orakeyarray[rec[:constraint_name].to_sym]  << rec[:column_name]
-            else
-              orakeyarray[rec[:constraint_name].to_sym]  =[]
-              orakeyarray[rec[:constraint_name].to_sym]  << rec[:column_name]
-          end
-      end
-      orakeyarray.each do |inx,val|
-         strwhere = " where "
-         val.each do |key|
-            strwhere << " #{key} = '#{wherefieldset(key.downcase,command_c)}'   and " 
-         end
-         rec = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first(strwhere[0..-5])
-         ##debugger
-         @errmsg << "err:duplicate #{strwhere[6..-5]} " if rec
-      end
-   end
-   def updatechk_edit
-      ## updateのとき
-      ## 外部keyとして参照されているとき　codeの変更は不可
-   end
-   def updatechk_del
-      ## delのとき
-      ##すでに外部keyとして参照されているときは削除不可
-   end
-   def wherefieldset(key,command_c)
-       new_key = if key =~ /_id/ then command_c[:sio_viewname].split("_")[1].chop + "_"  + key.sub("s_id","_id") else
-                                      command_c[:sio_viewname].split("_")[1].chop+ "_"  + key end
-      ##debugger
-      return command_c[new_key.to_sym]                      
-   end
+
 end

@@ -41,7 +41,7 @@ class ExcelexportController < ApplicationController
     command_r[:sio_classname] = "plsql_blk_export"
     ##@tbldata = []
     ##debugger
-    rcd = subpaging(command_r) 
+    rcd = subpaging(command_r,@screen_code) 
      fields.delete(:msg_ok_ng)    ####近いうちに  照会・修正の時はとる。　　確認の時のみ
      ## @tbldata =   plsql.__send__(params[:export][:screen_code]).all
      pkg = Axlsx::Package.new
@@ -82,7 +82,7 @@ class ExcelexportController < ApplicationController
 		 rowvalue = []
 		 fields.keys.each do |key|
 		    rowvalue << i[key.to_sym] if i.key?(key.to_sym)
-                 end
+         end
 		  ws.add_row rowvalue,:style =>fcolors1
          end
          ##debugger

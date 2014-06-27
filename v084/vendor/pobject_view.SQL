@@ -1,7 +1,7 @@
 CREATE OR REPLACE FORCE VIEW "RAILS"."VIEW_POBJECTS" 
 ("POBJECT_CODE",  "POBJECT_EXPIREDATE", "POBJECT_UPDATED_AT", 
 "POBJECT_CONTENS", "POBJECT_REMARK", "POBJECT_CREATED_AT", "POBJECT_UPDATE_IP", "ID", "POBJECT_ID", 
-"PERSON_CODE_UPD", "PERSON_NAME_UPD", "POBJECT_RUBYCODE") AS 
+"PERSON_ID_UPD", "PERSON_CODE_UPD", "PERSON_NAME_UPD", "POBJECT_RUBYCODE") AS 
   select
   pobject.code pobject_code
   , pobject.expiredate pobject_expiredate
@@ -12,6 +12,7 @@ CREATE OR REPLACE FORCE VIEW "RAILS"."VIEW_POBJECTS"
   , pobject.update_ip pobject_update_ip
   , pobject.id id
   , pobject.id pobject_id
+  , person_upd.id person_id_upd
   , person_upd.code person_code_upd
   , person_upd.name person_name_upd
   , pobject.rubycode pobject_rubycode 
@@ -23,3 +24,11 @@ where
   and pobject.objecttype = 'view'
   ;
   
+  CREATE OR REPLACE FORCE VIEW "RAILS"."BLK_CONSTRAINTS" ("TABLE_NAME", "CONSTRAINT_NAME", "CONSTRAINT_TYPE", "POSITION", "COLUMN_NAME") AS 
+  select
+ c.table_name, c.constraint_name, c.constraint_type,
+ cc.position, cc.column_name
+from user_constraints c, user_cons_columns cc
+where c.table_name      = cc.table_name
+  and c.constraint_name = cc.constraint_name
+order by cc.table_name, cc.constraint_name, cc.position;

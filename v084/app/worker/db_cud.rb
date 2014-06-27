@@ -13,9 +13,10 @@ class DbCud  < ActionController::Base
            command_cs = plsql.__send__(target_sio_tbl).all("where sio_user_code = #{user_id} and  sio_session_counter = #{sio_session_counter} and sio_command_response = 'C' ")
            ##debugger
            strsql = "where sio_session_counter = #{sio_session_counter} and sio_command_response = 'C' and sio_user_code = #{user_id} "
+           r_cnt0 = 1
            command_cs.each do |i|  ##テーブル、画面の追加処理
               ###commandは自分自身のテーブル内容
-              ## before update
+              ##debugger ## before update
               sioarray = []
               (sioarray,i  = __send__("sub_tbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_tbl_"+i[:sio_viewname].split("_")[1])
               (sioarray =    __send__("sub_screen_"+i[:sio_code],sioarray,i))  if  respond_to?("sub_screen_"+i[:sio_code])
@@ -24,14 +25,17 @@ class DbCud  < ActionController::Base
               sioarray.each  do |sio| ## before update
                  new_cmds =  plsql.__send__(sio).all(strsql)   
                  tblname = sio.split(/_/,3)[2]
+                 r_cnt = 1
                  new_cmds.each do |rec|
-                     update_table rec,tblname
+                     update_table(rec,tblname,r_cnt)
+                     r_cnt += 1
                  end
               end   ##sioarray.each
               tblname = i[:sio_viewname].split(/_/,3)[1]
-              update_table i,tblname ### 本体
-              reset_show_data_screen if tblname =~ /screen/   ###キャッシュを削除
-              reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
+              update_table i,tblname,r_cnt0 ### 本体
+              r_cnt0 += 1
+              reset_show_data_screen if tblname =~ /screen|pobjgrps/   ###キャッシュを削除
+              ##reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
               
               sioarray = []
               (sioarray  = __send__("sub_aftertbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_aftertbl_"+i[:sio_viewname].split("_")[1])
@@ -41,32 +45,36 @@ class DbCud  < ActionController::Base
               sioarray.each  do |sio| ## after update
                  new_cmds =  plsql.__send__(sio).all(strsql)   ###
                  tblname = sio.split(/_/,3)[2]
+                 r_cnt = 1
                  new_cmds.each do |rec|
-                     update_table rec,tblname
-                 end
-              end   ##sioarray.each
-           end ##command_r
-      rescue
-	      ###plsql.rollback_to "before_perform"  ### delay_jobが勝手にcommitしている模様
-              plsql.rollback
-	            p  $@
+                     update_table(rec,tblnameend,r_cnt)
+                     r_cnt += 1
+                  end   
+              end   ##sioarray.each           end ##command_r
+	      ###plsql.rollback_to "before_perform"  ### 
+        ##debugger
+          end
+          rescue 
+		      plsql.rollback
+              p  $@
               p  " err     #{$!}"
-	           fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-	           fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
-              plsql.connection.autocommit = true
-              ##debugger
-            else
-              plsql.__send__("userproc#{user_id.to_s}s").update :status=>if @errf == "" then "normal end" else "error" end,:updated_at=>Time.now,:where=>{ :id =>sio_session_counter}
+              fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+              fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		  
+              plsql.__send__("userproc#{user_id.to_s}s").update :status=> "error " ,:updated_at=>Time.now,:where=>{ :id =>sio_session_counter}
+          else
+              plsql.__send__("userproc#{user_id.to_s}s").update :status=> "normal end" ,:updated_at=>Time.now,:where=>{ :id =>sio_session_counter}
+          ensure
 	            plsql.commit   ##
               plsql.connection.autocommit = true         
-      end   ## begin
+          end  #begin  
     end   ##perform
       handle_asynchronously :perform  
     def reset_show_data_screen
-      cache_key =  "show" 
-      Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
+      ##cache_key =  "show" 
+      ##Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
+	  Rails.cache.clear(nil) ###delay_jobからcallされるので、grp_codeはbatch
     end
-    def reset_show_data_screenlist   ###casheは消えるけどうまくいかない　2013/11/2
+    def reset_show_data_screenlist   ###casheは消えけどうまくいかない　2013/11/2
       ##debugger
       cache_keys =["listindex","show","id"] 
       cache_keys.each do |key|
@@ -161,7 +169,7 @@ class DbCud  < ActionController::Base
               update_schs_by_ord command_r,tbl
       end
     end   
-    private
+    ##private
     ## linkの追加・削除機能が必要 2014/2/8 不要　 snoで対応
     def  new_stkhist command_r
       stk = {}
@@ -429,60 +437,80 @@ class DbCud  < ActionController::Base
       end  ##pagedata
       return command_r, command_r[:sio_viewname].split("_")[1]
     end
-    def update_table rec,tblname
-      tmp_key = {}
-      r_cnt = 0
-      to_cr = {}   ###テーブル更新用
-      rec.each do |j,k|
+    def update_table rec,tblname,r_cnt0
+      begin
+           tmp_key = {}
+           to_cr = {}   ###テーブル更新用
+           rec.each do |j,k|
            j_to_s = j.to_s
-           if   j_to_s.split("_")[0] == tblname.chop then  ##本体の更新
+              if   j_to_s.split("_")[0] == tblname.chop and j_to_s !~ /person_id_upd/ then  ##本体の更新
 	              ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
-                to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = nil  if k  == '#{nil}'  ##画面項目クリアー
-            end   ## if j_to_s.
-      end ## rec.each
-      to_cr[:persons_id_upd] = rec[:sio_user_code]
-      if  to_cr[:sio_message_contents].nil?
-          to_cr[:updated_at] = Time.now
-          case rec[:sio_classname]
-              when  /_insert_/ then
-                    ##debugger
-                    ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
-                    to_cr[:created_at] = Time.now  
-	                  plsql.__send__(tblname).insert to_cr  
-	            when /_update_/ then
-                    to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
-                    ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
-	                  ##debugger
-                    to_cr[:updated_at] = Time.now
-                    plsql.__send__(tblname).update  to_cr
-                     ##raise
-              when  /_delete_/ then 
+                  to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = nil  if k  == '#{nil}'  ##画面項目クリアー
+              end   ## if j_to_s.
+           end ## rec.each
+           to_cr[:persons_id_upd] = rec[:sio_user_code]
+           if  to_cr[:sio_message_contents].nil?
+               to_cr[:updated_at] = Time.now
+               case rec[:sio_classname]
+                    when  /_insert_/ then
+                        ##debugger
+                        ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
+                        to_cr[:created_at] = Time.now  
+	                      plsql.__send__(tblname).insert to_cr  
+	                  when /_update_/ then
+                         to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
+                         ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
+	                       ##debugger
+                         to_cr[:updated_at] = Time.now
+                         plsql.__send__(tblname).update  to_cr
+                         ##raise
+                    when  /_delete_/ then 
                          plsql.__send__(tblname).delete(:id => rec[:id])
-                        ### 2013/12 stop　unless  rec[:sio_ctltbl]  ##ctlを利用しての親子関係のときは、子の削除はしない。
-	     end   ## case iud 
-      end  ##to_cr[:sio_message_contents].nil?
-      r_cnt += 1
-      ##debugger 
-      @errf = ""
-      command_r = {}
-      command_r = rec.dup
-      command_r[:sio_recordcount] = r_cnt
-      command_r[:sio_result_f] =  if  to_cr[:sio_message_contents] then "1" else  "0" end
-      command_r[:sio_message_contents] = to_cr[:sio_message_contents]
-      @errf = "1" if to_cr[:sio_message_contents]
-      to_cr.each do |i,j| 
-	        if i.to_s =~ /s_id/  
-		        newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
-		        command_r[newi] = j if j 
-          end
-          command_r[i] = j if i == :id
-      end
-      command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
-      crt_def if  tblname == "pobjects"  
-      sub_update_stkhists command_r if tblname =~ /^shp|^arv/   ###在庫の更新
-      sub_insert_sio_r   command_r    ## 結果のsio書き込み
-      ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
+	             end   ## case iud 
+           end  ##to_cr[:sio_message_contents].nil
+           rescue  
+                plsql.rollback
+                command_r = {}
+                command_r = rec.dup
+                ##debugger
+                command_r[:sio_recordcount] = r_cnt0
+                command_r[:sio_result_f] =   "1" 
+                command_r[:sio_message_contents] =  "class #{self} : LINE #{__LINE__} $!: #{$!} "    ###evar not defined
+                command_r[:sio_errline] =  "class #{self} : LINE #{__LINE__} $@: #{$@} "[0..3999]
+                to_cr.each do |i,j| 
+                   if i.to_s =~ /s_id/  
+                      newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
+                      command_r[newi] = j if j 
+                   end
+                   command_r[i] = j if i == :id
+                end
+                command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
+                p  $@
+                p  " err     #{$!}"
+               fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+               fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
+           else 
+            command_r = {}
+            command_r = rec.dup
+            command_r[:sio_recordcount] = r_cnt0
+            command_r[:sio_result_f] =  "0"
+            command_r[:sio_message_contents] = nil
+            to_cr.each do |i,j| 
+	             if i.to_s =~ /s_id/  
+		              newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
+		              command_r[newi] = j if j 
+                 end
+               command_r[i] = j if i == :id
+            end
+            command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
+            crt_def if  tblname == "pobjects"  
+            sub_update_stkhists command_r if tblname =~ /^shp|^arv/   ###在庫の更新
+          ensure
+            sub_insert_sio_r   command_r    ## 結果のsio書き込み
+            ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
+          end ##begin
+          raise if command_r[:sio_result_f] ==   "1" 
     end
     def undefined
       nil   

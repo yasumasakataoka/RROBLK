@@ -347,7 +347,7 @@ taskRow.find("input:[name=itm_code]").blur(function () {
     self.master.beginTransaction();
     task.itm_code =  el.val();     
     jQuery.ajaxSetup({ async: false }); 	
-    jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code},function(data){task.itm_name = data.name;});
+    jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code,"code_to_name_oper":"add","q":"gantt_itms"},function(data){task.itm_name = data.itm_name;});
     jQuery.ajaxSetup({ async: true }); 
     self.master.endTransaction();}
   });

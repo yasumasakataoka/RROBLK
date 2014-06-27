@@ -1,14 +1,119 @@
 # -*- coding: utf-8 -*-  
 class   GanttController  <  ScreenController
+###同一priorityのもののみ抽出
   before_filter :authenticate_user!  
   respond_to :html ,:xml ##  将来　タイトルに変更
    def index
      @ganttdata = sub_gantt_chart(params[:screen_code],params[:id])
      @xnum1 = "parent_number"
      @xnum1witdth = 30   
-     ###debugger
-     #fprnt("@ganttdata :#{@ganttdata}")
+     ##debugger
+     ##fprnt("@ganttdata :#{@ganttdata}")
      render :json =>@ganttdata
+   end
+   def sub_gantt_chart screen_code,id
+      ngantts = []
+      time_now =  Time.now 
+      ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
+      case screen_code
+        when /^gantt_itms/   ##r_opeitm とcpo　procordがまだ
+            itm = plsql.itms.first("where id = '#{id}'  ")
+            rec = plsql.opeitms.first("where itms_id = #{id} and Expiredate > sysdate   order by priority desc, processseq desc,Expiredate ")
+      end
+       ##debugger
+      if rec then 
+        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:processseq=>rec[:processseq],:priority=>rec[:priority],:endtime=>time_now,:id=>"opeitms_"+rec[:id].to_s}
+        cnt = 0
+        @bgantts = {}
+        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:opeitm_duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>0}
+        until ngantts.size == 0
+          cnt += 1
+          ngantts = psub_get_itms_locas ngantts
+          break if cnt >= 500
+        end
+      else
+         return ""
+      end
+     
+     @bgantts[:"000"][:starttime] = Time.now
+     @bgantts[:"000"][:endtime] = prv_resch  ####再計算
+     @bgantts[:"000"][:opeitm_duration] =   (@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]
+     strgantt = '{"tasks":['
+     @bgantts.sort.each  do|key,value|
+        strgantt << %Q%{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}","loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}",
+        "nditm_parenum":"#{value[:nditm_parenum]}","nditm_chilnum":"#{value[:nditm_chilnum]}","start":#{value[:starttime].to_i.*1000},"opeitm_duration":#{value[:opeitm_duration]},
+        "end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},%
+     end
+     ## opeitmのsubtblidのopeitmは子のinsert用
+     ##debugger
+     ##fprnt("#{__LINE__} strgantt :#{strgantt}")
+     strgantt = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
+     return strgantt
+   end  
+
+   def psub_get_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック
+     ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
+     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
+     n0 = ngantts.shift
+     ##debugger
+     r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
+     if r0 then
+         strtime = psub_get_contents(n0,r0)
+         tmp = psub_get_chil_itms(n0,r0,strtime)
+         ngantts.concat(tmp) if tmp.size > 0 
+         tmp = psub_get_prev_process(n0,r0,strtime)
+         ngantts.concat(tmp) if tmp.size > 0 
+        else
+           psub_get_contents(n0,{})
+          #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
+     end
+     return ngantts
+   end  ##  psub_get_itms_locas に登録されたitmsは削除
+
+   def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
+     bgantt = {}
+     ##debugger  ###opeitmsに登録さ
+     itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
+	 if n0[:loca_id]
+        loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
+	  else
+	    rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]}   order by   processseq desc")
+	    loca = plsql.locas.first("where id = #{rec[:locas_id]} ")
+     end
+     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),
+                                 :assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],
+                                 :subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
+    ##p " Line #{__LINE__} #{bgantt}"
+     @bgantts.merge! bgantt
+     return bgantt[n0[:seq].to_sym][:starttime]
+   end
+
+   def psub_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
+     ngantts = []
+     rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
+     if rnditms.size > 0 then
+        mlevel = n0[:mlevel] + 1
+        rnditms.each.with_index(1)  do |i,cnt|
+		   ###debugger
+		   chilopeitm = plsql.opeitms.first("where itms_id = #{i[:itms_id_nditm]} and priority = #{r0[:priority]} and  Expiredate > sysdate  order by processseq desc")
+		   if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
+           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],
+		               :loca_id=>chil_loca,:priority=>r0[:priority],:endtime=>endtime,:nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
+        end         
+     end
+     return ngantts
+   end
+
+   def psub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
+     ##debugger
+     ngantts = []
+     rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
+     if rec
+           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:endtime=>endtime,:id=>"opeitms_"+rec[:id].to_s,:priority=>rec[:priority],:processseq=>rec[:processseq]}
+           endtime = endtime - rec[:duration]*24*60*60
+     end
+     ##debugger
+     return ngantts
    end
 
    def set_fields_from_gantt tblid,value ###画面の内容をcommand_r for gantt screen     
@@ -38,11 +143,11 @@ class   GanttController  <  ScreenController
                 command_r[:nditm_chilnum] = value[:nditm_chilnum]
                 command_r[:loca_code_nditm] = value[:loca_code]
                 command_r[:itm_code_nditm] = value[:itm_code]
-                command_r[:loca_code_nditm] = value[:loca_code]
+                ###command_r[:loca_code_nditm] = value[:loca_code]   ===>opeitmsの作成
                 command_r[:nditm_opeitm_id] = value[:paretblcode].split("_")[1].to_i if  value[:paretblcode].split("_")[0] == "opeitms"
                 command_r[:nditm_expiredate] = Time.parse("2099/12/31")
       end
-     return command_r
+     return command_
    end  
    def uploadgantt
      ##debugger
@@ -86,94 +191,8 @@ class   GanttController  <  ScreenController
 
       @ganttreturn = "retrurn ok"
    end
-   def sub_gantt_chart screen_code,id
-      ngantts = []
-      time_now =  Time.now 
-      ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
-      case screen_code
-      when /^r_itms/   ##r_opeitm とcpo　procordがまだ
-          itm = plsql.itms.first("where id = '#{id}'  ")
-          r = plsql.opeitms.first("where itms_id = #{id} and Expiredate > sysdate   order by processseq desc,priority desc, Expiredate ")
-      end
-     ##debugger
-     if r then 
-        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>r[:itms_id],:loca_id=>r[:locas_id],:processseq=>r[:processseq],:priority=>r[:priority],:endtime=>time_now,:id=>"opeitms_"+r[:id].to_s}
-        cnt = 0
-        @bgantts = {}
-        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:opeitm_duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>0}
-        until ngantts.size == 0
-          cnt += 1
-          ngantts = psub_get_itms_locas ngantts
-          break if cnt >= 500
-        end
-      else
-         return ""
-     end
-     
-     @bgantts[:"000"][:starttime] = Time.now
-     @bgantts[:"000"][:endtime] = prv_resch  ####再計算
-     @bgantts[:"000"][:opeitm_duration] =   (@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]
-     strgantt = '{"tasks":['
-     @bgantts.sort.each  do|key,value|
-        strgantt << %Q%{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}","loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}","nditm_parenum":"#{value[:nditm_parenum]}","nditm_chilnum":"#{value[:nditm_chilnum]}","start":#{value[:starttime].to_i.*1000},"opeitm_duration":#{value[:opeitm_duration]},"end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},%
-     end
-     ## opeitmのsubtblidのopeitmは子のinsert用
-     ##debugger
-     ##fprnt("#{__LINE__} strgantt :#{strgantt}")
-     strgantt = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
-     return strgantt
-   end  
-   def psub_get_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック
-     ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
-     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
-     n0 = ngantts.shift
-     #p "n0:#{n0}"
-     r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
-     if r0 then
-         endtime = psub_get_contents(n0,r0)
-         ngantts.concat(psub_get_chil_itms(n0,r0,endtime))
-         ngantts.concat(psub_get_next_process(n0,r0,endtime))
-        else
-           psub_get_contents(n0,{})
-          #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
-     end
-     return ngantts
-   end  ##  psub_get_itms_locas に登録されたitmsは削除
-   def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
-     bgantt = {}
-     ###debugger  ###opeitmsに登録さ
-     itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
-     loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
-     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),
-                                 :assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],
-                                 :subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
-    ##p " Line #{__LINE__} #{bgantt}"
-     @bgantts.merge! bgantt
-     return bgantt[n0[:seq].to_sym][:starttime]
-   end
-   def psub_get_chil_itms(n0,r0,endtime)
-     ngantts = []
-     rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
-     if rnditms.size > 0 then
-        mlevel = n0[:mlevel] + 1
-        rnditms.each.with_index(1)  do |i,cnt|
-           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:loca_id=>i[:locas_id_nditm],:priority=>r0[:priority],:endtime=>endtime,:nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
-        end         
-     end
-     return ngantts
-   end
-   def psub_get_next_process(n0,r0,endtime)
-     ngantts = []
-     ropeitms = plsql.opeitms.all("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   itms_id, processseq ")
-     if ropeitms.size > 0 then
-        nseq = n0[:seq][0..-3]
-        ropeitms..each.with_index(2)  do |i,cnt|
-           ngantts << {:seq=>(nseq + sprintf("%02d", cnt)),:mlevel=>n0[:mlevel],:itm_id=>i[:itms_id],:loca_id=>i[:locas_id],:endtime=>endtime,:id=>"opeitms_"+i[:id].to_s}
-           endtime = endtime - i[:duration]*24*60*60
-        end         
-     end
-     return ngantts
-   end
+
+   
    def prv_resch   ##本日を起点に再計算
       min_starttime = time_now = Time.now
       dp_id = 1
@@ -183,7 +202,7 @@ class   GanttController  <  ScreenController
          end
          min_starttime = @bgantts[key][:starttime] if  min_starttime > (@bgantts[key][:starttime]||= time_now)
          dp_id += 1
-         end
+      end
 
          for_serch_par_key =[]
          @bgantts.each  do|key,value|
@@ -191,11 +210,12 @@ class   GanttController  <  ScreenController
                    @bgantts[key][:starttime] = time_now  ###稼働日考慮今なし
                    @bgantts[key][:endtime] =  @bgantts[key][:starttime]   +  value[:opeitm_duration] *24*60*60
                    for_serch_par_key << [key , @bgantts[key][:endtime]]
-            end
+               end
          end
          max_time = Time.now
          for_serch_par_key.each do |i|
-            key = i[0].to_s[0..-4].to_sym
+            if i[0].to_s.size == 3 then key = i[0]  else  key = i[0].to_s[0..-4].to_sym end  ### i[0].to_s.size == 3 topの時
+            ##debugger
             if @bgantts[key][:starttime] < i[1]-24*60*60 then
                @bgantts[key][:starttime] = i[1]-24*60*60  ###カレンダー計算なし
                @bgantts[key][:endtime] =  @bgantts[key][:starttime] +@bgantts[key][:opeitm_duration]*24*60*60
@@ -206,8 +226,8 @@ class   GanttController  <  ScreenController
             end
          end
          @bgantts.sort.each  do|key,value|  ###topから再計算
-         if  time_now  >  @bgantts[key][:starttime] then
-            @bgantts[key][:endtime] = @bgantts[key.to_s[0..-4].to_sym][:starttime] -24*60*60 ###稼働日考慮今なし
+         if  time_now  >  @bgantts[key][:starttime]  and  key.to_s.size > 3 then
+            @bgantts[key][:endtime] = @bgantts[key.to_s[0..-4].to_sym][:starttime] -24*60*60   ###稼働日考慮今なし
             @bgantts[key][:starttime] =  @bgantts[key][:endtime]  -  value[:opeitm_duration] *24*60*60
          end
       end
