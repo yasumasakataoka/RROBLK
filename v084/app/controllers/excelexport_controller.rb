@@ -10,75 +10,80 @@ class ExcelexportController < ApplicationController
   #   comma = wb.styles.add_style :num_fmt => 3
   #   sheet.add_row [1500, -122.34, 123456789, 594829], :style=> [currency, red_negative, comma, super_funk]
     def index
-      @screen_code,jqgrid_id = get_screen_code 
-      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+      screen_code,jqgrid_id = get_screen_code 
+      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
       ##debugger
-      @gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
-      @viewname =  sub_blkgetpobj("r_#{@screen_code.split("_")[1]}","view")
+	  if Rails.cache.exist?(show_cache_key) then
+         @show_data = Rails.cache.read(show_cache_key)
+       else 
+	       ### create_def screen_code
+	     @show_data = set_detail(screen_code )  ## set gridcolumns
+      end
+      @gridcolumns  = @show_data[:gridcolumns] 
+      @viewname =  sub_blkgetpobj("r_#{screen_code.split("_")[1]}","view")
     end
     def export
       ##@fields =   plsql.__send__(params[:id]).column_names  ##show_dataのfieldに変更
 	  #該当データなしの時処理　
-      @screen_code = params[:export][:exportscreen_code]
-      screen_code 
+      screen_code = params[:export][:exportscreen_code]
       tblidsym = (screen_code.split("_")[1].chop + "_id").to_sym
-     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
-     @show_data =  Rails.cache.read(show_cache_key)
-     show_data
-     @xparams = {}
-     params[:export].each do |i,j|   ###jqgridと入力無の時の送られるデータがことなる。 jqgrid field nothing  rails fieldx= ""
-	@xparams[i.to_sym] = j if j != ""
-     end
-     xparams
-     set_fields_from_params 
-     ##debugger
-    fields = {}
-    col_type =[]
-    command_r[:sio_code] = screen_code
-    command_r[:sio_start_record] =  1
-    command_r[:sio_end_record] =  params[:export][:maxcount].to_i 
-    command_r[:sio_session_id] = "export"
-    command_r[:sio_classname] = "plsql_blk_export"
-    ##@tbldata = []
-    ##debugger
-    rcd = subpaging(command_r,@screen_code) 
-     fields.delete(:msg_ok_ng)    ####近いうちに  照会・修正の時はとる。　　確認の時のみ
-     ## @tbldata =   plsql.__send__(params[:export][:screen_code]).all
-     pkg = Axlsx::Package.new
-     pkg.workbook do |wb|
+      ##show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+      ##if Rails.cache.exist?(show_cache_key) then
+      ##   @show_data = Rails.cache.read(show_cache_key)
+      ## else 
+	       ### create_def screen_code
+	  ##   @show_data = set_detail(screen_code )  ## set gridcolumns
+      ##end
+	  @show_data = get_show_data screen_code
+      command_c = set_fields_from_params screen_code
+       ##debugger
+      fields = {}
+      col_type =[]
+      command_c[:sio_code] = screen_code
+      command_c[:sio_start_record] =  1
+      command_c[:sio_end_record] =  params[:export][:maxcount].to_i 
+      command_c[:sio_session_id] = "export"
+      command_c[:sio_classname] = "plsql_blk_export"
+      ##@tbldata = []
+      ##debugger
+      rcd = subpaging(command_c,screen_code) 
+      fields.delete(:msg_ok_ng)    ####近いうちに  照会・修正の時はとる。　　確認の時のみ
+      ## @tbldata =   plsql.__send__(params[:export][:screen_code]).all
+      pkg = Axlsx::Package.new
+      pkg.workbook do |wb|
       wb.add_worksheet(:name => 'export') do |ws|   # シート名の指定は省略可
 	      ### column毎に文字、数量、日付の指定をする。
 	   fcolors = []
 	   fcolors1 = []
            fields[tblidsym] = tblidsym.to_s
             fcolors << (wb.styles.add_style :bg_color =>  'ffc6b2')
-	   show_data[:gridcolumns].each do |i|
-               if  i[:hidden] == false and i[:editrules]           ### omit :msg_ok_ng
+	   @show_data[:gridcolumns].each do |i|
+         if  i[:hidden] == false and i[:editrules]           ### omit :msg_ok_ng
 	           fields[i[:field].to_sym] = if i[:label]  then i[:label] else "" end
 		   if i[:editable] == true then
 		      if i[:editrules][:required]  == true then
-                          fcolors << (wb.styles.add_style :bg_color =>  'ffc6b2')
+                     fcolors << (wb.styles.add_style :bg_color =>  'ffc6b2')
 		       else
-			  fcolors << (wb.styles.add_style :bg_color =>  'e5ffe5')
+			         fcolors << (wb.styles.add_style :bg_color =>  'e5ffe5')
 		      end
-                    else
-                          fcolors << nil
-                   end  ##if i[:editable] == true
-		   case show_data[:alltypes][i[:field].to_sym]
+             else
+                fcolors << nil
+           end  ##if i[:editable] == true
+		   case @show_data[:alltypes][i[:field].to_sym]
 		       when    /^timestamp/
                             fcolors1 << (wb.styles.add_style :format_code => 'YYYY/MM/DD hh:mm:ss')
 		       when "date"
                              fcolors1 << (wb.styles.add_style :format_code => 'YYYY/MM/DD')
 		       when "number"
                             fcolors1 << (wb.styles.add_style :format_code => '#,##0')  ###小数点以下の対応ができてない。
-			else
+			   else
 			    fcolors1 << nil
-		       end
-		end ##if  i[:hidden] == false and i[:editrules]
-           end  ##show_data[:gridcolumns].each
+	       end
+		 end ##if  i[:hidden] == false and i[:editrules]
+       end  ##show_data[:gridcolumns].each
          ws.add_row  fields.values,:style =>fcolors
 	 ##debugger
-          rcd[0].each do  |i|
+         rcd[0].each do  |i|
 		 rowvalue = []
 		 fields.keys.each do |key|
 		    rowvalue << i[key.to_sym] if i.key?(key.to_sym)
@@ -90,33 +95,19 @@ class ExcelexportController < ApplicationController
      end
   send_data(pkg.to_stream.read, 
   :type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  :filename => "#{@screen_code + Time.now.strftime("%y%m%d%H%M")}.xlsx")
+  :filename => "#{screen_code + Time.now.strftime("%y%m%d%H%M")}.xlsx")
  end
- def set_fields_from_params ###画面の内容をcommand_r
-     @command_r = {}
-     command_r
-     if show_data.empty? 
+ def set_fields_from_params screen_code  ###画面の内容をcommand_c
+     command_c = {}
+     if @show_data.nil? 
         render :text => "Create DetailFields #{screen_code} by (crt_r_view_sql.rb  #{screen_code.split(/_/)[1]}) and restart rails "  and return
      end
-     command_r[:sio_search]  = "false"
+     command_c[:sio_search]  = "false"
      ##debugger
-     show_data[:allfields].each do |j|
-        command_r[j] = xparams[j]  ##     
-	command_r[:sio_search]  = "true" if command_r[j]
-	##debugger
+     @show_data[:allfields].each do |j|
+        command_c[j] = params[:export][j]  ##     
+	    command_c[:sio_search]  = "true" if command_c[j] and command_c[j] != ""
      end ##
+	 return command_c
  end  
- def command_r
-     @command_r
- end
- def show_data
-     @show_data
- end
- def screen_code
-     @screen_code
- end
- def xparams
-     @xparams
- end
-
 end

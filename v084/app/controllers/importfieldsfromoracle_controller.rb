@@ -184,14 +184,14 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:pobjects_id_fld] = rec_id
        tmp[:ftype] = attr[:data_type].downcase
        tmp[:fieldlength] = attr[:data_length]
-       tmp[:datapresion] = attr[:data_precision]
+       tmp[:dataprecision] = attr[:data_precision]
        tmp[:datascale] =   attr[:data_scale]
        tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
        tmp[:expiredate] = Time.parse("2099/12/31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
        tmp[:remark] = " from oracle"
-       ##debugger
+       ###debugger
        plsql.fieldcodes.insert tmp
        return tmp
   end 
@@ -212,12 +212,12 @@ class ImportfieldsfromoracleController < ApplicationController
       if fieldcode[:fieldcode_ftype] == attr[:data_type].downcase then
           case fieldcode[:ftype]
                when "number"
-                    if fieldcode[:fieldcode_datapresion] != attr[:data_precision] and
-                       ieldcode[:fieldcode_datapresion] != 0 and    attr[:data_precision] != 38 then
+                    if fieldcode[:fieldcode_dataprecision] != attr[:data_precision] and
+                       ieldcode[:fieldcode_dataprecision] != 0 and    attr[:data_precision] != 38 then
                          @errmsg << " lenhtg unmatch"
                      end 
-                    if fieldcode[:fieldcode_datapresion] == attr[:data_precision] and
-                       (fieldcode[:fieldcode_datapresion] !=   attr[:data_precision]  or
+                    if fieldcode[:fieldcode_dataprecision] == attr[:data_precision] and
+                       (fieldcode[:fieldcode_dataprecision] !=   attr[:data_precision]  or
                          fieldcode[:fieldcode_datascale] !=   attr[:data_scale])
                          @errmsg << " lenhtg unmatch"
                      end                      
@@ -243,70 +243,7 @@ class ImportfieldsfromoracleController < ApplicationController
                         :created_at=>["905","created_at"," timestamp(6),"] ,
                         :updated_at=>["906","updated_at"," timestamp(6),"] } 
   end 
- def create_or_replace_view  tblid,tblname   ### 
-    subfields = plsql.r_fieldcodes.all("where id in(select fieldcodes_id from blktbsfieldcodes where blktbs_id = #{tblid} )")
-    selectstr = " select "
-        wherestr = "\n where "   ##joinが条件
-        fromstr = "\n from " + tblname + " " + tblname.chop + " ,"   ## 最後のSはとる。
-        sub_rtbl = "r_" + tblname   ##create view name  tbl:view=1:1
-        subfields.each do |rec|
-           js = rec[:pobject_code_fld]
-           if  js =~ /_id/  then
-              case  js
-                  when /persons_id_upd/ then  ##person は特殊
-                        join_rtbl = "upd_persons" 
-                  ##when /persons_id_chrg/ then
-                  ##     join_rtbl = "chrg_persons" 
-                  when "perons_id"
-                        next
-                   else
-                       join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
-              end 
-              rtblname =  js.sub(/s_id/,"")
-              fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
-              wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
-	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
-              selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
-              subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
-                      selectstr << k
-              end
-             else ##not _id
-               ##debugger
-               @errmsg << "length over table:" + tblname + " field:" +  js + " length:" + (tblname.chop.length + js.length).to_s if  (tblname.chop.length + js.length) > 30
-                  selectstr << tblname.chop + "." +  js  + " id,"   if js == 'id' 
-                  selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ," 
-           end      ##if  js =~ /_id/   
-        end   ##subfields
-        @strsql1 = "create or replace view  " + sub_rtbl + " as "   
-        @strsql1 << selectstr.chop +  fromstr.chop + wherestr[0..-5]
-        plsql.execute  @strsql1   
- end  #end create_or_replace_view  
 
-
- def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:省略形
-        k = ""
-	      if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
-           @errmsg << "create view #{ join_rtbl }"
-           raise 
-           ### create_or_replace_view  tblid,tblname
-	      end
-	    subfields = plsql.__send__(join_rtbl).column_names
-        subfields.each do |j|
-          js = xfield =  j.to_s  
-          xfield = "" if js.upcase == "ID" 
-          xfield = "" if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP/ and  join_rtbl  !=  "upd_persons"
-          ##xfield = "" if join_rtbl != sub_rtbl  and  join_rtbl  =~ /upd_person/
-               if   xfield  != "" then 
-                    xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] then  "_" + rtblname.split(/_/,2)[1] else "" end 
-                    k <<  " " +  xfield   + "," 
-                    lngerrfield = xfield.split(" ")[1]
-                    ###p " 127 #{xfield}"
-                    if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
-               end  
-        end  ## subfields.each           
-         yield k           
- end 
-      ##
  def  init_screenfields
       screenfields = 
          {:selection   =>  1,

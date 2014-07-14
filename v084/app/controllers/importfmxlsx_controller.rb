@@ -162,13 +162,16 @@ class ImportfmxlsxController < ScreenController
 	def get_id_from_code keys,command_c
 	    keys.each do |key,vals|
 		    strwhere = " where "
+			tblnamechop,delm = key.split(":")
+			tblnamechop = tblnamechop.split("_")[1].chop
+			delm ||= ""
 			vals.each do |val|
-			    strwhere << " #{val} = '#{command_c[val.to_sym]}' and "
+			    strwhere << " #{val.sub(delm,"")} = '#{command_c[val.to_sym]}' and "
 			end
 			##debugger
-			strwhere << %Q% #{key.to_s.split("_")[1].chop + "_expiredate" } > sysdate %
+			strwhere << %Q% #{tblnamechop + "_expiredate" } > sysdate %
 			get_id = plsql.__send__(key.to_s.split(":_")[0]).first(strwhere)
-			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_"+key.to_s.split("_")[1].chop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
+			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
 			if get_id then command_c[sym_key] = get_id[:id] else command_c[sym_key] = -1 end
 		end
 		return command_c

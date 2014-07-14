@@ -10,17 +10,18 @@ before_filter :authenticate_user!
         else
           render :text=>"error"
        end
+	   testlinks
     ##debugger
-    end
+    end	
     def crtcachelist grpcode
           ##debugger # breakpoint
         if   Rails.cache.exist?("listindex" + grpcode) then
              @cate_list,@max_cnt = Rails.cache.read("listindex" + grpcode) 
-	     Rails.cache.delete("listindex" + grpcode) if @cate_list.nil?
-	   else ##
-	     @cate_list = []
+	         Rails.cache.delete("listindex" + grpcode) if @cate_list.nil?
+	       else ##
+	         @cate_list = []
              @max_cnt = chk_cnt =  1
-	     plsql.r_screens.all("where screen_expiredate >sysdate order by screen_grpcodename").each do |i|
+	         plsql.r_screens.all("where screen_expiredate >sysdate order by screen_grpcodename").each do |i|
                 if   @cate_list[-1] then
                      if   @cate_list[-1][0] == i[:screen_grpcodename][0,1] then 
                           chk_cnt += 1
@@ -36,10 +37,34 @@ before_filter :authenticate_user!
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
              end 
-	    Rails.cache.write("listindex" + grpcode, [@cate_list,@max_cnt]) if  @cate_list
-          ##debugger # breakpoint
+	         Rails.cache.write("listindex" + grpcode, [@cate_list,@max_cnt]) if  @cate_list
+			 ##sub_define_default_methods
+             ##debugger # breakpoint
          end
      render :text => "no screen data "  and return   if @cate_list.nil?
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
+	def testlinks	###開発環境のみで動くようにすること。
+	        recs = plsql.r_tblinks.all  
+			recs.each do |rec|
+			        str_select = "select * from r_blktbsfieldcodes a where blktbsfieldcode_blktb_id = #{rec[:blktb_id_dest]}  and blktbsfieldcode_expiredate > sysdate"
+					str_select <<" and not exists(select 1 from r_tblinkflds b where a.id = b.tblinkfld_blktbsfieldcode_id )"
+				    fldrecs = plsql.select(:all,str_select)
+					##debugger
+			        fldrecs.each do |fldrec|
+			           fld = {}
+		    	       fld[:tblinks_id] = rec[:tblink_id]
+			           fld[:persons_id_upd] = 0
+			           fld[:expiredate] = DateTime.parse("2099/12/31")
+			           fld[:created_at] = Time.now
+			           fld[:updated_at] = Time.now
+		               fld[:remark] = "auto created "		   
+			           fld[:id] = plsql.tblinkflds_seq.nextval
+			           fld[:blktbsfieldcodes_id] = fldrec[:id]
+					   plsql.tblinkflds.insert fld
+			        end
+			end
+			plsql.tblinkflds.delete("where id in (select id  from tblinkflds  a where not exists(select 1 from blktbsfieldcodes b where a.blktbsfieldcodes_id = b.id and b.expiredate > sysdate))")
+	end
 end
+

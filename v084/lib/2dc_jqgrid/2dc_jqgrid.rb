@@ -41,6 +41,7 @@ include  JqgridFilter
    def jqgrid(title, id, screen_code,options = {},authenticity_token,ss_id)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
       # Default options
+	  sub_define_default_methods  unless respond_to?("dflt_dummy_def")
           options = 
         { 
           :selection_handler   => 'handleSelection',
@@ -240,8 +241,8 @@ include  JqgridFilter
       delm  ||= ""
 	  begin
 	        secgridc = get_show_data(viewname)[:allfields]
-		  rescue
-		   	raise  "shoud be seach_field invalid search_view:#{viewname} " 
+		  rescue  ###検索項目に指定しているviewがない。
+		   	raise  "shoud be seach_view invalid ;view_name is:#{viewname} "   
 	  end
       @gridcolumns.each do |tcolm|
         if  tcolm[:editable] == true and secgridc.index(tcolm[:field].sub(delm,"").to_sym)  
@@ -325,11 +326,14 @@ include  JqgridFilter
       
        ##javascript_edit <<   ";}})(jQuery);"
    end
-   def set_onInitializeForm
+   def set_onInitializeForm addorcopy
        require_fields =  "function(formid) {"
        @gridcolumns.each do |tcolm|
             require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
+			dfltval = "sub_set_default_value_#{tcolm[:field]}"
+			require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{eval(dfltval)}");%  if respond_to?(dfltval) and addorcopy == "add"
       end
+	  ##debugger
       require_fields << %Q% jQuery("#sData").show();% 
       require_fields << "}"
       return  require_fields
@@ -507,7 +511,7 @@ include  JqgridFilter
         <p id="#{id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
         <p id="#{id}_select_button">  #{extbutton} </p>
         #{extdiv_id}%
-     ##screen_javascript.gsub!(/\s+/," ")
+     screen_javascript.gsub!(/\s+/," ")
       ##debugger
       ##fprnt " jqgrid #{a} "
       id_cache_key =  "id " + screen_code +  sub_blkget_grpcode
@@ -584,7 +588,7 @@ include  JqgridFilter
                                                         ,editData:{q:"#{id}",copy:"#{ button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
 														,clearAfterAdd:false
                                                         ,afterShowForm:#{set_aftershowform(screen_code,"add")}
-                                                        ,beforeShowForm:#{set_onInitializeForm}
+                                                        ,beforeShowForm:#{set_onInitializeForm("add")}
                                                         ,afterSubmit:#{set_aftersubmit}
 														})}} %
                            when "delete"
@@ -608,7 +612,7 @@ include  JqgridFilter
                                                                 ,bSubmit: "#{button[:button_editgridrow]}" ,recreateForm: true 
                                                                 ,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                                                 ,afterShowForm:#{set_aftershowform(screen_code,button[:button_editgridrow])}
-                                                                ,beforeShowForm:#{set_onInitializeForm}
+                                                                ,beforeShowForm:#{set_onInitializeForm("copyandadd")}
                                                                 ,afterSubmit:#{set_aftersubmit}})}
                                    else { alert("Please select Row") } }}%
                            when "inlineedit"
@@ -660,4 +664,36 @@ include  JqgridFilter
       javascript_edit =  "function(xhr,postdata) {var txt = xhr.responseText; "
       javascript_edit << "if(txt.match(/err/i)){};return [true];}"
     end
+	def sub_define_default_methods
+	    eval("def dflt_dummy_def \n end")
+	    allfs = plsql.r_screenfields.all("where screenfield_expiredate > sysdate") 
+        sfdrubycode = nil
+        strsql = ""
+        allfs.each do |fld|
+            sfdrubycode = nil
+            tblname = fld[:pobject_code_scr].split("_")[1].chop
+            if tblname == fld[:pobject_code_sfd].split("_")[0] 
+               sfdrubydefname = fld[:pobject_code_sfd]
+	           if  fld[:screenfield_rubycode_dflt] 
+     	           sfdrubycode = fld[:screenfield_rubycode_dflt]
+                  else
+	                strsql = %Q/where pobject_code_tbl = '#{fld[:pobject_code_scr].split("_")[1]}'  and pobject_code_fld = '#{fld[:pobject_code_sfd].split("_",2)[1]}' 	 and blktbsfieldcode_expiredate > sysdate/
+	                tmp = plsql.r_blktbsfieldcodes.first(strsql)
+		            ##
+		            sfdrubycode = tmp[:blktbsfieldcode_rubycode_dflt]  if tmp
+    	          if sfdrubycode.nil?
+		             strsql = %Q/where  pobject_code_fld = '#{fld[:pobject_code_sfd].split("_",2)[1]}'  and fieldcode_expiredate > sysdate/
+		             tmp = plsql.r_fieldcodes.first(strsql)
+					 ##debugger
+                     sfdrubycode = tmp[:fieldcode_rubycode_dflt] if tmp
+                   end
+               end	
+               if sfdrubycode
+			      ##debugger
+			      sfdrubycode = "def sub_set_default_value_#{sfdrubydefname} \n" + sfdrubycode + "\n end"
+                  eval(sfdrubycode)
+               end
+            end			   
+        end	 
+     end
 end

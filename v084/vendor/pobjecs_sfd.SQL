@@ -1,8 +1,8 @@
 
   CREATE OR REPLACE FORCE VIEW "RAILS"."SFD_POBJECTS" 
 ("POBJECT_CODE",  "POBJECT_EXPIREDATE", "POBJECT_UPDATED_AT", 
-"POBJECT_CONTENS", "POBJECT_REMARK", "POBJECT_CREATED_AT", "POBJECT_UPDATE_IP", "ID", "POBJECT_ID", 
-"PERSON_CODE_UPD", "PERSON_NAME_UPD", "POBJECT_RUBYCODE") AS 
+"POBJECT_CONTENS", "POBJECT_REMARK", "POBJECT_CREATED_AT", "POBJECT_UPDATE_IP", "ID", "POBJECT_ID","POBJECT_PERSON_ID_UPD", 
+"PERSON_ID_UPD", "PERSON_CODE_UPD","PERSON_NAME_UPD", "POBJECT_RUBYCODE") AS 
   select
   pobject.code pobject_code
   , pobject.expiredate pobject_expiredate
@@ -12,7 +12,9 @@
   , pobject.created_at pobject_created_at
   , pobject.update_ip pobject_update_ip
   , pobject.id id
+  , pobject.PERSONS_ID_UPD pobject_person_id_upd
   , pobject.id pobject_id
+  , person_upd.id person_id_upd
   , person_upd.code person_code_upd
   , person_upd.name person_name_upd
   , pobject.rubycode pobject_rubycode 

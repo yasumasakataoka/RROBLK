@@ -2,8 +2,7 @@
 #### v084
 ## 同一login　userではviewとscreenは一対一
 ### show_data   画面の対するviewとその項目をユーザー毎にセット
-class ScreenController < ApplicationController
-  before_filter :authenticate_user!  
+class ScreenController < ListController
   respond_to :html ,:xml ##  将来　タイトルに変更
    def index
       init_from_screen 
@@ -123,15 +122,17 @@ class ScreenController < ApplicationController
       tblnamechop,field,delm = params[:chgname].split("_",3)
       exit if  tblnamechop == params[:q].split("_")[1].chop and params[:code_to_name_oper] != "add" and params[:code_to_name_oper] != "copyandadd" 
       ###既定値のセット
-      d_valuefms =  plsql.r_screenfields.all("where  pobject_code_scr = '#{params[:q]}'  and  screenfield_rubycode is not null AND screenfield_expiredate > sysdate")
+      d_valuefms =  plsql.r_screenfields.all("where  pobject_code_scr = '#{params[:q]}'  and  screenfield_rubycode_dflt is not null AND screenfield_expiredate > sysdate")
       d_valuefms.each do |rec|             
-            if  params[rec[:pobject_code_sfd].to_sym].nil? then params[rec[:pobject_code_sfd].to_sym] = eval(rec[:screenfield_rubycode])  end
+            if  params[rec[:pobject_code_sfd].to_sym].nil? then params[rec[:pobject_code_sfd].to_sym] = eval(rec[:screenfield_rubycode_dflt])  end
       end
       case tblnamechop
-           when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック
-                sw = same_tbl_code_to_name tblnamechop,field
-           else
-                sw = oth_tbl_code_to_name tblnamechop
+           when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック		        
+		        sw = same_tbl_code_to_name tblnamechop,field
+           when "vf"+params[:q].split("_")[1].chop
+			    sw = get_view_code_frm_screen_tblname  ###tblname対応
+		   else
+                sw = oth_tbl_code_to_name tblnamechop  
       end
       ##debugger
       if sw == "ON" 
@@ -159,10 +160,6 @@ class ScreenController < ApplicationController
    end	
    def    oth_tbl_code_to_name tblnamechop
       akeyfs,viewname,delm =  get_ary_find_field params[:q],params[:chgname]
-      if   viewname.nil? or viewname == ""  then 
-         sw = "OFF"
-         exit
-      end
       keyfields = {}
       sw = "ON"
       params.each do |key,val|
@@ -199,7 +196,7 @@ class ScreenController < ApplicationController
           end
           keyfields = {}
           params.each do |key,val|
-             if  key.to_s.split("_")[0]  == tblnamechop and akeyfs.index(key.to_s.split("_")[1].upcase) then
+             if  key.to_s.split("_")[0]  == tblnamechop and akeyfs.index(key.to_s.split("_",2)[1].upcase) then
                  if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
              end
           end
@@ -232,6 +229,49 @@ class ScreenController < ApplicationController
       ##debugger
       rec = plsql.__send__(viewname).first(strwhere)
    end
+   def   get_view_code_frm_screen_tblname 
+      akeyfs,viewname,delm =  get_ary_find_field params[:q],params[:chgname]
+      keyfields = {}
+      sw = "ON"
+      params.each do |key,val|
+           if  akeyfs.index(key.to_s) then
+               if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
+           end
+      end
+      ##debugger
+	  if sw == "ON" 	     
+         mytbl = params[:q].split("_")[1].chop
+	     tblnamekey = (mytbl+"_tblname").to_sym
+	     viewname = params[tblnamekey].to_s
+		 prgfs = plsql.r_blktbsfieldcodes.all("where pobject_code_tbl = '#{params[:q].split("_")[1]}' and blktbsfieldcode_viewflmk like 'tblnamefields%' and blktbsfieldcode_expiredate > sysdate ")
+		 newkeyfields = {}
+		 tblarray = {}
+		 prgfs.each do |prgf|  ###tblnameの架空項目を実項目へ変換
+		    key = "vf" + mytbl + "_" + prgf[:pobject_code_fld]
+		    if akeyfs.index(key)
+               tblarray = eval(prgf[:blktbsfieldcode_viewflmk])
+               newkeyfields[tblarray[params[tblnamekey].to_sym].to_sym] = params[key.to_sym]			   
+			end
+		 end
+		 delm = nil
+		 ##debugger
+         rec = get_tblfieldval_from_code newkeyfields,viewname,delm  
+         @getname ={}
+         if   rec then
+			 @getname[(mytbl+"_tblid").to_sym] = rec[:id]
+             prgfs.each do |keys|
+				     tblarray = eval(keys[:blktbsfieldcode_viewflmk])
+                     orgkey = tblarray[params[tblnamekey].to_sym]	
+			         @getname[("vf"+mytbl+"_"+keys[:pobject_code_fld]).to_sym] = rec[orgkey.to_sym]
+             end
+           else
+		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
+         end
+	  end
+      ##debugger
+      return sw
+    end
+
    def preview_prnt
       #@screen_code,@jqgrid_id = get_screen_code
       #show_data = get_show_data(@screen_code)
@@ -321,7 +361,7 @@ class ScreenController < ApplicationController
    def updatechk_foreignkey command_c   ###画面の必須keyになっていれば、不要
        constr = plsql.blk_constraints.all("where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'R' ")
 	   constr.each do |rec|
-	        ###debugger  ##person_id_updは必ずある。
+	        ##debugger  ##person_id_updは必ずある。
 	        fsym = (command_c[:sio_viewname].split("_")[1].chop+"_"+rec[:column_name].split("_")[0].chop.downcase + "_" + rec[:column_name].split("_",2)[1].downcase).to_sym
 	        if  command_c[fsym] and command_c[fsym].size > 0
 	            ex = plsql.__send__(rec[:column_name].split("_")[0]).first ("where id =  #{command_c[fsym]}")
@@ -346,7 +386,7 @@ class ScreenController < ApplicationController
 	  command_c = set_fields_from_allfields	  
 	  command_c[:sio_code]  = @screen_code
 	  command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
-	  command_c[:person_id_upd] = command_c[:sio_user_code]
+	  ##command_c[:person_id_upd] = command_c[:sio_user_code]
 	  command_c[:sio_viewname]  = @show_data[:screen_code_view] 
 	  command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
       return command_c

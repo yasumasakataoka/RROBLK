@@ -1,0 +1,40 @@
+
+### default value
+define_method(name) do |field_name|
+end
+
+### check calulate
+define_method(name) do |field_name|
+end
+
+
+allfs = plsql.r_screenfields.all("where screenfield_expiredate > sysdate") 
+sfdrubycode = nil
+allflds.each do |fld|
+  sfdrubycode = nil
+  tblname = fld[:pobject_code_scr].split("_")[1].chop
+  if tblname == fld[:pobject_code_sfd].splt("_")[0]
+     sfdrubydefname = fld[:pobject_code_sfd]
+	 if  fld[:screenfield_rubycode] 
+     	 sfdrubycode = fld[:screenfield_rubycode]
+       else
+	     strsql = %Q/where pobject_code_tbl = '#{fld[:pobject_code_scr].split("_")[0]}' 
+		                                 and pobject_code_fld = '#{fld[:pobject_code_sfd].split("_")[1]}'
+										 and blktblsfieldcode_expiredate > sysdate/
+	     tmp = plsql.r_blktbsfieldcodes.first(strsql)
+		 if tmp[:blktbsfieldcode_rubycode]
+		    sfdrubycode = tmp[:blktbsfieldcode_rubycode]
+    	   else
+		    strsql = %Q/where  pobject_code_fld = '#{fld[:pobject_code_sfd].split("_")[1]}'
+										 and fieldcode_expiredate > sysdate/
+		    tmp = plsql.r_fieldcodes.first(strsql)
+            sfdrubycode = tmp[:fieldcode_rubycode] if tmp
+		 end	
+     end	   
+  end
+  if sfdrubycode
+     define_method("sub_set_default_value_#{sfdrubydefname}") do |command_c|
+	    sfdrubycode
+     end 
+  end	 
+end

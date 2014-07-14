@@ -6,13 +6,14 @@
        tmp_person =  plsql.r_persons.first(:person_email =>current_user[:email])
        ###p " current_user[:email] #{current_user[:email]}"
        if tmp_person.nil?
-          render :text => "add persons to your email "  and return 
+           p "add person to his or her email "  
+		   raise   ### 別画面に移動する　後で対応
             else
           grp_code = tmp_person[:usergroup_code]
        end 
        return grp_code
      end
-     def sub_blkgetpobj code,ptype
+     def sub_blkgetpobj code,ptype    ###修正要　full指定しかダメ　　片方しか指定して無いときはテーブルの項目を修正する。
          fstrsqly = ""
          grp_code =  sub_blkget_grpcode 
          if code =~ /_id/ or   code == "id" then
@@ -99,11 +100,11 @@
        plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
   end   ## sub_insert_sio_c
   def sio_copy_insert req_command_c
-      show_data = get_show_data(req_command_c[:sio_code])
+      rshow_data = get_show_data(req_command_c[:sio_code])
       new_command_c = {}
       new_command_c[:sio_org_tblname] = req_command_c[:sio_viewname].split("_")[1]
       new_command_c[:sio_org_tblid] = req_command_c[:id]
-      show_data[:allfields].each do |i|
+      rshow_data[:allfields].each do |i|
            new_command_c[i] = req_command_c[i] if req_command_c[i] 
       end
       req_command_c.each_key do |i|
@@ -156,18 +157,18 @@
   def char_to_number_data command_r   ###   
        ##rubyXl マッキントッシュ excel windows excel not perfect
        @date1904 = nil
-       show_data = get_show_data(command_r[:sio_code])
-       show_data[:allfields].each do |i|
+       ##show_data = get_show_data(command_r[:sio_code])
+       @show_data[:allfields].each do |i|
 	     if command_r[i] then
-             case show_data[:alltypes][i]
-                  when "date",/^timestamp/ then
+             case @show_data[:alltypes][i]
+                  when /date|^timestamp/ then
 			        begin
                        command_r[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
 			           command_r[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
 			        rescue
                        command_r[i] = Time.now
 			        end
-                  when "number" then
+                  when /number/ then
                         command_r[i] = command_r[i].gsub(/\W/,"").to_f if command_r[i].class == String
                   when /char/
                        command_r[i] = command_r[i].to_i.to_s if command_r[i].class == Fixnum
@@ -228,11 +229,11 @@
         sub_insert_sio_r(command_c)
 	    all_sub_command_r[0] =  command_c
     else 
-         show_data = get_show_data(command_c[:sio_code])
-         strsql = "select #{sub_getfield(show_data)} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
+         ##show_data = get_show_data(command_c[:sio_code])
+         strsql = "select #{sub_getfield} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
          strsql  <<    " WHERE  cnt <= #{command_c[:sio_end_record]}  and  cnt >= #{command_c[:sio_start_record]} "
-        #fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+         ##debugger #fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
          pagedata = plsql.select(:all, strsql)
 	     all_sub_command_r  = []
 		 command_r = command_c.dup
@@ -255,12 +256,12 @@
 	 end  ##pagedata
 	 ##    plsql.select(:all, "#{strsql}").each do |j|
     end   ## case
-  ###p  "e: " + Time.now.to_s 
+    ###p  "e: " + Time.now.to_s 
     return all_sub_command_r
   end   ##sub_plsql_blk_paging
 
   def  sub_strwhere command_c
-       show_data = get_show_data(command_c[:sio_code])
+       ##show_data = get_show_data(command_c[:sio_code])
 	  #日付　/ - 固定にしないようにできないか?
        if command_c[:sio_strsql] then
           strwhere =  if command_c[:sio_strsql].downcase.split(")")[-1] =~ /where/ then   " and " else  " where "  end
@@ -268,11 +269,11 @@
            strwhere = " WHERE "
        end
        ##fprnt "class #{self} : LINE #{__LINE__} : command_c = '#{command_c}"
-       ##debugger ###command_c.each  do |i,j|  ##xparams gridの生 
-       params.each  do |i,j|  ##xparams gridの生
-	   ##debugger
-          next if j.nil?
-	      case show_data[:alltypes][i.to_sym]
+       ##xparams gridの生 
+	   if params[:commit] == "Export" then search_key = params[:export].dup else search_key = params.dup end
+       search_key.each  do |i,j|  ##xparams gridの生
+          next if j.nil? or j == ""
+	      case @show_data[:alltypes][i.to_sym]
 	        when "number"
              tmpwhere = " #{i} = #{j.to_i}     AND " 
 		     tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
@@ -283,13 +284,13 @@
 			    when 7
 			        tmpwhere = " to_char( #{i},'yyyy/mm') = '#{js}'       AND "  if Date.valid_date?(js.split("/")[0].to_i,js.split("/")[1].to_i,01)
 			    when 8
-			        tmpwhere = " to_char( #{i},'yyyy-mm') #{js[0]} '#{js[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
+			        tmpwhere = " to_char( #{i},'yyyy/mm') #{js[0]} '#{js[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
                 when 9 
-			        tmpwhere = " to_char( #{i},'yyyy-mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
+			        tmpwhere = " to_char( #{i},'yyyy/mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
 			    when 10
-			        tmpwhere = " to_char( #{i},'yyyy-mm-dd') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)
+			        tmpwhere = " to_char( #{i},'yyyy/mm/dd') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)
 			    when 11
-			        tmpwhere = " to_char( #{i},'yyyy-mm-dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
+			        tmpwhere = " to_char( #{i},'yyyy/mm/dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
                 when 12 
 			        tmpwhere = " to_char( #{i},'yyyy/mm/dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
              end ## j.size  
@@ -306,6 +307,7 @@
            tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/ 
 	    strwhere << tmpwhere  if  tmpwhere 
         end ### params.each  do |i,j|###
+		##debugger
        return strwhere[0..-7]
   end   ## sub_strwhere
   def  sub_pdfwhere viewname,reports_id,command_c
@@ -335,25 +337,25 @@
 
   def subpaging  command_c,screen_code
       ###debugger
-      show_data = get_show_data(command_c[:sio_code])
+      ##show_data = get_show_data(command_c[:sio_code])
       tbldata = []
-      command_c[:sio_viewname]  = show_data[:screen_code_view] 
+      command_c[:sio_viewname]  = @show_data[:screen_code_view] 
       sub_insert_sio_c command_c    ###ページング要求
       rcd = sub_plsql_blk_paging command_c,screen_code
       rcd.each do |j|
           tmp_data = {}
-          show_data[:allfields].each do |k|
+          @show_data[:allfields].each do |k|
              tmp_data[k] = j[k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
              ## tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
-             tmp_data[k] = j[k].strftime("%Y/%m/%d") if  show_data[:alltypes][k] == "date" and  !j[k].nil?
-             tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M") if  show_data[:alltypes][k] =~ /^time/ and  !j[k].nil?
+             tmp_data[k] = j[k].strftime("%Y/%m/%d") if  @show_data[:alltypes][k] == "date" and  !j[k].nil?
+             tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M") if  @show_data[:alltypes][k] =~ /^time/ and  !j[k].nil?
           end 
 	  tbldata << tmp_data
       end ## for
       return [tbldata,rcd[0][:sio_totalcount]]    ###[データの中身,レコード件数]
   end  ##subpagi
-  def  sub_getfield show_data
-       show_data[:allfields].join(",").to_s
+  def  sub_getfield 
+       @show_data[:allfields].join(",").to_s
   end   ##  sub_getfield
 
  def sub_set_chil_tbl_info next_screen_data
@@ -368,7 +370,7 @@
      end
  end
 
- def sub_sio sio,chk_cmn     
+ def sub_sioxx sio,chk_cmn     ###2014/07/12使用してない。
      tblname = sio.split(/_/,3)[2]
      chk_cmn.each do |rec|
          tmp_key = {}
@@ -448,9 +450,9 @@
       rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate ) 
                                and Priority = (select max(Priority) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate )  order by expiredate")
        if rs then
-	  return rs[:locas_id]
+	         return rs[:locas_id]
          else
-          3.times{ fprnt " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
+            3.times{ fprnt " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
 	        3.times{ p " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
           exit ###画面にメッセージをだす方法 バッチ処理だよ
        end

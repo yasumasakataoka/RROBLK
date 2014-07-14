@@ -20,7 +20,7 @@ class DbCud  < ActionController::Base
               sioarray = []
               (sioarray,i  = __send__("sub_tbl_"+i[:sio_viewname].split("_")[1],sioarray,i))  if  respond_to?("sub_tbl_"+i[:sio_viewname].split("_")[1])
               (sioarray =    __send__("sub_screen_"+i[:sio_code],sioarray,i))  if  respond_to?("sub_screen_"+i[:sio_code])
-               ### command_cs.each do |i|  ##テーブル、画面の追加処理
+              ### command_cs.each do |i|  ##テーブル、画面の追加処理
               ##debugger
               sioarray.each  do |sio| ## before update
                  new_cmds =  plsql.__send__(sio).all(strsql)   
@@ -49,7 +49,7 @@ class DbCud  < ActionController::Base
                  new_cmds.each do |rec|
                      update_table(rec,tblnameend,r_cnt)
                      r_cnt += 1
-                  end   
+                 end   
               end   ##sioarray.each           end ##command_r
 	      ###plsql.rollback_to "before_perform"  ### 
         ##debugger
@@ -64,7 +64,7 @@ class DbCud  < ActionController::Base
           else
               plsql.__send__("userproc#{user_id.to_s}s").update :status=> "normal end" ,:updated_at=>Time.now,:where=>{ :id =>sio_session_counter}
           ensure
-	            plsql.commit   ##
+	          plsql.commit   ##
               plsql.connection.autocommit = true         
           end  #begin  
     end   ##perform
@@ -147,7 +147,6 @@ class DbCud  < ActionController::Base
       lc_id = command_r[(tbl + "_loca_id").to_sym]
       it_id = command_r[(tbl + "_itm_id").to_sym]
       tm_time = command_r[(tbl + if  tbl =~ /^shp/ then "_depdate" else "_arvdate" end).to_sym].strftime("%Y/%m/%d %H:%M:%S")
-      ##debugger
       pstk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and to_char(strdate,'yyyy/mm/dd hh24:mi:ss') < '#{tm_time}'  order by strdate  desc  ")
       stk = plsql.stkhists.first("where locas_id =  #{lc_id} and  itms_id =  #{it_id} and to_char(strdate,'yyyy/mm/dd hh24:mi:ss') = '#{tm_time}'  order by strdate  desc ")
       if stk.nil? then  stk = new_stkhist(command_r) end
@@ -414,8 +413,7 @@ class DbCud  < ActionController::Base
          instsrec[:amt_act] = rec[:amt]
       end
       instsrec[:where] = {:id =>instsrec[:id]}
-      plsql.__send__(tbl.sub("acts","insts"
-        )).update instsrec
+      plsql.__send__(tbl.sub("acts","insts")).update instsrec
       update_schs_by_insts crt_sio_for_sch(tbl.sub("acts","insts"),instsrec[:id],command_r)
     end
 
@@ -440,35 +438,38 @@ class DbCud  < ActionController::Base
     def update_table rec,tblname,r_cnt0
       begin
            tmp_key = {}
-           to_cr = {}   ###テーブル更新用
+           @to_cr = {}   ###テーブル更新用
            rec.each do |j,k|
-           j_to_s = j.to_s
-              if   j_to_s.split("_")[0] == tblname.chop and j_to_s !~ /person_id_upd/ then  ##本体の更新
+             j_to_stbl,j_to_sfld = j.to_s.split("_",2)		    
+              if   j_to_stbl == tblname.chop   ##本体の更新
 	              ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
-	              to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
-                  to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = nil  if k  == '#{nil}'  ##画面項目クリアー
+	              @to_cr[j_to_sfld.sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
+                  @to_cr[j_to_sfld.to_sym] = nil  if k  == "#{nil}"  ##画面項目クリアー
+				  if respond_to?("sub_field_#{j_to_sfld}")
+				     __send__("sub_field_#{j_to_sfld}",j.to_s)
+				  end
               end   ## if j_to_s.
            end ## rec.each
-           to_cr[:persons_id_upd] = rec[:sio_user_code]
-           if  to_cr[:sio_message_contents].nil?
-               to_cr[:updated_at] = Time.now
+           @to_cr[:persons_id_upd] = rec[:sio_user_code]
+           if  @to_cr[:sio_message_contents].nil?
+               @to_cr[:updated_at] = Time.now
                case rec[:sio_classname]
                     when  /_insert_/ then
                         ##debugger
-                        ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
-                        to_cr[:created_at] = Time.now  
-	                      plsql.__send__(tblname).insert to_cr  
+                        ##fprnt "class #{self} : LINE #{__LINE__} INSERT : @to_cr = #{@to_cr}"
+                        @to_cr[:created_at] = Time.now  
+	                    plsql.__send__(tblname).insert @to_cr  
 	                  when /_update_/ then
-                         to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
-                         ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
+                         @to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
+                         ##fprnt "class #{self} : LINE #{__LINE__} update : @to_cr = #{@to_cr}"
 	                       ##debugger
-                         to_cr[:updated_at] = Time.now
-                         plsql.__send__(tblname).update  to_cr
+                         @to_cr[:updated_at] = Time.now
+                         plsql.__send__(tblname).update  @to_cr
                          ##raise
                     when  /_delete_/ then 
                          plsql.__send__(tblname).delete(:id => rec[:id])
 	             end   ## case iud 
-           end  ##to_cr[:sio_message_contents].nil
+           end  ##@to_cr[:sio_message_contents].nil
            rescue  
                 plsql.rollback
                 command_r = {}
@@ -478,7 +479,7 @@ class DbCud  < ActionController::Base
                 command_r[:sio_result_f] =   "1" 
                 command_r[:sio_message_contents] =  "class #{self} : LINE #{__LINE__} $!: #{$!} "    ###evar not defined
                 command_r[:sio_errline] =  "class #{self} : LINE #{__LINE__} $@: #{$@} "[0..3999]
-                to_cr.each do |i,j| 
+                @to_cr.each do |i,j| 
                    if i.to_s =~ /s_id/  
                       newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
                       command_r[newi] = j if j 
@@ -496,13 +497,14 @@ class DbCud  < ActionController::Base
             command_r[:sio_recordcount] = r_cnt0
             command_r[:sio_result_f] =  "0"
             command_r[:sio_message_contents] = nil
-            to_cr.each do |i,j| 
+            @to_cr.each do |i,j| 
 	             if i.to_s =~ /s_id/  
 		              newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
 		              command_r[newi] = j if j 
                  end
                command_r[i] = j if i == :id
             end
+			##debugger
             command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
             crt_def if  tblname == "pobjects"  
             sub_update_stkhists command_r if tblname =~ /^shp|^arv/   ###在庫の更新

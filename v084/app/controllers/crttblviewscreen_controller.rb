@@ -33,7 +33,8 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
          end
       end
       ##debugger
-     allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate order by connectseq")
+     ##allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate order by connectseq")
+	 allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate ")
      if allrecs.size>0 then
         if ctblspec = PLSQL::Table.find(plsql, pobject_code_tbl.to_sym) then
              add_modify = "modify"
@@ -117,16 +118,17 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
       @strsql0 = "create table #{tblname} ("
        tmpstrsql ={}
        allrecs.each do |rec|
-          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]}")
+          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
           ##debugger
+          next if frec.nil?		  
           tmpstrsql[frec[:pobject_code_fld].to_sym]= frec[:pobject_code_fld] + " " + frec[:fieldcode_ftype] + 
                    case frec[:fieldcode_ftype]
                         when "char","varchar","varchar2" then
                             "(#{frec[:fieldcode_fieldlength]}) ,"
                         when "number","numeric" then
-                            %Q%(#{if frec[:fieldcode_datapresion] == 0  or frec[:fieldcode_datapresion].nil? then "38),\n" else frec[:fieldcode_datapresion].to_s + "," + (frec[:fieldcode_datascale]||0).to_s + " ) ,\n" end }%
-                        else
-                            " , "
+                            %Q%(#{if frec[:fieldcode_dataprecision] == 0  or frec[:fieldcode_dataprecision].nil? then "38),\n" else frec[:fieldcode_dataprecision].to_s + "," + (frec[:fieldcode_datascale]||0).to_s + " ) ,\n" end }%
+						else
+                             ","
                    end
             mandatory_field.delete( frec[:pobject_code_fld].to_sym) 
           end
@@ -155,8 +157,9 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
       keys = []
       mandatory_field =  prv_init
       allrecs.each do |rec|
-          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]}")
+          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
           ##debugger
+          next if frec.nil?		  
           key = frec[:pobject_code_fld].to_sym
           keys << key
           if columns[key] then 
@@ -165,10 +168,10 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                    ##varchar2 100 バイトを超えると data_length *4 になる？
                    @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_fieldlength] });\n"
                 end
-                 frec[:fieldcode_datapresion] = 38 if  frec[:fieldcode_datapresion] == 0 or frec[:fieldcode_datapresion].nil?
+                 frec[:fieldcode_dataprecision] = 38 if  frec[:fieldcode_dataprecision] == 0 or frec[:fieldcode_dataprecision].nil?
                  frec[:fieldcode_datascale] = 0 if frec[:fieldcode_datascale].nil?
-                if (columns[key][:data_precision] != (frec[:fieldcode_datapresion]) or  columns[key][:data_scale] != (frec[:fieldcode_datascale])) and  frec[:fieldcode_ftype] == "number" then
-                   @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_datapresion]},#{frec[:fieldcode_datascale]});\n"
+                if (columns[key][:data_precision] != (frec[:fieldcode_dataprecision]) or  columns[key][:data_scale] != (frec[:fieldcode_datascale])) and  frec[:fieldcode_ftype] == "number" then
+                   @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_dataprecision]},#{frec[:fieldcode_datascale]});\n"
                 end
                else 
                    if columns[key][:data_type].downcase =~ /date|timestamp/ and frec[:fieldcode_ftype]  =~ /date|timestamp/ 
@@ -207,12 +210,13 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
            when "varchar2","char"
                 @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_fieldlength] });\n"
            when "number"
-                if  frec[:fieldcode_datapresion] then 
+                if  frec[:fieldcode_dataprecision] then 
                     @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}
-                                                           (#{if frec[:fieldcode_datapresion] == 0 then 38 else frec[:fieldcode_datapresion] end },#{frec[:fielcode_datascale]||0});\n"
+                                                           (#{if frec[:fieldcode_dataprecision] == 0 then 38 else frec[:fieldcode_dataprecision] end },#{frec[:fielcode_datascale]||0});\n"
                   else
                     @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n"
                 end
+		   when "vf"
            else
                @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n"
        end
@@ -221,7 +225,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
       ##debugger
       allrecs.each do |rec|
           field_sym =  plsql.pobjects.first(" where id = (select pobjects_id_fld from fieldcodes where id = #{rec[:fieldcodes_id]})")[:code].to_sym
-          rec[:connectseq] = columns[field_sym][:position]
+          ##rec[:connectseq] = columns[field_sym][:position] if columns[field_sym] ### vfieldはテーブルに登録しない
           rec[:where] = {:id => rec[:id]} 
           plsql.blktbsfieldcodes.update rec
       end
@@ -292,5 +296,86 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
     end    ## i
     plsql.commit 
  end  #end crt_chil_screen 
+ def create_or_replace_view  tblid,tblname   ### 
+    subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
+	tmp_union_tbls = plsql.blktbs.first("where id  = #{tblid} ")
+	union_tbls =  if tmp_union_tbls[:seltbls]  then eval(tmp_union_tbls[:seltbls])  else [""] end ##tblname対応
+	selectstr = ""
+	fromstr = ""
+	wherestr = ""
+	union_tbls.each_with_index do |utbl,idx|
+        selectstr <<  if idx == 0 then  " select " else "\n union \n select " end
+        wherestr << if utbl == "" then "\n where "  else  "\n where #{tblname.chop}.tblid = #{utbl.to_s.split("_")[1].chop}.id  and 
+		                                 #{tblname.chop}.tblname = '#{utbl.to_s}' and " end ##join条件
+        fromstr << "\n from " + tblname + " " + tblname.chop + " ,"   ## 最後のSはとる。
+		fromstr << if utbl == "" then "" else  utbl.to_s + " " + utbl.to_s.split("_")[1].chop + " ," end
+        subfields.each do |rec|
+           js = rec[:pobject_code_fld]
+           if  js =~ /_id/  then
+              case  js
+                  when /persons_id_upd/ then  ##person は特殊
+                        join_rtbl = "upd_persons" 
+                  ##when /persons_id_chrg/ then
+                  ##     join_rtbl = "chrg_persons" 
+                  when "perons_id"
+                        next
+                   else
+                       join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
+              end 
+              rtblname =  js.sub(/s_id/,"")
+              fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
+              wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
+	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
+              selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
+              subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
+                      selectstr << k
+              end
+             else ##not _id
+               ##debugger
+               @errmsg << "length over table:" + tblname + " field:" +  js + " length:" + (tblname.chop.length + js.length).to_s if  (tblname.chop.length + js.length) > 30
+               selectstr << tblname.chop + "." +  js  + " id,"   if js == 'id' 
+			   case rec[:blktbsfieldcode_viewflmk]
+				    when nil			
+			             selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ," 
+				    when /^tblnamefields/  ##vfield対応　union
+					     tblnamefields = eval(rec[:blktbsfieldcode_viewflmk])
+						 selectstr << utbl.to_s.split("_")[1].chop + "." +  tblnamefields[utbl] + "  vf" + tblname.chop + "_" +  js + " ," 
+               end 								   
+			end      ##if  js =~ /_id/   
+        end   ##subfields
+		selectstr = selectstr.chop +  fromstr.chop + wherestr[0..-5]
+		fromstr = ""
+		wherestr = ""
+	end
+    sub_rtbl = "r_" + tblname   ##create view name  tbl:view=1:1  自動作成されるviewはr_xxxxで固定
+    @strsql1 = "create or replace view  " + sub_rtbl + " as "   
+    @strsql1 << selectstr.chop 
+    plsql.execute  @strsql1   
+ end  #end create_or_replace_view  
+
+
+ def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:省略形
+        k = ""
+	      if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
+           @errmsg << "create view #{ join_rtbl }"
+           raise 
+           ### create_or_replace_view  tblid,tblname
+	      end
+	    subfields = plsql.__send__(join_rtbl).column_names
+        subfields.each do |j|
+          js = xfield =  j.to_s  
+          xfield = "" if js.upcase == "ID" 
+          xfield = "" if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|EXPIREDATE/ and  join_rtbl  !=  "upd_persons"
+          ##xfield = "" if join_rtbl != sub_rtbl  and  join_rtbl  =~ /upd_person/
+               if   xfield  != "" then 
+                    xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] then  "_" + rtblname.split(/_/,2)[1] else "" end 
+                    k <<  " " +  xfield   + "," 
+                    lngerrfield = xfield.split(" ")[1]
+                    ###p " 127 #{xfield}"
+                    if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
+               end  
+        end  ## subfields.each           
+         yield k           
+ end 
 end
 

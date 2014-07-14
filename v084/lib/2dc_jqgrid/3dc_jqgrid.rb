@@ -101,7 +101,7 @@ module JqgridFilter
       det_screen = plsql.r_screenfields.all(
                                 "where pobject_code_scr = '#{screen_code}'  
                                  and screenfield_expiredate > sysdate 
-                                 and screenfield_selection = 1 order by screenfield_seqno ")  ###
+                                 and screenfield_selection = '1' order by screenfield_seqno ")  ###
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
@@ -133,7 +133,7 @@ module JqgridFilter
                    if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
                        tmp_editrules[:date] = true 
                        tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
-                       tmp_columns[:datefmt] = "Y-m-d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
+                       tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
                        tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
                    end
 		   tmp_editrules[:required] = false  if tmp_editrules == {} 
