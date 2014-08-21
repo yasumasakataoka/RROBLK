@@ -169,8 +169,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                    @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_fieldlength] });\n"
                 end
                  frec[:fieldcode_dataprecision] = 38 if  frec[:fieldcode_dataprecision] == 0 or frec[:fieldcode_dataprecision].nil?
-                 frec[:fieldcode_datascale] = 0 if frec[:fieldcode_datascale].nil?
-                if (columns[key][:data_precision] != (frec[:fieldcode_dataprecision]) or  columns[key][:data_scale] != (frec[:fieldcode_datascale])) and  frec[:fieldcode_ftype] == "number" then
+                if ((columns[key][:data_precision]||=38  < frec[:fieldcode_dataprecision]) or  columns[key][:data_scale]||=0 != (frec[:fieldcode_datascale]||=0)) and  frec[:fieldcode_ftype] == "number" then
                    @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_dataprecision]},#{frec[:fieldcode_datascale]});\n"
                 end
                else 
@@ -298,8 +297,8 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
  end  #end crt_chil_screen 
  def create_or_replace_view  tblid,tblname   ### 
     subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
-	tmp_union_tbls = plsql.blktbs.first("where id  = #{tblid} ")
-	union_tbls =  if tmp_union_tbls[:seltbls]  then eval(tmp_union_tbls[:seltbls])  else [""] end ##tblname対応
+	tmp_union_tbl = plsql.blktbs.first("where id  = #{tblid} ")
+	union_tbls =  if tmp_union_tbl[:seltbls]  then eval(tmp_union_tbl[:seltbls])  else [""] end ##tblname対応
 	selectstr = ""
 	fromstr = ""
 	wherestr = ""
@@ -317,8 +316,8 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                         join_rtbl = "upd_persons" 
                   ##when /persons_id_chrg/ then
                   ##     join_rtbl = "chrg_persons" 
-                  when "perons_id"
-                        next
+                  ##when "perons_id"
+                  ##      next
                    else
                        join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
               end 

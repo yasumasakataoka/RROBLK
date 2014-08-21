@@ -7,24 +7,17 @@ class  AddupddelController < ScreenController
    before_filter :authenticate_user!  
    respond_to :html ,:xml ##  将来　タイトルに変更
    def index    ##  add update delete  
-      #@screen_code,@jqgrid_id = get_screen_code
       ##debugger
+	  get_screen_code
 	  command_c = init_from_screen 
-      #show_data = get_show_data(@screen_code)
-      #command_c  = set_fields_from_allfields
-      ##command_c[:sio_viewname]  = show_data[:screen_code_view] 
-      #command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
-	  #command_c[:person_id_upd] = command_c[:sio_user_code]
-	  ##command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
-      #command_c[:sio_code] = @screen_code
-      command_c[:sio_session_counter] =   user_seq_nextval(command_c[:sio_user_code]) if command_c[:sio_session_counter].nil?   ##
+      command_c[:sio_session_counter] =   user_seq_nextval(command_c[:sio_user_code])    ##
       @errmsg = ""
       case  params[:copy]  
           when /add/
              updatechk_add command_c
 			 updatechk_foreignkey command_c if  @errmsg == ""
              if  @errmsg == "" then
-                 command_c[:sio_classname] = "plsql_blk_insert_"
+                 command_c[:sio_classname] = "plsql_blk_add_"
                  command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                  command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
              end 
@@ -32,7 +25,7 @@ class  AddupddelController < ScreenController
 	         command_c[:sio_classname] = "plsql_blk_delete_"
 			 updatechk_del command_c
           when /edit/
-             command_c[:sio_classname] = "plsql_blk_update_"
+             command_c[:sio_classname] = "plsql_blk_edit_"
 			 updatechk_edit command_c
 			 updatechk_foreignkey command_c  if  @errmsg == ""
           else     

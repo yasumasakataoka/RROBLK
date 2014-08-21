@@ -8,10 +8,8 @@ class ImportfmxlsxController < ScreenController
    ##insertの時idは無視される
    ### 事前チックokかどうかexcelで返す
     def index
-	  init_from_screen 
-      ##@screen_code,jqgrid_id = get_screen_code 
-      #show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
-      #@gridcolumns  = Rails.cache.read(show_cache_key)[:gridcolumns] 
+	   get_screen_code  ## set @screen_code,@jqgrid_id  
+	  init_from_screen  
       @tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
       #dupchk
     end
@@ -21,6 +19,7 @@ class ImportfmxlsxController < ScreenController
 ###SimpleXlsxReader.configuration.catch_cell_load_errors = true, and load errors will instead be inserted into Sheet#load_errors keyed by [rownum, colnum].
     def import
 	  @rendererrmsg = []
+	  get_screen_code
 	  command_c = init_from_screen 
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
       if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
@@ -59,17 +58,18 @@ class ImportfmxlsxController < ScreenController
 					##debugger
 					command_c = get_id_from_code keys,command_c
                     case ws[iws].sheet_name.upcase
-	                    when /^INSERT/ then
+	                    when /^ADD/ then
 							updatechk_add command_c  ###同一レコード内での重複チェックができてない。
 			                updatechk_foreignkey command_c  if  @errmsg == ""
                             if  @errmsg == "" then
-                                command_c[:sio_classname] = "plsql_blk_insert_"
+                                command_c[:sio_classname] = "plsql_blk_add_"
                                 command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                             end 
-                        when  /^UPDATE/ then
-                            command_c[:sio_classname] = "plsql_blk_update_"
+                        when  /^EDIT/ then
+                            command_c[:sio_classname] = "plsql_blk_edit_"
                             command_c[:id] = command_c[tblidsym]
+							##debugger
 					        updatechk_edit command_c
 			                updatechk_foreignkey command_c if  @errmsg == ""
 	                    when /^DELETE/ then
@@ -79,7 +79,7 @@ class ImportfmxlsxController < ScreenController
         	            when nil then
                            break
                         else
-		                   @errmsg = "sheet name err must be insert or update or delete"
+		                   @rendererrmsg  << [ws[iws].sheet_name,"sheet name err must be add or edit or delete"]
 			                break
 	                 end  ##case
 					 if @errmsg == "" and commit_flg
@@ -110,10 +110,10 @@ class ImportfmxlsxController < ScreenController
       @nfields = []   ## 更新項目
       @indispfs = []   ## 項須項目
       @keyfs = []   ## key項須項目
-      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
-      show_data = get_show_data(@screen_code)
-      tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
       ##debugger
+      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
+      show_data = get_show_data @screen_code
+      tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
       show_data[:gridcolumns].each do |i|
 	   @fields[i[:label].to_sym] = i[:field] if i[:hidden] == false  and  i[:label]
 	   @rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false and  i[:label]
@@ -122,7 +122,7 @@ class ImportfmxlsxController < ScreenController
                @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
            end
       end
-      if  sheet_name.downcase == "update" or  sheet_name.downcase == "delete" then
+      if  sheet_name.downcase == "edit" or  sheet_name.downcase == "delete" then
            @fields[tblidsym] = @rfields[tblidsym] = tblidsym.to_s
            @nfields << tblidsym
            @indispfs << tblidsym

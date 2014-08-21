@@ -12,8 +12,8 @@
           grp_code = tmp_person[:usergroup_code]
        end 
        return grp_code
-     end
-     def sub_blkgetpobj code,ptype    ###修正要　full指定しかダメ　　片方しか指定して無いときはテーブルの項目を修正する。
+    end
+    def sub_blkgetpobj code,ptype    ###修正要　full指定しかダメ　　片方しか指定して無いときはテーブルの項目を修正する。
          fstrsqly = ""
          grp_code =  sub_blkget_grpcode 
          if code =~ /_id/ or   code == "id" then
@@ -39,20 +39,36 @@
          end  ## if ocde
       ##fprnt " Line:#{__LINE__} Time:#{Time.now.to_s}  fstrsqly:#{fstrsqly}"
       return orgname 
-  end  ## def getpobj
-
-  def fprnt str
-    foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
-    foo.puts "#{Time.now.to_s}  #{str}"
-    foo.close
-  end   ##fprnt str
-  def user_seq_nextval sio_user_code 
-      ses_cnt_usercode = "sesseq_a" + sio_user_code.to_s 
+    end  ## def getpobj
+    def sub_blkget_code_fm_name name,ptype    ###修正要　full指定しかダメ　　片方しか指定して無いときはテーブルの項目を修正する。
+         grp_code =  sub_blkget_grpcode 
+         if name =~ /_id/ or   name == "id" then
+            orgcode = name
+           else
+            orgcode = ""      
+            basesql = "select POBJECT_CODE  from R_POBJGRPS where POBJGRP_EXPIREDATE > SYSDATE AND USERGROUP_CODE = '#{grp_code}' and   "
+            basesql  <<  " pobjgrp_name = '#{name}' and POBJECT_OBJECTTYPE = '#{ptype}' "
+            rec = plsql.select(:first,basesql)
+            orgcode =  if rec then rec[:pobject_code] else name end			
+         end  ## if ocde
+      ##debugger ##fprnt " Line:#{__LINE__} Time:#{Time.now.to_s}  fstrsqly:#{fstrsqly}"
+      return orgcode ||= name
+    end  ## def getpobj
+    def fprnt str
+      foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
+      foo.puts "#{Time.now.to_s}  #{str}"
+      foo.close
+    end   ##fprnt str
+    def user_seq_nextval sio_user_code 
+	  ##debugger
+      ses_cnt_usercode = "userproc_ses_cnt" + sio_user_code.to_s ###user_code 15char 以下
       unless PLSQL::Sequence.find(plsql,ses_cnt_usercode) then 
              plsql.execute "CREATE SEQUENCE #{ses_cnt_usercode}"
+             plsql.execute "CREATE SEQUENCE userproc#{sio_user_code.to_s}s_seq"
              userprocs = "CREATE TABLE userproc#{sio_user_code.to_s}s
                    ( id numeric(38)
-                    ,tblname VARCHAR(30)
+				     ,session_counter numeric(38)
+                     ,tblname VARCHAR(30)
                      ,status VARCHAR(20)
                      ,cnt numeric(38)
                      ,Persons_id_Upd numeric(38)
@@ -60,13 +76,14 @@
                      ,created_at timestamp(6)
                      ,Expiredate date
                      ,Updated_at timestamp(6)
-                     , CONSTRAINT userproc#{sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
-                      )"
+                     ,CONSTRAINT userproc#{sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
+					 ,CONSTRAINT userproc#{sio_user_code.to_s}s_uk1 UNIQUE(session_counter,tblname)
+                      )"					  
               plsql.execute userprocs
       end
       return plsql.__send__(ses_cnt_usercode).nextval 
-  end
-  def user_parescreen_nextval sio_user_code 
+    end
+    def user_parescreen_nextval sio_user_code 
       parescreen_cnt_usercode = "parescreen_a" + sio_user_code.to_s 
       unless PLSQL::Sequence.find(plsql,parescreen_cnt_usercode) then 
              plsql.execute "CREATE SEQUENCE #{parescreen_cnt_usercode}"
@@ -85,43 +102,43 @@
               plsql.execute parescreens
       end
       return plsql.__send__(parescreen_cnt_usercode).nextval 
-  end
+    end
 
-  def sub_insert_sio_c   command_c   ###要求
+    def sub_insert_sio_c   command_c   ###要求
       ##debugger
       command_c = char_to_number_data(command_c)
       command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
-      command_c[:sio_term_id] =  request.remote_ip
-      command_c[:sio_session_id] = params[:q]
+      command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？
+      ###command_c[:sio_session_id] = if params[:q] then params[:q] else command_c[:sio_id] end ## 未使用 2014/07 
       command_c[:sio_command_response] = "C"
       command_c[:sio_add_time] = Time.now
-      #command_c.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
-      ### remark とcodeがnumberになっていた。原因不明　2011-09-19
+      ##debugger #command_c.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
        plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
-  end   ## sub_insert_sio_c
-  def sio_copy_insert req_command_c
-      rshow_data = get_show_data(req_command_c[:sio_code])
-      new_command_c = {}
-      new_command_c[:sio_org_tblname] = req_command_c[:sio_viewname].split("_")[1]
-      new_command_c[:sio_org_tblid] = req_command_c[:id]
-      rshow_data[:allfields].each do |i|
-           new_command_c[i] = req_command_c[i] if req_command_c[i] 
-      end
-      req_command_c.each_key do |i|
-           new_command_c[i] = req_command_c[i] if i.to_s =~ /^sio/
-      end
-      new_command_c[:sio_id] =  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}_SEQ").nextval
+    end   ## sub_insert_sio_c
+    #def sio_copy_insert req_command_c
+    #  rshow_data = get_show_data(req_command_c[:sio_code])
+    #  new_command_c = {}
+    #  new_command_c[:sio_org_tblname] = req_command_c[:sio_viewname].split("_")[1]
+    #  new_command_c[:sio_org_tblid] = req_command_c[:id]
+    #  rshow_data[:allfields].each do |i|
+    #       new_command_c[i] = req_command_c[i] if req_command_c[i] 
+    # end
+    # req_command_c.each_key do |i|
+    #       new_command_c[i] = req_command_c[i] if i.to_s =~ /^sio/
+    #  end
+    #  new_command_c[:sio_id] =  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}_SEQ").nextval
       #####new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval   矛盾
       #### insertの時idの関係が有る時があるとの無条件にセットできない。
-      new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval  if new_command_c[:id].nil?
-      sym_id = (req_command_c[:sio_viewname].split('_')[1].chop+"_id").to_sym
-      new_command_c[sym_id] = new_command_c[:id]
+    #  new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval  if new_command_c[:id].nil?
+     # sym_id = (req_command_c[:sio_viewname].split('_')[1].chop+"_id").to_sym
+     # new_command_c[sym_id] = new_command_c[:id]
       ##fprnt " class #{self} : LINE #{__LINE__} new_command_c  = #{new_command_c}"  ##debugger
-      plsql.__send__("SIO_#{req_command_c[:sio_viewname]}").insert new_command_c
-  end
-  def sub_userproc_insert command_c
+    #  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}").insert new_command_c
+    #end
+    def sub_userproc_insert command_c
       userproc = {}
-      userproc[:id] = command_c[:sio_session_counter]
+      userproc[:id] = plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s_seq").nextval
+	  userproc[:session_counter] = command_c[:sio_session_counter]
       userproc[:tblname] = "sio_"+ command_c[:sio_viewname]
       userproc[:cnt] = command_c[:sio_recordcount]
       userproc[:status] = "request"
@@ -130,8 +147,8 @@
       userproc[:persons_id_upd] = 0
       userproc[:expiredate] = DateTime.parse("2099/12/31")
       plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s").insert userproc
-  end
-  def sub_parescreen_insert rcdkey,hash_rcd
+    end
+    def sub_parescreen_insert rcdkey,hash_rcd
       parescreen = {}
       parescreen[:id] = @ss_id.to_i
       parescreen[:rcdkey] = rcdkey
@@ -142,19 +159,18 @@
       parescreen[:persons_id_upd] = 0
       parescreen[:expiredate] = DateTime.parse("2099/12/31")
       plsql.__send__("parescreen#{current_user[:id].to_s}s").insert parescreen
-  end
-  def sub_insert_sio_r sub_command_r   ####回答
-      ##debugger
-      ##fprnt " class #{self} : LINE #{__LINE__} sub_command_r  = #{sub_command_r}"
-      sub_command_r[:sio_id] =  plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}_SEQ").nextval
-      sub_command_r[:sio_command_response] = "R"
-      sub_command_r[:sio_add_time] = Time.now
+    end
+    def sub_insert_sio_r command_r   ####回答
+      ##fprnt " class #{self} : LINE #{__LINE__} command_r  = #{command_r}"
+      command_r[:sio_id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
+      command_r[:sio_command_response] = "R"
+      command_r[:sio_add_time] = Time.now
           ##debugger
-      plsql.__send__("SIO_#{sub_command_r[:sio_viewname]}").insert sub_command_r
+      plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
       return 
       ##plsql.commit 
-  end   ## sub_insert_sio_r 
-  def char_to_number_data command_r   ###   
+    end   ## sub_insert_sio_r 
+    def char_to_number_data command_r   ###根本解決を   
        ##rubyXl マッキントッシュ excel windows excel not perfect
        @date1904 = nil
        ##show_data = get_show_data(command_r[:sio_code])
@@ -176,9 +192,9 @@
 	      end  ## if command_r
        end  ## sho_data.each
      return command_r
-  end ## defar_to....
+    end ## defar_to....
 
-  def num_to_date(num)
+    def num_to_date(num)
       return nil if num.nil?
       if @date1904
         compare_date = DateTime.parse('December 31, 1903')
@@ -187,13 +203,13 @@
       end
       # subtract one day to compare date for erroneous 1900 leap year compatibility
       compare_date - 1 + num
-  end
+    end
 
-  def sub_plsql_blk_paging  command_c,screen_code
-    ### strsqlにコーディングしてないときは、viewをしよう
-    ### strdql はupdate insertには使用できない。
-    ### command_c[:sio_strsql] = (select  ・・・・) a
-    if  command_c[:sio_strsql]  then   ## 親からの情報があるときは対象外
+    def sub_plsql_blk_paging  command_c,screen_code
+      ### strsqlにコーディングしてないときは、viewをしよう
+      ### strdql はupdate insertには使用できない。
+      ### command_c[:sio_strsql] = (select  ・・・・) a
+      if  command_c[:sio_strsql]  then   ## 親からの情報があるときは対象外
         tmp_sql =  command_c[:sio_strsql] 
       else
         tmp_str = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and screen_Expiredate > sysdate order by screen_expiredate ")
@@ -206,20 +222,20 @@
           else 
             tmp_sql =  command_c[:sio_viewname]  + " a " 
         end
-    end
-    strsql = "SELECT id FROM " + tmp_sql
-    tmp_sql << sub_strwhere(command_c)  if command_c[:sio_search]  == "true"
-    sort_sql = ""
-    unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == "" then 
+      end
+      strsql = "SELECT id FROM " + tmp_sql
+      tmp_sql << sub_strwhere(command_c)  if command_c[:sio_search]  == "true"
+      sort_sql = ""
+      unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == "" then 
 	    sort_sql = " ROW_NUMBER() over (order by " +  command_c[:sio_sidx] + " " +  command_c[:sio_sord]  + " ) " 
-	  else
+	   else
 	    sort_sql = "rownum "
-    end
-    cnt_strsql = "SELECT 1 FROM " + tmp_sql 
-    ##debugger
-    command_c[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
-    case  command_c[:sio_totalcount]
-    when nil,0   ## 該当データなし　　回答
+      end
+      cnt_strsql = "SELECT 1 FROM " + tmp_sql 
+      ##debugger
+      command_c[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
+      case  command_c[:sio_totalcount]
+      when nil,0   ## 該当データなし　　回答
          ## insert_sio_r recodcount,result_f,contents
 	    contents = "not find record"    ### 将来usergroup毎のメッセージへ
 	    command_c[:sio_recordcount] = 0
@@ -228,7 +244,7 @@
 	    all_sub_command_r = []
         sub_insert_sio_r(command_c)
 	    all_sub_command_r[0] =  command_c
-    else 
+      else 
          ##show_data = get_show_data(command_c[:sio_code])
          strsql = "select #{sub_getfield} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
          r_cnt = 0
@@ -253,14 +269,14 @@
 	       ##debugger
 	       tmp.merge! command_r
 	       all_sub_command_r <<  tmp   ### all_sub_command_r << command_r にすると以前の全ての配列が最新に変わってしまう
-	 end  ##pagedata
+	    end  ##pagedata
 	 ##    plsql.select(:all, "#{strsql}").each do |j|
-    end   ## case
-    ###p  "e: " + Time.now.to_s 
-    return all_sub_command_r
-  end   ##sub_plsql_blk_paging
+      end   ## case
+      ###p  "e: " + Time.now.to_s 
+      return all_sub_command_r
+    end   ##sub_plsql_blk_paging
 
-  def  sub_strwhere command_c
+    def  sub_strwhere command_c
        ##show_data = get_show_data(command_c[:sio_code])
 	  #日付　/ - 固定にしないようにできないか?
        if command_c[:sio_strsql] then
@@ -309,8 +325,8 @@
         end ### params.each  do |i,j|###
 		##debugger
        return strwhere[0..-7]
-  end   ## sub_strwhere
-  def  sub_pdfwhere viewname,reports_id,command_c
+    end   ## sub_strwhere
+    def  sub_pdfwhere viewname,reports_id,command_c
       tmpwhere = sub_strwhere command_c
        case  params[:initprnt] 
        when  "1"  then
@@ -333,9 +349,9 @@
        end
        ##if params[:
        return tmpwhere
-  end
+    end
 
-  def subpaging  command_c,screen_code
+    def subpaging  command_c,screen_code
       ###debugger
       ##show_data = get_show_data(command_c[:sio_code])
       tbldata = []
@@ -353,98 +369,24 @@
 	  tbldata << tmp_data
       end ## for
       return [tbldata,rcd[0][:sio_totalcount]]    ###[データの中身,レコード件数]
-  end  ##subpagi
-  def  sub_getfield 
+    end  ##subpagi
+    def  sub_getfield 
        @show_data[:allfields].join(",").to_s
-  end   ##  sub_getfield
+    end   ##  sub_getfield
 
- def sub_set_chil_tbl_info next_screen_data
-     strwhere = "where ptblid = #{next_screen_data[:sio_org_tblid]} and "
-     strwhere << "ctblname = '#{next_screen_data[:sio_viewname].split("_")[1]}'  "
-     ctbl_id = plsql.__send__("CTL#{next_screen_data[:sio_org_tblname]}").first(strwhere)
-     if ctbl_id
-	return ctbl_id[:ctblid]
-      else
-	 ##fprnt " LINE #{__LINE__}  ptblname CTL#{next_screen_data[:sio_org_tblname]} ; strwhere = #{strwhere} "
-	 raise "error"
-     end
- end
-
- def sub_sioxx sio,chk_cmn     ###2014/07/12使用してない。
-     tblname = sio.split(/_/,3)[2]
-     chk_cmn.each do |rec|
-         tmp_key = {}
-         r_cnt = 0
-         to_cr = {}   ###テーブル更新用
-         rec.each do |j,k|
-             j_to_s = j.to_s
-             ##fprnt"class #{self} : LINE #{__LINE__} j_to_s: #{j_to_s} tblname.chop: #{tblname.chop}"
-	     ##debugger
-             if   j_to_s.split("_")[0] == tblname.chop then  ##本体の更新
-	          ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
-	          to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
-                  to_cr[j_to_s.split(/_/,2)[1].sub("_id","s_id").to_sym] = nil  if k  == '#{nil}'  ##画面項目クリアー
-                     else  ### link先のidを求める 自分のテーブル以外の項目は該当テーブルのidを求めるための項目
-                        ### 画面では必要項目のみ変更可能にする。
-	                unless   j_to_s =~ /(_upd|sio_)/ or k.nil? or j_to_s == "id"   then
-                                 ###debugger
-                                 tkey = tblname.chop + "_" + j_to_s.split("_")[0] + "_id" + if j_to_s.split("_",3)[2] then "_" + j_to_s.split("_",3)[2] else "" end
-			         tmp_key[j] = k  if rec.key?(tkey.to_sym) and k ###mandatory field  
-                        end  ## unless j_to_s
-                   end   ## if j_to_s.
-             end ## j,
-	     tmp_key.each do |key,value|  ##code等から別テーブルのidを求める。
-	           #if key !~/_code/  then ###chil_screenで必要
-	           rvalue = []
-                   rvalue=  sub_mandatory_field_to_id(tmp_key,key)  #mandatory fieldからもとめたid優先
-                   to_cr.merge! rvalue[0]
-	           rvalue[1].each do |delkey|  ##すでにセットしたテーブルからは項目を除く
-		     tmp_key.delete(delkey)
-		   end
-	     end  ### tmp_key.each do |key,value|
-	      ##fprnt"class #{self} : LINE #{__LINE__} sio_view_name: #{sio_view_name} strsql: #{strsql} ****person_id #{rec[:person_id_upd]}"
-	      to_cr[:persons_id_upd] = rec[:sio_user_code]
-	      if to_cr[:sio_message_contents].nil?
-		        to_cr[:updated_at] = Time.now
-	          case rec[:sio_classname]
-                    when  /_insert_/ then
-                          ##to_cr[:id] = plsql.__send__(tblname + "_seq").nextval
-		                      ##fprnt "class #{self} : LINE #{__LINE__} INSERT : to_cr = #{to_cr}"
-                          to_cr[:created_at] = Time.now                 
-		                      plsql.__send__(tblname).insert to_cr
-		                      chlctltbl(to_cr) if tblname == "chilscreens"
-		                when /_update_/ then
-                          to_cr[:where] = {:id => rec[:id]}             ##変更分のみ更新
-                          ##fprnt "class #{self} : LINE #{__LINE__} update : to_cr = #{to_cr}"
-		                      ##debugger
-                         to_cr[:updated_at] = Time.now
-                         plsql.__send__(tblname).update  to_cr
-                   when  /_delete_/ then 
-                         plsql.__send__(tblname).delete(:id => rec[:id])
-	          end   ## case iud 
-	      end  ##to_cr[:sio_message_contents].nil?
-
-	      r_cnt += 1
-	         ##debugger 
-           command_r = {}
-           command_r = rec
-           command_r[:sio_recordcount] = r_cnt
-           command_r[:sio_result_f] = "0"
-           command_r[:sio_message_contents] = nil
-           to_cr.each do |i,j| 
-              if i.to_s =~ /s_id/  and i.to_s != "persons_id_upd" then   ###変更は　sio_user_codeを使用
-		             newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
-		             command_r[newi] = j if j
-              end
-           command_r[i] = j if i == :id
-           end
-           command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
-	         sub_insert_sio_r   command_r    ## 結果のsio書き込み
-           ##fprnt " LINE #{__LINE__} i #{i} } "
-           end  ##chk_cmn.each
-	         reset_show_data_screen if sio =~ /screenfields|chilscreens/   ###キャッシュを削除
-           reset_show_data_screenlist if tblname == "pobjgrps"   ###キャッシュを削除
+    def sub_set_chil_tbl_info next_screen_data
+      strwhere = "where ptblid = #{next_screen_data[:sio_org_tblid]} and "
+      strwhere << "ctblname = '#{next_screen_data[:sio_viewname].split("_")[1]}'  "
+      ctbl_id = plsql.__send__("CTL#{next_screen_data[:sio_org_tblname]}").first(strwhere)
+      if ctbl_id
+	  return ctbl_id[:ctblid]
+       else
+	  ##fprnt " LINE #{__LINE__}  ptblname CTL#{next_screen_data[:sio_org_tblname]} ; strwhere = #{strwhere} "
+	  raise "error"
+      end
     end
+
+ 
     def sub_get_ship_locas_frm_itm_id itms_id
         ##debugger
       rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > sysdate ) 
@@ -457,6 +399,78 @@
           exit ###画面にメッセージをだす方法 バッチ処理だよ
        end
     end
+	
+    def sub_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
+      rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
+      if rnditms.size > 0 then
+        ngantts = []
+        mlevel = n0[:mlevel] + 1
+        rnditms.each.with_index(1)  do |i,cnt|
+		   ###debugger
+		   chilopeitm = plsql.opeitms.first("where itms_id = #{i[:itms_id_nditm]} and priority = #{r0[:priority]} and  Expiredate > sysdate  order by processseq desc")
+		   ###if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
+		   if chilopeitm 
+     		   chil_loca = chilopeitm[:locas_id]
+     		   prdpurshp = chilopeitm[:prdpurshp] 
+     		   processseq = chilopeitm[:processseq] 
+     		   priority = chilopeitm[:priority]
+             else
+               chil_loca = 0
+			   prdpurshp = "end"
+			   processseq = 999
+		   end
+           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:prd_pur_shp=>prdpurshp,:safestkqty=>i[:safestkqty],
+		               :loca_id=>chil_loca,:loca_id_to=>r0[:locas_id],
+					   :priority=>priority,:processseq=>processseq,
+					   :endtime=>endtime,:duration=>chilopeitm[:duration],
+					   :nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
+        end 
+       else
+         ngantts  = [{}]	   
+      end
+      return ngantts
+    end
+
+    def sub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
+      ##debugger
+      rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
+      if rec
+	       ngantts = []
+           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:loca_id_to=>r0[:locas_id],
+		   :endtime=>endtime,:prd_pur_shp=>rec[:prdpurshp],:duration=>rec[:duration],:nditm_parenum=>1,:nditm_chilnum=>1,
+		   :safestkqty=>rec[:safestkqty],:id=>"opeitms_"+rec[:id].to_s,:priority=>rec[:priority],:processseq=>rec[:processseq]}
+           endtime = endtime - rec[:duration]*24*60*60  ###dayのみ修正要
+		else
+          ngantts = [{}]		
+      end
+      ##debugger
+      return ngantts
+    end
+	def sub_get_amt qty ,price ,loca_id,prd_pur_shp
+	    (qty||=0)*(price||=0)
+	end
+
+	def sub_get_price loca_id,itm_id,isudatesym ,duedatesym
+	     1
+    end	
+    def sub_get_chrgperson_fm_loca loca_id,prd_pur_shp
+        case prd_pur_shp
+	       when "pur"
+	           strwhere = "where locas_id_dealer = #{loca_id} and expiredate > sysdate"
+               chrgperson = plsql.dealers.first(strwhere)
+			   chrgperson_id = chrgperson[:chrgpersons_id_dflt] if chrgperson			      
+          else	
+	           strwhere = "where locas_id_asstwh = #{loca_id} and expiredate > sysdate"
+               chrgperson = plsql.asstwhs.first(strwhere)	
+			   chrgperson_id = chrgperson[:chrgpersons_id_dflt] if chrgperson	   
+	    end
+	    if chrgperson_id.nil?
+	       chrgperson = plsql.r_chrgpersons.first("where person_code =  'dummy'")
+	       if chrgperson.nil? then chrgperson_id = 0  else chrgperson_id = chrgperson[:id] end
+	    end 
+	    return chrgperson_id
+    end
+
     def sub_cal_date(loca_id,ops_loca_id,dueday) 
         dueday
     end
@@ -470,6 +484,45 @@
     end
     def sub_get_to_locaid(custord_loca_id,itm_id)
         custord_loca_id
-    end  
+    end  	
+    def sub_get_sects_id_fm_locas_id  locas_id
+	    sect = plsql.sects.first("where locas_id_sect = #{locas_id||0} ")
+		if sect.nil?
+	       sect = plsql.r_sects.first("where loca_code_sect =  'dummy'")
+	       if sect.nil? then sect_id = 0  else sect_id = sect[:id] end
+		  else
+		   sect_id = sect[:id]
+	    end 
+	    return sect_id
+	end
+	  	
+    def sub_get_locas_id_fm_sects_id  sects_id
+	    sect = plsql.sects.first("where id = #{sects_id} ")
+		if sect.nil?
+	       p "err logic err?"
+		   raise on
+		  else
+		   locas_id = sect[locas_id_sect]
+	    end 
+	    return locas_id
+	end
+    def sub_get_dealers_id_fm_locas_id  locas_id
+	    dealer = plsql.dealers.first("where locas_id_dealer = #{locas_id} ")
+		if dealer.nil?
+	       p "err logic err?  locas_id:#{locas_id}"
+		   raise
+		  else
+		   dealers_id = dealer[:id]
+	    end 
+	    return dealers_id
+	end
+	def sub_select_column_for_sio_insert command_c,tblname
+	    new_command_c = {}
+	    colms = PLSQL::Table.find(plsql, tblname).column_names
+		colms.each do |colm|
+		    new_command_c[colm] = command_c[colm]
+		end
+		return new_command_c
+	end
 end   ##module Ror_blk
 

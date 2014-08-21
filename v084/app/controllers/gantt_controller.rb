@@ -56,17 +56,19 @@ class   GanttController  <  ScreenController
      ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
      n0 = ngantts.shift
      ##debugger
-     r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
-     if r0 then
-         strtime = psub_get_contents(n0,r0)
-         tmp = psub_get_chil_itms(n0,r0,strtime)
-         ngantts.concat(tmp) if tmp.size > 0 
-         tmp = psub_get_prev_process(n0,r0,strtime)
-         ngantts.concat(tmp) if tmp.size > 0 
+	 if n0.size > 0  ###子部品がいなかったとき{}になる。
+        r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
+        if r0 then
+           strtime = psub_get_contents(n0,r0)
+           tmp = sub_get_chil_itms(n0,r0,strtime)
+           ngantts.concat(tmp) if tmp.size > 0 
+           tmp = sub_get_prev_process(n0,r0,strtime)
+           ngantts.concat(tmp) if tmp.size > 0 
         else
            psub_get_contents(n0,{})
           #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
-     end
+        end
+	 end	
      return ngantts
    end  ##  psub_get_itms_locas に登録されたitmsは削除
 
@@ -86,34 +88,6 @@ class   GanttController  <  ScreenController
     ##p " Line #{__LINE__} #{bgantt}"
      @bgantts.merge! bgantt
      return bgantt[n0[:seq].to_sym][:starttime]
-   end
-
-   def psub_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-     ngantts = []
-     rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > sysdate ")
-     if rnditms.size > 0 then
-        mlevel = n0[:mlevel] + 1
-        rnditms.each.with_index(1)  do |i,cnt|
-		   ###debugger
-		   chilopeitm = plsql.opeitms.first("where itms_id = #{i[:itms_id_nditm]} and priority = #{r0[:priority]} and  Expiredate > sysdate  order by processseq desc")
-		   if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
-           ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],
-		               :loca_id=>chil_loca,:priority=>r0[:priority],:endtime=>endtime,:nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
-        end         
-     end
-     return ngantts
-   end
-
-   def psub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-     ##debugger
-     ngantts = []
-     rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
-     if rec
-           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:endtime=>endtime,:id=>"opeitms_"+rec[:id].to_s,:priority=>rec[:priority],:processseq=>rec[:processseq]}
-           endtime = endtime - rec[:duration]*24*60*60
-     end
-     ##debugger
-     return ngantts
    end
 
    def set_fields_from_gantt tblid,value ###画面の内容をcommand_r for gantt screen     

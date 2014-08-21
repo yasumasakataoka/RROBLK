@@ -87,14 +87,15 @@ module JqgridFilter
     end
     conditions.chomp("AND ")
   end
-  def get_show_data screen_code
+  def get_show_data screen_code   ##popup画面もある
+     ##debugger
      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
      if Rails.cache.exist?(show_cache_key) then
            show_data = Rails.cache.read(show_cache_key)
           else 
-           show_data = set_detail(screen_code )  ## set gridcolumns
+           show_data = set_detail(screen_code)  ## set gridcolumns
      end
-     return show_data
+     return show_data  ###popup画面もあるのでここで@show_dataにはできない。
   end
   def set_detail screen_code
       show_data = {}  
@@ -106,10 +107,10 @@ module JqgridFilter
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
               ###debugger ## textは表示できないのでメッセージの変更要
-	      fprnt  "Create screenfields #{screen_code} by crt_r_view_sql.rb"
-              p      "Create screenfields #{screen_code} by crt_r_view_sql.rb"
-	      ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
-	      show_data = nil
+	         fprnt  "Create screenfields #{screen_code} "
+              p      "Create screenfields #{screen_code} "
+	          ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
+	          show_data = nil
               return show_data 
            end   
            ###
@@ -194,18 +195,17 @@ module JqgridFilter
       ###debugger ## 画面の項目
       case
          when params[:q]   then ##disp
-               jqgrid_id   =  params[:q]
-	           screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
-               screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
+               @jqgrid_id   =  params[:q]
+	           @screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
+               @screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
           when params[:action]  == "index"  then 
-               jqgrid_id  = screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
+               @jqgrid_id  = @screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
           when params[:nst_tbl_val] then
-               jqgrid_id   =  params[:nst_tbl_val]
-               screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
+               @jqgrid_id   =  params[:nst_tbl_val]
+               @screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
 		  when params[:dump] then  ### import by excel
-               screen_code = params[:dump][:screen_code]
+               @screen_code = params[:dump][:screen_code]
 	end
-     return screen_code,jqgrid_id
   end
  end
  

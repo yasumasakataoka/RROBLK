@@ -88,8 +88,8 @@ DROP TABLE Sects
 CREATE TABLE Sects
   ( id number(38)
   ,Locas_id_sect number(38)
-  ,Remark number(38)
-  ,Expiredate varchar(40)
+  ,Remark varchar(200)
+  ,Expiredate date
   ,Persons_id_Upd number(38)
   ,Update_IP varchar(40)
   ,created_at timestamp(6)
@@ -129,7 +129,7 @@ values(0,'0',0,'2099/12/31')
   "LOCA_ID_SECT", "LOCA_CODE_SECT", "LOCA_NAME_SECT", "LOCA_ABBR_SECT", "LOCA_ZIP_SECT", "LOCA_COUNTRY_SECT", "LOCA_PRFCT_SECT", "LOCA_ADDR1_SECT", "LOCA_ADDR2_SECT", 
   "LOCA_TEL_SECT", "LOCA_FAX_SECT", "LOCA_MAIL_SECT", "LOCA_REMARK_SECT", 
   "SECT_REMARK", "PERSON_SCRLV_ID", "SCRLV_LEVEL1", "SCRLV_ID", "SCRLV_REMARK", "SCRLV_CODE") AS 
-  select person.code person_code ,person.expiredate person_expiredate ,person.updated_at person_updated_at ,person.name person_name ,person.remark person_remark ,
+ select person.code person_code ,person.expiredate person_expiredate ,person.updated_at person_updated_at ,person.name person_name ,person.remark person_remark ,
   person.created_at person_created_at ,person.update_ip person_update_ip ,person.usergroups_id person_usergroup_id , usergroup.usergroup_name usergroup_name,
   usergroup.usergroup_code usergroup_code, usergroup.usergroup_remark usergroup_remark, usergroup.usergroup_id usergroup_id,person.email person_email ,
   person.id id,person.id person_id ,person.persons_id_upd person_person_id_upd , person_upd.updperson_id updperson_id_upd, person_upd.updperson_code updperson_code_upd,
@@ -162,27 +162,22 @@ loca.update_ip loca_update_ip ,loca.created_at loca_created_at ,loca.updated_at 
 
 
 CREATE OR REPLACE FORCE VIEW "RAILS"."R_SECTS" ("ID", "SECT_ID", "LOCA_ID_SECT", "LOCA_CODE_SECT", "LOCA_NAME_SECT",
- "LOCA_ABBR_SECT", "LOCA_ZIP_SECT", "LOCA_COUNTRY_SECT", "LOCA_PRFCT_SECT", "LOCA_ADDR1_SECT", "LOCA_ADDR2_SECT", "LOCA_TEL_SECT", 
- "LOCA_FAX_SECT", "LOCA_MAIL_SECT", "LOCA_REMARK_SECT", "SECT_REMARK", "SECT_EXPIREDATE", "SECT_PERSON_ID_UPD", "PERSON_CODE_UPD", 
+ "LOCA_ABBR_SECT", "LOCA_ZIP_SECT", "LOCA_COUNTRY_SECT", "LOCA_PRFCT_SECT", 
+ "LOCA_ADDR1_SECT", "LOCA_ADDR2_SECT", "LOCA_TEL_SECT", 
+ "LOCA_FAX_SECT", "LOCA_MAIL_SECT", "LOCA_REMARK_SECT",
+ "SECT_REMARK",  "SECT_EXPIREDATE", "SECT_PERSON_ID_UPD", "PERSON_CODE_UPD", 
  "PERSON_NAME_UPD", "PERSON_EMAIL_UPD",  "SECT_UPDATE_IP", "SECT_CREATED_AT", "SECT_UPDATED_AT") AS 
-  select sect.id ,sect.id sect_id ,sect.locas_id_sect sect_loca_id_sect , loca_sects.loca_code loca_code_sect,
- loca_sects.loca_name loca_name_sect, loca_sects.loca_abbr loca_abbr_sect,
- loca_sects.loca_zip loca_zip_sect,
- loca_sects.loca_country loca_country_sect,
- loca_sects.loca_prfct loca_prfct_sect,
- loca_sects.loca_addr1 loca_addr1_sect,
- loca_sects.loca_addr2 loca_addr2_sect,
- loca_sects.loca_tel loca_tel_sect,
- loca_sects.loca_fax loca_fax_sect,
- loca_sects.loca_mail loca_mail_sect,
- loca_sects.loca_remark loca_remark_sect,
+select sect.id ,sect.id sect_id ,loca_sect.loca_id loca_id_sect , loca_sect.loca_code loca_code_sect, loca_sect.loca_name loca_name_sect,
+ loca_sect.loca_abbr loca_abbr_sect, loca_sect.loca_zip loca_zip_sect, loca_sect.loca_country loca_country_sect, loca_sect.loca_prfct loca_prfct_sect,
+ loca_sect.loca_addr1 loca_addr1_sect, loca_sect.loca_addr2 loca_addr2_sect, loca_sect.loca_tel loca_tel_sect,
+ loca_sect.loca_fax loca_fax_sect, loca_sect.loca_mail loca_mail_sect, loca_sect.loca_remark loca_remark_sect,
 sect.remark sect_remark ,sect.expiredate sect_expiredate ,sect.persons_id_upd sect_person_id_upd ,
  person_upd.code person_code_upd,
  person_upd.name person_name_upd,
  person_upd.email person_email_upd,
 sect.update_ip sect_update_ip ,sect.created_at sect_created_at ,sect.updated_at sect_updated_at
- from sects sect ,r_locas  loca_sects,persons  person_upd
- where  loca_sects.loca_id = sect.locas_id_sect and  person_upd.id = sect.persons_id_upd
+ from sects sect ,r_locas  loca_sect,persons  person_upd
+ where  loca_sect.loca_id = sect.locas_id_sect and  person_upd.id = sect.persons_id_upd
 ;
  CREATE OR REPLACE FORCE VIEW "RAILS"."UPD_PERSONS"
  ("ID", "UPDPERSON_ID","UPDPERSON_CODE","UPDPERSON_NAME") AS 

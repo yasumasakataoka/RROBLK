@@ -5,11 +5,12 @@
 class ScreenController < ListController
   respond_to :html ,:xml ##  将来　タイトルに変更
    def index
+      get_screen_code   ##@screen_code,@jqgrid_id  
+	  ##debugger
       init_from_screen 
       @pare_class = "online"
       @scriptopt = @options = {}
       @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
-      #@screen_code,@jqgrid_id  = get_screen_code
       @disp_screenname_name = sub_blkgetpobj(@screen_code,"screen")
       ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
       ##debugger ## 詳細項目の確認
@@ -18,34 +19,32 @@ class ScreenController < ListController
       ##debugger ## 詳細項目セット
       params[:page] ||= 1 
       params[:rows] ||= 50
-      #@screen_code,@jqgrid_id = get_screen_code
       ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
-      #@show_data = get_show_data(@screen_code)
-      #command_r = set_fields_from_allfields ###画面の内容をcommand_rへ
-	  command_r = init_from_screen command_r
-      command_r[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
+	  get_screen_code
+	  command_c = init_from_screen command_c
+      command_c[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
       rdata =  []
       ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
-      command_r[:sio_classname] = "plsql_blk_paging"
-      command_r[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
-      command_r[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
-      command_r[:sio_sord] = params[:sord]
-      command_r[:sio_search] = params[:_search] 
-      command_r[:sio_sidx]  = params[:sidx]
-      #command_r[:sio_code]  = @screen_code
-      rdata = subpaging(command_r,@screen_code)     ## rdata[データの中身,レコード件数]
+      command_c[:sio_classname] = "plsql_blk_paging"
+      command_c[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
+      command_c[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
+      command_c[:sio_sord] = params[:sord]
+      command_c[:sio_search] = params[:_search] 
+      command_c[:sio_sidx]  = params[:sidx]
+      ##debugger #command_r[:sio_code]  = @screen_code
+      rdata = subpaging(command_c,@screen_code)     ## rdata[データの中身,レコード件数]
       plsql.commit
       @tbldata = rdata[0].to_jqgrid_xml(@show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
       ##debugger ##fprnt "class #{self} : LINE #{__LINE__} @tbldata #{@tbldata}"
       respond_with @tbldata
    end  ##disp
    def nst  ###子画面　
+      get_screen_code ###
       init_from_screen 
       pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
       chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
       @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
       #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
-      #@screen_code,@jqgrid_id = get_screen_code
       ##@show_data = get_show_data(@screen_code)
       ##########
       @options ={}
@@ -273,7 +272,6 @@ class ScreenController < ListController
     end
 
    def preview_prnt
-      #@screen_code,@jqgrid_id = get_screen_code
       #show_data = get_show_data(@screen_code)
       #command_r ={}
       #command_r[:sio_totalcount] = 0
@@ -281,7 +279,7 @@ class ScreenController < ListController
       pdfscript = plsql.r_reports.first("where pobject_Code_lst = '#{params[:pdflist]}' and  report_Expiredate > sysdate")
       unless  pdfscript.nil? then
          reports_id = pdfscript[:id]
-         #command_r = set_fields_from_allfields ###画面の内容をcommand_rへ
+		 get_screen_code
 		 commnad_r = init_from_screen 
          strwhere = sub_pdfwhere(@show_data[:screen_code_view] ,reports_id,command_r)
          command_r[:sio_strsql] = " (select * from #{@show_data[:screen_code_view]} " + strwhere + " ) a"
@@ -381,14 +379,16 @@ class ScreenController < ListController
       return command_c[new_key.to_sym]                      
    end
    def init_from_screen command_c = {}
-      @screen_code,@jqgrid_id  = get_screen_code
-	  @show_data = get_show_data(@screen_code)
-	  command_c = set_fields_from_allfields	  
-	  command_c[:sio_code]  = @screen_code
+      ###@screen_code,@jqgrid_id  = get_screen_code
+	  ##debugger
+	  @show_data = get_show_data @screen_code
+	  command_c = set_fields_from_allfields	
 	  command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
 	  ##command_c[:person_id_upd] = command_c[:sio_user_code]
 	  command_c[:sio_viewname]  = @show_data[:screen_code_view] 
+	  command_c[:sio_code]  = @screen_code
 	  command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
+	  command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
       return command_c
    end
 end ## ScreenController

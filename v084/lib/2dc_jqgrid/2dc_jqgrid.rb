@@ -46,6 +46,7 @@ include  JqgridFilter
         { 
           :selection_handler   => 'handleSelection',
           :autowidth           => 'false',
+          :autoheight           => 'false',
           :shrinkToFit          => 'false',
           :div_repl_id         => '',          ###別画面にリンクする時
           :text_indent         =>   '2',       ### footerの横位置
@@ -81,9 +82,7 @@ include  JqgridFilter
       end
      
      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
-     ##debugger
-
-
+     ###debugger
      if Rails.cache.exist?(show_cache_key) then
          @show_data = Rails.cache.read(show_cache_key)
        else 
@@ -491,6 +490,7 @@ include  JqgridFilter
               shrinkToFit: #{options[:shrinkToFit]},
               scrollrows: true,
               autowidth: #{options[:autowidth]},
+              autoheight: #{options[:autoheight]},
               rownumbers: #{options[:rownumbers]},
 	            #{return_code}
               #{str_set_navbutton[1]} 

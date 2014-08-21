@@ -47,8 +47,11 @@ before_filter :authenticate_user!
 	def testlinks	###開発環境のみで動くようにすること。
 	        recs = plsql.r_tblinks.all  
 			recs.each do |rec|
-			        str_select = "select * from r_blktbsfieldcodes a where blktbsfieldcode_blktb_id = #{rec[:blktb_id_dest]}  and blktbsfieldcode_expiredate > sysdate"
-					str_select <<" and not exists(select 1 from r_tblinkflds b where a.id = b.tblinkfld_blktbsfieldcode_id )"
+			        str_select = "select distinct a.id from r_blktbsfieldcodes a ,r_tblinks x "
+					str_select << "where blktbsfieldcode_blktb_id = #{rec[:blktb_id_dest]}  and blktbsfieldcode_expiredate > sysdate"
+					str_select <<" and  a.blktb_id = x.blktb_id_dest"
+					str_select <<" and not exists(select 1 from r_tblinkflds b where a.id = b.tblinkfld_blktbsfieldcode_id "
+					str_select <<" and x.pobject_id_view_src = b.pobject_id_view_src )"
 				    fldrecs = plsql.select(:all,str_select)
 					##debugger
 			        fldrecs.each do |fldrec|

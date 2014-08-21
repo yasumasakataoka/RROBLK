@@ -1,21 +1,21 @@
 CREATE OR REPLACE FORCE VIEW "RAILS"."FLD_POBJECTS" 
 ("POBJECT_CODE",  "POBJECT_EXPIREDATE", "POBJECT_UPDATED_AT", 
-"POBJECT_CONTENS", "POBJECT_REMARK", "POBJECT_CREATED_AT", "POBJECT_UPDATE_IP", "ID", "POBJECT_ID", "POBJECT_PERSON_ID_UPD",
-"PERSON_CODE_UPD", "PERSON_ID_UPD","PERSON_NAME_UPD") AS 
+"POBJECT_CONTENTS", "POBJECT_REMARK", "POBJECT_CREATED_AT", "POBJECT_UPDATE_IP", "ID", "POBJECT_ID", "POBJECT_PERSON_ID_UPD",
+"UPDPERSON_CODE_UPD", "UPDPERSON_ID_UPD","UPDPERSON_NAME_UPD") AS 
   select
   pobject.code pobject_code
   , pobject.expiredate pobject_expiredate
   , pobject.updated_at pobject_updated_at
-  , pobject.contens pobject_contens
+  , pobject.contents pobject_contents
   , pobject.remark pobject_remark
   , pobject.created_at pobject_created_at
   , pobject.update_ip pobject_update_ip
   , pobject.id 
   , pobject.id pobject_id
     , pobject.persons_id_upd pobject_person_id_upd
-  , person_upd.code person_code_upd
-  , person_upd.id person_id_upd
-  , person_upd.name person_name_upd
+  , person_upd.code updperson_code_upd
+  , person_upd.id updperson_id_upd
+  , person_upd.name updperson_name_upd
 from
   pobjects pobject
   , persons person_upd 
