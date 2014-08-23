@@ -44,14 +44,14 @@ before_filter :authenticate_user!
      render :text => "no screen data "  and return   if @cate_list.nil?
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
-	def testlinks	###開発環境のみで動くようにすること。
-	        recs = plsql.r_tblinks.all  
+	def testlinks	###開発環境のみで動くようにすること。  ###項目が削除されているときの対応、現在項目を削除している。
+	        recs = plsql.r_tblinks.all("where tblink_expiredate > sysdate")  
 			recs.each do |rec|
-			        str_select = "select distinct a.id from r_blktbsfieldcodes a ,r_tblinks x "
-					str_select << "where blktbsfieldcode_blktb_id = #{rec[:blktb_id_dest]}  and blktbsfieldcode_expiredate > sysdate"
-					str_select <<" and  a.blktb_id = x.blktb_id_dest"
-					str_select <<" and not exists(select 1 from r_tblinkflds b where a.id = b.tblinkfld_blktbsfieldcode_id "
-					str_select <<" and x.pobject_id_view_src = b.pobject_id_view_src )"
+			        str_select = "select distinct a.id from r_blktbsfieldcodes a "
+					str_select << "where blktbsfieldcode_expiredate > sysdate"
+					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec[:id]}) b "
+					str_select << " where a.id = b.tblinkfld_blktbsfieldcode_id )"
+					str_select << " and a.blktbsfieldcode_blktb_id = #{rec[:tblink_blktb_id_dest]} "
 				    fldrecs = plsql.select(:all,str_select)
 					##debugger
 			        fldrecs.each do |fldrec|
@@ -64,10 +64,14 @@ before_filter :authenticate_user!
 		               fld[:remark] = "auto created "		   
 			           fld[:id] = plsql.tblinkflds_seq.nextval
 			           fld[:blktbsfieldcodes_id] = fldrec[:id]
-					   plsql.tblinkflds.insert fld
+					   unless plsql.tblinkflds.first("where tblinks_id = #{rec[:tblink_id]} and blktbsfieldcodes_id = #{fldrec[:id]} ")
+					      plsql.tblinkflds.insert fld
+					   end
 			        end
 			end
-			plsql.tblinkflds.delete("where id in (select id  from tblinkflds  a where not exists(select 1 from blktbsfieldcodes b where a.blktbsfieldcodes_id = b.id and b.expiredate > sysdate))")
+			strwhere = "where id in (select id  from r_tblinkflds  a where not exists(select 1 from blktbsfieldcodes b where a.tblinkfld_blktbsfieldcode_id = b.id "
+			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > sysdate))"
+			plsql.tblinkflds.delete(strwhere)
 	end
 end
 

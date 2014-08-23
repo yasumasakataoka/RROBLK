@@ -254,7 +254,8 @@ class DbCud  < ActionController::Base
  end 
  def sub_do_tblinks doba
      strwhere = "where pobject_code_view_src = '#{doba[:pobject_code_view_src]}' and pobject_code_tbl_dest = '#{doba[:pobject_code_tbl_dest]}' "
-	 ##debugger
+	 strwhere << " and tblink_beforeafter = '#{doba[:tblink_beforeafter]}'  and tblink_seqno = '#{doba[:tblink_seqno]}' "
+	 debugger
 	 upd_tblinkkys = plsql.r_tblinkkys.all(strwhere)
 	 strwhere = "where "
 	 upd_tblinkkys.each do |updk|
@@ -343,31 +344,19 @@ class DbCud  < ActionController::Base
 	    duedatesym = :shpsch_depdate
         command_c[duedatesym] = ngantt[:endtime] - ngantt[:duration]*24*60*60  ####day固定
    end
-   itm_idsym = "#{ngantt[:prd_pur_shp]}sch_itm_id".to_sym
+   itm_idsym = "opeitm_itm_id".to_sym
    command_c[itm_idsym] = ngantt[:itm_id]
-   processseqsym = "#{ngantt[:prd_pur_shp]}sch_processseq".to_sym
+   processseqsym = "opeitm_processseq".to_sym
    command_c[processseqsym] = ngantt[:processseq]
-   prioritysym = "#{ngantt[:prd_pur_shp]}sch_priority".to_sym
+   prioritysym = "opeitm_priority".to_sym
    command_c[prioritysym] = ngantt[:priority]
    loca_id_tosym = "#{ngantt[:prd_pur_shp]}sch_loca_id_to".to_sym
    command_c[loca_id_tosym] = ngantt[:loca_id_to]
-   loca_idsym =case ngantt[:prd_pur_shp]
-	                 when "pur"
-					       "#{ngantt[:prd_pur_shp]}sch_dealer_id".to_sym
-	                 when "prd"
-					     "#{ngantt[:prd_pur_shp]}sch_sect_id".to_sym
-			 when "shp"
-					      "#{ngantt[:prd_pur_shp]}sch_loca_id".to_sym
-    			 end
-   command_c[loca_idsym] =
-                case ngantt[:prd_pur_shp]
-	                 when "pur"
-					       sub_get_dealers_id_fm_locas_id ngantt[:loca_id]
-	                 when "prd"
-                                               sub_get_sects_id_fm_locas_id  ngantt[:loca_id]
-			 when "shp"
-					      ngantt[:loca_id]
-    			 end
+   case ngantt[:prd_pur_shp]
+	         when "pur"
+				command_c[:pursch_dealer_id] = sub_get_dealers_id_fm_locas_id ngantt[:loca_id]
+   end
+   command_c[:opeitm_loca_id] = ngantt[:loca_id]
    chrgperson_idsym = "#{ngantt[:prd_pur_shp]}sch_chrgperson_id".to_sym
    command_c[chrgperson_idsym] = sub_get_chrgperson_fm_loca ngantt[:loca_id],ngantt[:prd_pur_shp]
    qtysym = "#{ngantt[:prd_pur_shp]}sch_qty".to_sym
@@ -398,11 +387,11 @@ class DbCud  < ActionController::Base
      command_c[orgtblidsym] = rec[:orgtblid]	
     command_c[:sio_session_counter] =   @new_sio_session_counter
     command_c[:sio_user_code] =   @sio_user_code ##
-	strsql = "select sum(qty - qty_ord) balqty from #{ngantt [:prd_pur_shp]}schs "
-	strsql << " where itms_id =  #{command_c[itm_idsym]} and processseq = #{command_c[processseqsym]} "
-	strsql << " and #{duedatesym.to_s.split("_",2)[1]} > to_date('#{Blksdate}','yyyy-mm-dd') "
-	strsql << " and qty > qty_ord "
-	strsql << " group by itms_id,processseq "
+	strsql = "select sum(#{ngantt [:prd_pur_shp]}sch_qty - #{ngantt [:prd_pur_shp]}sch_qty_ord) balqty from r_#{ngantt [:prd_pur_shp]}schs "
+	strsql << " where opeitm_itm_id =  #{command_c[itm_idsym]} and opeitm_processseq = #{command_c[processseqsym]} "
+	strsql << " and #{ngantt [:prd_pur_shp]}sch_#{duedatesym.to_s.split("_",2)[1]} > to_date('#{Blksdate}','yyyy-mm-dd') "
+	strsql << " and #{ngantt [:prd_pur_shp]}sch_qty > #{ngantt [:prd_pur_shp]}sch_qty_ord "
+	strsql << " group by opeitm_itm_id,opeitm_processseq "
 	chk_balqty = plsql.select(:first,strsql)
 	command_c[qtysym] -= if chk_balqty then chk_balqty[:balqty] else 0 end
 	if command_c[qtysym]  > 0
