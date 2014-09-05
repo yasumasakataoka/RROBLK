@@ -55,6 +55,7 @@
       return orgcode ||= name
     end  ## def getpobj
     def fprnt str
+	  p str
       foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
       foo.puts "#{Time.now.to_s}  #{str}"
       foo.close
@@ -105,36 +106,13 @@
     end
 
     def sub_insert_sio_c   command_c   ###要求
-      ##debugger
-      command_c = char_to_number_data(command_c)
-      command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
-      command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？
-      ###command_c[:sio_session_id] = if params[:q] then params[:q] else command_c[:sio_id] end ## 未使用 2014/07 
-      command_c[:sio_command_response] = "C"
-      command_c[:sio_add_time] = Time.now
-      ##debugger #command_c.delete(:msg_ok_ng)  ## sioに照会・更新依頼時は更新結果は不要
-       plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
+        command_c = char_to_number_data(command_c)
+        command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
+        command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？ 
+        command_c[:sio_command_response] = "C"
+        command_c[:sio_add_time] = Time.now
+        plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
     end   ## sub_insert_sio_c
-    #def sio_copy_insert req_command_c
-    #  rshow_data = get_show_data(req_command_c[:sio_code])
-    #  new_command_c = {}
-    #  new_command_c[:sio_org_tblname] = req_command_c[:sio_viewname].split("_")[1]
-    #  new_command_c[:sio_org_tblid] = req_command_c[:id]
-    #  rshow_data[:allfields].each do |i|
-    #       new_command_c[i] = req_command_c[i] if req_command_c[i] 
-    # end
-    # req_command_c.each_key do |i|
-    #       new_command_c[i] = req_command_c[i] if i.to_s =~ /^sio/
-    #  end
-    #  new_command_c[:sio_id] =  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}_SEQ").nextval
-      #####new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval   矛盾
-      #### insertの時idの関係が有る時があるとの無条件にセットできない。
-    #  new_command_c[:id] = plsql.__send__("#{req_command_c[:sio_viewname].split('_')[1]}_seq").nextval  if new_command_c[:id].nil?
-     # sym_id = (req_command_c[:sio_viewname].split('_')[1].chop+"_id").to_sym
-     # new_command_c[sym_id] = new_command_c[:id]
-      ##fprnt " class #{self} : LINE #{__LINE__} new_command_c  = #{new_command_c}"  ##debugger
-    #  plsql.__send__("SIO_#{req_command_c[:sio_viewname]}").insert new_command_c
-    #end
     def sub_userproc_insert command_c
       userproc = {}
       userproc[:id] = plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s_seq").nextval
@@ -414,13 +392,14 @@
      		   prdpurshp = chilopeitm[:prdpurshp] 
      		   processseq = chilopeitm[:processseq] 
      		   priority = chilopeitm[:priority]
+     		   opeitm_id = chilopeitm[:id]
              else
                chil_loca = 0
 			   prdpurshp = "end"
 			   processseq = 999
 		   end
            ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:prd_pur_shp=>prdpurshp,:safestkqty=>i[:safestkqty],
-		               :loca_id=>chil_loca,:loca_id_to=>r0[:locas_id],
+		               :loca_id=>chil_loca,:loca_id_to=>r0[:locas_id],:opeitm_id =>opeitm_id,
 					   :priority=>priority,:processseq=>processseq,
 					   :endtime=>endtime,:duration=>chilopeitm[:duration],
 					   :nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
@@ -436,7 +415,8 @@
       rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
       if rec
 	       ngantts = []
-           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:loca_id_to=>r0[:locas_id],
+           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:opeitm_id=>rec[:id],
+		   :loca_id_to=>r0[:locas_id],
 		   :endtime=>endtime,:prd_pur_shp=>rec[:prdpurshp],:duration=>rec[:duration],:nditm_parenum=>1,:nditm_chilnum=>1,
 		   :safestkqty=>rec[:safestkqty],:id=>"opeitms_"+rec[:id].to_s,:priority=>rec[:priority],:processseq=>rec[:processseq]}
            endtime = endtime - rec[:duration]*24*60*60  ###dayのみ修正要
@@ -446,6 +426,45 @@
       ##debugger
       return ngantts
     end
+    def sub_get_prev_opeitm_processseq p_opeitm  ###
+      ##debugger
+      rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itm_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]} and processseq < #{p_opeitm[:processseq]}  order by   processseq desc")
+      if rec
+	       rec[:processseq]
+		else
+          p "logic err 	sub_get_prev_opeitm_processseq   p_opeitm:#{p_opeitm} "
+          raise		  
+      end
+    end
+	
+    def sub_get_itm_locas_procssseq_frm_opeitm opeitm_id  ###
+      ##debugger
+      rec = plsql.opeitms.first("where id  = #{opeitm_id} and Expiredate > sysdate ")
+      if rec
+	       {:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:processseq=>rec[:processseq]}
+		else
+          p "logic err 	sub_get_itm_locas_procssseq_frm_opeitm opeitm_id:#{opeitm_id} "
+          raise		  
+      end
+    end
+	
+    def sub_get_next_opeitm_processseq_and_loca_id p_opeitm  ###
+      ##debugger
+	  if p_opeitm[:itm_id].nil? or p_opeitm[:priority].nil? or p_opeitm[:processseq].nil?
+	     tmp = plsql.opeitms.first("where id = #{p_opeitm[:opeitm_id]} ")
+		 p_opeitm[:itm_id] = tmp[:itms_id]
+		 p_opeitm[:priority] = tmp[:priority]
+		 p_opeitm[:processseq] = tmp[:processseq]
+	  end
+      rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itm_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]} and processseq > #{p_opeitm[:processseq]}  order by   processseq ")
+      if rec
+	       {:processseq=>rec[:processseq],:loca_id=>rec[:locas_id],:itm_id=>rec[:itms_id]}
+		else
+          p "logic err 	sub_get_next_opeitm_processseq_and_loca_id   p_opeitm:#{p_opeitm} "	  
+          raise		  
+      end
+    end
+
 	def sub_get_amt qty ,price ,loca_id,prd_pur_shp
 	    (qty||=0)*(price||=0)
 	end
@@ -515,6 +534,16 @@
 		   dealers_id = dealer[:id]
 	    end 
 	    return dealers_id
+	end
+    def sub_get_locas_id_fm_dealers_id  dealers_id
+	    dealer = plsql.dealers.first("where id = #{dealers_id} ")
+		if dealer.nil?
+	       p "err logic err?  dealers_id:#{dealers_id}"
+		   raise
+		  else
+		   locas_id = dealer[:locas_id_dealer]
+	    end 
+	    return locas_id
 	end
 	def sub_select_column_for_sio_insert command_c,tblname
 	    new_command_c = {}

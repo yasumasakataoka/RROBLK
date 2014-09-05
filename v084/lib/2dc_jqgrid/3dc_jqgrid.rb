@@ -106,7 +106,7 @@ module JqgridFilter
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
-              ###debugger ## textは表示できないのでメッセージの変更要
+             debugger ## textは表示できないのでメッセージの変更要
 	         fprnt  "Create screenfields #{screen_code} "
               p      "Create screenfields #{screen_code} "
 	          ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
