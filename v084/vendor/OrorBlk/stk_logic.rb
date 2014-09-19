@@ -1,42 +1,35 @@
-﻿   strsql = " where strdate >= to_date('#{Blksdate}','yyyy-mm-dd') and "  ###予定在庫は昨日以前はすべてzero
-   strsql << " itms_id = #{rec[:itms_id]}  and locas_id = #{rec[:locas_id]} and "
-   strsql << " processseq  = #{rec[:processseq]} and  sno_prj = '#{rec[:sno_prj]}'   and "
-   strsql << " (qty_sch + qty_ord + qty_inst + qty - #{safestkqty} ) < 0  order by strdate "  
-   tqty = 0  ##加算
-   prds_purs_shps = plsql.stkhists.all(strsql)   ###最終在庫がマイナスの品目日付順レコード
-   prds_purs_shps.each do |prd_pur_shp|
-      qty = prd_pur_shp[:qty_sch] + prd_pur_shp[:qty_ord] + prd_pur_shp[:qty_inst] + prd_pur_shp[:qty] - (safestkqty) 
-      if allqty  <= qty and qty*-1 > tqty 
-		allqty += qty*-1
-		tqty += qty*-1
-       else
-	     if allqty  > qty and qty *-1 > tqty   
-		   qty = allqty *-1
-		   allqty = 0
-		 end
-       end	  
-       n0 = {}
-       n0 = {:seq => "001",:mlevel=>0}
-      opeitm[:priority] = 999   ###opeitms priorityに999は必須
-      opeitm[:processseq] = rec[:processseq]
-      ngantts = sub_get_prev_process(n0,opeitm,prd_pur_shp[:strdate])
-      ngantts.concat( sub_get_chil_itms(n0,opeitm,prd_pur_shp[:strdate]))
-      ngantts.each do |ngantt|
-           if  ngantt.size > 0
-               @screen_code = "r_#{ngantt[:prd_pur_shp]}schs"
-               @jqgrid_id  = 0	
-               psub_create_prd_pur_shp ngantt,rec,"stkhists"
-           end
-        break if allqty<=0
-      end
-      opeitm[:processseq] = 999
-      ngantts = sub_get_chil_itms(n0,opeitm,prd_pur_shp[:strdate])
-      ngantts.each do |ngantt|
-           if  ngantt.size > 0
-               @screen_code = "r_#{ngantt[:prd_pur_shp]}schs"
-               @jqgrid_id  = 0	
-               psub_create_prd_pur_shp ngantt,rec,"stkhists"
-           end
-        break if allqty<=0
-      end
+﻿   def sub_create_prd_pur_shp_sch_by_stk 
+      strwhere = "where " 
+      strwhere << " itms_id = #{rec[:itms_id]}  and "  if rec[:itms_id]
+      strwhere << " locas_id = #{rec[:locas_id]}  and " if rec[:locas_id]
+      strwhere << " sno_prj = #{rec[:sno_prj]}  and " if rec[:sno_prj]
+      strwhere << " processseq = #{rec[:processseq]}    and itms_id_pare = #{rec[:itms_id_pare]}  " if rec[:processseq]
+      short_stks = plsql.blk_chk_short_stk_qty.all(strwhere[0..-5])
+      short_stks.each do |short_stk|
+	  short_qty = sort_stk[:short_qty] * -1
+	  strwhere = "where  a.itms_id = #{short_stk[:itms_id]}  and  a.locas_id = #{short_stk[:locas_id]}  and " 
+      strwhere << " a.sno_prj = #{short_stk[:sno_prj]}  and  a.processseq = #{short_stk[:processseq]}  and  a.itms_id_pare = #{short_stk[:itms_id_pare]}    " 
+      create_prd_pur_shps = plsql.blk_short_stk_qty_all.all(strsql)
+	  command_c = {}
+	  command_c[:sio_user_code] =   @sio_user_code ##
+	  target_tbl = create_prd_pur_shps[0][:prdpursch] + "schs"
+      command_c[:sio_classname] = "plsql_auto_#{target_tbl}_add_by_stkhists"
+      @screen_code = "r_#{target_tbl}"
+	  command_c[:sio_code] = @screen_code
+      command_c[:sio_viewname] = @screen_code
+      command_c[:sio_session_counter] =   @new_sio_session_counter
+	  @show_data = get_show_data(command_c[:sio_code])  ##char_to_number_dataとともに見直し
+	  create_prd_pur_shps.each do |src_tbl|
+	     command_c[:id] = command_c["#{target_tbl.chop}_id".to_sym] = plsql.__send__("#{target_tbl}_seq").nextval
+		 @src_tbl = src_tbl
+		 @src_tbl[:priority] = inout[:priority]
+		 @src_tbl[:prdpurshp] = create_prd_pur_shps[0][:prdpursch]
+	     strwhere = "where pobject_code_view_src = 'r_stkhists' and pobject_code_tbl_dest = '#{target_tbl}' and tblink_seqno = 10 "   ###after_self
+	     target_flds = plsql.r_tblinkflds.all(strwhere)
+	     target_flds.each do |tfld|
+	        command_c[("#{target_tbl.chop}_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c] 
+	     end
+	     sub_insert_sio_c    command_c 
+	     sub_userproc_chk_insert command_c
+	  end
    end

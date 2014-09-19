@@ -32,10 +32,10 @@ function TaskFactory() {
    */
   this.build = function(id, subtblid, paretblcode, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) {
     // Set at beginning of day
-    var adjusted_end = computeEnd(end);    //blk modify
-    var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration);
+    //var adjusted_end = computeEnd(end);    //blk modify
+    //var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration); blk modify
 
-    return new Task(id, subtblid, paretblcode, level, calculated_start, adjusted_end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum);
+    return new Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum);
   };
 
 }
@@ -158,14 +158,14 @@ Task.prototype.setPeriod = function (start, end) {
   //set end
   var wantedEndMillis = end;
 
-  end = computeEnd(end);
+  end = computeEnd(end); 
 
   if (this.end != end || this.end != wantedEndMillis) {
     this.end = end;
     somethingChanged = true;
   }
 
-  this.opeitm_duration = recomputeDuration(this.start, this.end);
+  // this.opeitm_duration = recomputeDuration(this.start, this.end);  blk modify
 
   //profilerSetPer.stop();
 
@@ -213,7 +213,7 @@ Task.prototype.setPeriod = function (start, end) {
       this.start = Math.min(bs, this.start);
     }
 
-     this.opeitm_duration = recomputeDuration(this.start, this.end);
+     // this.opeitm_duration = recomputeDuration(this.start, this.end);  blk modify
   } else {
 
     //check global boundaries
@@ -289,12 +289,13 @@ Task.prototype.moveTo = function (start, ignoreMilestones) {
   start = computeStart(start);
 
   var end = computeEndByDuration(start, this.opeitm_duration);
+  end = this.end;  // blk modify
 
   if (this.start != start || this.start != wantedStartMillis) {
     //in case of end is milestone it never changes, but recompute opeitm_duration
     if (!ignoreMilestones && this.endIsMilestone) {
       end = this.end;
-      this.opeitm_duration = recomputeDuration(start, end);
+    //  this.opeitm_duration = recomputeDuration(start, end);   blk modify
     }
     this.start = start;
     this.end = end;

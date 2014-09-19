@@ -94,6 +94,7 @@ class ImportfieldsfromoracleController < ApplicationController
              end
       end
       ####ユニークindex
+	  debugger
       ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
       keyarray={}
       ukeys.each do |rec|
@@ -185,7 +186,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:ftype] = attr[:data_type].downcase
        tmp[:fieldlength] = attr[:data_length]
        tmp[:dataprecision] = attr[:data_precision]
-       tmp[:datascale] =   attr[:data_scale]
+       tmp[:datascale] =   attr[:data_scale]||=0
        tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
        tmp[:expiredate] = Time.parse("2099/12/31")
        tmp[:created_at] = Time.now
@@ -321,7 +322,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
        crttype    viewname                 ##interface用　ｓｉｏ作成
     end
  end  ##create_screenfields 
- def setscreenfields   ii,jj,viewname,screen_id,fields,row_cnt
+ def setscreenfields   ii,jj,viewname,screen_id,fields,row_cnt   ### ii->sym_key.to_s,jj==>iiのval 
        screenfields = init_screenfields
        code_pos = []
        indisp = 0 
@@ -356,7 +357,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 	 end
 	 screenfields[:edoptmaxlength]   =  jj[:data_length]
          screenfields[:dataprecision]   =  jj[:data_precision]
-         screenfields[:datascale]   =  jj[:data_scale]
+         screenfields[:datascale]   =  jj[:data_scale]||=0
          screenfields[:indisp]   =  indisp  
 	 ### screenfields[:editablehide] =  nil
 	 screenfields[:width] =  if jj[:data_length] * 6 > 300 then 300  else jj[:data_length] * 6 end 

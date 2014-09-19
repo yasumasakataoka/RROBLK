@@ -55,10 +55,10 @@
       return orgcode ||= name
     end  ## def getpobj
     def fprnt str
-	  p str
-      foo = File.open("blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
+      foo = File.open("#{Rails.root}/log/blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
       foo.puts "#{Time.now.to_s}  #{str}"
       foo.close
+	  p str
     end   ##fprnt str
     def user_seq_nextval sio_user_code 
 	  ##debugger
@@ -111,6 +111,7 @@
         command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？ 
         command_c[:sio_command_response] = "C"
         command_c[:sio_add_time] = Time.now
+		##debugger if command_c[:sio_code] == "r_nditms"
         plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
     end   ## sub_insert_sio_c
     def sub_userproc_insert command_c
@@ -426,22 +427,40 @@
       ##debugger
       return ngantts
     end
-    def sub_get_prev_opeitm_processseq p_opeitm  ###
-      ##debugger
-      rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itm_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]} and processseq < #{p_opeitm[:processseq]}  order by   processseq desc")
+    def sub_get_prev_opeitm p_opeitm  ###
+	  if  p_opeitm[:itms_id_pare] == p_opeitm[:itms_id] 
+          strwhere = "where itms_id = #{p_opeitm[:itms_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]||= 999} "
+          strwhere << " and processseq < #{p_opeitm[:processseq]}  order by   processseq desc"
+		  rec = plsql.opeitms.first(strwhere) 		  
+		  if rec.nil?
+		     strwhere = "where itms_id = #{p_opeitm[:itms_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]||= 999} "
+             strwhere << " and processseq = #{p_opeitm[:processseq]}  "
+		     rec = plsql.opeitms.first(strwhere)
+		     if rec then rec = {} end
+		  end
+		 else  
+          strwhere = "where itms_id = #{p_opeitm[:itms_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]||= 999}  "
+          strwhere << " and processseq = 999 "
+		  rec = plsql.opeitms.first(strwhere) 
+	  end
       if rec
-	       rec[:processseq]
+	       rec
 		else
-          p "logic err 	sub_get_prev_opeitm_processseq   p_opeitm:#{p_opeitm} "
-          raise		  
+		  if p_opeitm[:chk] == true
+		     rec 
+			else 
+             p "logic err 	sub_get_prev_opeitm_processseq   p_opeitm:#{p_opeitm} "
+             raise
+          end			 
       end
+	  return rec
     end
 	
     def sub_get_itm_locas_procssseq_frm_opeitm opeitm_id  ###
       ##debugger
       rec = plsql.opeitms.first("where id  = #{opeitm_id} and Expiredate > sysdate ")
       if rec
-	       {:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:processseq=>rec[:processseq]}
+	       rec
 		else
           p "logic err 	sub_get_itm_locas_procssseq_frm_opeitm opeitm_id:#{opeitm_id} "
           raise		  
@@ -450,17 +469,36 @@
 	
     def sub_get_next_opeitm_processseq_and_loca_id p_opeitm  ###
       ##debugger
-	  if p_opeitm[:itm_id].nil? or p_opeitm[:priority].nil? or p_opeitm[:processseq].nil?
-	     tmp = plsql.opeitms.first("where id = #{p_opeitm[:opeitm_id]} ")
-		 p_opeitm[:itm_id] = tmp[:itms_id]
+	  if p_opeitm[:itms_id].nil? or p_opeitm[:priority].nil? or p_opeitm[:processseq].nil? or p_opeitm[:prdpursch].nil? 
+	     tmp = plsql.opeitms.first("where id = #{p_opeitm[:opeitms_id]} ")
+		 p_opeitm[:itms_id] = tmp[:itms_id]
+		 p_opeitm[:locas_id] = tmp[:locas_id]
 		 p_opeitm[:priority] = tmp[:priority]
 		 p_opeitm[:processseq] = tmp[:processseq]
+		 p_opeitm[:prdpursch] = tmp[:prdpursch]
 	  end
-      rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itm_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]} and processseq > #{p_opeitm[:processseq]}  order by   processseq ")
+	  if p_opeitm[:processseq] < 999
+	        strwhere = "where itms_id = #{p_opeitm[:itms_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]} and processseq > #{p_opeitm[:processseq]}  order by   processseq "
+            rec = plsql.opeitms.first(strwhere)
+		else
+		    p_opeitm[:prdpursch] = "shp"
+			rec = p_opeitm.dup
+      end		
       if rec
-	       {:processseq=>rec[:processseq],:loca_id=>rec[:locas_id],:itm_id=>rec[:itms_id]}
+	       {:processseq=>rec[:processseq],:locas_id=>rec[:locas_id],:itms_id=>rec[:itms_id],:prev_prdpurshp=>p_opeitm[:prdpursch]}
 		else
           p "logic err 	sub_get_next_opeitm_processseq_and_loca_id   p_opeitm:#{p_opeitm} "	  
+          raise		  
+      end
+    end
+	
+    def sub_get_opeitms_id_fm_itm_processseq_priority p_opeitm  ###
+      ##debugger
+      rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itms_id]} and Expiredate > sysdate and Priority = #{p_opeitm[:priority]||=999} and processseq = #{p_opeitm[:processseq]||=999}  ")
+      if rec
+	       rec
+		else
+          p "logic err 	sub_get_opeitms_id_fm_itm_processseq_priority   p_opeitm:#{p_opeitm} "	  
           raise		  
       end
     end

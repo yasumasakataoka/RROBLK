@@ -21,7 +21,7 @@ class ScreenController < ListController
       params[:rows] ||= 50
       ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
 	  get_screen_code
-	  command_c = init_from_screen command_c
+	  command_c = init_from_screen 
       command_c[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
       rdata =  []
       ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
@@ -121,9 +121,12 @@ class ScreenController < ListController
       tblnamechop,field,delm = params[:chgname].split("_",3)
       exit if  tblnamechop == params[:q].split("_")[1].chop and params[:code_to_name_oper] != "add" and params[:code_to_name_oper] != "copyandadd" 
       ###既定値のセット
-      d_valuefms =  plsql.r_screenfields.all("where  pobject_code_scr = '#{params[:q]}'  and  screenfield_rubycode_dflt is not null AND screenfield_expiredate > sysdate")
-      d_valuefms.each do |rec|             
-            if  params[rec[:pobject_code_sfd].to_sym].nil? then params[rec[:pobject_code_sfd].to_sym] = eval(rec[:screenfield_rubycode_dflt])  end
+      params.each do |key,val|   
+            dfltval =  plsql.r_rubycodings.first("where  pobject_objecttype = 'view_field' and  pobject_code = '#{key.to_s}'
+	                       and rubycoding_code like '%_dflt%'  AND rubycoding_expiredate > sysdate")          
+            if  dfltval
+			    params[key] = eval(dfltval[:rubycoding_rubycode])  
+			end
       end
       case tblnamechop
            when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック		        
@@ -378,9 +381,10 @@ class ScreenController < ListController
       ##debugger
       return command_c[new_key.to_sym]                      
    end
-   def init_from_screen command_c = {}
+   def init_from_screen 
       ###@screen_code,@jqgrid_id  = get_screen_code
 	  ##debugger
+	  command_c = {}
 	  @show_data = get_show_data @screen_code
 	  command_c = set_fields_from_allfields	
 	  command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER

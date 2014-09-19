@@ -164,22 +164,22 @@ $.splittify = {
 //<%------------------------------------------------------------------------  UTILITIES ---------------------------------------------------------------%>
   function computeStart(start) {
     var d = new Date(start+3600000*12);
-    d.setHours(0, 0, 0, 0);
+    // d.setHours(0, 0, 0, 0);
     //move to next working day
-    while (isHoliday(d)) {
-      d.setDate(d.getDate() + 1);
-    } 
+ //   while (isHoliday(d)) {
+ //     d.setDate(d.getDate() + 1);
+ //   } 
     d.setHours(0, 0, 0, 0);
     return d.getTime();
   }
 
   function computeEnd(end) {
     var d = new Date(end-3600000*12);
-    d.setHours(23, 59, 59, 999);
+    // d.setHours(23, 59, 59, 999);
     //move to next working day
-    while (isHoliday(d)) {
-      d.setDate(d.getDate() + 1);
-    }
+    //while (isHoliday(d)) {               ;;blk modify
+    //  d.setDate(d.getDate() + 1);
+    //}
     d.setHours(23, 59, 59, 999);
     return d.getTime();
   }
@@ -190,7 +190,7 @@ $.splittify = {
     var q = duration - 1;
     while (q > 0) {
       d.setDate(d.getDate() + 1);
-      if (!isHoliday(d))
+     // if (!isHoliday(d)) blk modify
         q--;
     }
     d.setHours(23, 59, 59, 999);
@@ -204,7 +204,7 @@ $.splittify = {
     var q = duration ;
     while (q > 0) {
       d.setDate(d.getDate() - 1);
-      if (!isHoliday(d))
+     // if (!isHoliday(d)) ;blk modify
         q--;
     }
     d.setHours(23, 59, 59, 999);

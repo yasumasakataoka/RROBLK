@@ -200,7 +200,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
          plsql.execute bk_sql  unless PLSQL::Table.find(plsql, "bk_#{tblname}_#{Time.now.strftime("%m%d")}".to_sym) 
      end
      @strsql0.split(";").each do |i|
-        ##debugger
+        fprnt "line #{__LINE__} \n plsql.execute #{i}"
         plsql.execute i if i =~ /\w/
      end
   end
@@ -296,9 +296,11 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
     plsql.commit 
  end  #end crt_chil_screen 
  def create_or_replace_view  tblid,tblname   ### 
+    debugger
     subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
 	tmp_union_tbl = plsql.blktbs.first("where id  = #{tblid} ")
 	union_tbls =  if tmp_union_tbl[:seltbls] and tmp_union_tbl[:seltbls] != "undefined" then eval(tmp_union_tbl[:seltbls])  else [""] end ##tblname対応
+	### tmp_union_tbl[:seltbls]はarrayであること。　　checkが必要
 	selectstr = ""
 	fromstr = ""
 	wherestr = ""
@@ -350,6 +352,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
     @strsql1 = "create or replace view  " + sub_rtbl + " as "   
     @strsql1 << selectstr.chop 
     plsql.execute  @strsql1   
+	#### sql実行時のエラー表示　がまだできてない。
  end  #end create_or_replace_view  
 
 

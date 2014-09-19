@@ -251,7 +251,6 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
             if (!sups[i].from.synchronizeStatus())
               break;
           }
-
           self.master.changeTaskDates(task, task.start, task.end);
         }
 

@@ -4,6 +4,7 @@ class DbCud  < ActionController::Base
  ##　importと 画面でエラー検出すること。
  ##  shp,arvの更新条件がまだできてない。
     Blksdate = Date.today -1  ##在庫基準日　sch,ord,instのこれ以前の納期は許さない。
+	plsql.blkstddates.update({:datevalue =>Blksdate,:where=>{:key=>"blksdate"}})
     def perform(sio_session_counter,user_id)
       begin
 	    @sio_user_code = user_id
@@ -29,8 +30,6 @@ class DbCud  < ActionController::Base
 		      ##plsql.rollback
               plsql.__send__("userproc#{user_id.to_s}s").update :status=> "error " ,:updated_at=>Time.now,:where=>{ :session_counter =>sio_session_counter}
 			  if  @sio_result_f !=   "1" 
-			      p  $@
-                  p  " err     #{$!}"
                   fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
                   fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
 			  end  
@@ -100,9 +99,11 @@ class DbCud  < ActionController::Base
            rec.each do |j,k|
              j_to_stbl,j_to_sfld = j.to_s.split("_",2)		    
               if   j_to_stbl == tblname.chop   ##本体の更新
-	              ###2013/3/25 追加覚書　 xxxx_id_yyyy   yyyy:自身のテーブルの追加  プラス _idをs_idに
 	              @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] = k  if k  ###org tbl field name
-                  @src_tbl[j_to_sfld.to_sym] = nil  if k  == "\#{nil}"  ##画面項目クリアー
+				  if respond_to?("psub_tbl_fld_set_#{j_to_sfld.sub('_id','s_id')}")
+				     @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] = __send__("psub_tbl_fld_set_#{j_to_sfld.sub('_id','s_id')}")
+				  end 	 
+                  @src_tbl[j_to_sfld.to_sym] = nil  if k  == "\#{nil}"  ##
               end   ## if j_to_s.
            end ## rec.each
            @src_tbl[:persons_id_upd] = rec[:sio_user_code]
@@ -116,7 +117,7 @@ class DbCud  < ActionController::Base
 	                    plsql.__send__(tblname).insert @src_tbl  
 	                  when /_edit_/ then
                          @src_tbl[:where] = {:id => rec[:id]}             ##変更分のみ更新
-	                       ##debugger
+	                     ##debugger
                          @src_tbl[:updated_at] = Time.now
                          plsql.__send__(tblname).update  @src_tbl
                     when  /_delete_/ then 
@@ -138,8 +139,6 @@ class DbCud  < ActionController::Base
                    command_r[i] = j if i == :id
                 end
                 command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
-                p  $@
-                p  " err     #{$!}"
                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
            else
@@ -174,7 +173,7 @@ class DbCud  < ActionController::Base
 		  crt_def_rubycode
       end
 	end
- def crt_def_rubycode
+    def crt_def_rubycode
      if @src_tbl[:expiredate]||Date.today > Date.today + 1
 	     if @src_tbl[:code]
 		    strdef = "def #{@src_tbl[:code]}  #{@src_tbl[:hikisu]} \n" 
@@ -183,9 +182,9 @@ class DbCud  < ActionController::Base
 			eval(strdef)
 		 end
 	  end
- end
+    end
 
- def sub_command_instance_variable command_c
+    def sub_command_instance_variable command_c
      ##debugger
 	 str = ""
      command_c.each do |key,val|
@@ -207,8 +206,8 @@ class DbCud  < ActionController::Base
 	 end
 	 ##debugger
 	 eval(str)
- end
- def sub_tblinks_before command_c
+    end
+    def sub_tblinks_before command_c
      ##debugger
      do_all = plsql.r_tblinks.all("where pobject_code_scr_src = '#{command_c[:sio_viewname]}' and tblink_expiredate > sysdate order by tblink_seqno ")
 	 do_all.each do |doba|
@@ -221,8 +220,8 @@ class DbCud  < ActionController::Base
 			 end
 		 end
 	 end
- end 
- def sub_tblinks_after command_c
+    end 
+    def sub_tblinks_after command_c
      ##debugger
 	 do_all = plsql.r_tblinks.all("where pobject_code_scr_src = '#{command_c[:sio_viewname]}' and tblink_expiredate > sysdate order by tblink_seqno ")
 	 do_all.each do |doba|
@@ -235,20 +234,25 @@ class DbCud  < ActionController::Base
 			 end
 		 end
 	 end
- end 
- def sub_do_tblinks doba
-     strwhere = "where pobject_code_scr_src = '#{doba[:pobject_code_scr_src]}' and pobject_code_tbl_dest = '#{doba[:pobject_code_tbl_dest]}' "
-	 strwhere << " and tblink_beforeafter = '#{doba[:tblink_beforeafter]}'  and tblink_seqno = '#{doba[:tblink_seqno]}' "
-	 upd_tblinkkys = plsql.r_tblinkkys.all(strwhere)
-	 strwhere = "where "
-	 upd_tblinkkys.each do |updk|
-         strwhere << " #{updk[:pobject_code_fld]} = '#{eval(updk[:tblinkky_command_c])}'   and"		 
-	 end
-	 tbln = doba[:pobject_code_tbl_dest]
-	 ##debugger
-	 @target_rec = plsql.__send__(tbln).first(strwhere[0..-5])
-	 eval(doba[:tblink_rubycode_before]) if doba[:tblink_rubycode_before] 
-	 case @target_rec
+    end 
+    def sub_do_tblinks doba
+        strwhere = "where pobject_code_scr_src = '#{doba[:pobject_code_scr_src]}' and pobject_code_tbl_dest = '#{doba[:pobject_code_tbl_dest]}' "
+	    strwhere << " and tblink_beforeafter = '#{doba[:tblink_beforeafter]}'  and tblink_seqno = '#{doba[:tblink_seqno]}' "
+	    upd_tblinkkys = plsql.r_tblinkkys.all(strwhere)
+	    strwhere = "where "
+	    upd_tblinkkys.each do |updk|
+            strwhere << " #{updk[:pobject_code_fld]} = '#{eval(updk[:tblinkky_command_c])}'   and"		 
+	    end
+		if strwhere.size < 7
+           	fprnt " err  line:#{__LINE__} doba #{doba} "	
+			fprnt " err  line:#{__LINE__} key record nothing "
+			raise
+		end
+	    tbln = doba[:pobject_code_tbl_dest]
+	    ##debugger
+	    @target_rec = plsql.__send__(tbln).first(strwhere[0..-5])
+	    eval(doba[:tblink_rubycode_before]) if doba[:tblink_rubycode_before] 
+	    case @target_rec
 	    when nil
 		    case @sio_classname
 			     when /_add_/
@@ -265,108 +269,106 @@ class DbCud  < ActionController::Base
         else 
 		    case @sio_classname
 			     when /_add_/
-				     eval(doba[:tblink_when_add_dup]) if doba[:tblink_when_add_dup]
+				     fprnt "err line#{__LINE__} same key exists tbln:#{tbln}  -->strwhere:#{strwhere} "
+					 raise
 				 when /_edit_/
 				 when /_delete_/
 			end			
-	 end
-	 eval(doba[:tblink_rubycode_after]) if doba[:tblink_rubycode_after] 
-	 command_c = {} 
-     command_c[:sio_session_counter] =   @new_sio_session_counter ##
-     command_c[:sio_classname] = @sio_classname
-     command_c[:id] = @id 
-	 command_c[:sio_code] = "r_#{tbln}" 
-	 command_c[:sio_viewname] = "r_#{tbln}"
-     command_c = sub_set_target_rec( command_c ,doba)
-	 @show_data = get_show_data(command_c[:sio_code])  ##char_to_number_dataとともに見直し]]
-	 ##debugger
-	 command_c[:sio_user_code] =   @sio_user_code ##
-	 sub_insert_sio_c    command_c 
-	 sub_userproc_chk_insert command_c
- end
+	    end
+	    eval(doba[:tblink_rubycode_after]) if doba[:tblink_rubycode_after] 
+	    command_c = {} 
+        command_c[:sio_session_counter] =   @new_sio_session_counter ##
+        command_c[:sio_classname] = @sio_classname
+        command_c[:id] = @id 
+	    command_c[:sio_code] = "r_#{tbln}" 
+	    command_c[:sio_viewname] = "r_#{tbln}"
+        command_c = sub_set_target_rec( command_c ,doba)
+	    @show_data = get_show_data(command_c[:sio_code])  ##char_to_number_dataとともに見直し]]
+	     p "__LINE__ #{__LINE__} command_c #{command_c} " ##debugger
+	    command_c[:sio_user_code] =   @sio_user_code ##
+	    sub_insert_sio_c    command_c 
+	    sub_userproc_chk_insert command_c
+    end
  
- def sub_set_target_rec command_c ,doba
-     tblchop = command_c[:sio_viewname].split("_")[1].chop + "_"
-     @target_rec.each do |key,val|
-	    command_c[(tblchop+key.to_s.sub("s_id","_id")).to_sym] = val if val 
-	 end
-	 strwhere = "where pobject_code_scr_src = '#{doba[:pobject_code_scr_src]}' and pobject_code_tbl_dest = '#{doba[:pobject_code_tbl_dest]}' " 
-	 strwhere << " and tblink_beforeafter = '#{doba[:tblink_beforeafter]}'  and tblink_seqno = '#{doba[:tblink_seqno]}'  order by tblinkfld_seqno "
-	 target_flds = plsql.r_tblinkflds.all(strwhere)
-	 ##debugger
-	 target_flds.each do |tfld|
-	    command_c[(tblchop+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c] 
-	 end
-	 return command_c
- end
+    def sub_set_target_rec command_c ,doba
+        tblchop = command_c[:sio_viewname].split("_")[1].chop + "_"
+        @target_rec.each do |key,val|
+	       command_c[(tblchop+key.to_s.sub("s_id","_id")).to_sym] = val if val 
+	    end
+	    strwhere = "where pobject_code_scr_src = '#{doba[:pobject_code_scr_src]}' and pobject_code_tbl_dest = '#{doba[:pobject_code_tbl_dest]}' " 
+	    strwhere << " and tblink_beforeafter = '#{doba[:tblink_beforeafter]}'  and tblink_seqno = '#{doba[:tblink_seqno]}'  "
+		strwhere << " order by pobject_code_view_src,pobject_code_tbl_dest,blktbsfieldcode_seqno "
+	    target_flds = plsql.r_tblinkflds.all(strwhere)
+	    target_flds.each do |tfld| 	
+			 fprnt  " tblinkflds line:#{__LINE__}   tfld[:tblinkfld_command_c] #{tfld[:tblinkfld_command_c]} "
+	        command_c[(tblchop+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c]
+	    end
+	    return command_c
+    end
  
- def sub_userproc_chk_insert command_c    
+    def sub_userproc_chk_insert command_c    
         strwhere = " where tblname = 'sio_#{command_c[:sio_viewname]}' and "
 		strwhere << " session_counter = #{command_c[:sio_session_counter]} "
         chkuserproc = plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s").first(strwhere)
 		sub_userproc_insert command_c if chkuserproc.nil?
 		@userproc_insert = true
- end
- def psub_create_prd_pur_shp ngantt,rec,tblname
-    #stkhists view
-    command_c = {}  ## r_stkhists
-	command_c = plsql.r_stkhists.first("where id = #{rec[:id]} ")
-	sub_command_instance_variable command_c
-	strwhere = "where pobject_code_scr_src = 'r_stkhists' and pobject_code_tbl_dest = '#{ngantt[:prd_pur_shp]}schs' " 
-	strwhere << " and tblink_beforeafter = 'after_self'  and tblink_seqno = 10  order by tblinkfld_seqno"
-	target_flds = plsql.r_tblinkflds.all(strwhere)
-    if  ngantt[:prd_pur_shp] =~ /prd|pur/
-        duedatesym = "#{ngantt[:prd_pur_shp]}sch_duedate".to_sym
-     else
-	    duedatesym = :shpsch_depdate
     end
-	command_new = {}  ## xxxschs
-	@screen_code = "r_#{ngantt[:prd_pur_shp]}schs" 
-	command_new[:sio_code] = command_new[:sio_viewname] = @screen_code
-    command_new[:sio_classname] = "stkhist_auto_add_#{@screen_code}"
-    command_new[:sio_session_counter] =   @new_sio_session_counter
-    command_new[:sio_user_code] =   @sio_user_code ##
-	target_flds.each do |tfld|
-	    command_new[("#{ngantt[:prd_pur_shp]}sch_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c] 
-	end
-	strsql = "select sum(#{ngantt [:prd_pur_shp]}sch_qty - #{ngantt [:prd_pur_shp]}sch_qty_ord) balqty from r_#{ngantt [:prd_pur_shp]}schs "
-	strsql << " where opeitm_itm_id =  #{command_c[:stkhist_itm_id]} and opeitm_processseq = #{command_c[:stkhist_processseq]} "
-	strsql << " and #{ngantt [:prd_pur_shp]}sch_#{duedatesym.to_s.split("_",2)[1]} >= to_date('#{Blksdate}','yyyy-mm-dd') "
-	strsql << " and #{ngantt [:prd_pur_shp]}sch_qty > #{ngantt [:prd_pur_shp]}sch_qty_ord "
-	strsql << " group by opeitm_itm_id,opeitm_processseq "
-	chk_balqty = plsql.select(:first,strsql)
-	qtysym = "#{ngantt[:prd_pur_shp]}sch_qty".to_sym
-	##command_new[qtysym] = rec[:qty_sch]*ngantt[:nditm_chilnum]/ngantt[:nditm_parenum]*-1  ##小数点桁数
-	command_new[qtysym] -= if chk_balqty then chk_balqty[:balqty] else 0 end
-	debugger
-	if command_new[qtysym]  > 0
-       @show_data = get_show_data @screen_code
-       command_new[:id] = plsql.__send__("#{ngantt[:prd_pur_shp]}schs_seq").nextval
-       command_new[("#{ngantt[:prd_pur_shp]}sch_id").to_sym] =  command_new[:id]
-       sub_insert_sio_c    command_new
-       sub_userproc_chk_insert command_new
-	end   
- end
- def  sub_get_opeitm_id_fm_itm_id p_opeitm
-      strwhere = " where itms_id = #{p_opeitm[:itm_id]} and expiredate > sysdate and  "
-      strwhere << " processseq =  #{if p_opeitm[:processseq] then p_opeitm[:processseq]  else 999 end} and "
-      strwhere << " priority  =  #{if p_opeitm[:priority] then p_opeitm[:priority]  else 999 end} "	  
-	  opeitm_id = plsql.opeitms.first(strwhere)
-	  if opeitm_id.nil?
-	     p " logic err sub_get_opeitm_id_fm_itm_id  --- p_opeitm:#{p_opeitm} "
-		 raise
-      end
-      return opeitm_id[:id]	  
- end
- def  sub_get_opeitm_next_processseq p_opeitm
-      strwhere = " where itms_id = #{p_opeitm[:itm_id]} and expiredate > sysdate and  "
-      strwhere << " processseq >  #{p_opeitm[:processseq]} and "
-      strwhere << " priority  =  #{if p_opeitm[:priority] then p_opeitm[:priority] else 999 end} "	  
-	  opeitm_id = plsql.opeitms.first(strwhere)
-	  if opeitm_id.nil?
-	     p " sub_get_opeitm_prv_processseq  --- p_opeitm:#{p_opeitm} "
-		 raise
-      end
-      return opeitm_id[:processseq]	  
- end
-end ## class
+    def sub_create_prd_pur_shp_sch_by_stk rec,inout 
+      strwhere = "where " 
+      strwhere << " itms_id = #{rec[:itms_id]}  and "  if rec[:itms_id]
+      strwhere << " locas_id = #{rec[:locas_id]}  and " if rec[:locas_id]
+      strwhere << " sno_prj = '#{rec[:sno_prj]}'  and " if rec[:sno_prj]
+      strwhere << " processseq = #{rec[:processseq]}    and itms_id_pare = #{rec[:itms_id_pare]}       " if rec[:processseq]
+      short_stks = plsql.blk_chk_short_stk_qty.all(strwhere[0..-5])
+      short_stks.each do |short_stk|
+	    prev_ope = plsql.opeitms.first("where itms_id = #{short_stk[:itms_id_pare]} and processseq < #{short_stk[:processseq]} ") 
+	    if prev_ope	or short_stk[:itms_id] != short_stk[:itms_id_pare]
+	     short_qty = short_stk[:short_qty] * -1
+	     strwhere = "where  itms_id = #{short_stk[:itms_id]}  and  locas_id = #{short_stk[:locas_id]}  and " 
+         strwhere << " sno_prj = '#{short_stk[:sno_prj]}'  and  processseq = #{short_stk[:processseq]}  and  itms_id_pare = #{short_stk[:itms_id_pare]}    " 
+		 strwhere << " order by itms_id,locas_id,itms_id_pare,processseq,sno_prj,strdate "
+         create_prd_pur_shps = plsql.blk_short_stk_qty_all.all(strwhere)
+	     command_c = {}
+	     command_c[:sio_user_code] =   @sio_user_code ##
+		 p_opeitm = {}		 
+		 p_opeitm[:itms_id_pare] = short_stk[:itms_id_pare]
+		 p_opeitm[:itms_id] = short_stk[:itms_id]
+		 p_opeitm[:processseq] = short_stk[:processseq]
+	     @prev_opeitm = sub_get_prev_opeitm(p_opeitm) 
+	     target_tbl = @prev_opeitm[:prdpurshp] + "schs"
+         command_c[:sio_classname] = "auto_#{target_tbl}_add_by_stkhists"
+         @screen_code = "r_#{target_tbl}"
+	     command_c[:sio_code] = @screen_code
+         command_c[:sio_viewname] = @screen_code
+         command_c[:sio_session_counter] =   @new_sio_session_counter
+	     @show_data = get_show_data(command_c[:sio_code])  ##char_to_number_dataとともに見直し
+	     create_prd_pur_shps.each do |src_tbl|
+	        command_c[:id] = command_c["#{target_tbl.chop}_id".to_sym] = plsql.__send__("#{target_tbl}_seq").nextval
+		    @src_tbl = src_tbl.dup
+			@src_tbl[:id] = command_c[:id]
+		    @src_tbl[:priority] = inout[:priority]
+			if  short_qty >= src_tbl[:s_qty]*-1
+                @src_tbl[:s_qty] = 	src_tbl[:s_qty]*-1
+                short_qty += src_tbl[:s_qty]
+              else
+			    @src_tbl[:s_qty] = short_qty
+				short_qty = 0
+            end			  
+		    @src_tbl[:prdpurshp] = target_tbl[0..2]
+	        strwhere = "where pobject_code_view_src = 'r_stkhists' and pobject_code_tbl_dest = '#{target_tbl}' and tblink_seqno = 10 "   ###after_self
+			strwhere << " order by pobject_code_view_src,pobject_code_tbl_dest,blktbsfieldcode_seqno "
+	        target_flds = plsql.r_tblinkflds.all(strwhere)
+	        target_flds.each do |tfld|
+			   ## 
+			   fprnt " tfld[:tblinkfld_command_c] :#{tfld[:tblinkfld_command_c]} "
+	           command_c[("#{target_tbl.chop}_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c] 
+	        end
+	        sub_insert_sio_c    command_c 
+	        sub_userproc_chk_insert command_c
+			break if short_qty <= 0
+	     end
+		end 
+	  end	 
+    end
+ 
+ end ## class

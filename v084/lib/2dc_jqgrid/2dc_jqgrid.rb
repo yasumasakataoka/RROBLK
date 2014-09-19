@@ -62,7 +62,7 @@ include  JqgridFilter
      ##       var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
      ##       function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
      ## end      
-     ##    nst_div << 'function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
+         nst_div << 'function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/gantt/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
          nst_div <<  'function getUrlVars()
                             {
                              var vars = [], hash;
@@ -211,11 +211,6 @@ include  JqgridFilter
       end
       options.chop! << "}"
     end 
-    def fprnt str
-      foo = File.open("#{Rails.root}/log/blk#{Process::UID.eid.to_s}.log", "a") # 書き込みモード
-      foo.puts "#{Time.now.to_s}  #{str}"
-      foo.close
-    end   ##fprnt str
      ################
     def set_extbutton pare_screen_code     ### 子画面用のラジオボ タンセット
       ##debugger
