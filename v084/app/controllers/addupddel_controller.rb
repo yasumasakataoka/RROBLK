@@ -9,8 +9,9 @@ class  AddupddelController < ScreenController
    def index    ##  add update delete  
       ##debugger
 	  get_screen_code
-	  command_c = init_from_screen 
-      command_c[:sio_session_counter] =   user_seq_nextval(command_c[:sio_user_code])    ##
+	  @pare_class = "online"
+	  command_c = init_from_screen params
+      command_c[:sio_session_id] =   1
       @errmsg = ""
       case  params[:copy]  
           when /add/
@@ -34,11 +35,16 @@ class  AddupddelController < ScreenController
       end ## case parems[:oper]
       ##debugger
       if  @errmsg == "" then 
+	      @req_userproc = false
+	      @sio_user_code = command_c[:sio_user_code]
+          plsql.connection.autocommit = false
+          command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
+		  command_c[:sio_recordcount] = 1
           sub_insert_sio_c    command_c 
-          sub_userproc_insert command_c
+          sub_userproc_chk_set command_c
           plsql.commit
           dbcud = DbCud.new
-          dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code])
+          dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code],"")
 		  ###  line画面の時
           sym_code = (command_c[:sio_viewname].split("_")[1].chop+"_code").to_sym
 		  sym_sno = (command_c[:sio_viewname].split("_")[1].chop+"_sno").to_sym
@@ -51,11 +57,10 @@ class  AddupddelController < ScreenController
 			  end
 		  end
 		  if  params[:copy] == "add" then jstxt = %Q%jQuery("form input").val("");jQuery("form textarea").val("");% else jstxt = "" end 
-          jstxt << %Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'>sent code:#{scode} to server</p>");%
-		  render :js=>jstxt
-         else
+              jstxt << %Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'>sent code:#{scode} to server</p>");%
+		      render :js=>jstxt
+       else
 		  render :js=>%Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'><font color='#ff0000'>#{@errmsg} </font></p>");%
-      end
+       end
    end  ## add_upd_del
-
 end

@@ -94,7 +94,7 @@ class ImportfieldsfromoracleController < ApplicationController
              end
       end
       ####ユニークindex
-	  debugger
+	  ##debugger
       ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
       keyarray={}
       ukeys.each do |rec|
@@ -425,27 +425,27 @@ def crttype   viewname
       # 例外の発生有無に関わらず最後に必ず実行する処理
   end         
      @tsqlstr =  "CREATE TABLE " + "SIO_" + viewname   + " (\n" 
-     @tsqlstr <<  "          sio_id numeric(38)  CONSTRAINT " +  "SIO_" + viewname   + "_id_pk PRIMARY KEY \n"
-     @tsqlstr <<  "          ,sio_user_code numeric(38)\n"
+     @tsqlstr <<  "          sio_id number(38)  CONSTRAINT " +  "SIO_" + viewname   + "_id_pk PRIMARY KEY \n"
+     @tsqlstr <<  "          ,sio_user_code number(38)\n"
      @tsqlstr <<  "          ,sio_Term_id varchar(30)\n"
-     @tsqlstr <<  "          ,sio_session_id varchar(256)\n"
+     @tsqlstr <<  "          ,sio_session_id number\n"
      @tsqlstr <<  "          ,sio_Command_Response char(1)\n"
-     @tsqlstr <<  "          ,sio_session_counter numeric(38)\n"
-     @tsqlstr <<  "          ,sio_classname varchar(30)\n" 
+     @tsqlstr <<  "          ,sio_session_counter number(38)\n"
+     @tsqlstr <<  "          ,sio_classname varchar(50)\n" 
      @tsqlstr <<  "          ,sio_viewname varchar(30)\n" 
      @tsqlstr <<  "          ,sio_code varchar(30)\n"
      @tsqlstr <<  "          ,sio_strsql varchar(4000)\n"
-     @tsqlstr <<  "          ,sio_totalcount numeric(38)\n"
-     @tsqlstr <<  "          ,sio_recordcount numeric(38)\n"
-     @tsqlstr <<  "          ,sio_start_record numeric(38)\n"
-     @tsqlstr <<  "          ,sio_end_record numeric(38)\n"
+     @tsqlstr <<  "          ,sio_totalcount number(38)\n"
+     @tsqlstr <<  "          ,sio_recordcount number(38)\n"
+     @tsqlstr <<  "          ,sio_start_record number(38)\n"
+     @tsqlstr <<  "          ,sio_end_record number(38)\n"
      @tsqlstr <<  "          ,sio_sord varchar(256)\n"
      @tsqlstr <<  "          ,sio_search varchar(10)\n"
      @tsqlstr <<  "          ,sio_sidx varchar(256)\n"
      @tsqlstr  <<  @strsql
      @tsqlstr <<  "          ,sio_errline varchar(4000)\n"
      @tsqlstr <<  "          ,sio_org_tblname varchar(30)\n"
-     @tsqlstr <<  "          ,sio_org_tblid numeric(38)\n"
+     @tsqlstr <<  "          ,sio_org_tblid number(38)\n"
      @tsqlstr <<  "          ,sio_add_time date\n"
      @tsqlstr <<  "          ,sio_replay_time date\n"
      @tsqlstr <<  "          ,sio_result_f char(1)\n"
@@ -457,7 +457,7 @@ def crttype   viewname
      plsql.execute @tsqlstr
 
      @tsqlstr =  " CREATE INDEX SIO_#{viewname}_uk1 \n"
-     @tsqlstr << "  ON SIO_#{viewname}(sio_user_code,sio_session_id) \n"
+     @tsqlstr << "  ON SIO_#{viewname}(sio_user_code,sio_session_counter,sio_session_id,sio_Command_Response) \n"
      @tsqlstr << "  TABLESPACE USERS  STORAGE (INITIAL 20K  NEXT 20k  PCTINCREASE 75)"  
      ##fprnt @tsqlstr 
    plsql.execute @tsqlstr

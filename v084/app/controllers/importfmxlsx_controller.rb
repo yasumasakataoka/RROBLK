@@ -9,7 +9,7 @@ class ImportfmxlsxController < ScreenController
    ### 事前チックokかどうかexcelで返す
     def index
 	   get_screen_code  ## set @screen_code,@jqgrid_id  
-	  init_from_screen  
+	  init_from_screen params
       @tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
       #dupchk
     end
@@ -19,8 +19,9 @@ class ImportfmxlsxController < ScreenController
 ###SimpleXlsxReader.configuration.catch_cell_load_errors = true, and load errors will instead be inserted into Sheet#load_errors keyed by [rownum, colnum].
     def import
 	  @rendererrmsg = []
+	  @pare_class = "online"
 	  get_screen_code
-	  command_c = init_from_screen 
+	  command_c = init_from_screen params
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
       if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
       if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
@@ -57,6 +58,7 @@ class ImportfmxlsxController < ScreenController
 	                end  ##column
 					##debugger
 					command_c = get_id_from_code keys,command_c
+					command_c[:sio_recordcount] = command_c[:sio_session_id] = count
                     case ws[iws].sheet_name.upcase
 	                    when /^ADD/ then
 							updatechk_add command_c  ###同一レコード内での重複チェックができてない。
@@ -95,7 +97,7 @@ class ImportfmxlsxController < ScreenController
               sub_userproc_insert command_c
               plsql.commit
               dbcud = DbCud.new
-              dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code])
+              dbcud.perform(command_c[:sio_session_counter],command_c[:sio_user_code],"")
 			  else
 			   plsql.rollback
            end

@@ -296,7 +296,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
     plsql.commit 
  end  #end crt_chil_screen 
  def create_or_replace_view  tblid,tblname   ### 
-    debugger
+    ##debugger
     subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
 	tmp_union_tbl = plsql.blktbs.first("where id  = #{tblid} ")
 	union_tbls =  if tmp_union_tbl[:seltbls] and tmp_union_tbl[:seltbls] != "undefined" then eval(tmp_union_tbl[:seltbls])  else [""] end ##tblname対応

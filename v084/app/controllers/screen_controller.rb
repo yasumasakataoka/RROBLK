@@ -7,13 +7,17 @@ class ScreenController < ListController
    def index
       get_screen_code   ##@screen_code,@jqgrid_id  
 	  ##debugger
-      init_from_screen 
+      init_from_screen params
       @pare_class = "online"
       @scriptopt = @options = {}
       @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
       @disp_screenname_name = sub_blkgetpobj(@screen_code,"screen")
+	  if @screen_code =~ /custords/ 
+	      @master = false
+		else
+          @master = true 
+	  end
       ### set_detail screen_code => "",@div_id => "" ,sqlstr =>""  ###親の画面だからnst なし
-      ##debugger ## 詳細項目の確認
    end  ##index
    def disp   ##  jqgrid返り
       ##debugger ## 詳細項目セット
@@ -21,7 +25,7 @@ class ScreenController < ListController
       params[:rows] ||= 50
       ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"
 	  get_screen_code
-	  command_c = init_from_screen 
+	  command_c = init_from_screen params
       command_c[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
       rdata =  []
       ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
@@ -40,7 +44,7 @@ class ScreenController < ListController
    end  ##disp
    def nst  ###子画面　
       get_screen_code ###
-      init_from_screen 
+      init_from_screen params
       pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
       chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
       @disp_screenname_name =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
@@ -93,16 +97,11 @@ class ScreenController < ListController
      strsql = nil if strsql == ""
      return strsql
    end
-   def  set_fields_from_allfields ###画面の内容をcommand_rへ
+   def  set_fields_from_allfields value ###画面の内容をcommand_rへ
      command_c = {}
-     @show_data[:evalstr].each do |key,rubycode|   ###既定値等セット　画面からの入力優先
-         ##debugger
-         command_c[key] = eval(rubycode)
-     end
      @show_data[:allfields].each do |j|
-	## nilは params[j] にセットされない。
-        command_c[j] = params[j]  if params[j]  ##unless j.to_s  == "id"  ## sioのidとｖｉｅｗのｉｄが同一になってしまう
-        ##command_c[:id_tbl] = params[j].to_i if j.to_s == "id"          
+	    ## nilは params[j] にセットされない。
+        command_c[j] = value[j]  if value[j]      
      end ##
     return command_c
    end  
@@ -116,18 +115,21 @@ class ScreenController < ListController
       end
    end
    def  code_to_name    ### 必須keyとして登録された_codeが変化したときcall　　該当データなしの時の表示方法
-      ##debugger
       keyfields = {}
       tblnamechop,field,delm = params[:chgname].split("_",3)
       exit if  tblnamechop == params[:q].split("_")[1].chop and params[:code_to_name_oper] != "add" and params[:code_to_name_oper] != "copyandadd" 
-      ###既定値のセット
-      params.each do |key,val|   
-            dfltval =  plsql.r_rubycodings.first("where  pobject_objecttype = 'view_field' and  pobject_code = '#{key.to_s}'
-	                       and rubycoding_code like '%_dflt%'  AND rubycoding_expiredate > sysdate")          
-            if  dfltval
-			    params[key] = eval(dfltval[:rubycoding_rubycode])  
+      ###既定値のセットは2dc_jqgridで実施
+      ## 前処理
+      ##debugger
+	  if respond_to?("psub_view_field_#{params[:chgname]}_init")
+	     __send__("psub_view_field_#{params[:chgname]}_init",params)
+		    ##tbs,screen,field,の時は　pobjectへの登録もしている。
+		   else	  
+		    fld_key = params[:chgname].split("_",2)[1]
+		    if respond_to?("psub_field_#{fld_key}_init")
+		       __send__("psub_field_#{fld_key}_init",params) 
 			end
-      end
+	  end 
       case tblnamechop
            when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック		        
 		        sw = same_tbl_code_to_name tblnamechop,field
@@ -283,7 +285,8 @@ class ScreenController < ListController
       unless  pdfscript.nil? then
          reports_id = pdfscript[:id]
 		 get_screen_code
-		 commnad_r = init_from_screen 
+		 value = param
+		 commnad_r = init_from_screen value
          strwhere = sub_pdfwhere(@show_data[:screen_code_view] ,reports_id,command_r)
          command_r[:sio_strsql] = " (select * from #{@show_data[:screen_code_view]} " + strwhere + " ) a"
 	     command_r[:sio_end_record] = 1000
@@ -381,12 +384,11 @@ class ScreenController < ListController
       ##debugger
       return command_c[new_key.to_sym]                      
    end
-   def init_from_screen 
+   def init_from_screen value
       ###@screen_code,@jqgrid_id  = get_screen_code
 	  ##debugger
-	  command_c = {}
 	  @show_data = get_show_data @screen_code
-	  command_c = set_fields_from_allfields	
+	  command_c = set_fields_from_allfields	value
 	  command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
 	  ##command_c[:person_id_upd] = command_c[:sio_user_code]
 	  command_c[:sio_viewname]  = @show_data[:screen_code_view] 
@@ -395,6 +397,7 @@ class ScreenController < ListController
 	  command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
       return command_c
    end
+
 end ## ScreenController
 
 

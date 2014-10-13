@@ -8,7 +8,7 @@ class   GanttController  <  ScreenController
      @xnum1 = "parent_number"
      @xnum1witdth = 30   
      ##debugger
-     ##fprnt("@ganttdata :#{@ganttdata}")
+     fprnt("@ganttdata :#{@ganttdata}")
      render :json =>@ganttdata
    end
    def sub_gantt_chart screen_code,id
@@ -16,8 +16,8 @@ class   GanttController  <  ScreenController
       time_now =  Time.now 
       ## {n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]}
       case screen_code
-        when /^gantt_itms/   ##r_opeitm とcpo　procordがまだ
-            itm = plsql.itms.first("where id = '#{id}'  ")
+        when /^gantt_itms/   ##r_opeitm と
+		    itm = plsql.itms.first("where id = '#{id}'  ")
             rec = plsql.opeitms.first("where itms_id = #{id} and Expiredate > sysdate   order by priority desc, processseq desc,Expiredate ")
       end
        ##debugger
@@ -51,116 +51,73 @@ class   GanttController  <  ScreenController
      @ganttdata = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
    end  
 
-   def psub_get_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック
-     ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
-     ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
-     n0 = ngantts.shift
-     ##debugger
-	 if n0.size > 0  ###子部品がいなかったとき{}になる。
-        r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > sysdate")
-        if r0 then
-           strtime = psub_get_contents(n0,r0)
-           tmp = sub_get_chil_itms(n0,r0,strtime)
-           ngantts.concat(tmp) if tmp.size > 0 
-           tmp = sub_get_prev_process(n0,r0,strtime)
-           ngantts.concat(tmp) if tmp.size > 0 
-        else
-           psub_get_contents(n0,{})
-          #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > sysdate"
-        end
-	 end	
-     return ngantts
-   end  ##  psub_get_itms_locas に登録されたitmsは削除
-
-   def psub_get_contents(n0,r0)   ##n0→子の内容　r0→opeitm
-     bgantt = {}
-     ##debugger  ###opeitmsに登録さ
-     itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
-	 if n0[:loca_id]
-        loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
-	  else
-	    rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > sysdate and Priority = #{r0[:priority]}   order by   processseq desc")
-	    loca = plsql.locas.first("where id = #{rec[:locas_id]} ")
-     end
-     bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0[:duration]||=1),
-                                 :assigs=>"",:endtime=>n0[:endtime],:starttime=>n0[:endtime]-(r0[:duration]||=1)*24*60*60,:depends=>"",:nditm_parenum=>n0[:nditm_parenum],:nditm_chilnum=>n0[:nditm_chilnum],
-                                 :subtblid=>"opeitms_"+r0[:id].to_s,:id=>n0[:id]}
-    ##p " Line #{__LINE__} #{bgantt}"
-     @bgantts.merge! bgantt
-     return bgantt[n0[:seq].to_sym][:starttime]
-   end
-
-   def set_fields_from_gantt tblid,value ,command_r ###画面の内容をcommand_r for gantt screen     
-      rid = if value[:id].split("_")[1] then value[:id].split("_")[1].to_i else nil end
-      command_r[:id] = rid
-      command_r[(tblid.chop+"_id").to_sym] = rid
-      case tblid
-           when "opeitms" then
-                command_r[:opeitm_duration] = value[:opeitm_duration]
-                command_r[:loca_code] = value[:loca_code]
-                command_r[:itm_code] = value[:itm_code]
-                command_r[:opeitm_priority] = 999
-                command_r[:opeitm_processseq] = 999
+   def set_fields_from_gantt tblcode,value ,command_r ###画面の内容をcommand_r from gantt screen     
+       pare_opeitm = plsql.r_opeitms.first("where id = #{value[:paretblcode].split("_")[1].to_i}")
+	   if pare_opeitm
+	        if value[:itm_cod ] == pare_opeitm[:itm_code]			    ###前工程作成
+               @screen_code  = jqgrid_id = "r_opeitms"
+                command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
+                command_r.merge!(init_from_screen(value))
+                command_r[:opeitm_unit_id_lttime] = paretbl[:units_id_lttime]
+			    ##command_r[:opeitm_duration] = value[:opeitm_duration]  ## init_from_screenでセットされる
+                ##command_r[:loca_code] = value[:loca_code]
+                ##command_r[:itm_code] = value[:itm_code]
+                command_r[:opeitm_prdpurshp] = value[:opeitm_prdpurshp]
+                command_r[:opeitm_priority] = pare_opeitm[:opeitm_priority]
+                command_r[:opeitm_processseq] = pare_opeitm[:opeitm_processseq] - 10
                 command_r[:opeitm_expiredate] = Time.parse("2099/12/31")
-                if value[:paretblcode] then
-                   if value[:paretblcode].split("_")[0] == "opeitms" then
-                        paretbl = plsql.opeitms.first("where id = #{ value[:paretblcode].split("_")[1]} ")
-                        command_r[:opeitm_priority] = paretbl[:priority]
-                        command_r[:opeitm_unit_id_lttime] = paretbl[:units_id_lttime]
-                        expiredate = plsql.r_opeitms.first("where loca_code = '#{value[:loca_code]}' and itm_code = '#{value[:itm_code]}' and opeitm_expiredate > sysdate  and opeitm_priority =  #{paretbl[:priority]} order by opeitm_expiredate")
-                        command_r[:opeitm_expiredate] =  if expiredate then expiredate[:opeitm_expiredate]  else Time.parse("2099/12/31") end 
-                   end
-               end
-           when "nditms" then
-                command_r[:nditm_parenum] = value[:nditm_parenum]
-                command_r[:nditm_chilnum] = value[:nditm_chilnum]
-                command_r[:loca_code] = value[:loca_code]
+			  else		    
+                @screen_code  = jqgrid_id = "r_nditms"
+                command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
+                command_r.merge!(init_from_screen(value))
+                ##command_r[:nditm_parenum] = value[:nditm_parenum]
+                ##command_r[:nditm_chilnum] = value[:nditm_chilnum]
+                ##command_r[:loca_code] = value[:loca_code]
                 command_r[:itm_code_nditm] = value[:itm_code]
                 ###command_r[:loca_code_nditm] = value[:loca_code]   ===>opeitmsの作成
-                command_r[:nditm_opeitm_id] = value[:paretblcode].split("_")[1].to_i if  value[:paretblcode].split("_")[0] == "opeitms"
+                command_r[:nditm_opeitm_id] = value[:paretblcode].split("_")[1].to_i 
                 command_r[:nditm_expiredate] = Time.parse("2099/12/31")
-      end
-     return command_r
+			end
+       end
+       return command_r
    end  
    def uploadgantt
         sio_user_code = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
 		sio_session_counter =   user_seq_nextval(sio_user_code) 
 		command_r = {}
+        command_r[:sio_user_code] = sio_user_code
+		command_r[:sio_session_counter] =   sio_session_counter
         params[:tasks].each do |key,value|
-            command_r = {}
-            command_r[:sio_user_code] = sio_user_code
-		    command_r[:sio_session_counter] =   sio_session_counter
-            tblid = value[:id].split("_")[0]
-            case tblid 
-                when  "0" then
+            tblcode = value[:id].split("_")[0]
+            case tblcode 
+                when  "000" then
                 ##top record
                    next
                 when "gantttmp"  then ### レコード追加
-                    tblid = value[:id].split("_")[1]
-                    command_r = set_fields_from_gantt(tblid,value,command_r)
-                    command_r[:sio_classname] = "plsql_blk_insert"
+                    tblcode = value[:id].split("_")[1]
+                    command_r[:sio_classname] = "plsql_blk_gantt_add_"
+					sub_insert(set_fields_from_gantt tblcode,value ,command_r)
                 else
-                    command_r = set_fields_from_gantt(tblid, value,command_r)
-                    command_r[:sio_classname] = "plsql_blk_update"
-            end
-            @screen_code  = jqgrid_id = "r_" + tblid
-            command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
-			command_r.merge!(init_from_screen) 
-            sub_insert_sio_c     command_r  ##
-            unless  value[:subtblid].empty?  then
-                command_r = {}
-                command_r[:sio_user_code] = sio_user_code
-		        command_r[:sio_session_counter] =   sio_session_counter
-                subtblname = value[:subtblid].split("_")[0] 
-                @screen_code  = jqgrid_id = "r_" + subtblname
-               	command_r.merge!(init_from_screen)
-                value[:id] = value[:subtblid]
-                command_r = set_fields_from_gantt(subtblname, value,command_r)
-                if  value[:subtblid].split("_")[1] then command_r[:sio_classname] = "plsql_blk_update"   else command_r[:sio_classname] = "plsql_blk_insert" end 
-                command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
-                command_r[:sio_user_code] = sio_user_code  
-			    ##fprnt command_r
-                sub_insert_sio_c     command_r  
+          			rid = value[:id].split("_")[1].to_i 
+         			if  rid.nil
+		    		    fprnt "logic err line #{__LINE__} value #{value}"
+			    		raise
+				   end
+                    command_r[:sio_classname] = "plsql_blk_gantt_edit_"
+                    @screen_code  = jqgrid_id = "r_" + tblcode
+                    command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
+			        command_r.merge!(init_from_screen(value))
+                    command_r[:id] = command_r[(tblcode.chop+"_id").to_sym] = rid					
+                    sub_insert_sio_c     command_r  ##
+                    if  tblcode == "nditms"
+                        @screen_code  = jqgrid_id = "r_opeitms" 
+               	        command_r.merge!(init_from_screen(value))
+                        command_r[:id] = command_r[:opeitm_id] = value[:subtblid].split("_")[1].to_i
+                        command_r[:sio_classname] = "plsql_blk_gantt_edit_"    
+                        command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
+                        command_r[:sio_user_code] = sio_user_code  
+			            sub_insert_sio_c     command_r  
+					end
             end
         end
         sub_userproc_insert command_r
@@ -169,7 +126,6 @@ class   GanttController  <  ScreenController
         dbcud.perform(command_r[:sio_session_counter],command_r[:sio_user_code])
         @ganttreturn = "retrurn ok"
    end
-
    
    def prv_resch   ##本日を起点に再計算
         dp_id = 1

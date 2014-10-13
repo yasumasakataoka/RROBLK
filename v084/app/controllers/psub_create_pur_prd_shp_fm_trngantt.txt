@@ -1,0 +1,33 @@
+	def psub_create_pur_prd_shp_fm_trngantt( command_c,trn,short_qty )
+        ###
+	    prev_trns = plsql.trngantts.all("where  orgtblname = '#{trn[:orgtblname]}' and orgtblid = #{trn[:orgtblid]}
+		                                 and key like '#{trn[:key]}%' and key > '#{trn[:key]}'
+										 and mlevel =  #{trn[:mlevel]+1}")
+		prev_trns.each do  |ptrn|
+	       target_tbl = ptrn[:prdpurshp] + "schs"
+           @screen_code = "r_#{target_tbl}"
+	       command_c[:sio_code] = @screen_code
+           command_c[:sio_viewname] = @screen_code
+		   @show_data =  case ptrn[:prdpurshp]
+		                      when "prd"
+							       @show_data_prd
+				              when "pur"
+							       @show_data_pur
+				              when  "shp"
+							       @show_data_shp
+		                 end			
+	        strwhere = "where pobject_code_view_src = 'r_trngantts' and pobject_code_tbl_dest = '#{target_tbl}' and tblink_seqno = 10 "   ###after_self
+			strwhere << " order by pobject_code_view_src,pobject_code_tbl_dest,blktbsfieldcode_seqno "
+	        target_flds = plsql.r_tblinkflds.all(strwhere)
+			command_c[:id] = command_c["#{target_tbl.chop}_id".to_sym] = plsql.__send__("#{target_tbl}_seq").nextval
+	        target_flds.each do |tfld|
+			   ##
+			   if  tfld[:tblinkfld_command_c] 
+			       ##fprnt " tfld[:tblinkfld_command_c] :#{tfld[:tblinkfld_command_c]}:#{eval(tfld[:tblinkfld_command_c])} "
+	               command_c[("#{target_tbl.chop}_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c])
+               end				   
+	        end
+	        sub_insert_sio_c    command_c 
+	        sub_userproc_chk_insert command_c
+		end
+    end

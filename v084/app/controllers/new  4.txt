@@ -1,1 +1,282 @@
+﻿    def psub_tbl_fld_set_rebuild command_c
+	    if command_c[:sio_classname] =~ /_add_/ and @src_tbl[:rebuild] == "1"
+		   psub_create_trngantts
+		end
+	end
+    def psub_create_trngantts
+	    gantt_params = plsql.opeitms.first("where id = #{@src_tbl[:opeitms_id]}")
+		if @src_tbl[:tblname] =~ /^cust/
+		    cust = plsql.__send__("r_#{@src_tbl[:tblname]}).first(" where id =#{@src_tbl[:tblid]}")
+			cust_code = cust[:cust_code]
+		    cust_name = cust[:cust_name]
+		end
+		case @src_tbl[:tblname]
+		     when /^cust|^prd|^pur/
+			      endtime = @src_tbl[:duedate]
+			 when /^shp/
+			      endtime = @src_tbl[:depdate]
+		end
+		ngantts = []
+        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>gantt_params[:itms_id],:loca_id=>gantt_params[:locas_id],
+                :processseq=>gantt_params[:processseq],:priority=>gantt_params[:priority],
+			    :endtime=>endtime,:id=>"000"}
+        cnt = 0
+        @bgantts = {}
+        @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",
+				:itm_name=>sub_blkgetpobj(@src_tbl[:tblname]||="全行程","tbl"),
+				:loca_code=>cust_code||="",
+				:loca_name=>cust_name||="",
+				:opeitm_duration=>"",:assigs=>"",
+				:endtime=>time_now,
+				:starttime=>nil,:depends=>"",:id=>0}
+        until ngantts.size == 0
+            cnt += 1
+            ngantts = psub_get_itms_locas ngantts
+            break if ngantts[:seq].size >= 27  ##9階層まで
+        end
+        @bgantts[:"000"][:starttime] = if @min_time < Time.now then Time.now else @min_time end
+        prv_resch_trn  ####再計算
+        @bgantts[:"000"][:endtime] = @bgantts[:"001"][:endtime] 
+        @bgantts[:"000"][:opeitm_duration] = " #{(@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]}"
+        @bgantts.sort.each  do|key,value|
+		    if key.to_s.size > 4
+		       itms_id_pare = @bgantts[key.to_s[0..-4].to_sym][:itm_id]
+			   processseq_pare = @bgantts[key.to_s[0..-4].to_sym][:processseq]
+		     else 				    
+		       itms_id_pare = value[:itm_id]
+			   processseq_pare = 999
+			end
+            str_trndetail ={:id=>plsql.trndetails_seq.nextval,:key=>key.to_s+"00",
+				            :orgtblname=>gantt_params[:orgtblname],:orgtblid=>gantt_params[:orgtblid],
+			                :mlevel=>value[:mlevel],:itms_id_pare=>itms_id_pare,:processseq=>prpcessseq_pare,opeitms_id=>value[:opeitm_id],
+			                :sno_prj=>gantt_params[:sno_prj],:strdatre=>value[:starttime],:strdatre_est=>value[:starttime_est],
+							:duedate=>value[:endtime],:duedate_est=>value[:endtime],
+                            :parenum=>value[:nditm_parenum],:chilnum=>value[:nditm_chilnum],
+							:qty=>value[:qty],:qty_alloc=>0,:prdpurshp=>value[:prdpurshp],
+							:created_at=>Time.now,:updated=>Time.now,:remark=>"auto_created_by def trndetails ",:persons_id_upd=>0}
+		    plsql.trndetails.insert str_trndetail
+        end
+    end
+    def sub_alloc_create_prd_pur_shp_from_gantt orgtblname,orgtblid,short_qty	   
+	   ###引当てKEY　 custXXXの時はorgtblname = custXXXX prd,pur,shpの時はorgtblname=prd,pur,shpXXXX
+	   ### orgtblname = tblnameの時は上位部品から引当て可能
+	   ###  孫の構成が異なっていても引当てる。 psub_chk_alloc_opeitmでチェック
+	   strsql = %Q% select * from trngannts a where orgtblname = '#{orgtblname}' and orgtblid = #{orgtblid} 
+	                and exists(select 1 from (select opeitems_id ,substr(key,1,length(key)-2) alloc_key 
+					                          from trngantts where  orgtblname = '#{orgtblname}' and orgtblid = #{orgtblid}
+					                          group by opeitms_id,substr(key,1,length(key)-2) having sum(qty_alloc) < max(qty )) b
+                               where a.opeitms_id = b.opeitms_id and substr(a.key,1,length(a.key)-2) = b.alloc_key)
+                    and tblname is null and  b.sno_prj = '#{gantt_rec[:sno_prj]}' and alloc_qty > 0
+				    and substr(key,length(key)-2,2) = '00'  /*構成展開のみされた　オリジナル構成  */ 
+                    and to_char(duedate,'yyyy/mm/dd HH24') < '#{gantt_rec[:duedate].strftime(%Y/%m/%d %H)}'
+                    order by duedate desc
+                    for update%							   
+	   crtschs = plsql.select(:all,strsql)
+	   command_c= {}
+       command_c[:sio_session_counter] =   @new_sio_session_counter
+       command_c[:sio_classname] = "auto_#{target_tbl}_add_by_trngantt"
+	   @show_data_prd = get_show_data("r_prdschs")
+	   @show_data_pur = get_show_data("r_purschs")
+	   @show_data_shp = get_show_data("r_shpschs")
+  	   crtschs.each do |rec|
+	      short_qty = sub_chk_free_prdpurshp rec,short_qty
+	      short_qty = sub_chk_free_stk (rec,short_qty) if short_qty > 0  ###在庫引当て
+		  short_qty　= sub_chk_free_prdpurshp_delay (rec,short_qty) if short_qty > 0   ##納期遅れ分
+		  psub_create_pur_prd_shp_fm_trngantt( command_c,rec,short_qty ) if short_qty>0
+	   end	   
+	end
+	
+	def psub_create_pur_prd_shp_fm_trngantt( command_c,trn,short_qty )
+        ###
+	    @show_data = get_show_data(command_c[:sio_code])  ##char_to_number_dataとともに見直し
+	    prev_trns = plsql.trngantts.all("where  orgtblname = '#{trn[:orgtblname]}' and orgtblid = #{trn[:orgtblid]}
+		                                 and key like '#{trn[:key]}%' and key > '#{trn[:key]}'
+										 and mlevel =  #{trn[:mlevel]+1}")
+		prev_trns.each do  |ptrn|
+	       target_tbl = ptrn[:prdpurshp] + "schs"
+           @screen_code = "r_#{target_tbl}"
+	       command_c[:sio_code] = @screen_code
+           command_c[:sio_viewname] = @screen_code
+		   @show_data =  case ptrn[:prdpurshp]
+		                      when "prd"
+							       @show_data_prd
+				              when "pur"
+							       @show_data_pur
+				              when  "shp"
+							       @show_data_shp
+		                 end
+			
+	        strwhere = "where pobject_code_view_src = 'r_trngantts' and pobject_code_tbl_dest = '#{target_tbl}' and tblink_seqno = 10 "   ###after_self
+			strwhere << " order by pobject_code_view_src,pobject_code_tbl_dest,blktbsfieldcode_seqno "
+	        target_flds = plsql.r_tblinkflds.all(strwhere)
+			command_c[:id] = command_c["#{target_tbl.chop}_id".to_sym] = plsql.__send__("#{target_tbl}_seq").nextval
+	        target_flds.each do |tfld|
+			   ## 
+			   fprnt " tfld[:tblinkfld_command_c] :#{tfld[:tblinkfld_command_c]} "
+	           command_c[("#{target_tbl.chop}_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c]) if  tfld[:tblinkfld_command_c] 
+	        end
+	        sub_insert_sio_c    command_c 
+	        sub_userproc_chk_insert command_c
+		end
+    end
 
+    def sub_chk_free_prdpurshp rec,short_qty
+	    strsql %Q% select tblname,tblid, qty_alloc from trngantts 
+                   where  OPEITMS_ID in(select opeitms_id from trngantts
+				                        where orgtblname = '#{rec[:orgtblname]}' and orgtblid = '#{rec[:orgtblid]}'
+										and substr(key,1,length('#{rec[:key]}')) = '#{rec[:key]}')
+                   and ORGTBLname = tblname and orgtblid = tblid   /* 未引当てを示す*/
+                   and  b.sno_prj = 'rec[:sno_prj]' and alloc_qty > 0
+                   and to_char(duedate,'yyyy/mm/dd HH24') <=  '#{rec[:duedate].strftime(%Y/%m/%d %H)}'
+                   order by duedate desc
+                   for update%
+		unallocs = plsql.trngantts.all(strsql)   ### 未引当て
+		sub_key = "01"  ###ファイルの分割は98まで
+		unallocs.each do |rec|
+		    alloc_qty = psub_chng_free_to_alloc( rec, short_qty ,sub_key) ### 未引当てから引当てへ
+			short_qty -= alloc_qty
+			break short_qty <= 0
+			sub_key.next!
+		end 
+		return short_qty
+	end
+	
+    def sub_chk_free_stk rec,short_qty
+	    strsql %Q% select tblname,tblid, qty_alloc from trngantts    /* qty_alloc 未引当てに残っている数 */
+                   where  OPEITMS_ID = #{rec[:opeitms_id]}'
+                   and ORGTBLname = tblname and orgtblid = tblid
+                   and  b.sno_prj = '#{rec[:sno_prj]}'
+                   and tblname = 'lotstkhists' and alloc_qty > 0
+                   order by duedate desc
+                   for update%
+		unallocs = plsql.trngantts.all(strsql)   ### 未引当て
+		unallocs.each do |rec|
+		    alloc_qty = psub_chng_freestk_to_allocstk( rec, short_qty ) ### 未引当てから引当てへ
+			short_qty -= alloc_qty
+			break short_qty <= 0
+		end 
+		return short_qty
+	end
+	
+    def sub_chk_free_prdpurshp_delay gantt_rec,short_qty
+	    strsql %Q% select tblname,tblid, qty_alloc from trngantts   /* qty_alloc 未引当てに残っている数 */ 
+                   where  OPEITMS_ID in(select opeitms_id from trngantts a where orgtblname = '#{orgtblname}' and orgtblid = #{orgtblid} 
+	               and exists(select 1 from (select opeitems_id ,substr(key,1,length(key)-2) alloc_key 
+					                          from trngantts where  orgtblname = '#{orgtblname}' and orgtblid = #{orgtblid}
+					                          group by opeitms_id,substr(key,1,length(key)-2) having sum(qty_alloc) < max(qty )) b
+                               where a.opeitms_id = b.opeitms_id and substr(a.key,1,length(a.key)-2) = alloc_key)
+                   and tblname is null
+                   and  b.sno_prj = '#{gantt_rec[:sno_prj]}' and alloc_qty > 0
+				   and substr(key,length(key)-2,2) = '00'  /*構成展開のみされた　オリジナル構成  */ 
+                   and to_char(duedate,'yyyy/mm/dd HH24') > '#{gantt_rec[:duedate].strftime(%Y/%m/%d %H)}'
+                   order by duedate 
+                   for update%
+		unallocs = plsql.trngantts.all(strsql)   ### 未引当て
+		unallocs.each do |free_rec|
+		    alloc_qty = psub_chng_free_to_alloc( free_rec,gantt_rec, short_qty ) ### 未引当てから引当てへ
+			short_qty -= alloc_qty
+			break short_qty <= 0
+		end 
+		return short_qty
+	end
+	
+	def psub_chng_free_to_alloc( free_rec,gantt_rec, short_qty,sub_key )
+	    alloc_qty = if free_rec[:qty_alloc] >= short_qty then short_qty else free_rec[:qty_alloc] end
+        chng_trns = plsql.trngantts.all("where orgtblname = '#{free_rec[:orgtblname]}' and orgtblid = #{free_rec[:orgtblid]}")
+        chng_trns.each do |chng_rec|
+		    pare_rec_free =  plsql.trngantts.first("where orgtblname = '#{free_rec[:orgtblname]}' and orgtblid = #{free_rec[:orgtblid]} 
+			                                        and  key = '#{chng_rec[:key][0..-6]}' ")
+			if pare_rec_free 
+			    ###子供の時
+     			alloc_new_qty = pare_rec_free[:qty_alloc]*(chng_rec[:chilnum]||=1)/(chng_rec[:parenum]||=1)
+    		 else
+			    ###  topの時
+     			alloc_new_qty = alloc_qty 
+			end
+		    plsql.trngantts.update {:qty_alloc =>chng_rec[:qty_alloc]-alloc_new_qty,:where=>{:id=>chng_rec[:id]}}  ##引当て元のfreeの数を減
+			chng_rec[:orgtblname] = gantt_rec[:orgtblname]
+			chng_rec[:orgtblid] = gantt_rec[:orgtblid]
+			chng_rec[:qty_alloc] = alloc_new_qty
+			chng_rec[:duedate] = pare_rec_gantt[:strdate]
+			chng_rec[:key] = gantt_rec[:key][0..-3] + sub_key + chng_rec[:key][5..-1]
+			## keyはopeitms_id順に振られる
+			org_qty_rec = plsql.trngantts.first("where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                                     and key = '#{gant_rec[:key]+chng_rec[:key][5..-1]}' and opeitms_id = #{chng_rec[:opeitms_id]}")
+			chng_rec[:qty] = org_qty_rec[:qty] if org_qty_rec   ###構成が変わった時の対応　psub_chk_alloc_opeitm
+			chng_rec[:id] = plsql.trngnatts_seq.nextval
+			plsql.trngantts.insert chng_rec
+        end		
+	end
+		
+	def psub_chng_freestk_to_allocstk( free_rec,gantt_rec, short_qty,sub_key )
+	    alloc_qty = if free_rec[:qty_alloc] >= short_qty then short_qty else free_rec[:qty_alloc] end
+        chng_trns = plsql.trngantts.all("where orgtblname = '#{free_rec[:orgtblname]}' 
+		                                 and orgtblid = #{free_rec[:orgtblid]} and opeitms_id = #{gantt_rec[:opeitms_id]}")
+        chng_trns.each do |chng_rec|
+		    plsql.trngantts.update {:qty_alloc =>chng_rec[:qty_alloc]-alloc_new_qty,:where=>{:id=>chng_rec[:id]}}  ##引当て元のfreeの数を減
+			chng_rec[:orgtblname] = gantt_rec[:orgtblname]
+			chng_rec[:orgtblid] = gantt_rec[:orgtblid]
+			chng_rec[:qty_alloc] = alloc_new_qty
+			chng_rec[:duedate] = pare_rec_gantt[:strdate]
+			chng_rec[:key] = gantt_rec[:key][0..-3] + sub_key + chng_rec[:key][5..-1]
+			## keyはopeitms_id順に振られる
+			org_qty_rec = plsql.trngantts.first("where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                                     and key = '#{gant_rec[:key]+chng_rec[:key][5..-1]}' and opeitms_id = #{chng_rec[:opeitms_id]}")
+			chng_rec[:qty] = org_qty_rec[:qty]
+			chng_rec[:id] = plsql.trngnatts_seq.nextval
+			plsql.trngantts.insert chng_rec
+			##子品目の必要数を減する
+			pare_itm = plsql.trngantts.first("where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                                     and key = '#{gant_rec[:key]+chng_rec[:key][5..-1]}' and opeitms_id = #{gantt_rec[:opeitms_id]}")
+			
+			chil_itms = plsql.trngantts.all("where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                                     and key like '#{pare_itm[:key]%' and key > '#{pare_itm[:key]'")
+			chil_itms.all do |chil_itm|
+			    pare_alloc_qty = chil_itms = plsql.trngantts.all("where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                                     and key = '#{pare_itm[:key][0..-6]%'")
+				chil_itm[:qty] =  (pare_alloc_qty[:qty]-pare_alloc_qty[:qty_alloc])*(chil_itm[:chilnum]||=1)/(chil_itm[:parenum]||=1)		
+				plsql.trngantts.update  {:qty=>chil_itm[:qty],:where=>{:id=>chil_itm[:id}}								 
+			end			
+        end	
+		strsql = %Q/ select orgtblname,orgtblid,substr(key,1,length(key)-2) key2,opeitms_id,sum(qty_alloc) qty_alloc,max(qty) qty
+                     from trngantts 
+                     where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}  
+			                and key like '#{gant_rec[:key][0..-2]}%' 					 
+			         group by orgtblname,orgtblid,substr(key,1,length(key)-2),opeitms_id
+			         having sum(qty_alloc)>max(qty) /
+		over_alloc_itms = plsql.select(:all,strsql)
+		psub_over_alloc_to_free over_alloc_itms
+	end
+	
+	def psub_chk_alloc_opeitm( free_rec,gantt_rec, short_qty )
+	    ## gantt_recにはあるがfree_recからの引当てにはないopeitms  途中で構成が変更された。
+	end
+	def psub_over_alloc_to_free over_alloc_itms
+	    over_alloc_itms.each do |over_itm|
+		    over_qty = over_itm[:qty_alloc] - over_itm[:qty]
+		    alloc_tbls = plsql.trngantts.all("where orgtblname = tblname and orgtblid = tblid and opeitms_id = #{over_itm[:opeitms_id]} 
+			                                   and qty_alloc < qty ")
+			alloc_tbls.each do |alloc_tbl|
+			   alloc_tbl[:qty_alloc] = if over_qty > (alloc_tbl[:qty_alloc] - alloc_tbl[:qty])
+			                               minus_qty = (alloc_tbl[:qty_alloc] - alloc_tbl[:qty])
+			                               over_qty -=  (alloc_tbl[:qty_alloc] - alloc_tbl[:qty])
+                            			   alloc_tbl[:qty]
+									   else
+			                               minus_qty = over_qty
+									       over_qty = 0
+    									   += over_qty
+									   end  
+				plsql.trngantts.update {:qty_alloc=>alloc_tbl[:qty_alloc],:where=>{:id=>alloc_tbl[:id]}}  ###未引当ての戻し
+				over_trn = plsql.trngantts.first("where  orgtblname = '#{over_itm[:orgtblname]}' and orgtblid = #{over_itm[:orgtblid]}  
+			                                      and key like '#{gant_rec[:key][0..-2]}%'
+												  and tblname = '#{alloc_tbl[:tblname]}' and tblid = #{alloc_tbl[:tblid]}")
+				plsql.trngantts.update {:qty_alloc=>over_trn[:alloc]-minus_qty,:where=>{:id=>over_trn[:id]}}  ##過剰引当て数解除								  
+				break if over_qty <= 0					   
+			end			
+		end
+	end
+	
+	
+	
+	
+	

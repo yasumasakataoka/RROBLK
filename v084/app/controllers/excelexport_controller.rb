@@ -42,7 +42,7 @@ class ExcelexportController < ApplicationController
       col_type =[]
       command_c[:sio_start_record] =  1
       command_c[:sio_end_record] =  params[:export][:maxcount].to_i 
-      command_c[:sio_session_id] = "export"
+      command_c[:sio_session_id] = 1
       command_c[:sio_classname] = "plsql_blk_export"
       ##@tbldata = []
       ##debugger

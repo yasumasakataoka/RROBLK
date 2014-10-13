@@ -80,6 +80,8 @@ module JqgridJson
 end
 
 module JqgridFilter
+			### とりあえず
+			Blksdate  = Date.today - 1  ##在庫基準日　sch,ord,instのこれ以前の納期は許さない。
   def filter_by_conditions(columns)
     conditions = ""
     columns.each do |column|
@@ -87,9 +89,9 @@ module JqgridFilter
     end
     conditions.chomp("AND ")
   end
-  def get_show_data screen_code   ##popup画面もある
+  def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
      ##debugger
-     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+     show_cache_key =  "show " + screen_code||=" coding err missing screen_code" +  sub_blkget_grpcode
      if Rails.cache.exist?(show_cache_key) then
            show_data = Rails.cache.read(show_cache_key)
           else 
@@ -106,9 +108,7 @@ module JqgridFilter
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
-             debugger ## textは表示できないのでメッセージの変更要
-	         fprnt  "Create screenfields #{screen_code} "
-              p      "Create screenfields #{screen_code} "
+	         fprnt "#{if screen_code =~ /coding*err/ then screen_code else 'create screen_code' + screen_code  end}" 
 	          ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
 	          show_data = nil
               return show_data 
@@ -193,19 +193,37 @@ module JqgridFilter
     end    ##set_detai
     def get_screen_code 
       ###debugger ## 画面の項目
-      case
-         when params[:q]   then ##disp
+        case
+            when params[:q]   then ##disp
                @jqgrid_id   =  params[:q]
 	           @screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
                @screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
-          when params[:action]  == "index"  then 
+            when params[:action]  == "index"  then 
                @jqgrid_id  = @screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
-          when params[:nst_tbl_val] then
+            when params[:nst_tbl_val] then
                @jqgrid_id   =  params[:nst_tbl_val]
                @screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
-		  when params[:dump] then  ### import by excel
+		    when params[:dump] then  ### import by excel
                @screen_code = params[:dump][:screen_code]
+	    end
+     end
+    def crt_def_all
+      eval("def dummy_def \n end")
+      crt_defs = plsql.rubycodings.all("where expiredate > sysdate")
+      crt_defs.each do |i|
+          @src_tbl = i
+		  crt_def_rubycode
+      end
 	end
-  end
+    def crt_def_rubycode
+     if @src_tbl[:expiredate]||Date.today > Date.today + 1
+	     if @src_tbl[:code]
+		    strdef = "def #{@src_tbl[:code]}  #{@src_tbl[:hikisu]} \n" 
+			strdef << @src_tbl[:rubycode]
+			strdef <<"\n end"
+			eval(strdef)
+		 end
+	  end
+    end
  end
  

@@ -11,6 +11,7 @@ before_filter :authenticate_user!
           render :text=>"error"
        end
 	   testlinks
+       crt_def_all  
     ##debugger
     end	
     def crtcachelist grpcode
@@ -47,7 +48,7 @@ before_filter :authenticate_user!
 	def testlinks	###開発環境のみで動くようにすること。  ###項目が削除されているときの対応、現在項目を削除している。
 	        recs = plsql.r_tblinks.all("where tblink_expiredate > sysdate")  
 			recs.each do |rec|
-			        str_select = "select distinct a.id from r_blktbsfieldcodes a "
+			        str_select = "select distinct a.id ,a.blktbsfieldcode_seqno from r_blktbsfieldcodes a "
 					str_select << "where blktbsfieldcode_expiredate > sysdate"
 					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec[:id]}) b "
 					str_select << " where a.id = b.tblinkfld_blktbsfieldcode_id )"
@@ -64,6 +65,7 @@ before_filter :authenticate_user!
 		               fld[:remark] = "auto created "		   
 			           fld[:id] = plsql.tblinkflds_seq.nextval
 			           fld[:blktbsfieldcodes_id] = fldrec[:id]
+			           fld[:seqno] = fldrec[:blktbsfieldcode_seqno]
 					   unless plsql.tblinkflds.first("where tblinks_id = #{rec[:tblink_id]} and blktbsfieldcodes_id = #{fldrec[:id]} ")
 					      plsql.tblinkflds.insert fld
 					   end

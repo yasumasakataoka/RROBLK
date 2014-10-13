@@ -41,7 +41,6 @@ include  JqgridFilter
    def jqgrid(title, id, screen_code,options = {},authenticity_token,ss_id)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
       # Default options
-	  sub_define_default_methods  unless respond_to?("dflt_dummy_def")
           options = 
         { 
           :selection_handler   => 'handleSelection',
@@ -80,7 +79,7 @@ include  JqgridFilter
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
              replace_end = "'); "
       end
-     
+     p "001 #{Time.now} "
      show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
      ###debugger
      if Rails.cache.exist?(show_cache_key) then
@@ -91,13 +90,19 @@ include  JqgridFilter
      end
      render :text =>"Create ScreenFields #{screen_code} by crt_r_view_sql.rb" and return   if @show_data.nil?
      @gridcolumns = @show_data[:gridcolumns]
-     @evalstr = @show_data[:evalstr]
-     id_cache_key =  "id " + screen_code +  sub_blkget_grpcode
+     ###@evalstr = @show_data[:evalstr]
+     id_cache_key =  "id_" + screen_code +  sub_blkget_grpcode
+     p "002 #{Time.now}  id_cache_key:#{id_cache_key}"
+     p "Rails.cache.exist?(id_cache_key) #{Rails.cache.exist?(id_cache_key) } "
      if Rails.cache.exist?(id_cache_key) then
          id_data = Rails.cache.read(id_cache_key)
+         p "002 001 #{Time.now} "
         else
           id_data = create_screen_field(screen_code,title, id, options )
+          p "002 - 002 #{Time.now} "
       end
+	  
+     p "003 #{Time.now} "
      ##debugger
      screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
        screen <<   nst_div
@@ -125,8 +130,8 @@ include  JqgridFilter
       cellnames = "var cellNames = ["
       @gridcolumns.each do |c|
         col_names << %Q|"#{c[:label]}",|
-	col_model << %Q|{name:"#{c[:field]}", index:"#{c[:field]}"#{get_attributes(c)} },|
-	cellnames << %Q|"#{c[:field]}",|
+	    col_model << %Q|{name:"#{c[:field]}", index:"#{c[:field]}"#{get_attributes(c)} },|
+	    cellnames << %Q|"#{c[:field]}",|
       end
       col_names.chop! << "]"
       col_model.chop! << "]"
@@ -229,7 +234,7 @@ include  JqgridFilter
            end   ### rad_screen.each
 	    return  t_extbutton,t_extdiv_id
     end    ## set_extbutton pare_screen  
-    def get_return_name_val screen_code,scrfield,paragraph
+    def get_return_name_val screen_code,scrfield,paragraph  ###paragrapf 検索key 
       tmp_val = ""
       viewname,delm = paragraph.split(":")
       delm  ||= ""
@@ -238,7 +243,7 @@ include  JqgridFilter
 		  rescue  ###検索項目に指定しているviewがない。
 		   	raise  "shoud be seach_view invalid ;view_name is:#{viewname} "   
 	  end
-      @gridcolumns.each do |tcolm|
+      @gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ
         if  tcolm[:editable] == true and secgridc.index(tcolm[:field].sub(delm,"").to_sym)  
               tmp_val  << "if(data.#{tcolm[:field]}){"   
               tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
@@ -324,24 +329,38 @@ include  JqgridFilter
        require_fields =  "function(formid) {"
        @gridcolumns.each do |tcolm|
             require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
-			dfltval = "sub_set_default_value_#{tcolm[:field]}"
-			require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{eval(dfltval)}");%  if respond_to?(dfltval) and addorcopy == "add"
-      end
-	  ##debugger
-      require_fields << %Q% jQuery("#sData").show();% 
-      require_fields << "}"
-      return  require_fields
+			if addorcopy == "add"
+			   if respond_to?("psub_view_field_#{tcolm[:field]}_dflt")
+			      dflt_val =  __send__("psub_view_field_#{tcolm[:field]}_dflt")
+			      require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
+				 else 
+				   if  respond_to?("psub_view_field_#{tcolm[:field]}_dflt")
+			           dflt_val =  __send__("psub_view_field_#{tcolm[:field]}_dflt")
+			           require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
+					  else
+					    if respond_to?("psub_field_#{tcolm[:field].split('_')[1]}_dflt")
+                           dflt_val = __send__("psub_field_#{tcolm[:field].split('_')[1]}_dflt")
+			               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
+						end
+				   end
+			   end
+			end
+       end
+	   ##debugger
+       require_fields << %Q% jQuery("#sData").show();% 
+       require_fields << "}"
+       return  require_fields
    end
    def del_fields_protect oper
-       require_fields =  "function(formid) {"
-       @gridcolumns.each do |tcolm|
+        require_fields =  "function(formid) {"
+        @gridcolumns.each do |tcolm|
             require_fields << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
-      end
-      require_fields << %Q% jQuery("#sData").hide();% if oper == "view"
-      require_fields << %Q% jQuery("#sData").show();% if oper != "view"
-      require_fields << "}"
-      return  require_fields
-       ##javascript_edit <<   ";}})(jQuery);
+        end
+        require_fields << %Q% jQuery("#sData").hide();% if oper == "view"
+        require_fields << %Q% jQuery("#sData").show();% if oper != "view"
+        require_fields << "}"
+        return  require_fields
+        ##javascript_edit <<   ";}})(jQuery);
    end
 
    def set_pdf_item screen_code
@@ -509,12 +528,13 @@ include  JqgridFilter
      screen_javascript.gsub!(/\s+/," ")
       ##debugger
       ##fprnt " jqgrid #{a} "
-      id_cache_key =  "id " + screen_code +  sub_blkget_grpcode
+      id_cache_key =  "id_" + screen_code +  sub_blkget_grpcode
+	  p " 002 003 #{Time.now} &  id_cache_key:#{id_cache_key}"
       id_data = {}
       id_data[:screen_javascript] = screen_javascript
       id_data[:screen_html] = screen_html
       Rails.cache.write(id_cache_key,id_data) 
-
+      p "Rails.cache.exist?(id_cache_key) #{Rails.cache.exist?(id_cache_key) } "
       return id_data
     end
     def set_navbutton screen_code,id
@@ -659,36 +679,4 @@ include  JqgridFilter
       javascript_edit =  "function(xhr,postdata) {var txt = xhr.responseText; "
       javascript_edit << "if(txt.match(/err/i)){};return [true];}"
     end
-	def sub_define_default_methods
-	    eval("def dflt_dummy_def \n end")
-	    allfs = plsql.r_screenfields.all("where screenfield_expiredate > sysdate") 
-        sfdrubycode = nil
-        strsql = ""
-        allfs.each do |fld|
-            sfdrubycode = nil
-            tblname = fld[:pobject_code_scr].split("_")[1].chop
-            if tblname == fld[:pobject_code_sfd].split("_")[0] 
-               sfdrubydefname = fld[:pobject_code_sfd]
-	           if  fld[:screenfield_rubycode_dflt] 
-     	           sfdrubycode = fld[:screenfield_rubycode_dflt]
-                  else
-	                strsql = %Q/where pobject_code_tbl = '#{fld[:pobject_code_scr].split("_")[1]}'  and pobject_code_fld = '#{fld[:pobject_code_sfd].split("_",2)[1]}' 	 and blktbsfieldcode_expiredate > sysdate/
-	                tmp = plsql.r_blktbsfieldcodes.first(strsql)
-		            ##
-		            sfdrubycode = tmp[:blktbsfieldcode_rubycode_dflt]  if tmp
-    	          if sfdrubycode.nil?
-		             strsql = %Q/where  pobject_code_fld = '#{fld[:pobject_code_sfd].split("_",2)[1]}'  and fieldcode_expiredate > sysdate/
-		             tmp = plsql.r_fieldcodes.first(strsql)
-					 ##debugger
-                     sfdrubycode = tmp[:fieldcode_rubycode_dflt] if tmp
-                   end
-               end	
-               if sfdrubycode
-			      ##debugger
-			      sfdrubycode = "def sub_set_default_value_#{sfdrubydefname} \n" + sfdrubycode + "\n end"
-                  eval(sfdrubycode)
-               end
-            end			   
-        end	 
-     end
 end
