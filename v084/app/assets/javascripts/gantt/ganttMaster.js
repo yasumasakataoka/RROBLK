@@ -272,10 +272,12 @@ GanttMaster.messages = {
 };
 
 
-GanttMaster.prototype.createTask = function (id, subtblid,paretblcode,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum) {
+GanttMaster.prototype.createTask = function (id, subtblid,paretblcode,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            qty,qty_sch_qty_ord,qty_inst,qty_stk,org_start,org_end) {
   var factory = new TaskFactory();
 
-  return factory.build(id,subtblid,paretblcode, level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum);
+  return factory.build(id,subtblid,paretblcode, level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                       qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end);
 };
 
 
@@ -392,7 +394,9 @@ GanttMaster.prototype.loadTasks = function(tasks, selectedRow) {
   for (var i=0;i<tasks.length;i++){
     var task = tasks[i];
     if (!(task instanceof Task)) {  
-      var t = factory.build(task.id, task.subtblid, task.paretblcode, task.level, task.start,task.end, task.opeitm_duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.nditm_parenum,task.nditm_chilnum);
+      var t = factory.build(task.id, task.subtblid, task.paretblcode, task.level, task.start,task.end,
+	  task.opeitm_duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.nditm_parenum,task.nditm_chilnum,
+	  task.qty,task.qty_sch,task.qty_ord,task.qty_inst,task.qty_stk,task.org_start,task.org_end);
       for (var key in task) {
         if (key!="end" && key!="start")  
           t[key] = task[key]; //copy all properties

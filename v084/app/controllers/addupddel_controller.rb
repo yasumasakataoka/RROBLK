@@ -7,7 +7,6 @@ class  AddupddelController < ScreenController
    before_filter :authenticate_user!  
    respond_to :html ,:xml ##  将来　タイトルに変更
    def index    ##  add update delete  
-      ##debugger
 	  get_screen_code
 	  @pare_class = "online"
 	  command_c = init_from_screen params
@@ -19,6 +18,7 @@ class  AddupddelController < ScreenController
 			 updatechk_foreignkey command_c if  @errmsg == ""
              if  @errmsg == "" then
                  command_c[:sio_classname] = "plsql_blk_add_"
+				 ##debugger if command_c[:sio_viewname].split("_")[1] == "custords"
                  command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                  command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
              end 
@@ -37,6 +37,7 @@ class  AddupddelController < ScreenController
       if  @errmsg == "" then 
 	      @req_userproc = false
 	      @sio_user_code = command_c[:sio_user_code]
+		  @sio_classname = command_c[:sio_classname]
           plsql.connection.autocommit = false
           command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
 		  command_c[:sio_recordcount] = 1

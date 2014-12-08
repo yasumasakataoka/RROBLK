@@ -4,12 +4,12 @@ V084::Application.configure do
   # In the development environment your application's code is reloaded on
   # every request. This slows down response time but is perfect for development
   # since you don't have to restart the web server when you make code changes.
-  ##config.cache_classes = false
+  config.cache_classes = false
   config.cache_store = :memory_store
 
   # Log error messages when you accidentally call methods on nil.
   config.whiny_nils = true
-  config.cache_store = :null_store
+  ##config.cache_store = :null_store
 
   # Show full error reports and disable caching
   config.consider_all_requests_local       = true

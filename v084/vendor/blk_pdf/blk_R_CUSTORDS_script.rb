@@ -1,6 +1,6 @@
 ###   start ###
 ##### /@sum = [:custord_qty, :custord_price, :custord_amt]  /###
-##### /pdfparam = {:sheetname=>'R_CUSTORDS',:page_size =>'A4',:page_layout =>:landscape,:max_rcnt => 14}   /#
+##### /pdfparam = {:sheetname=>'r_custords',:page_size =>'A4',:page_layout =>:landscape,:max_rcnt => 14}   /#
 ##### /order by loca_code_cust,custord_duedate  /#
 ##### /pagekey =  [:loca_code_cust]  /#
  dstart = ppdf.cursor

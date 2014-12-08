@@ -10,11 +10,10 @@
 <%=gantt_stylesheets%>
 <% end %>
 
-<title> <%= @disp_screenname_name %></title>
+<title> <%= @title %></title>
            
 </head>
 <body >
-
  <%=   yield %>
 <br>
 
@@ -30,5 +29,4 @@
       <p class="notice"><%= notice %> <class="alert"><%= alert %></p>
 </div>
 </body>
-<style> .prntclass {display: none} </style>
 </html>

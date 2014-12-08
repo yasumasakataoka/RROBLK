@@ -29,10 +29,7 @@ class ImportfmxlsxController < ScreenController
       FileUtils.cp temp.path, file
       ##debugger
       ws = RubyXL::Parser.parse file
-      FileUtils.rm file
-      #command_c[:sio_viewname]  = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")[:pobject_code_view]
-      #command_c[:sio_code] = @screen_code
-      #command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
+      FileUtils.rm file 
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
       for iws in 0..99
            break if ws[iws].nil?
@@ -42,7 +39,7 @@ class ImportfmxlsxController < ScreenController
            dupchk  ws[iws].sheet_name
 		   commit_flg = true
 		   keys = set_keys_get_id_from_code(command_c)
-           for count in 0..99999
+           for count in 0..999999
 		        @errmsg == ""
 	            if  count == 0
 	                 ##debugger
@@ -151,7 +148,7 @@ class ImportfmxlsxController < ScreenController
 
     end
 	def set_keys_get_id_from_code command_c
-	      strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > sysdate and "
+	      strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > current_date and "
 		  strsql << "screenfield_paragraph is not null group by screenfield_paragraph,pobject_code_sfd"
 	      tmpkeys = plsql.select(:all,strsql)
 		  keys = {}
@@ -171,7 +168,7 @@ class ImportfmxlsxController < ScreenController
 			    strwhere << " #{val.sub(delm,"")} = '#{command_c[val.to_sym]}' and "
 			end
 			##debugger
-			strwhere << %Q% #{tblnamechop + "_expiredate" } > sysdate %
+			strwhere << %Q% #{tblnamechop + "_expiredate" } > current_date %
 			get_id = plsql.__send__(key.to_s.split(":_")[0]).first(strwhere)
 			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
 			if get_id then command_c[sym_key] = get_id[:id] else command_c[sym_key] = -1 end

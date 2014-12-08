@@ -11,7 +11,8 @@ before_filter :authenticate_user!
           render :text=>"error"
        end
 	   testlinks
-       crt_def_all  
+       crt_def_all
+       Rails.cache.clear	   
     ##debugger
     end	
     def crtcachelist grpcode
@@ -22,7 +23,7 @@ before_filter :authenticate_user!
 	       else ##
 	         @cate_list = []
              @max_cnt = chk_cnt =  1
-	         plsql.r_screens.all("where screen_expiredate >sysdate order by screen_grpcodename").each do |i|
+	         plsql.r_screens.all("where screen_expiredate >current_date order by screen_grpcodename").each do |i|
                 if   @cate_list[-1] then
                      if   @cate_list[-1][0] == i[:screen_grpcodename][0,1] then 
                           chk_cnt += 1
@@ -46,10 +47,10 @@ before_filter :authenticate_user!
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
 	def testlinks	###開発環境のみで動くようにすること。  ###項目が削除されているときの対応、現在項目を削除している。
-	        recs = plsql.r_tblinks.all("where tblink_expiredate > sysdate")  
+	        recs = plsql.r_tblinks.all("where tblink_expiredate > current_date")  
 			recs.each do |rec|
 			        str_select = "select distinct a.id ,a.blktbsfieldcode_seqno from r_blktbsfieldcodes a "
-					str_select << "where blktbsfieldcode_expiredate > sysdate"
+					str_select << "where blktbsfieldcode_expiredate > current_date"
 					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec[:id]}) b "
 					str_select << " where a.id = b.tblinkfld_blktbsfieldcode_id )"
 					str_select << " and a.blktbsfieldcode_blktb_id = #{rec[:tblink_blktb_id_dest]} "
@@ -72,7 +73,7 @@ before_filter :authenticate_user!
 			        end
 			end
 			strwhere = "where id in (select id  from r_tblinkflds  a where not exists(select 1 from blktbsfieldcodes b where a.tblinkfld_blktbsfieldcode_id = b.id "
-			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > sysdate))"
+			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > current_date))"
 			plsql.tblinkflds.delete(strwhere)
 	end
 end

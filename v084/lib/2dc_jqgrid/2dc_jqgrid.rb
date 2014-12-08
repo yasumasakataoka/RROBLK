@@ -38,7 +38,7 @@ include  JqgridFilter
       js1 << javascript_include_tag('gantt/ganttGridEditor.js') + "\n"  
       js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
    end
-   def jqgrid(title, id, screen_code,options = {},authenticity_token,ss_id)
+   def jqgrid( options = {},authenticity_token,ss_id)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
       # Default options
           options = 
@@ -79,37 +79,31 @@ include  JqgridFilter
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
              replace_end = "'); "
       end
-     p "001 #{Time.now} "
-     show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+     ##p "001 #{Time.now} "
+     show_cache_key =  "show" + @screen_code +  sub_blkget_grpcode
      ###debugger
-     if Rails.cache.exist?(show_cache_key) then
-         @show_data = Rails.cache.read(show_cache_key)
-       else 
-	       ### create_def screen_code
-	       @show_data = set_detail(screen_code )  ## set gridcolumns
-     end
-     render :text =>"Create ScreenFields #{screen_code} by crt_r_view_sql.rb" and return   if @show_data.nil?
+     @show_data = Rails.cache.read(show_cache_key)
+	 ###fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}" if @show_data.nil? 
+	 @show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
+     fprnt "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
      @gridcolumns = @show_data[:gridcolumns]
      ###@evalstr = @show_data[:evalstr]
-     id_cache_key =  "id_" + screen_code +  sub_blkget_grpcode
-     p "002 #{Time.now}  id_cache_key:#{id_cache_key}"
-     p "Rails.cache.exist?(id_cache_key) #{Rails.cache.exist?(id_cache_key) } "
-     if Rails.cache.exist?(id_cache_key) then
-         id_data = Rails.cache.read(id_cache_key)
-         p "002 001 #{Time.now} "
-        else
-          id_data = create_screen_field(screen_code,title, id, options )
-          p "002 - 002 #{Time.now} "
-      end
-	  
-     p "003 #{Time.now} "
+     id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
+     id_data_javascript = Rails.cache.read(id_cache_key)
+	 if id_data_javascript
+        id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
+	    id_data_html = Rails.cache.read(id_cache_key)
+	   else	
+        ##id_data_javascript,id_data_html = create_screen_field(screen_code,title, id, options )
+        id_data_javascript,id_data_html = create_screen_field(  options )
+     end		
      ##debugger
-     screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
+     screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{@jqgrid_id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
        screen <<   nst_div
-       screen << id_data[:screen_javascript]
+       screen << id_data_javascript
        screen << " });</script>" 
        screen << " <p> #{options[:pare_contents]}</p>   "
-       screen << id_data[:screen_html]
+       screen << id_data_html
        screen <<  replace_end
        ##fprnt screen
        screen.gsub!(/\s+/," ")    if init_jq  =~ /replaceWith/  ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
@@ -144,13 +138,12 @@ include  JqgridFilter
       column.except(:field, :label).each do |couple|
         if couple[0] == :editoptions
           options << "editoptions:#{get_sub_options(couple[1])},"
-        
         elsif couple[0] == :formoptions
           options << "formoptions:#{get_sub_options(couple[1])},"
         elsif couple[0] == :searchoptions
           options << %Q|stype:"select",searchoptions:#{get_sub_searchoptions(couple[1])},|  ###日付の時 stype:"text"????
         elsif couple[0] == :editrules
-          options << "editrules:#{get_sub_options(couple[1])},"
+          options << "editrules:#{get_sub_options(couple[1])},"  if @screen_code.split("_")[1].chop == column[:field].split("_")[0] or couple[1] =~ /required:true/
         elsif couple[0] == :formatter
           options << "formatter:" + if couple[1] =~ /Fmatter$/ then couple[1] else %Q%"#{couple[1]}"% end + ","
         else
@@ -165,76 +158,76 @@ include  JqgridFilter
     end
       # Generate options for editable fields (value, data, width, maxvalue, cols, rows, ...)
     def get_sub_options(editoptions)
-      options = "{"
-      editoptions.each do |couple|
+        options = "{"
+        editoptions.each do |couple|
         if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
-          options << %Q/value:"/
-          couple[1].each_with_index do |v,i|    ###  修正　入力内容をそのまま
-            options << "#{v[0]}:#{v[1]};" if i >0 
-          end
-          options.chop! << %Q/",/
-        elsif couple[0] == :data # :data => [Category.all, :id, :title])
-          options << %Q/value:"/
-          couple[1].first.each do |obj|
-            options << "%s:%s;" % [obj.send(couple[1].second), obj.send(couple[1].third)]
-          end
-          options.chop! << %Q/",/
-         elsif   couple[0] == :date
-           options << "custom:true, custom_func:isValidDate,"
-         else # :size => 30, :rows => 5, :maxlength => 20, ...
-          if couple[1].instance_of?(Fixnum) || couple[1] == 'true' || couple[1] == 'false' || couple[1] == true || couple[1] == false || couple[1] =~ /function/
-              options << %Q/#{couple[0]}:#{couple[1]},/
-            else
-              options << %Q/#{couple[0]}:"#{couple[1]}",/          
-          end
-        end
-      end
+            options << %Q/value:"/
+            couple[1].each_with_index do |v,i|    ###  修正　入力内容をそのまま
+                options << "#{v[0]}:#{v[1]};" if i >0 
+            end
+            options.chop! << %Q/",/
+            elsif couple[0] == :data # :data => [Category.all, :id, :title])
+                options << %Q/value:"/
+                couple[1].first.each do |obj|
+                    options << "%s:%s;" % [obj.send(couple[1].second), obj.send(couple[1].third)]
+                end
+                options.chop! << %Q/",/
+                elsif   couple[0] == :date
+                    options << "custom:true, custom_func:isValidDate,"
+                  else # :size => 30, :rows => 5, :maxlength => 20, ...
+                    if couple[1].instance_of?(Fixnum) || couple[1] == 'true' || couple[1] == 'false' || couple[1] == true || couple[1] == false || couple[1] =~ /function/
+                        options << %Q/#{couple[0]}:#{couple[1]},/
+                       else
+                        options << %Q/#{couple[0]}:"#{couple[1]}",/          
+                    end
+                end
+            end
       options.chop! << "}"
     end
     def get_sub_searchoptions(editoptions)
-      options = "{"
-      editoptions.each do |couple|
-        if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
-          options << %Q/value:"/
-          couple[1].each do |v|    ###  修正　入力内容をそのまま
-            options << "#{v[0]}:#{v[1]};"
-          end
-          options.chop! << %Q/",/
-        elsif couple[0] == :data # :data => [Category.all, :id, :title])
-          options << %Q/value:"/
-          couple[1].first.each do |obj|
-            options << "%s:%s;" % [obj.send(couple[1].second), obj.send(couple[1].third)]
-          end
-          options.chop! << %Q/",/
-        else # :size => 30, :rows => 5, :maxlength => 20, ...
-          if couple[1].instance_of?(Fixnum) || couple[1] == 'true' || couple[1] == 'false' || couple[1] == true || couple[1] == false || couple[1] =~ /function/
-              options << %Q/#{couple[0]}:#{couple[1]},/
-            else
-              options << %Q/#{couple[0]}:"#{couple[1]}",/          
-          end
+        options = "{"
+        editoptions.each do |couple|
+            if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
+                options << %Q/value:"/
+                couple[1].each do |v|    ###  修正　入力内容をそのまま
+                    options << "#{v[0]}:#{v[1]};"
+                end
+                options.chop! << %Q/",/
+              elsif couple[0] == :data # :data => [Category.all, :id, :title])
+                options << %Q/value:"/
+                couple[1].first.each do |obj|
+                options << "%s:%s;" % [obj.send(couple[1].second), obj.send(couple[1].third)]
+                end
+                options.chop! << %Q/",/
+              else # :size => 30, :rows => 5, :maxlength => 20, ...
+                if couple[1].instance_of?(Fixnum) || couple[1] == 'true' || couple[1] == 'false' || couple[1] == true || couple[1] == false || couple[1] =~ /function/
+                    options << %Q/#{couple[0]}:#{couple[1]},/
+                   else
+                    options << %Q/#{couple[0]}:"#{couple[1]}",/          
+                end
+            end
         end
-      end
-      options.chop! << "}"
+        options.chop! << "}"
     end 
      ################
     def set_extbutton pare_screen_code     ### 子画面用のラジオボ タンセット
-      ##debugger
-      ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
-      rad_screen = plsql.select(:all,"select pobject_code_scr,pobject_code_scr_ch from r_chilscreens where chilscreen_Expiredate > sysdate 
+        ##debugger
+        ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
+        rad_screen = plsql.select(:all,"select pobject_code_scr,pobject_code_scr_ch from r_chilscreens where chilscreen_Expiredate > sysdate 
                                             and pobject_code_scr = '#{pare_screen_code}' group by  chilscreen_grp,pobject_code_scr,pobject_code_scr_ch")
-           t_extbutton = ""
-           t_extdiv_id = ""
-           rad_screen.each_with_index do |i,k|     ###child tbl name sym
+            t_extbutton = ""
+            t_extdiv_id = ""
+            rad_screen.each_with_index do |i,k|     ###child tbl name sym
                ### view name set
-                  t_extbutton << %Q|<input type="radio" id="radio#{pare_screen_code}#{k.to_s}"  name="nst_radio#{pare_screen_code}"|
-                  t_extbutton << %Q| value="#{i[:pobject_code_scr]}_div_#{i[:pobject_code_scr_ch]}_div_| ### 親のview
-                  t_extbutton << %Q|#{i[:pobject_code_scr_ch]}_div_1"/>|    #**
-                  t_extbutton << %Q| <label for="radio#{pare_screen_code}#{k.to_s}">  #{sub_blkgetpobj(i[:pobject_code_scr_ch],"screen")} </label> |   ##"screen"画面
-                  t_extdiv_id << %Q|<div id="div_#{i[:pobject_code_scr]}_div_#{i[:pobject_code_scr_ch]}"> </div> |   #**
-           end   ### rad_screen.each
+                    t_extbutton << %Q|<input type="radio" id="radio#{pare_screen_code}#{k.to_s}"  name="nst_radio#{pare_screen_code}"|
+                    t_extbutton << %Q| value="#{i[:pobject_code_scr]}_div_#{i[:pobject_code_scr_ch]}_div_| ### 親のview
+                    t_extbutton << %Q|#{i[:pobject_code_scr_ch]}_div_1"/>|    #**
+                    t_extbutton << %Q| <label for="radio#{pare_screen_code}#{k.to_s}">  #{sub_blkgetpobj(i[:pobject_code_scr_ch],"screen")} </label> |   ##"screen"画面
+                    t_extdiv_id << %Q|<div id="div_#{i[:pobject_code_scr]}_div_#{i[:pobject_code_scr_ch]}"> </div> |   #**
+            end   ### rad_screen.each
 	    return  t_extbutton,t_extdiv_id
     end    ## set_extbutton pare_screen  
-    def get_return_name_val screen_code,scrfield,paragraph  ###paragrapf 検索key 
+    def get_return_name_val scrfield,paragraph  ###paragrapf 検索key 
       tmp_val = ""
       viewname,delm = paragraph.split(":")
       delm  ||= ""
@@ -244,7 +237,7 @@ include  JqgridFilter
 		   	raise  "shoud be seach_view invalid ;view_name is:#{viewname} "   
 	  end
       @gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ
-        if  tcolm[:editable] == true and secgridc.index(tcolm[:field].sub(delm,"").to_sym)  
+        if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true 
               tmp_val  << "if(data.#{tcolm[:field]}){"   
               tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
               tmp_val  << "}"   
@@ -252,7 +245,7 @@ include  JqgridFilter
       end  ### secgridc.each do |tcolm| 
        ##debugger
       fmfield = viewname.split("_")[1].chop+"_id"
-      tofield = screen_code.split("_")[1].chop+"_"+fmfield
+      tofield = @screen_code.split("_")[1].chop+"_"+fmfield
       if  delm 
              fmfield += delm
              tofield += delm
@@ -261,7 +254,7 @@ include  JqgridFilter
       ##tmp_val << %Q%if(data.errmsg){alert(data.errmsg);}%
       return tmp_val
     end
-    def set_aftershowform screen_code,oper
+    def set_aftershowform oper
       ###外部テーブルのリンクに関係ない項目は　enable == true and require == false
       ## 変更項目の修正不可は固定にはしないで、関数で対応
       ## javascript_edit = %Q%(function($) {
@@ -269,19 +262,18 @@ include  JqgridFilter
       javascript_edit =  "function(formid) {"
       tmp_code_to_name = ""
       require_fields = ""
-      strsenddata = %Q% "q":"#{screen_code}","chgname":p_chgname,"code_to_name_oper":"#{oper}",%
-      strkeydata = %Q% "q":"#{screen_code}","fieldname":keyname%
+      strsenddata = %Q% "q":"#{@screen_code}","chgname":p_chgname,"code_to_name_oper":"#{oper}",%
+      strkeydata = %Q% "q":"#{@screen_code}","fieldname":keyname%
       @gridcolumns.each do |tcolm|
-            ###debugger
-            if (tcolm[:field].split("_")[0] != screen_code.split("_")[1].chop  and 
-                tcolm[:editable] == true and  tcolm[:editrules][:required] == false)  then 
+            ###debugger  if tcolm[:field] =~ /fieldcode_fieldlength/
+            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editrules][:required] != true)   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
-	          end
-            if (tcolm[:field].split("_")[0] != screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or  tcolm[:field] =~ /_id/ then 
+	        end
+            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or  tcolm[:field] =~ /_id/ then 
                require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
                strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
 	          end
-            if tcolm[:field].split("_")[0] == screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true  then 
+            if tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true  then 
                if  oper != "add" and  oper != "copyandadd"  then javascript_edit << ""  ### 中止　外部keyでチェックする。jQuery("##{tcolm[:field]}",formid).attr("disabled",true); 
                    else  javascript_edit << %Q%
                                                            jQuery("##{tcolm[:field]}",formid).attr("disabled",false);%
@@ -292,13 +284,13 @@ include  JqgridFilter
 
      javascript_edit << %Q% jQuery("#sData").show();% 
       ###既定値等セット  ### jQuery("##{tcolm[:field]}",formid).val()にセットすべきもの
-     recs = plsql.select(:all,"select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{screen_code}'  and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph")
+     recs = plsql.select(:all,"select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph")
      recs.each do |rec|
-         seartbls = plsql.r_screenfields.all("where pobject_code_scr = '#{screen_code}'  and screenfield_paragraph  = '#{rec[:screenfield_paragraph]}' AND screenfield_expiredate > sysdate ")
+         seartbls = plsql.r_screenfields.all("where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  = '#{rec[:screenfield_paragraph]}' AND screenfield_expiredate > sysdate ")
          seartbls.each do |tcolm|
             tmp_code_to_name << %Q% if(p_chgname=="#{tcolm[:pobject_code_sfd]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
                                           {#{strsenddata.chop}},function(data){
-      					  #{get_return_name_val(screen_code,tcolm[:pobject_code_sfd],tcolm[:screenfield_paragraph])}})}%
+      					  #{get_return_name_val(tcolm[:pobject_code_sfd],tcolm[:screenfield_paragraph])}})}%
          end
      end
      tmp_code_to_name << ";"
@@ -328,30 +320,27 @@ include  JqgridFilter
    def set_onInitializeForm addorcopy
        require_fields =  "function(formid) {"
        @gridcolumns.each do |tcolm|
-            require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
+	        if (tcolm[:field].split("_")[0] == @screen_code.split("_")[1] and tcolm[:editable] == true ) or  (tcolm[:required] == true )
+               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
+			end
 			if addorcopy == "add"
-			   if respond_to?("psub_view_field_#{tcolm[:field]}_dflt")
-			      dflt_val =  __send__("psub_view_field_#{tcolm[:field]}_dflt")
+			   if respond_to?("proc_view_field_#{tcolm[:field]}_dflt")
+			      dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt")
 			      require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
 				 else 
-				   if  respond_to?("psub_view_field_#{tcolm[:field]}_dflt")
-			           dflt_val =  __send__("psub_view_field_#{tcolm[:field]}_dflt")
-			           require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
-					  else
-					    if respond_to?("psub_field_#{tcolm[:field].split('_')[1]}_dflt")
-                           dflt_val = __send__("psub_field_#{tcolm[:field].split('_')[1]}_dflt")
+					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt")   ###tbl_field_xxxx_dfflt テーブル登録時
+                           dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt")
 			               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
-						end
-				   end
+					end
 			   end
 			end
-       end
-	   ##debugger
-       require_fields << %Q% jQuery("#sData").show();% 
-       require_fields << "}"
-       return  require_fields
-   end
-   def del_fields_protect oper
+        end
+	    ##debugger
+        require_fields << %Q% jQuery("#sData").show();% 
+        require_fields << "}"
+        return  require_fields
+    end
+    def del_fields_protect oper
         require_fields =  "function(formid) {"
         @gridcolumns.each do |tcolm|
             require_fields << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
@@ -361,101 +350,76 @@ include  JqgridFilter
         require_fields << "}"
         return  require_fields
         ##javascript_edit <<   ";}})(jQuery);
-   end
+    end
+	##def custom_button
+	##    strsql = "select * from r_usebuttons where pobject_code_scr_ub = '#{@screen_code}' and button_onclickbutton is not null and "
+	##	strsql << " usebutton_expiredate > sysdate "
+	##    custom_button_scripts = plsql.select(:all, strsql)
+	##	strscript = ""
+	##	custom_button_scripts.each do |script|
+	##	    strscript << eval(script[:button_onclickbutton])
+	##	end
+	##	return strscript
+	##end
+    def create_screen_field( options)
+        ##id columns options  authenticity_token
+        # Generate columns dat
+        col_names, col_model,cellnames = gen_columns
 
-   def set_pdf_item screen_code
-      pdflist = plsql.r_reports.all("where pobject_code_scr = '#{screen_code}' and REPORT_EXPIREDATE >sysdate")                 ##**
-      pdfvalue = ""
-      pdflist.each do |i|
-	      pdfvalue = i[:pobject_code_rep] + ":" + sub_blkgetpobj(i[:pobject_code_rep],"report") + ";"              ##**
-      end
-      pdfvalue.chop if pdfvalue.size > 0
-      return pdfvalue
-   end
-   def get_screenoptions screen_code
-      screenoptions = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and REPORT_EXPIREDATE >sysdate  order by  REPORT_EXPIREDATE  ")                 ##**
-      pdfvalue = ""
-      pdflist.each do |i|
-	      pdfvalue = i[:pobject_code_rep] + ":" + sub_blkgetpobj(i[:pobject_code_rep],"report") + ";"              ##**
-      end
-      pdfvalue.chop if pdfvalue.size > 0
-      return pdfvalue
-   end
-   def create_screen_field(screen_code,title, id, options)
-      ##id columns options  authenticity_token
-      # Generate columns dat
-       col_names, col_model,cellnames = gen_columns
-
-      # Enable filtering (by default)
-      screen_options = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and SCREEN_EXPIREDATE >sysdate")  
-      p " line #{__LINE__} logic err screen_code = #{screen_code} " and return if screen_options.nil?
+        # Enable filtering (by default)
+        screen_options = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")  
+        p " line #{__LINE__} logic err screen_code = #{@screen_code} " and return if screen_options.nil?
      
-      # Enable selection link, button
+        # Enable selection link, button
          extbutton = "" 
-         extbutton,extdiv_id =  set_extbutton(screen_code)
-      # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
+         extbutton,extdiv_id =  set_extbutton(@screen_code)
+        # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
 
 
-      ###
-      ### replaceのため「''」は使用できない
-      ###
-      selection_link = ""
-      if  options[:selection_handler].present? && extbutton!= "" then
-        selection_link = %Q|
-        jQuery("##{id}_select_button").buttonset();
-        jQuery("##{id}_select_button :radio").click( function(e){ 
-          var getid = jQuery("##{id}").getGridParam("selrow");          
-          var nst_tbl_val = jQuery("##{id}_select_button :checked").val(); 
-          if (getid) { 
-                     var rowdata = jQuery("##{id}").getRowData(getid);           
+        ###
+        ### replaceのため「''」は使用できない
+        ###
+        selection_link = ""
+        if  options[:selection_handler].present? && extbutton!= "" then
+            selection_link = %Q|
+            jQuery("##{@jqgrid_id}_select_button").buttonset();
+            jQuery("##{@jqgrid_id}_select_button :radio").click( function(e){ 
+            var getid = jQuery("##{@jqgrid_id}").getGridParam("selrow");          
+            var nst_tbl_val = jQuery("##{@jqgrid_id}_select_button :checked").val(); 
+            if (getid) { 
+                     var rowdata = jQuery("##{@jqgrid_id}").getRowData(getid);           
                      jQuery.post("/screen/nst",{id:getid,nst_tbl_val:nst_tbl_val,authenticity_token:p_authenticity_token,ss_id:p_ss_id,data:rowdata} );   
-          } else { 
-            alert("Please select a row");
-          }
-          return false; 
-        });|
-      end
-   ###pdf
-      pdf_opt = ""
-      pdf_opt = set_pdf_item id
-      pdf_link = %Q|jQuery("##{id}_printid").append("<b>screen has nopdf_list</b>");| 
-
-      if pdf_opt.size>0 then 
-         pdfdata = %Q%function nWin() {var pdata = jQuery("##{id}").getPostData(); 
-                      var strparam;jQuery.each(pdata, function(key, value) {strparam = strparam + key + "=" + value + "&" }); strparam = strparam + "q=#{id}";
-                      var url = "/pdf/index?"+strparam;window.open(url);};
-                      jQuery(function() {jQuery(".#{id}_filterbuttonclass").click(nWin);});%
-         pdf_link = %Q% jQuery("##{id}_printid").filterGrid("##{id}",
-                     {formclass:"##{id}_filterformclass",buttonclass:"#{id}_filterbuttonclass",enableSearch:true,searchButton:"pdf",autosearch:true,url:"/screen/preview_prnt?q=#{id}",
-                     filterModel:[{label:'.  pdf list', name: 'pdflist', stype: 'select', sopt:{value:"#{pdf_opt}"}},
-                      {label:'  Nobody print records?', name: 'initprnt', stype: 'select', sopt:{value:"1:yes init_new_record_print;2:yes init_update_record_print;9:no all_print"}},
-                      {label:'  You update records?', name: 'whoupdate', stype: 'select',sopt:{value:"1:yes My_Records;9:no all_Records"}}]}); #{pdfdata}%
-     end
-     # Enable direct selection (when a row in the table is clicked)
-      # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
-      return_cod = ""
-     return_code = %Q%onCellSelect:function(rowid, iCol,value,e){ 
-         var pare_cellname  = getUrlVars()["grid_key"];
-	 if(pare_cellname){
-            var cellname = cellNames[iCol];
-            if(cellname.match(/_code/i)){ 
-              if(window.opener){
-                                 var nameofcode = pare_cellname.replace("_code","_name");
-                                 var rowdata = jQuery("##{id}").getRowData(rowid);
-                                 var taskId = getUrlVars()["taskid"];
-                                 if(taskId)
+                } else { 
+                 alert("Please select a row");
+                       }
+                return false; 
+            });|
+        end
+        # Enable direct selection (when a row in the table is clicked)
+        # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
+        return_cod = ""
+        return_code = %Q%onCellSelect:function(rowid, iCol,value,e){ 
+               var pare_cellname  = getUrlVars()["grid_key"];
+	        if(pare_cellname){
+                var cellname = cellNames[iCol];
+                    if(cellname.match(/_code/i)){ 
+                        if(window.opener){
+                                var nameofcode = pare_cellname.replace("_code","_name");
+                                var rowdata = jQuery("##{@jqgrid_id}").getRowData(rowid);
+                                var taskId = getUrlVars()["taskid"];
+                                if(taskId)
                                     {
                                      jQuery("tr[taskId="+taskId+"] input[name="+pare_cellname+"]", window.opener.document).val(value).change();
-			            }
+			                        }
                                   else
                                     {
-                                     jQuery("#"+ pare_cellname, window.opener.document).val(value); 
-                                     var tnamefields = nameofcode.split("_");
-                                     var namefield = tnamefields[0]+"_"+tnamefields[1];
-			             jQuery("#"+ nameofcode ,window.opener.document).val(rowdata[namefield]);
+                                    jQuery("#"+ pare_cellname, window.opener.document).val(value); 
+                                    var tnamefields = nameofcode.split("_");
+                                    var namefield = tnamefields[0]+"_"+tnamefields[1];
+			                    jQuery("#"+ nameofcode ,window.opener.document).val(rowdata[namefield]);
                                     }
-			           window.close();}}}},%
-    custom_func = %Q%
+			                window.close();}}}},%
+        custom_func = %Q%
                      function isValidDate(value, colname)
                      {                                       
                       var isValid = true;
@@ -475,89 +439,84 @@ include  JqgridFilter
                       if(hi[1]){if(hi[1]<"00"||hi[1]>="60"||hi[1].length!=2){isValid = false;}}
                       if(isValid){return [isValid,""];}else{return [isValid,"Please enter valid date :" + colname];}  
                      }% 
-#### #{set_aftershowform(screen_code_view,gridcolumns)}  ###コメントにした
-### jQuery("[taskId="+taskId+"][name="+pare_cellname+"]"   は　NG スペースが必要
-    str_set_navbutton = set_navbutton(screen_code,id)
-    ##btn 押されたボタン
-    screen_javascript = %Q%  var lastsel; var btn; 
-	     #{cellnames}
-          jQuery(document).ready(function(){ 
-          #{custom_func}         
-          function textHeightFmatter(cellvalue, options, rowObject) { if(cellvalue){return "<div style=max-height:30px>"+cellvalue+"</div>";}}   
-          function untextHeightFmatter(cellvalue, options){if(cellvalue){return cellvalue.replace("<div style=max-height:30px>","").replace("</div>","");}}  
-          var mygrid = jQuery("##{id}").jqGrid({
-              url:"/screen/disp?q=#{id}&ss_id="+p_ss_id,
-              editurl:"/addupddel/index",
-              datatype: "xml",
-              colNames:#{col_names},
-              colModel:#{col_model},
-              pager: jQuery("##{id}_pager"),
-              rowNum:#{screen_options[:screen_rows_per_page]},
-              rowList:[#{screen_options[:screen_rowlist]}],
-              imgpath: "/images/jqgrid",
-              viewrecords: true,
-              width:#{screen_options[:screen_width] ||= 1800},
-              height: #{screen_options[:screen_height]},
-              sortname: "#{screen_options[:screen_sort_column]}",
-              sortorder: "",
+        #### #{set_aftershowform(screen_code_view,gridcolumns)}  ###コメントにした
+        ### jQuery("[taskId="+taskId+"][name="+pare_cellname+"]"   は　NG スペースが必要
+        str_set_navbutton = set_navbutton
+        ##btn 押されたボタン
+        screen_javascript = %Q%  var lastsel; var btn; 
+	        #{cellnames}
+            jQuery(document).ready(function(){ 
+            #{custom_func}         
+            function textHeightFmatter(cellvalue, options, rowObject) { if(cellvalue){return "<div style=max-height:30px>"+cellvalue+"</div>";}}   
+            function untextHeightFmatter(cellvalue, options){if(cellvalue){return cellvalue.replace("<div style=max-height:30px>","").replace("</div>","");}}  
+                var mygrid = jQuery("##{@jqgrid_id}").jqGrid({
+                url:"/screen/disp?q=#{@jqgrid_id}&ss_id="+p_ss_id,
+                editurl:"/addupddel/index",
+                datatype: "xml",
+                colNames:#{col_names},
+                colModel:#{col_model},
+                pager: jQuery("##{@jqgrid_id}_pager"),
+                rowNum:#{screen_options[:screen_rows_per_page]},
+                rowList:[#{screen_options[:screen_rowlist]}],
+                imgpath: "/images/jqgrid",
+                viewrecords: true,
+                width:#{screen_options[:screen_width] ||= 1900},
+                height: #{screen_options[:screen_height]},
+                sortname: "#{screen_options[:screen_sort_column]}",
+                sortorder: "",
 	            multiSort:true,
-              shrinkToFit: #{options[:shrinkToFit]},
-              scrollrows: true,
-              autowidth: #{options[:autowidth]},
-              autoheight: #{options[:autoheight]},
-              rownumbers: #{options[:rownumbers]},
+                shrinkToFit: #{options[:shrinkToFit]},
+                scrollrows: true,
+                autowidth: #{options[:autowidth]},
+                autoheight: #{options[:autoheight]},
+                rownumbers: #{options[:rownumbers]},
 	            #{return_code}
-              #{str_set_navbutton[1]} 
-              caption: "#{title}"
+                #{str_set_navbutton[1]} 
+               caption: "#{@title}"
               })
-            .navGrid("##{id}_pager",
-            {refresh:true,view:false,edit:false,add:false,del:false,search:false })
-            #{str_set_navbutton[0]};
-            jQuery("##{id}").jqGrid("gridResize",{minWidth:350,maxWidth:1800,minHeight:80, maxHeight:900});
-            #{selection_link}
-            #{pdf_link }
-            mygrid.filterToolbar();mygrid[0].toggleToolbar();%
-    screen_html = %Q%
-        <div id="#{screen_code}_printid" class="prntclass"></div>
-       <p  id="grpsrc#{id}"  ></p> 
-        <p id="flash_alert" style="display:none;padding:0.7em;" class="ui-state-highlight ui-corner-all"></p>
-        <table id="#{id}" class="scroll" cellpadding="0" cellspacing="0 align=center"></table>
-        <p id="#{id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
-        <p id="#{id}_select_button">  #{extbutton} </p>
-        #{extdiv_id}%
-     screen_javascript.gsub!(/\s+/," ")
-      ##debugger
-      ##fprnt " jqgrid #{a} "
-      id_cache_key =  "id_" + screen_code +  sub_blkget_grpcode
-	  p " 002 003 #{Time.now} &  id_cache_key:#{id_cache_key}"
-      id_data = {}
-      id_data[:screen_javascript] = screen_javascript
-      id_data[:screen_html] = screen_html
-      Rails.cache.write(id_cache_key,id_data) 
-      p "Rails.cache.exist?(id_cache_key) #{Rails.cache.exist?(id_cache_key) } "
-      return id_data
+            .navGrid("##{@jqgrid_id}_pager",
+                {refresh:true,view:false,edit:false,add:false,del:false,search:false })
+                #{str_set_navbutton[0]};
+                jQuery("##{@jqgrid_id}").jqGrid("gridResize",{minWidth:350,maxWidth:1900,minHeight:80, maxHeight:900});
+                #{selection_link}
+                mygrid.filterToolbar();mygrid[0].toggleToolbar();%
+        screen_html = %Q%
+            <div id="#{@jqgrid_id}_cust_buttonA_id" class="cust_buttonA"></div>
+            <p  id="grpsrc#{@jqgrid_id}"  ></p> 
+            <p id="flash_alert" style="display:none;padding:0.7em;" class="ui-state-highlight ui-corner-all"></p>
+            <table id="#{@jqgrid_id}" class="scroll" cellpadding="0" cellspacing="0 align=center"></table>
+            <p id="#{@jqgrid_id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
+            <p id="#{@jqgrid_id}_select_button">  #{extbutton} </p>
+            #{extdiv_id}%
+        ##screen_javascript.gsub!(/\s+/," ")
+        ##debugger
+        ##fprnt " jqgrid #{a} "
+        id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
+        Rails.cache.write(id_cache_key,screen_javascript)
+        id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
+        Rails.cache.write(id_cache_key,screen_html)
+        return screen_javascript,screen_html
     end
-    def set_navbutton screen_code,id
+    def set_navbutton
       person =  plsql.r_persons.first(:person_email =>current_user[:email])
-      buttons = plsql.r_usebuttons.all("where pobject_code_scr_ub = '#{screen_code}' and  usebutton_Expiredate > sysdate order by  button_seqNo ")
+      buttons = plsql.r_usebuttons.all("where pobject_code_scr_ub = '#{@screen_code}' and  usebutton_Expiredate > sysdate order by  button_seqNo ")
       str_navbuttonadd = ""
       br_screen = {}
       inline = %Q%onSelectRow: function(rowid){if(inLineFlg){
                     if( inLineFlg=="inlineedit" || rowid == addline){ 
-                    jQuery("##{id}").jqGrid("saveRow",rowid,{ extraparam : {q:id,copy:inLineFlg,authenticity_token :p_authenticity_token ,ss_id:p_ss_id}});
+                    jQuery("##{@jqgrid_id}").jqGrid("saveRow",rowid,{ extraparam : {q:id,copy:inLineFlg,authenticity_token :p_authenticity_token ,ss_id:p_ss_id}});
                     lastsel=rowid;%
       tmpinline = ""  ###jqgridマニュアルによるとformat共存しないほうがいい
       ##debugger
-
       buttons.each do |button|
-             br_screen = plsql.r_screens.first("where pobject_code_scr = '#{screen_code}' and screen_expiredate > sysdate  order by  screen_expiredate ") if  br_screen == {}
+             br_screen = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and screen_expiredate > sysdate  order by  screen_expiredate ") if  br_screen == {}
              if button[:button_title] == "navSeparatorAdd"  then    ###セパレータ
-                   str_navbuttonadd << %Q%.navSeparatorAdd("##{id}_pager",{sepclass:"ui-separator",sepcontent:""})%
+                   str_navbuttonadd << %Q%.navSeparatorAdd("##{@jqgrid_id}_pager",{sepclass:"ui-separator",sepcontent:""})%
                 else
                     str_navbuttonadd << %Q%
-                      .navSeparatorAdd("##{id}_pager",{sepclass:"ui-separator",sepcontent:""})
+                      .navSeparatorAdd("##{@jqgrid_id}_pager",{sepclass:"ui-separator",sepcontent:""})
                       .navButtonAdd
-                        ("##{id}_pager"
+                        ("##{@jqgrid_id}_pager"
                           ,{title:"view"
                            ,caption:""
                            ,buttonicon:"ui-icon-note"
@@ -565,14 +524,14 @@ include  JqgridFilter
                              {
                               btn = "view";                              
                               if(inLineFlg){alert(" Now inline mode ") } 
-                              else{var gsr = jQuery("##{id}").getGridParam("selrow");
-                                   if(gsr){jQuery("##{id}").editGridRow
+                              else{var gsr = jQuery("##{@jqgrid_id}").getGridParam("selrow");
+                                   if(gsr){jQuery("##{@jqgrid_id}").editGridRow
                                             (
                                              gsr
                                              ,{#{br_screen[:screen_form_ps]}
                                                ,editCaption:"view"
                                                ,saveicon:[false,,]
-                                               ,editData:{q:"#{id}",copy:"view",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
+                                               ,editData:{q:"#{@jqgrid_id}",copy:"view",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                                ,afterShowForm:#{del_fields_protect("view")}
                                               } 
                                             )
@@ -583,8 +542,8 @@ include  JqgridFilter
                            }
                         )% if str_navbuttonadd == ""
                     str_navbuttonadd << %Q%
-                       .navSeparatorAdd("##{id}_pager",{sepclass:"ui-separator",sepcontent:""})
-                       .navButtonAdd("##{id}_pager"
+                       .navSeparatorAdd("##{@jqgrid_id}_pager",{sepclass:"ui-separator",sepcontent:""})
+                       .navButtonAdd("##{@jqgrid_id}_pager"
                                      ,{caption:"#{button[:button_caption]}"
                                      ,title:"#{button[:button_title]}"
                                      ,buttonicon:"#{button[:button_buttonicon]}" %
@@ -595,22 +554,22 @@ include  JqgridFilter
                               ,onClickButton: function(){
                               btn = "#{button[:button_editgridrow]}";
                               if(inLineFlg){alert(" Now inline mode ") }
-                              else{jQuery("##{id}").editGridRow(
+                              else{jQuery("##{@jqgrid_id}").editGridRow(
                                                         "new"
                                                         ,{#{br_screen[:screen_form_ps]}
                                                         ,editCaption:"#{button[:button_title]}"
                                                         ,bSubmit: "#{button[:button_editgridrow]}", recreateForm: true 
-                                                        ,editData:{q:"#{id}",copy:"#{ button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
+                                                        ,editData:{q:"#{@jqgrid_id}",copy:"#{ button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
 														,clearAfterAdd:false
-                                                        ,afterShowForm:#{set_aftershowform(screen_code,"add")}
+                                                        ,afterShowForm:#{set_aftershowform("add")}
                                                         ,beforeShowForm:#{set_onInitializeForm("add")}
                                                         ,afterSubmit:#{set_aftersubmit}
 														})}} %
                            when "delete"
                                       str_navbuttonadd << %Q%
-                             ,onClickButton: function(){ btn = "#{ button[:button_editgridrow]}";var gsr = jQuery("##{id}").getGridParam("selrow");
-                              if(gsr){ jQuery("##{id}").editGridRow(gsr,{#{br_screen[:screen_form_ps]},editCaption:"#{button[:button_title]}",
-                                bSubmit: "#{button[:button_editgridrow]}", recreateForm: true ,modal:true,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",
+                             ,onClickButton: function(){ btn = "#{ button[:button_editgridrow]}";var gsr = jQuery("##{@jqgrid_id}").getGridParam("selrow");
+                              if(gsr){ jQuery("##{@jqgrid_id}").editGridRow(gsr,{#{br_screen[:screen_form_ps]},editCaption:"#{button[:button_title]}",
+                                bSubmit: "#{button[:button_editgridrow]}", recreateForm: true ,modal:true,editData:{q:"#{@jqgrid_id}",copy:"#{button[:button_editgridrow]}",
                                 authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                  ,checkOnSubmit:true  
                                  ,afterShowForm:#{del_fields_protect("delete")}})} else { alert("Please select Row") } }%                             
@@ -619,14 +578,14 @@ include  JqgridFilter
                              ,onClickButton:function(){
                               btn = "#{ button[:button_editgridrow]}";                              
                               if(inLineFlg){alert(" Now inline mode ") } 
-                              else{var gsr = jQuery("##{id}").getGridParam("selrow");
-                                   if(gsr){ jQuery("##{id}").editGridRow(
+                              else{var gsr = jQuery("##{@jqgrid_id}").getGridParam("selrow");
+                                   if(gsr){ jQuery("##{@jqgrid_id}").editGridRow(
                                                                  gsr
                                                                 ,{#{br_screen[:screen_form_ps]}
                                                                 ,editCaption:"#{button[:button_title]}"
                                                                 ,bSubmit: "#{button[:button_editgridrow]}" ,recreateForm: true 
-                                                                ,editData:{q:"#{id}",copy:"#{button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
-                                                                ,afterShowForm:#{set_aftershowform(screen_code,button[:button_editgridrow])}
+                                                                ,editData:{q:"#{@jqgrid_id}",copy:"#{button[:button_editgridrow]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
+                                                                ,afterShowForm:#{set_aftershowform(button[:button_editgridrow])}
                                                                 ,beforeShowForm:#{set_onInitializeForm("copyandadd")}
                                                                 ,afterSubmit:#{set_aftersubmit}})}
                                    else { alert("Please select Row") } }}%
@@ -634,33 +593,33 @@ include  JqgridFilter
                                        str_navbuttonadd  << %Q%
                               ,onClickButton: function(){
                               btn = "#{ button[:button_editgridrow]}";
-                              if(inLineFlg){inLineFlg=null;jQuery("##{id}").trigger("reloadGrid");alert("inline end");}
+                              if(inLineFlg){inLineFlg=null;jQuery("##{@jqgrid_id}").trigger("reloadGrid");alert("inline end");}
                               else{ inLineFlg="inlineedit";alert("change to inline EDIT")}}%
-                                       tmpinline << %Q%if(inLineFlg=="inlineedit"){jQuery("##{id}").jqGrid("editRow",rowid, {"keys" : true,"oneditfunc" : null,"successfunc" : null,
+                                       tmpinline << %Q%if(inLineFlg=="inlineedit"){jQuery("##{@jqgrid_id}").jqGrid("editRow",rowid, {"keys" : true,"oneditfunc" : null,"successfunc" : null,
                                         extraparam : {copy:"#{ button[:button_editgridrow]}",q:id,authenticity_token :p_authenticity_token,ss_id:p_ss_id },
                                         "aftersavefunc" : null,	"errorfunc": null,"afterrestorefunc" : null, 	"restoreAfterError" : true,"mtype" : "POST"});} %
                            when "inlineadd"
                                       str_navbuttonadd  << %Q%
                              ,onClickButton: function(){
                              btn = "#{ button[:button_editgridrow]}";
-                             if(inLineFlg){inLineFlg=null;jQuery("##{id}").trigger("reloadGrid");alert("inline end");}
-                             else{ inLineFlg="inlineadd";alert("change to inline ADD");lno += 1;addline="new_row"+lno;jQuery("##{id}").jqGrid("addRowData", addline,{},"first");jQuery("#"+addline).click();}}%
-                                      tmpinline << %Q%if(inLineFlg=="inlineadd"){jQuery("##{id}").jqGrid("editRow",addline,
+                             if(inLineFlg){inLineFlg=null;jQuery("##{@jqgrid_id}").trigger("reloadGrid");alert("inline end");}
+                             else{ inLineFlg="inlineadd";alert("change to inline ADD");lno += 1;addline="new_row"+lno;jQuery("##{@jqgrid_id}").jqGrid("addRowData", addline,{},"first");jQuery("#"+addline).click();}}%
+                                      tmpinline << %Q%if(inLineFlg=="inlineadd"){jQuery("##{@jqgrid_id}").jqGrid("editRow",addline,
                                                        {"keys" : true,"oneditfunc" : null,"successfunc" : null,extraparam :
                                                                                                           {copy:"#{ button[:button_editgridrow]}",q:id,authenticity_token :p_authenticity_token,ss_id:p_ss_id },
-                                                                                                          "aftersavefunc" : function(){lno += 1;addline="new_row"+lno;jQuery("##{id}").jqGrid("addRowData", addline,{},"first");
+                                                                                                          "aftersavefunc" : function(){lno += 1;addline="new_row"+lno;jQuery("##{@jqgrid_id}").jqGrid("addRowData", addline,{},"first");
                                                                                                           jQuery("#"+addline).click();},"errorfunc": null,"afterrestorefunc" : null,"restoreAfterError" : true,"mtype" : "POST"});
                                                           }%
                             when "restorerow"
                                        str_navbuttonadd << %Q%
-                                 ,onClickButton: function(){if(inLineFlg){jQuery("##{id}").jqGrid("restoreRow",rowid);}else{inLineFlg=null;alert("Now not inline "); }}%
+                                 ,onClickButton: function(){if(inLineFlg){jQuery("##{@jqgrid_id}").jqGrid("restoreRow",rowid);}else{inLineFlg=null;alert("Now not inline "); }}%
                           end    ##case button[:button_editgridrow]         
                         str_navbuttonadd <<  %Q%
                          ,position:"right" })%
                     else  ##button[:button_editgridrow]
                       if button[:button_onclickbutton] then
                           str_navbuttonadd << %Q%
-                         ,onClickButton: function() {#{button[:button_onclickbutton]}}, position:"right" })% 
+                         ,onClickButton: function() {#{eval(button[:button_onclickbutton])}}, position:"right" })% 
                          else
                              str_navbuttonadd << "})"
                       end

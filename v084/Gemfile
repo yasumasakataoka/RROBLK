@@ -56,5 +56,11 @@ gem 'activerecord-oracle_enhanced-adapter'
  gem "rubyXL"
 ## gem 'google-spreadsheet-ruby'
 ## gem 'simple_xlsx_reader'
+### 普通にObjectをStoreしたい
+### Dalli is a high performance pure Ruby client for accessing memcached servers.
+gem 'dalli'
  gem 'prawn'
 ##gem 'prawn_rails'
+###barcode code39,QR  ・・・・
+gem 'barby'
+gem 'prawn-qrcode'

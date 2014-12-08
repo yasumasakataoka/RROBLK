@@ -1,0 +1,17 @@
+﻿<TITLE> Ctreate Pdf Script </TITLE>
+<h1> Ctreate Pdf Script </h1>
+<br><p>
+</p></br>
+<br>
+<tr><td align="right"><b>Get pdf source from xlsx </b> 
+</br>
+<%= form_for :dump, :url=>{:controller=>"crtpdfscript",:action=>"create_pdf_script"}, :html => { :multipart => true } do |f| -%>
+Select an Excel File :
+<%= f.file_field :excel_file -%>
+<%= submit_tag 'Submit' -%>
+<br></br>
+<p> sheet name rule => report_code </p>
+<% end -%>
+</table>
+
+

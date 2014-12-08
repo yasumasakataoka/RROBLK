@@ -121,11 +121,16 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   row.find("[status]").attr("status", task.status);
   row.find("[name=nditm_parenum]").val(task.nditm_parenum);  //add
   row.find("[name=nditm_chilnum]").val(task.nditm_chilnum);  //add
-  row.find("[name=sno]").val(task.sno);  //add
-  row.find("[name=snoline]").val(task.snoline);  //add
+  row.find("[name=qty]").val(task.qty);  //add v2
+  row.find("[name=qty_sch]").val(task.qty_sch);  //add v2
+  row.find("[name=qty_ord]").val(task.qty_ord);  //add v2
+  row.find("[name=qty_inst]").val(task.qty_inst);  //add v2
+  row.find("[name=qty_stk]").val(task.qty_stk);  //add v2
   row.find("[name=opeitm_duration]").val(task.opeitm_duration);
   row.find("[name=start]").val(new Date(task.start).format("yyyy/MM/dd")).updateOldValue(); // called on dates only because for other field is called on focus event
   row.find("[name=end]").val(new Date(task.end).format("yyyy/MM/dd")).updateOldValue();
+  row.find("[name=org_start]").val(new Date(task.org_start).format("yyyy/MM/dd")).updateOldValue(); // add v2
+  row.find("[name=org_end]").val(new Date(task.org_end).format("yyyy/MM/dd")).updateOldValue();   //add v2
   row.find("[name=depends]").val(task.depends);
   row.find(".taskAssigs").html(task.getAssigsString());  //modify
 
@@ -381,17 +386,20 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
 
   taskEditor.find("#subtblid").val(task.subtblid);
   //add blk
-  taskEditor.find("#itm_name").val(task.itm_name);
-  taskEditor.find("#itm_code").val(task.itm_code);
-  taskEditor.find("#loca_name").val(task.loca_name);
-  taskEditor.find("#loca_code").val(task.loca_code);
-  taskEditor.find("#sno").val(task.sno);
-  taskEditor.find("#snoline").val(task.snoline);
-  taskEditor.find("#nditm_parenum").val(task.nditm_parenum);
-  taskEditor.find("#nditm_chilnum").val(task.nditm_chilnum);
+  taskEditor.find("#itm_name").val(task.itm_name); //add
+  taskEditor.find("#itm_code").val(task.itm_code);  //add
+  taskEditor.find("#loca_name").val(task.loca_name); //add
+  taskEditor.find("#loca_code").val(task.loca_code);  //add
+  taskEditor.find("#qty").val(task.qty);  //add v2
+  taskEditor.find("#qty_sch").val(task.qty_sch);  //add v2
+  taskEditor.find("#qty_ord").val(task.qty_ord);  //add v2
+  taskEditor.find("#qty_inst").val(task.qty_inst);  //add v2
+  taskEditor.find("#qty_stk").val(task.qty_stk);  //add v2
+  taskEditor.find("#nditm_parenum").val(task.nditm_parenum); //add
+  taskEditor.find("#nditm_chilnum").val(task.nditm_chilnum); //add
   //
   taskEditor.find("#description").val(task.description);
-  taskEditor.find("#paretblcode").val(task.paretblcode);
+  taskEditor.find("#paretblcode").val(task.paretblcode); //add
   taskEditor.find("#progress").val(task.progress ? parseFloat(task.progress) : 0);
   taskEditor.find("#status").attr("status", task.status);
 
@@ -403,6 +411,8 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   taskEditor.find("#opeitm_duration").val(task.opeitm_duration);
   taskEditor.find("#start").val(new Date(task.start).format());
   taskEditor.find("#end").val(new Date(task.end).format());
+  taskEditor.find("#org_start").val(new Date(task.org_start).format()); //add v2
+  taskEditor.find("#org_end").val(new Date(task.org_end).format()); //add v2
 
   //taskEditor.find("[name=depends]").val(task.depends);
 
@@ -508,8 +518,11 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       task.loca_code = taskEditor.find("#loca_code").val();
       task.nditm_parenum = taskEditor.find("#nditm_parenum").val();
       task.nditm_chilnum = taskEditor.find("#nditm_chilnum").val();
-      task.sno = taskEditor.find("#itm_sno").val();
-      task.snoline = taskEditor.find("#snoline").val();
+      task.qty = taskEditor.find("#qty").val();
+      task.qty_sch = taskEditor.find("#qty_sch").val();
+      task.qty_ord = taskEditor.find("#qty_ord").val();
+      task.qty_inst = taskEditor.find("#qty_inst").val();
+      task.qty_stk = taskEditor.find("#qty_stk").val();
 
       task.depends = taskEditor.find("#depends").val();
       task.description = taskEditor.find("#description").val();

@@ -37,8 +37,13 @@
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_parenum</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_chilnum</th>
 <% else %>
-<th class="gdfColHeader gdfResizable" style="width:30px;">sno</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;">qty</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_sch</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_ord</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_inst</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_stk</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">org_start</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">org_end</th>
 <% end %>
 <th class="gdfColHeader gdfResizable" style="width:50px;">start</th>
 <th class="gdfColHeader gdfResizable" style="width:50px;">end</th>
@@ -67,8 +72,13 @@
 <td class="gdfCell"><input type="text" name="nditm_parenum" value="(#=obj.nditm_parenum#)"></td>
 <td class="gdfCell"><input type="text" name="nditm_chilnum" value="(#=obj.nditm_chilnum#)"></td>
 <% else %>
-<td class="gdfCell"><input type="text" name="sno" value="(#=obj.sno#)"></td>
-<td class="gdfCell"><input type="text" name="qty" value="(#=obj.qty#)"></td>
+<td class="gdfCell"><input type="text" name="qty"  style="text-align:right" value="(#=obj.qty#)"></td>
+<td class="gdfCell"><input type="text" name="qty_sch" style="text-align:right" value="(#=obj.qty_sch#)"></td>
+<td class="gdfCell"><input type="text" name="qty_ord"  style="text-align:right" value="(#=obj.qty_ord#)"></td>
+<td class="gdfCell"><input type="text" name="qty_inst"  style="text-align:right" value="(#=obj.qty_inst#)"></td>
+<td class="gdfCell"><input type="text" name="qty_stk"  style="text-align:right" value="(#=obj.qty_stk#)"></td>
+<td class="gdfCell"><input type="text" name="org_start" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="org_end" value="" class="date" readonly></td>
 <% end %>
 <td class="gdfCell"><input type="text" name="start" value="" class="date" readonly></td>
 <td class="gdfCell"><input type="text" name="end" value="" class="date" readonly></td>
@@ -133,13 +143,16 @@
 <td><label for="itm_name">itm_name</label><br><input type="text" name="itm_name" id="itm_name" value="" size="20" class="formElements"></td>
 </tr>
 
-<tr>
+<tr  align="right">
 <% if @master == true %>
 <td><label for="nditm_parenum">nditm_parenum</label><br><input type="text" name="nditm_parenum" id="nditm_parenum" value="" class="formElements"></td>
 <td><label for="nditm_chilnum">nditm_chilnum</label><br><input type="text" name="nditm_chilnum" id="nditm_chilnum" value=""  class="formElements"></td>
 <% else %>
-<td><label for="sno">sno</label><br><input type="text" name="sno" id="sno" value="" class="formElements"></td>
 <td><label for="qty">qty</label><br><input type="text" name="qty" id="qty" value=""  class="formElements"></td>
+<td><label for="qty_sch">qty_sch</label><br><input type="text" name="qty_sch" id="qty_sch" value=""  class="formElements"></td>
+<td><label for="qty_ord">qty_ord</label><br><input type="text" name="qty_ord" id="qty_ord" value=""  class="formElements"></td>
+<td><label for="qty_inst">qty_inst</label><br><input type="text" name="qty_inst" id="qty_inst" value=""  class="formElements"></td>
+<td><label for="qty_stk">qty_stk</label><br><input type="text" name="qty_stk" id="qty_stk" value=""  class="formElements"></td>
 <% end %>
 <td><label for="name">subtblid</label><br><input type="text" name="subtblid" id="subtblid" value="" class="formElements"></td>
 <td><label for="paretblcode">paretblcode</label><br><input type="text" name="paretblcode" id="paretblcode" value="" class="formElements"></td>
@@ -147,8 +160,15 @@
 </tr>
 
 <tr>
+<% if @master == true %>
 <td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
 <td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+<% else %>
+<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+<td><label for="org_start">org_start</label><br><input type="text" name="org_start" id="org_start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="org_end">org_end</label><br><input type="text" name="org_end" id="org_end" value="" class="date" size="10" class="formElements"></td>
+<% end %>
 <td class="graph" style="padding-left:50px"><label for="opeitm_duration">dur.</label><br><input type="text" name="opeitm_duration" id="opeitm_duration" value="" size="5" class="formElements"></td>
 </tr>
 
@@ -188,3 +208,4 @@
 </tr>
 --></div>
 </div>
+<p> test </p>

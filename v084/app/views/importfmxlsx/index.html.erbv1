@@ -1,0 +1,16 @@
+<h1> IMPORT from xlsx </h1>
+<br><p>
+</p></br>
+<%= form_for :dump, :url=>{:controller=>"importfmxlsx",:action=>"import"}, :html => { :multipart => true } do |f| -%>
+Select an Excel File :
+<%= f.file_field :excel_file -%>
+<%= submit_tag 'Submit' -%>
+<br>
+<tr><td align="right"><b>Import: Table data from xlsx (target screen_code )</b> <%= f.text_field :screen_code,value:@screen_code,:readonly => true  %></td></tr>
+</br>
+<% end -%>
+<p>一列目がnullはレコードの終わりを示す</p>
+<%= render :partial=>"errmsg" %>
+</table>
+
+

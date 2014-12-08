@@ -30,6 +30,7 @@ module JqgridJson
           value.gsub!("\\n","\n")  if value and value.is_a? String
           value.gsub!("<","&lt;")   if value and value.is_a? String ###xml 禁止文字対策
           value.gsub!(">","&gt;")   if value and value.is_a? String ###xml 禁止文字対策
+          value.gsub!("&","&amp;")   if value and value.is_a? String ###xml 禁止文字対策
           array << %Q(<cell>#{value}</cell>)
         end
         array << "</row>"
@@ -91,12 +92,10 @@ module JqgridFilter
   end
   def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
      ##debugger
-     show_cache_key =  "show " + screen_code||=" coding err missing screen_code" +  sub_blkget_grpcode
-     if Rails.cache.exist?(show_cache_key) then
-           show_data = Rails.cache.read(show_cache_key)
-          else 
-           show_data = set_detail(screen_code)  ## set gridcolumns
-     end
+     show_cache_key =  "show" + (screen_code||=" coding err missing screen_code") +  sub_blkget_grpcode
+     show_data = Rails.cache.read(show_cache_key)
+     ###fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}" if show_data.nil?
+     show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
      return show_data  ###popup画面もあるのでここで@show_dataにはできない。
   end
   def set_detail screen_code
@@ -108,8 +107,7 @@ module JqgridFilter
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
            if det_screen.empty?
-	         fprnt "#{if screen_code =~ /coding*err/ then screen_code else 'create screen_code' + screen_code  end}" 
-	          ##render :text =>"Create screenfields #{screen_code} by crt_r_view_sql.rb" 
+	         fprnt "line #{(__LINE__).to_s }  #{if screen_code =~ /coding*err/ then screen_code else  ' create screen_code ' + screen_code  end}" 
 	          show_data = nil
               return show_data 
            end   
@@ -124,26 +122,28 @@ module JqgridFilter
            alltypes = {} 
 	   icnt = 0
 	   evalstr = {} 
-	   det_screen.each do |i|  
-                ## lable名称はユーザgroup固有よりセット    editable はtblから持ってくるように将来はする。
-                ##fprnt " i #{i}"
-                   tmp_editrules = {}
-                   tmp_columns = {}
-                   tmp_editrules[:required] = true  if i[:screenfield_indisp] == 1
-                   tmp_editrules[:number] = true if i[:screenfield_type] == "number"
-                   if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
-                       tmp_editrules[:date] = true 
-                       tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
-                       tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
-                       tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
-                   end
-		   tmp_editrules[:required] = false  if tmp_editrules == {} 
-                   tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
-                   tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
-                   ### tmp_columns[:label] ||=  i[:screenfield_code]
-                   tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
-                   tmp_columns[:editrules] = tmp_editrules 
-                   tmp_columns[:width] = i[:screenfield_width]
+	    det_screen.each do |i|  
+            ## lable名称はユーザgroup固有よりセット    editable はtblから持ってくるように将来はする。
+            ##fprnt " i #{i}"
+            tmp_editrules = {}
+            tmp_columns = {}
+            if i[:screenfield_indisp] == 1 then tmp_editrules[:required] = true   else tmp_editrules[:required] = false end
+            if i[:screenfield_type] == "number"
+                tmp_columns[:align] = "right"
+				tmp_editrules[:number] = true 
+			end
+            if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
+               tmp_editrules[:date] = true 
+               tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
+               tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
+               tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
+            end
+           tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
+           tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
+           ### tmp_columns[:label] ||=  i[:screenfield_code]
+           tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
+           tmp_columns[:editrules] = tmp_editrules 
+           tmp_columns[:width] = i[:screenfield_width]
 		   if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
 		      tmp_columns[:editable] = true
 		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  
@@ -180,50 +180,17 @@ module JqgridFilter
                    allfields << i[:pobject_code_sfd].to_sym  #**
 
                    alltypes [i[:pobject_code_sfd].to_sym] =  i[:screenfield_type].downcase
-		               evalstr[i[:pobject_code_sfd].to_sym] = i[:screenfield_rubycode] if i[:screenfield_rubycode] 
+		     ##    evalstr[i[:pobject_code_sfd].to_sym] = i[:screenfield_rubycode] if i[:screenfield_rubycode] 
            end   ## screenfields.each
 	         show_data[:allfields] =  allfields  
            show_data[:alltypes]  =  alltypes  
            show_data[:screen_code_view] = screen_code_view
            show_data[:gridcolumns] = gridcolumns
            show_data[:evalstr] = evalstr
-        show_cache_key =  "show " + screen_code +  sub_blkget_grpcode
+        show_cache_key =  "show" + screen_code +  sub_blkget_grpcode
+	    ## fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}"
         Rails.cache.write(show_cache_key,show_data) 
 	return show_data
     end    ##set_detai
-    def get_screen_code 
-      ###debugger ## 画面の項目
-        case
-            when params[:q]   then ##disp
-               @jqgrid_id   =  params[:q]
-	           @screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
-               @screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
-            when params[:action]  == "index"  then 
-               @jqgrid_id  = @screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
-            when params[:nst_tbl_val] then
-               @jqgrid_id   =  params[:nst_tbl_val]
-               @screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
-		    when params[:dump] then  ### import by excel
-               @screen_code = params[:dump][:screen_code]
-	    end
-     end
-    def crt_def_all
-      eval("def dummy_def \n end")
-      crt_defs = plsql.rubycodings.all("where expiredate > sysdate")
-      crt_defs.each do |i|
-          @src_tbl = i
-		  crt_def_rubycode
-      end
-	end
-    def crt_def_rubycode
-     if @src_tbl[:expiredate]||Date.today > Date.today + 1
-	     if @src_tbl[:code]
-		    strdef = "def #{@src_tbl[:code]}  #{@src_tbl[:hikisu]} \n" 
-			strdef << @src_tbl[:rubycode]
-			strdef <<"\n end"
-			eval(strdef)
-		 end
-	  end
-    end
  end
  
