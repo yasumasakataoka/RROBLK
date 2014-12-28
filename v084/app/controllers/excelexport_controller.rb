@@ -1,4 +1,4 @@
-class ExcelexportController < ApplicationController
+class ExcelexportController < ScreenController
   before_filter :authenticate_user!  
   ###   date_format = wb.styles.add_style :format_code => 'YYYY-MM-DD'
   ##   time_format = wb.styles.add_style :format_code => 'hh:mm:ss'

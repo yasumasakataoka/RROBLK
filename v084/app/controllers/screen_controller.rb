@@ -118,6 +118,7 @@ class ScreenController < ListController
 		       __send__("proc_field_#{fld_key}_init",params) 
 			end
 	  end 
+	  ###  
       case tblnamechop
            when params[:q].split("_")[1].chop  ###同一テーブル新規のときのチェック		        
 		        sw = same_tbl_code_to_name tblnamechop,field
@@ -159,7 +160,7 @@ class ScreenController < ListController
                if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
            end
       end
-      ##debugger
+      ###debugger
       rec = get_tblfieldval_from_code keyfields,viewname,delm  if sw == "ON" 
       @getname ={}
       if   rec then
@@ -370,6 +371,23 @@ class ScreenController < ListController
                                       command_c[:sio_viewname].split("_")[1].chop+ "_"  + key end
         ##debugger
         return command_c[new_key.to_sym]                      
+    end
+	
+    def init_from_screen value
+        ###@screen_code,@jqgrid_id  = get_screen_code
+	    ##debugger
+	    @show_data = get_show_data @screen_code
+	    if @show_data.nil?
+	       render :text=> "Create screen #{@screen_code} " and return
+	    end
+	    command_c = vproc_set_fields_from_allfields	value
+	    command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
+	    ##command_c[:person_id_upd] = command_c[:sio_user_code]
+	    command_c[:sio_viewname]  = @show_data[:screen_code_view] 
+	    command_c[:sio_code]  = @screen_code
+	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
+	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
+        return command_c
     end
 end ## ScreenController
 

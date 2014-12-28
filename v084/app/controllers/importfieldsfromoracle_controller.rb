@@ -72,42 +72,43 @@ class ImportfieldsfromoracleController < ApplicationController
       @errmsg << "  nothing "  
      plsql.commit  
   end   ##begin
-  end
-  def chk_index ltblname,columns
-      tblname = ltblname.upcase
-      prv_create_index_pk ltblname
-      r_key = plsql.user_constraints.all("where  table_name = '#{tblname}' and constraint_type = 'R' ")  ##外部key
-      fkey=[]
-      r_key.each do |rec|
-         fkey << rec[:constraint_name]
-      end
-      hash_rkey = {}
-      columns.each do |key,value|
+  end	
+	def chk_index ltblname,columns
+		tblname = ltblname.upcase
+		prv_create_index_pk ltblname
+		r_key = plsql.user_constraints.all("where  table_name = '#{tblname}' and constraint_type = 'R' ")  ##外部key
+		### postgresqlの時は　user_constraintsはtable_constraintsになる。
+		fkey=[]
+		r_key.each do |rec|
+			fkey << rec[:constraint_name]
+		end
+		hash_rkey = {}
+		columns.each do |key,value|
             hash_rkey[key] = key.to_s if key.to_s =~ /s_id/
-      end
-      hash_rkey.each do|k,v|
+		end
+		hash_rkey.each do|k,v|
              unless fkey.index("#{tblname.chop}_#{v.upcase}") then
                     @tsqlstr = " ALTER TABLE #{tblname} ADD CONSTRAINT #{tblname.chop}_#{v} "
                     @tsqlstr << " FOREIGN KEY(#{v}) REFERENCES #{v.split("_")[0]}(id)"  #####custord
                     ##debugger
                     plsql.execute @tsqlstr
              end
-      end
-      ####ユニークindex
-	  ##debugger
-      ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
-      keyarray={}
-      ukeys.each do |rec|
-          unless  keyarray[rec[:blkuky_grp].to_sym] then  keyarray[rec[:blkuky_grp].to_sym] = [] end
-          keyarray[rec[:blkuky_grp].to_sym] << rec[:pobject_code_fld] 
-      end
-      constr = plsql.blk_constraints.all("where table_name = '#{tblname}'  and  constraint_type = 'U' order by  constraint_name,position")
-      orakeyarray = []
-      constr.each do |rec|
+		end
+		####ユニークindex
+		##debugger
+		ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
+		keyarray={}
+		ukeys.each do |rec|
+			unless  keyarray[rec[:blkuky_grp].to_sym] then  keyarray[rec[:blkuky_grp].to_sym] = [] end
+			keyarray[rec[:blkuky_grp].to_sym] << rec[:pobject_code_fld] 
+		end
+		constr = plsql.blk_constraints.all("where table_name = '#{tblname}'  and  constraint_type = 'U' order by  constraint_name,position")
+		orakeyarray = []
+		constr.each do |rec|
            unless  orakeyarray.index(rec[:constraint_name]) then  orakeyarray << rec[:constraint_name]   end  
-      end
-      ##debugger
-      case  keyarray.size 
+		end
+		##debugger
+		case  keyarray.size 
             when 0 then
                 case  orakeyarray.size
                      when 1..999
@@ -119,9 +120,9 @@ class ImportfieldsfromoracleController < ApplicationController
                           prv_drop_constr tblname,orakeyarray
                end  
                 prv_add_constr  keyarray,tblname
-      end         
-  end
-  def prv_drop_constr tblname,orakeyarray
+		end         
+	end
+	def prv_drop_constr tblname,orakeyarray
        orakeyarray.each do |key|
           @tsqlstr = " ALTER TABLE #{tblname} drop CONSTRAINT #{key}"
           plsql.execute @tsqlstr
@@ -532,14 +533,14 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 		end    ## i
 		plsql.commit 
 	end  #end crt_chil_screen 
- def prv_create_index_pk ltblname
-     tblname = ltblname.upcase
-      unless PLSQL::Sequence.find(plsql,"#{tblname}_seq".to_sym) then 
+	def prv_create_index_pk ltblname
+		tblname = ltblname.upcase
+		unless PLSQL::Sequence.find(plsql,"#{tblname}_seq".to_sym) then 
              @tsqlstr =  "create sequence " + tblname + "_seq" 
              plsql.execute @tsqlstr
-       end
-       c_key = plsql.user_constraints.first("where table_name = '#{tblname}' and constraint_type = 'P' ")  ###主key
-       if c_key then
+		end
+		c_key = plsql.user_constraints.first("where table_name = '#{tblname}' and constraint_type = 'P' ")  ###主key
+		if c_key then
                 keys = plsql.user_ind_columns.all(" where table_name = '#{tblname}' and index_name =  '#{c_key[:constraint_name]}' ")
                       keys.each do |rec|
                       @errmsg << "PRIMARY KEY diffrent"  if  rec[:column_name] != "ID" 
@@ -547,56 +548,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
            else
               @tsqlstr =  "ALTER TABLE " + tblname + "  add  CONSTRAINT #{tblname}_id_pk PRIMARY KEY(id) " 
               plsql.execute @tsqlstr     
-       end
- end
-	def proc_chk_ctl_index ltblname,columns  ###使用されてない。
-		tblname = ltblname.upcase
-		r_key = plsql.user_constraints.all("where  table_name = '#{tblname}' and constraint_type = 'R' ")  ##外部key
-		fkey=[]
-		r_key.each do |rec|
-			fkey << rec[:constraint_name]
 		end
-		hash_rkey = {}
-		columns.each do |key,value|
-            hash_rkey[key] = key.to_s 
-		end
-		hash_rkey.each do|k,v|
-             unless fkey.index("#{tblname}_#{v.upcase}") then
-                    @tsqlstr = " ALTER TABLE #{tblname} ADD CONSTRAINT #{tblname}_#{v} "
-                    @tsqlstr << " FOREIGN KEY(#{v}) REFERENCES #{v.split("_")[0]}(id)"  #####custord
-                    ##debugger
-                    plsql.execute @tsqlstr
-             end
-        end
-		####ユニークindex
-		ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_seqno")
-		keyarray=[]
-		ukeys.each do |rec|
-			keyarray << rec[:pobject_code_fld]
-		end
-		constr = plsql.blk_constraints.all("where table_name = '#{tblname}'  and  constraint_name = '#{tblname}_UKYS_BLK' order by position")
-		orakeyarray = []
-		constr.each do |rec|
-          orakeyarray << rec[:column_name]
-		end
-		##debugger
-		case  keyarray.size 
-            when 0 then
-                case  orakeyarray.size
-                     when 1..999
-                            prv_drop_constr tblname
-                end  
-            when 1..999 then
-               case  orakeyarray.size
-                     when 0 then
-                            prv_add_constr  keyarray,tblname
-                     when 1..999
-                          if   keyarray !=  orakeyarray then
-                               prv_drop_constr tblname
-                               prv_add_constr  keyarray,tblname
-                          end
-                end  
-		end         
 	end
 end
 

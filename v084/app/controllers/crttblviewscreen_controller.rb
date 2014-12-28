@@ -50,11 +50,10 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
      end   ##if allrecs
      allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate")
      ctblspec = PLSQL::Table.find(plsql, pobject_code_tbl.to_sym)
-     prv_chk_field_seq allrecs,ctblspec.columns
      create_or_replace_view   rec_id,pobject_code_tbl
 	 Rails.cache.clear(nil)
      create_screenfields "r_"+pobject_code_tbl
-     create_code_to_name        pobject_code_tbl.upcase
+     proc_set_search_code_of_screen        "r_"+pobject_code_tbl
      chk_index  pobject_code_tbl,ctblspec.columns
    rescue
      plsql.rollback
@@ -66,93 +65,92 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
      plsql.commit  
   end   ##begin
   end
-  def create_code_to_name   pobject_code_tbl    
-      keys = plsql.user_ind_columns.all("  where table_name = '#{pobject_code_tbl}' and  column_position = 1")
-      keys.each do |key|
-          if key[:column_name] != "ID" then
-              update_rec = nil
-             if key[:column_name] =~ /_ID/ then
-                  chk_keys = plsql.user_ind_columns.count("where table_name = '#{pobject_code_tbl}' and  index_name = '#{key[:index_name]}'")
-                  sql = "where  table_name = '#{pobject_code_tbl}'  and constraint_type = 'U'  and  index_name = '#{key[:index_name]}'"
-                  constraint = plsql.user_constraints.first(sql)
-                  if chk_keys == 1 and constraint then
-                      sndkeys = plsql.user_ind_columns.all("  where table_name = '#{key[:column_name].split("_")[0]}' and  column_position = 1")
-                      sndkeys.each do |sk|  
-                         if   sk[:column_name] == "CODE"  then
-                              strsql = %Q%where pobject_code_sfd = '#{key[:column_name].split("_")[0].downcase.chop}_#{sk[:column_name].downcase}%
-                              strsql << %Q%#{if key[:column_name].split("_ID_",2)[1] then  key[:column_name].split("_ID",2)[1].downcase else "" end}'%
-                              strsql << %Q% and pobject_code_scr = 'r_#{pobject_code_tbl.downcase}' and screenfield_expiredate > sysdate %
-                              prv_code_to_name_key_set strsql,"r_#{pobject_code_tbl.downcase}"
-                         end
-                      end
-                    end
-                else
-                    if  key[:column_name] == "CODE" or  key[:column_name] == "SNO"  then
-                        strsql = "where pobject_code_sfd = '#{pobject_code_tbl.chop.downcase}_#{key[:column_name].downcase}'  "
-                        strsql << " and pobject_code_scr = 'r_#{pobject_code_tbl.downcase}'  and screenfield_expiredate > sysdate "
-                        prv_code_to_name_key_set strsql,"r_#{pobject_code_tbl.downcase}"
-                   end
-              end
-          end
-      end
-  end
-  def prv_code_to_name_key_set strsql,screen_code
-      ##debugger
-      update_rec = plsql.r_screenfields.first(strsql)
-      if  update_rec then
-          tmp_rec = {}
-          tmp_rec[:paragraph] = screen_code
-          tmp_rec[:updated_at] = Time.now
-          tmp_rec[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
-          if   update_rec[:screenfield_remark] !~ /set paragraph = '#{screen_code}'  by crtviewscreen/ 
-               tmp_rec[:remark] = if update_rec[:screenfield_remark] then  update_rec[:screenfield_remark] else "" end  + 
-                     if update_rec[:screenfield_remark].size < 120  then " set paragraph = '#{screen_code}'  by crtviewscreen" else "" end
-          end
-          tmp_rec[:where] = {:id => update_rec[:id]}
-          ##debugger
-          plsql.screenfields.update tmp_rec
-      end 
-  end
-  def prv_add_tbl_field tblname,allrecs
-      mandatory_field =  prv_init
-      @strsql0 = "create table #{tblname} ("
-       tmpstrsql ={}
-       allrecs.each do |rec|
-          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
-          ##debugger
-          next if frec.nil?		  
-          tmpstrsql[frec[:pobject_code_fld].to_sym]= frec[:pobject_code_fld] + " " + frec[:fieldcode_ftype] + 
-                   case frec[:fieldcode_ftype]
-                        when "char","varchar","varchar2" then
-                            "(#{frec[:fieldcode_fieldlength]}) ,"
-                        when "number","numeric" then
-                            %Q%(#{if frec[:fieldcode_dataprecision] == 0  or frec[:fieldcode_dataprecision].nil? then "38),\n" else frec[:fieldcode_dataprecision].to_s + "," + (frec[:fieldcode_datascale]||0).to_s + " ) ,\n" end }%
-						else
+	def proc_set_search_code_of_screen   pobject_code_scr    
+		##keys = plsql.user_ind_columns.all("  where table_name = '#{pobject_code_tbl}' and  column_position = 1")
+		### 以下　blkukysに変更して　全面コーディングし直した　2014/12/26
+		strsql = "select * from r_screenfields where pobject_code_scr = '#{pobject_code_scr}' "
+		screenfields = ActiveRecord::Base.connection.select_all(strsql)
+		screenfields.each do |key|
+			tgtblchop = key["pobject_code_sfd"].split("_")[0].chop
+			if key["pobject_code_sfd"] =~ /_code/ and key["screenfield_indisp"] == "1" and  tgtblchop != pobject_code_scr.split("_",2)[1]
+				strsql = "select * from r_blkukys 
+				           where pobject_code_tbl = '#{tgtblchp}s'  and pobject_code_fld = '#{key["pobject_code_sfd"].split("_")[1]}'"
+				ukygrp = ActiveRecord::Base.connection.select_one(strsql)
+				dlm = ""
+				if ukysgrp.nil?  ###_xxxを使用していた時
+					strsql = "select * from r_blkukys 
+				           where pobject_code_tbl = '#{tgtblchop}s'  and pobject_code_fld = '#{tgtblchop}_code}'"
+					ukygrp = ActiveRecord::Base.connection.select_one(strsql)
+					dlm = key["pobject_code_sfd"].split("_code",2)[1]
+				end
+				strsql = "select * from r_blkukys 
+				           where pobject_code_tbl = '#{pobject_code_scr.split("_",2)[1]}'  and blkuky_grp = '#{ukygrp["blkuky_grp"]}'"
+				ukys = ActiveRecord::Base.connection.select_one(strsql)
+				ukys.each do|ukey|
+					strsql = "select * from r_screenfields where pobject_code_scr = '#{pobject_code_scr}' and 
+					                                             pobject_code_sfd = '#{ukey["pobject_code_sfd"]+dlm}'"  ###dlm = "_xxxx"
+					screenfield = ActiveRecord::Base.connection.select_one(strsql)
+					if screenfield["screenfield_paragraph"].nil?
+						updatestr = ""
+						if   screenfield["screenfield_remark"] !~ /by proc_set_search_code_of_screen/  
+							updatestr << if screenfield["screenfield_remark"].size <  50  then %Q& remark = '#{screenfield["screenfield_remark"]} _ by proc_set_search_code_of_screen'  & else ""  end
+						end
+						updatestr << %Q&,paragraph = '#{pobject_code_scr + if dlm == "" then "" else ":" + dlm end}' &
+						Screenfield.where(:id=>screenfield["id"]).update_all(updatestr)
+					end
+                end	
+			end
+			if key["pobject_code_sfd"] =~ /_sno_/ and key["screenfield_indisp"] == "1" and key["pobject_code_sfd"].split("_")[0] == pobject_code_scr.split("_",2)[1].chop
+				if screenfield[:screenfield_paragraph].nil?
+					updatestr = %Q& paragraph = 'r_#{pobject_code_scr.split("_")[1][3..-1]}#{key["pobject_code_sfd"].split("_sno_")[1]}s'&  ## xxxords,xxxinsts  xxx は3桁
+					Screenfield.where(:id=>key["id"]).update_all(updatestr)
+				end
+            end	
+		end
+	end
+	def prv_add_tbl_field tblname,allrecs
+		mandatory_field =  prv_init
+		@strsql0 = "create table #{tblname} ("
+		tmpstrsql ={}
+		allrecs.each do |rec|
+			frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
+			##debugger
+			next if frec.nil?		  
+			tmpstrsql[frec[:pobject_code_fld].to_sym]= frec[:pobject_code_fld] + " " + frec[:fieldcode_ftype] + 
+                case frec[:fieldcode_ftype]
+                    when "char","varchar","varchar2" then
+                        "(#{frec[:fieldcode_fieldlength]}) ,"
+                    when "number","numeric" then
+                        %Q%(#{if frec[:fieldcode_dataprecision] == 0  or frec[:fieldcode_dataprecision].nil? then "38),\n" else frec[:fieldcode_dataprecision].to_s + "," + (frec[:fieldcode_datascale]||0).to_s + " ) ,\n" end }%
+					else
                              ","
-                   end
-            mandatory_field.delete( frec[:pobject_code_fld].to_sym) 
-          end
-       rec0 = allrecs[0]
-       rec0[:expiredate]=Time.parse("2099-12-31")
-       rec0[:created_at] = Time.now
-       rec0[:updated_at] = Time.now
-       mandatory_field.each do |key,value|
-          tmpstrsql[value[0].to_sym] = value[1] +  value[2]
-          rec0[:id] = plsql.blktbsfieldcodes_seq.nextval
-          ##debugger
-          rec0[:fieldcodes_id] = plsql.fieldcodes.first("where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
-                                                   and objecttype = 'tbl_field' and expiredate  > sysdate)")[:id]
-          plsql.blktbsfieldcodes.insert rec0 if rec0
-       end
-       ##debugger
-       tmpstrsql.sort.each do |key,value|
-          @strsql0 << value         
-       end
-       @strsql0 <<  " CONSTRAINT #{tblname}_id_pk PRIMARY KEY (id),"
-       ##  primkey key対応
-       @strsql0 = @strsql0.chop + ")"
-       plsql.execute @strsql0
-  end
+                 end
+			mandatory_field.delete( frec[:pobject_code_fld].to_sym) 
+         end
+		rec0 = allrecs[0]
+		rec0[:expiredate]=Time.parse("2099-12-31")
+		rec0[:created_at] = Time.now
+		rec0[:updated_at] = Time.now
+		mandatory_field.each do |key,value|
+			tmpstrsql[value[0].to_sym] = value[1] +  value[2]
+			rec0[:id] = plsql.blktbsfieldcodes_seq.nextval
+			##debugger
+			id = plsql.fieldcodes.first("where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
+                                                   and objecttype = 'tbl_field' and expiredate  > sysdate)")
+			if id
+				rec0[:fieldcodes_id]  = id[:id] 
+				plsql.blktbsfieldcodes.insert rec0 
+			end
+		end
+		##debugger
+		tmpstrsql.sort.each do |key,value|
+			@strsql0 << value         
+		end
+		@strsql0 <<  " CONSTRAINT #{tblname}_id_pk PRIMARY KEY (id),"
+		##  primkey key対応
+		@strsql0 = @strsql0.chop + ")"
+		plsql.execute @strsql0
+	end
   def prv_modify_tbl_field tblname,allrecs,columns
       keys = []
       mandatory_field =  prv_init
@@ -219,15 +217,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
            else
                @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n"
        end
-  end
-  def prv_chk_field_seq allrecs,columns
-      ##debugger
-      allrecs.each do |rec|
-          field_sym =  plsql.pobjects.first(" where id = (select pobjects_id_fld from fieldcodes where id = #{rec[:fieldcodes_id]})")[:code].to_sym
-          ##rec[:connectseq] = columns[field_sym][:position] if columns[field_sym] ### vfieldはテーブルに登録しない
-          rec[:where] = {:id => rec[:id]} 
-          plsql.blktbsfieldcodes.update rec
-      end
   end
  def sio_fields viewname
       @strsql = ""

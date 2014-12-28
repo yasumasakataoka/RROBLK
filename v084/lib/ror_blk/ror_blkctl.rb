@@ -107,7 +107,9 @@
         end
         return plsql.__send__(parescreen_cnt_usercode).nextval 
     end
-
+	def proc_insert_sio_c command_c
+		sub_insert_sio_c   command_c
+	end
     def sub_insert_sio_c   command_c   ###要求  無限ループにならないこと
 		proc_tblinks(command_c) do 
 			"before"
@@ -625,16 +627,36 @@
             if r0 then
                 strtime = vproc_get_contents(n0,r0)
                 tmp = vproc_get_chil_itms(n0,r0,strtime)
-                ngantts.concat(tmp) if tmp.size > 0 
+                ngantts.concat(tmp) if tmp[0].size > 0 
                 tmp = sub_get_prev_process(n0,r0,strtime)
-                ngantts.concat(tmp) if tmp.size > 0 
+                ngantts.concat(tmp) if tmp[0].size > 0 
               else
                 vproc_get_contents(n0,{})
                 #p "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > current_date"
             end
 	    end	
         return ngantts
-    end  ##  psub_get_itms_locas に登録されたitmsは削除
+    end  ##  psub_get_itms_locas に登録されたitmsは削除  
+    def proc_get_tree_under_opeitm opeitm_id
+		ngantts = []
+		n0 = {}
+		r0 =  plsql.opeitms.first("where id = #{opeitm_id} ")
+		n0[:itm_id] = r0[:itms_id]
+		n0[:processseq] = r0[:processseq]
+		n0[:priority] = r0[:priority]
+		n0[:seq] = "000"
+		n0[:endtime]  = Time.now
+		n0[:mlevel] = 0
+		ngantts << n0			
+		if r0 then
+            strtime = vproc_get_contents(n0,r0)
+            tmp = vproc_get_chil_itms(n0,r0,strtime)
+            ngantts.concat(tmp) if tmp[0].size > 0 
+            tmp = sub_get_prev_process(n0,r0,strtime)
+            ngantts.concat(tmp) if tmp[0].size > 0 
+         end
+        return ngantts
+    end
 
     def vproc_get_contents(n0,r0)   ##
         ##fprnt "n0:#{n0}"
@@ -725,7 +747,7 @@
 	                @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] = k 
                     @src_tbl[j_to_sfld.to_sym] = nil  if k  == "\#{nil}"  ##
 				  else	
-			        if respond_to?("proc_view_field_#{j.to_s}_dflt")  ###view_field_xxxx_dfflt 画面表示
+			        if respond_to?("proc_view_field_#{j.to_s}_dflt")  ###view_field_xxxx_dflt 画面表示
 			            @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] =  __send__("proc_view_field_#{j.to_s}_dflt")
 					end
 				end	
@@ -807,7 +829,7 @@
         crt_defs = plsql.select("select * from tblinks where expiredate > current_date")
         crt_defs.each do |src_tbl|
 		    vproc_crt_def_rubycode src_tbl
-        end
+        end	
 	end
     def vproc_crt_def_rubycode src_tbl
 		if src_tbl[:code]
@@ -817,14 +839,27 @@
 		    eval(strdef)
 		end
     end
-    def proc_create_tblinkfld_def 
-	    init_streval = %Q%  command_c = {} 
-	command_c[:sio_session_counter] =   @new_sio_session_counter 
-	command_c[:sio_recordcount] = 1
-	command_c[:sio_classname] = @sio_classname
-	command_c[:sio_user_code] =   @sio_user_code
-	command_c  = vproc_tblinkfld_id_set(command_c)	\n%
-	    strsql = " select * from r_tblinkflds where tblinkfld_expiredate > current_date " 
+	def str_init_command_c tbl_dest
+	    %Q%
+		command_c = {} 
+		command_c[:sio_session_counter] =   @new_sio_session_counter 
+		command_c[:sio_recordcount] = 1
+		command_c[:sio_classname] = @sio_classname
+		command_c[:sio_user_code] =   @sio_user_code
+		command_c[:sio_code] = command_c[:sio_viewname] =  tbl_dest
+		command_c  = vproc_tblinkfld_id_set(command_c)	 
+		%
+	end
+	def str_sio_set
+		%Q%
+		sub_insert_sio_c    command_c
+		sub_userproc_chk_set    command_c
+		proc_command_c_to_instance command_c
+		end
+		%
+	end
+    def proc_create_tblinkfld_def 	
+		strsql = " select * from r_tblinkflds where tblinkfld_expiredate > current_date " 
 		strsql << " order by pobject_code_scr_src,pobject_code_tbl_dest,tblink_beforeafter,tblink_seqno,tblinkfld_seqno "
 	    recs = plsql.select(:all,strsql)
 		streval = ""
@@ -839,14 +874,11 @@
 				beforeafter = rec[:tblink_beforeafter]
 				seqno = rec[:tblink_seqno]
 				streval = "def proc_fld_#{src_screen}_#{tblchop}s_#{beforeafter+seqno.to_s}\n"
-				streval << init_streval
-				streval << %Q%  command_c[:sio_code] = command_c[:sio_viewname] = "r_#{rec[:pobject_code_tbl_dest]}" \n%
+				streval << str_init_command_c("r_#{rec[:pobject_code_tbl_dest]}")
 			else
 				if src_screen != rec[:pobject_code_scr_src] or 	tblchop != rec[:pobject_code_tbl_dest].chop or
 				   beforeafter != rec[:tblink_beforeafter] or seqno != rec[:tblink_seqno]
-					streval << "	sub_insert_sio_c    command_c\n" 
-					streval << "	sub_userproc_chk_set    command_c\n"
-				    streval << "end\n"
+					streval << str_sio_set
 					##fprnt streval
 				    eval(streval)
 					src_screen = rec[:pobject_code_scr_src]
@@ -854,42 +886,24 @@
 					beforeafter = rec[:tblink_beforeafter]
 					seqno = rec[:tblink_seqno]
 					streval = "def proc_fld_#{src_screen}_#{tblchop}s_#{beforeafter+seqno.to_s}\n"
-					streval << init_streval
-					streval << %Q%   command_c[:sio_code] = command_c[:sio_viewname] = "r_#{rec[:pobject_code_tbl_dest]}" \n%
+					streval << str_init_command_c("r_#{rec[:pobject_code_tbl_dest]}")
 				end
 			end
 	        streval << %Q%	command_c[:#{(tblchop+"_"+rec[:pobject_code_fld].sub("s_id","_id"))}] = #{rec[:tblinkfld_command_c]} \n% if  rec[:tblinkfld_command_c]
 	    end ##
 		if recs.size > 0
-			streval << "	sub_insert_sio_c    command_c\n" 
-			streval << "	sub_userproc_chk_set    command_c\n"
-		    streval << "end\n"
+			streval << str_sio_set
 			eval(streval)
+			###fprnt streval
 		end
     end
 	def  vproc_tblinkfld_id_set command_c	
 		if command_c[:sio_classname] =~ /_add_/
-			@trg_id = plsql.__send__("#{command_c[:sio_viewname].split("_")[1]}_seq").nextval
-			command_c[:id] = command_c[(command_c[:sio_viewname].split("_")[1].chop+"_id").to_sym] = @trg_id
+			command_c[:id] = plsql.__send__("#{command_c[:sio_viewname].split("_")[1]}_seq").nextval
+			command_c[(command_c[:sio_viewname].split("_")[1].chop+"_id").to_sym] = command_c[:id]
 		end
 		return command_c
 	end
-    def init_from_screen value
-        ###@screen_code,@jqgrid_id  = get_screen_code
-	    ##debugger
-	    @show_data = get_show_data @screen_code
-	    if @show_data.nil?
-	       render :text=> "Create screen #{@screen_code} " and return
-	    end
-	    command_c = vproc_set_fields_from_allfields	value
-	    command_c[:sio_user_code] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
-	    ##command_c[:person_id_upd] = command_c[:sio_user_code]
-	    command_c[:sio_viewname]  = @show_data[:screen_code_view] 
-	    command_c[:sio_code]  = @screen_code
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
-        return command_c
-    end
     def vproc_set_fields_from_allfields value ###画面の内容をcommand_rへ
         command_c = {}
         @show_data[:allfields].each do |j|
@@ -898,14 +912,25 @@
         end ##
         return command_c
     end
-	
-    def proc_prdpurshp_mk_trngannt_and_alloctbl
-
-        if @src_tbl[:tblname].nill? or (src[:tblname] == 
-        @show_data[:allfields].each do |j|
-	        ## nilは params[j] にセットされない。
-            command_c[j] = value[j]  if value[j]      
-        end ##
-        return command_c
-    end
+	def proc_set_command_c(command_c,view_dest)		
+		command_c[:sio_session_counter] =   @new_sio_session_counter 
+		command_c[:sio_recordcount] = 1
+		command_c[:sio_classname] = @sio_classname
+		command_c[:sio_user_code] =   @sio_user_code
+		command_c[:sio_code] = command_c[:sio_viewname] =  view_dest
+	end
+    def proc_opeitm_instance opeitm_flds
+	    @opeitm = {}
+		opeitm_flds.each do |key,val|
+		    @opeitm[key.to_s.split("_",2)[1].to_sym] = val if key.to_s =~ /^opeitm/
+		end
+		@opeitm[:minqty] ||= 0
+		@opeitm[:maxqty] ||= 999999999
+		@opeitm[:maxqty] = 9999999999 if @opeitm[:maxqty] == 0
+		@opeitm[:opt_fixoterm] ||= 999999999
+		@opeitm[:opt_fixoterm] = 9999999999 if  @opeitm[:opt_fixoterm] == 0 
+		@opeitm[:packqty] ||= 1 
+		@opeitm[:packqty]  = 1 if @opeitm[:packqty] == 0
+		@opeitm[:autocreate_ord] ||= '0' ## 0:手動　1：自動　confirm=1  2:仮のxxxORDSを自動作成 confirm=0
+	end
 end   ##module Ror_blk

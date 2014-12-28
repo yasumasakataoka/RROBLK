@@ -3,31 +3,28 @@
  ## def self.perform(sio_id,sio_view_name)
  ##　importと 画面でエラー検出すること。
 			### とりあえず
-		##plsql.blkstddates.update({:datevalue =>blksdate,:where=>{:key=>"blksdate"}})  ###修正要
     def perform(sio_session_counter,user_id,one_by_one)
       begin	
 		@req_userproc = false
 	    @sio_user_code = user_id
         ###plsql.execute "SAVEPOINT before_perform"
         plsql.connection.autocommit = false
-        crt_def_all  unless respond_to?("dummy_def")
+        ##crt_def_all  unless respond_to?("dummy_def")
 	    @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
         @pare_class = "batch"
         tg_tbls = plsql.select(:all,"select * from userproc#{user_id.to_s}s where session_counter = #{sio_session_counter}")
-		tg_tbls.each do |tg_tbl|
-		    strsql = "select * from #{tg_tbl[:tblname]} a where sio_session_counter = #{sio_session_counter} and sio_command_response = 'C' and sio_user_code = #{user_id} "
-		    strsql << " and not exists(select 1 from #{tg_tbl[:tblname]} b where  a.sio_session_counter = b.sio_session_counter " 
-		    strsql << " and sio_command_response = 'R' and a.sio_user_code =  b.sio_user_code and a.sio_session_id = b.sio_session_id)"
-            command_cs = plsql.select(:all,strsql)
-            ##debugger if tg_tbl[:tblname] =~ /inout/
+		tg_tbls.each do |tg_tbl|   ###複数のテーブルを同一セッションで処理
+		    ### sio_session_counter --> session group id   sio_session_id-->group 内　id
+            command_cs = plsql.select(:all,sql_perform)
             r_cnt0 = tg_tbl[:cnt_out]||=0
 		    tblname = command_cs[0][:sio_viewname].split("_",3)[1] 
-            command_cs.each do |i|  ##テーブル、画面の追加処理
+            command_cs.each do |i|  ##テーブル、画面の追加処理  #複数のレコードを処理
 				r_cnt0 += 1
+				@sio_classname = i[:sio_classname]
                 proc_update_table i,r_cnt0 ### 本体
                 reset_show_data_screen if tblname =~ /screen|pobjgrps/   ###キャッシュを削除
                 ##
-				strsql = " update userproc#{user_id.to_s}s set cnt_out = #{r_cnt0},status = 'normal end' ,updated_at = sysdate
+				strsql = " update userproc#{user_id.to_s}s set cnt_out = #{r_cnt0},status = 'normal end' ,updated_at = current_date
 				           where session_counter = #{sio_session_counter} and tblname = '#{tg_tbl[:tblname]}' "
 		        plsql.execute strsql
 				if one_by_one == "one_by_one"			
@@ -52,79 +49,140 @@
 			end		
       end		
     end   ##perform
-      handle_asynchronously :perform  	  
+      handle_asynchronously :perform
+	def sql_perform  tg_tbl
+		%Q%
+		select * from #{tg_tbl[:tblname]} a where sio_session_counter = #{sio_session_counter} and sio_command_response = 'C' and sio_user_code = #{user_id}
+		        and not exists(select 1 from #{tg_tbl[:tblname]} b where  a.sio_session_counter = b.sio_session_counter  
+		        and sio_command_response = 'R' and a.sio_user_code =  b.sio_user_code and a.sio_session_id = b.sio_session_id)
+		%
+	end
     def reset_show_data_screen
 	   ##debugger
       ##cache_key =  "show" 
       ##Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
 	  Rails.cache.clear(nil) ###delay_jobからcallされるので、grp_codeはbatch
     end
-    def reset_show_data_screenlist   ###casheは消えけどうまくいかない　2013/11/2
-      ##debugger
-      cache_keys =["listindex","show","id"] 
-      cache_keys.each do |key|
-         Rails.cache.delete_matched(key) ###delay_jobからcallされるので、grp_codeはbat
-      end
+    def proc_update_table rec,r_cnt0  ##rec = command_c command_rとの混乱を避けるためrecにした。
+	    tblname = rec[:sio_viewname].split("_")[1]
+        begin 	       
+            command_r = rec.dup ###sio_xxxxx の　レスポンス用
+            tmp_key = {}
+            proc_set_src_tbl  rec ### @src_tblの項目作成
+            command_r[:sio_recordcount] = r_cnt0
+            if  command_r[:sio_message_contents].nil? 
+			    case command_r[:sio_classname]
+			        when /_add_/ then
+                        ##debugger  if tblname == "mkschs"
+	                    plsql.__send__(tblname).insert @src_tbl  
+	                when /_edit_/ then
+                         @src_tbl[:where] = {:id => rec[:id]}             ##変更分のみ更新
+	                     ##debugger
+                         plsql.__send__(tblname).update  @src_tbl
+                    when  /_delete_/ then 
+                         plsql.__send__(tblname).delete(:id => rec[:id])
+	            end   ## case iud
+            end  ##@src_tbl[:sio_message_contents].nil
+          rescue  
+                ###debugger
+                plsql.rollback
+                @sio_result_f = command_r[:sio_result_f] =   "9"  ##9:error 
+                command_r[:sio_message_contents] =  "class #{self} : LINE #{__LINE__} $!: #{$!} "    ###evar not defined
+                command_r[:sio_errline] =  "class #{self} : LINE #{__LINE__} $@: #{$@} "[0..3999]
+                @src_tbl.each do |i,j| 
+                    if i.to_s =~ /s_id/  
+                        newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
+                        command_r[newi] = j if j 
+                    end
+                    command_r[i] = j if i == :id
+                end
+                command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
+                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
+                fprnt"LINE #{__LINE__} command_r: #{command_r} " 
+          else
+			##debugger
+            @sio_result_f = command_r[:sio_result_f] =  "1"   ## 1 normal end
+            command_r[:sio_message_contents] = nil
+            command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id] = @src_tbl[:id]
+            ##crt_def_tb if  tblname == "blktbs"
+            case tblname
+                 when 	/rubycodings|tblink/
+						##undef dummy_def if respond_to?("dummy_def")
+						crt_def_all
+				 when   "mkschs","mkords","mkinsts","reallocs"
+				        vproc_tbl_mk  tblname do 
+						     case tblname
+							      when  "mkschs"
+								     DbSchs.new
+							      when  "mkords"
+								     DbOrds.new
+							      when  "reallocs"
+								     DbReAlloc.new
+							      when  "mkinsts"
+								     DbInsts.new
+							 end
+						end
+				 ####when   /schs$|ords$|insts$|acts$/
+            end				 					   
+          ensure
+		    ##debugger
+            sub_insert_sio_r   command_r    ## 結果のsio書き込み
+            ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
+        end ##begin
+        raise if @sio_result_f ==   "9" 
     end
+	def vproc_tbl_mk tblname
+	    if tblname == "mkinsts"  then order_by_add = " sumtype,tblname,tblid, "  else order_by_add = "" end
+	    recs = plsql.select(:all,"select * from #{tblname} where result_f = '0' order by #{order_by_add} id")   ##0 未処理
+        dbmk = yield
+		recs.each do |rec|
+		    if rec[:runtime] == -1
+			   rec[:result_f] = "5"  ## Queueing
+			   rec[:where] = {:id =>rec[:id]}
+			   plsql.__send__(tblname).update rec
+			   ##fprnt "line:#{__LINE__} rec:#{rec}"
+            end			 
+		end
+		dbmk.__send__("perform_#{tblname}", recs)
+		plsql.commit
+	end
 end
-class DbSchs  < ActionController::Base
-    def perform_mkschs rec
+class DbSchs  < DbCud
+    def perform_mkschs recs
 	  begin
 	    @sio_user_code = 0
         plsql.connection.autocommit = false
 	    @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
         @pare_class = "batch"
         cnt = 0
-        @bgantts = {}
-        @bgantts[:"000"] = {:mlevel=>0,
-				:opeitm_id=>plsql.select(:first,"select * from opeitms where itms_id = #{rec[:itms_id]} and priority = 999 and processseq = 999")[:id],
-				:opeitm_duration=>"",:assigs=>"",
-				:endtime=>rec[:duedate],
-				:qty=>rec[:qty],
-				:depends=>""}
-		ngantts = []
-        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],
-                :processseq=>rec[:processseq],:priority=>rec[:priority],
-			    :endtime=>rec[:duedate],:id=>"000"}
-        until ngantts.size == 0
-            cnt += 1
-            ngantts = psub_get_itms_locas ngantts
-            break if cnt >= 10000
-        end	
-        @bgantts[:"000"][:starttime] = if @min_time < Time.now then Time.now else @min_time end
-        prv_resch_trn  ####再計算
-        @bgantts[:"000"][:endtime] = @bgantts[:"001"][:endtime] 
-        @bgantts[:"000"][:opeitm_duration] = " #{(@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]}"
-		str_trngantt = {}
-		maxsubkey = ""
-        @bgantts.sort.each  do|key,value|   ###依頼されたオーダ等を単純にopeitms,nditmsを使用してgantttableに展開
-			idx = plsql.trngantts_seq.nextval
-			subkey = key.to_s
-			key = key.to_s.scan(/.{1,3}/).join("00") + "00"
-			opeitm = plsql.select(:first,"select * from opeitms  where id =  #{value[:opeitm_id]}")
-            str_trngantt ={:id=>idx,:key=>key,:keynext=>"00",:subkey=>subkey,
-				            :orgtblname=>rec[:tblname],:orgtblid=>rec[:tblid]||=idx,
-			                :mlevel=>value[:mlevel],
-			                :sno_prj=>rec[:sno_prj],:strdate=>value[:starttime],:strdate_est=>value[:starttime_est],
-							:duedate=>value[:endtime],:duedate_est=>value[:endtime],
-                            :parenum=>value[:nditm_parenum],:chilnum=>value[:nditm_chilnum],
-							:qty=>value[:qty],:qty_alloc=>0,:prdpurshp=>value[:prdpurshp],
-							:itms_id=>opeitm[:itms_id],:processseq=>opeitm[:processseq],:locas_id=>opeitm[:locas_id],
-							:expiredate=>"2099/12/31".to_date,
-							:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created_by def trngantts ",:persons_id_upd=>0}
-			##fprnt " line #{__LINE__} trngantt #{str_trngantt} "
-		    plsql.trngantts.insert str_trngantt
-			maxsubkey = subkey if subkey > maxsubkey 
-        end
-		proc_chk_create_prd_pur_shp_from_gantt str_trngantt,maxsubkey	
-		rec[:result_f] = "1"  ## normal end
-		rec[:cmpldate] = Time.now
-		rec[:updated_at] = Time.now
-		rec[:where] = {:id =>rec[:id]}
-		plsql.mkschs.update rec   ###insertはtblinks updateはここ　何とかならないか
-		plsql.commit
+		recs.each do |rec|
+		    chk_trngantt = plsql.select(:first,"select * from trngantts where orgtblname = '#{rec[:tblbame]}' and orgtblid = #{rec[:tblid]}")
+            if chk_trngantt 
+				chk_tbl = plsql.select(:first,"selecgt * from #{rec[:tblname]} where id = #{rec[:tblid]}")
+				if ckk_tbl
+					raise if rec[:sio_classname] !~ /_edit_/
+					@sio_classname = "perform_mksch_edit_"				
+					vproc_edit_trngantts(rec)
+				else
+					raise if rec[:sio_classname] !~ /_delete_/
+					@sio_classname = "perform_mksch_delete_"				
+					vproc_edit_trngantts(rec)
+				end
+			else
+				raise if rec[:sio_classname] !~ /_add_/
+				@sio_classname = "perform_mksch_add_"				
+				vproc_add_trngantts(rec)
+			end
+		    rec[:result_f] = "1"  ## normal end
+		    rec[:cmpldate] = Time.now
+		    rec[:updated_at] = Time.now
+		    rec[:where] = {:id =>rec[:id]}
+		    plsql.mkschs.update rec   ###insertはtblinks updateはここ　何とかならないか
+		end
         dbcud = DbCud.new
         dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
+		plsql.commit
         plsql.connection.autocommit = true
 		rescue
 		        plsql.rollback
@@ -140,196 +198,241 @@ class DbSchs  < ActionController::Base
 	  end
     end
     handle_asynchronously :perform_mkschs
-	def sql_chk_create_prd_pur_shp_from_gantt gantt_rec,subkey
-	    %Q% select a.*,b.short_qty from trngantts a,  
-	                             (select itms_id , processseq,locas_id,
-								    subkey ,sno_prj,(max(qty ) - sum(qty_alloc)) short_qty  
-					                from trngantts where  orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}
-					                group by itms_id,processseq,locas_id,subkey,sno_prj having sum(qty_alloc) < max(qty )) b
-                    where a.itms_id = b.itms_id and a.processseq = b.processseq and a.locas_id = b.locas_id
-					and a.subkey = b.subkey and a.sno_prj = b.sno_prj  
-					and orgtblname = '#{gantt_rec[:orgtblname]}' and orgtblid = #{gantt_rec[:orgtblid]}
-					and key != '00000' /* topの	レコードは除く */
-					and a.subkey > '#{subkey}'
-                    order by a.subkey %		
-	end
-	def proc_chk_create_prd_pur_shp_from_gantt gantt_rec,maxsubkey
-	   ###引当てKEY　 custXXXの時はorgtblname = custXXXX prd,pur,shpの時はorgtblname=prd,pur,shpXXXX
-	   ### orgtblname = tblnameの時は上位部品から引当て可能
-	   ###  孫の構成が異なっていても引当てる。 psub_chk_alloc_opeitmでチェック
-	   @show_data_prd = get_show_data("r_prdschs")
-	   @show_data_pur = get_show_data("r_purschs")
-	   @show_data_shp = get_show_data("r_shpschs")	   
-	   subkey = "000"
-	   while subkey < maxsubkey
-	        short_rec = plsql.select(:first,sql_chk_create_prd_pur_shp_from_gantt(gantt_rec,subkey))
-			##fprnt "line #{__LINE__} #{sql_chk_create_prd_pur_shp_from_gantt(gantt_rec,subkey)} "
-			short_rec[:short_qty] = vproc_chk_pare_alloc short_rec if subkey.size > 3 ##親の引当て数確認
-			if short_rec[:short_qty] > 0
-	            short_rec[:short_qty] = vproc_chk_free_prdpurshpstk short_rec,delay=false,loca = true
-	            short_rec[:short_qty] = vproc_chk_free_prdpurshpstk short_rec,delay=true,loca = true  ##納期遅れの引当てもする。
-			end
-		    ### 倉庫違いの引当て対応は未対応
-		    if  short_rec[:short_qty] >0 and short_rec[:key] != "00000"
-	            command_c = {}
-                command_c[:sio_session_counter] =   @new_sio_session_counter
-	            command_c[:sio_user_code] = @sio_user_code 
-                command_c[:sio_classname] = "auto_#{short_rec[:prdpurshp]}schs_add_by_trngantt"
-		        command_c[:sio_recordcount] = 1
-			    vproc_create_pur_prd_shp_fm_trngantt( command_c,short_rec )
-               	subkey = short_rec[:subkey]
-               else
-                #### subkey = short_rec[:subkey] +"999"  ##全数親が引きあたっている時は子品目の引当てはしない。
-				###中止　子品目の不要がわからなくなる。
-            end				
-	   end	   
-	end
-	def vproc_create_pur_prd_shp_fm_trngantt( command_c,short_rec)  ##
-        ###
-	       target_tbl = short_rec[:prdpurshp] + "schs"	       
-           command_c[:sio_viewname] = command_c[:sio_code] = @screen_code  = "r_#{target_tbl}"
-		   @show_data =  case short_rec[:prdpurshp]
-		                      when "prd"
-							       @show_data_prd
-				              when "pur"
-							       @show_data_pur
-				              when  "shp"
-							       @show_data_shp
-		                 end
-            if  short_rec[:key].size > 5
-	            strsql = %Q% select * from trngantts a where orgtblname = '#{short_rec[:orgtblname]}' and orgtblid = #{short_rec[:orgtblid]} 
-	                    and sno_prj = '#{short_rec[:sno_prj]}'   and key = '#{short_rec[:key][0..-6]}' %   
-		        ##fprnt" line #{__LINE__} strsql='#{strsql}'"				
-	            pare_trn = plsql.select(:first,strsql)
-		        pare_strsql = "select * from opeitms where itms_id = #{pare_trn[:itms_id]} and processseq = #{pare_trn[:processseq]} and locas_id = #{pare_trn[:locas_id]}"
-		        pare_opeitm = plsql.select(:first,pare_strsql)
-               else				
-		        strsql = "select * from opeitms where itms_id = #{short_rec[:itms_id]} and processseq = #{short_rec[:processseq]} and locas_id = #{short_rec[:locas_id]}"
-		        pare_opeitm = plsql.select(:first,strsql)
-            end				
-		    strsql = "select * from opeitms where itms_id = #{short_rec[:itms_id]} and processseq = #{short_rec[:processseq]} and locas_id = #{short_rec[:locas_id]}"
-		    opeitm = plsql.select(:first,strsql)	   
-	        strwhere = "select * from r_tblinkflds where pobject_code_scr_src = 'mk_trngantts' and pobject_code_tbl_dest = '#{target_tbl}' and tblink_seqno = 10 "   ###after_self
-			strwhere << " order by pobject_code_scr_src,pobject_code_tbl_dest,blktbsfieldcode_seqno "
-	        target_flds = plsql.select(:all,strwhere)			
-							debugger if  target_tbl == "custords"
-			command_c[:id] = command_c["#{target_tbl.chop}_id".to_sym] = plsql.__send__("#{target_tbl}_seq").nextval
-			###sub_command_instance_variable command_c   ##@xxxxは使用しない。
-	        target_flds.each do |tfld|
-			   ##
-			   if  tfld[:tblinkfld_command_c] 
-			       ##fprnt " tfld[:tblinkfld_command_c] :#{tfld[:tblinkfld_command_c]}:#{eval(tfld[:tblinkfld_command_c])} "
-	               command_c[("#{target_tbl.chop}_"+tfld[:pobject_code_fld].sub("s_id","_id")).to_sym] = eval(tfld[:tblinkfld_command_c])
-               end				   
-	        end
-			##fprnt "line #{__LINE__} command_c = #{command_c}"
-	        sub_insert_sio_c    command_c 
-	        sub_userproc_chk_set    command_c
-    end
-	def vproc_chk_pare_alloc short_rec
-	    pare_rec = plsql.select(:first,"select (max(qty) - sum(qty_alloc)) short_qty from trngantts
-		                        where orgtblname = '#{short_rec[:orgtblname]}' and orgtblid = #{short_rec[:orgtblid]}
-								and subkey = '#{short_rec[:subkey][0..-4]}' and (tblname != 'lotstkhists' or tblname is null)
-								group by subkey having max(qty) > sum(qty_alloc)")
-		if pare_rec
-		    short_rec[:short_qty] = pare_rec[:short_qty] * short_rec[:chilnum] / short_rec[:parenum]
-          else
-		    short_rec[:short_qty] = 0
+	def vproc_add_trngantts	rec								
+        @bgantts = {}
+		cnt = 0
+        @bgantts[:"000"] = {:mlevel=>0,
+							:opeitm_id=>plsql.select(:first,"select * from opeitms where itms_id = #{rec[:itms_id]} and priority = 999 and processseq = 999")[:id],
+							:opeitm_duration=>"",:assigs=>"",
+							:endtime=>rec[:duedate],
+							:qty=>rec[:qty],
+							:depends=>""}
+	    ngantts = []
+        ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],
+					:processseq=>rec[:processseq],:priority=>rec[:priority],
+					:endtime=>rec[:duedate],:id=>"000"}
+        until ngantts.size == 0
+            cnt += 1
+            ngantts = proc_get_tree_itms_locas ngantts
+             break if cnt >= 10000
+        end	
+        @bgantts[:"000"][:starttime] = if @min_time < Time.now then Time.now else @min_time end
+        prv_resch_trn  ####再計算
+        @bgantts[:"000"][:endtime] = @bgantts[:"001"][:endtime] 
+        @bgantts[:"000"][:opeitm_duration] = " #{(@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]}"
+	    str_gantt = {}
+        @bgantts.sort.each  do|key,value|   ###依頼されたオーダ等を単純にopeitms,nditmsを使用してgantttableに展開
+			idx = plsql.trngantts_seq.nextval
+			opeitm = plsql.select(:first,"select * from opeitms  where id =  #{value[:opeitm_id]}")
+			str_gantt ={:id=>idx,:key=>key.to_s,
+			:orgtblname=>rec[:tblname],:orgtblid=>rec[:tblid],
+			:mlevel=>value[:mlevel],
+			:sno_prj=>rec[:sno_prj],:strdate=>value[:starttime],
+			:duedate=>value[:endtime],
+            :parenum=>value[:nditm_parenum],:chilnum=>value[:nditm_chilnum],
+			:qty=>value[:qty],:prdpurshp=>value[:prdpurshp],
+			:itms_id=>opeitm[:itms_id],:processseq=>opeitm[:processseq],:locas_id=>opeitm[:locas_id],:priority=>opeitm[:priority],
+			:expiredate=>"2099/12/31".to_date,
+			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created_by perform_mkschs ",:persons_id_upd=>0}
+		    plsql.trngantts.insert str_gantt		
+		    vproc_create_schs_from_gantt str_gantt
         end
-		###debugger if short_rec[:short_qty] == 0
-        update_rec = plsql.select(:first,"select * from trngantts where id = #{short_rec[:id]}")
-        update_rec[:qty_alloc] =  update_rec[:qty] - short_rec[:short_qty]
-		update_rec[:where] = {:id=>update_rec[:id]}
-        plsql.trngantts.update  update_rec 		
-		return short_rec[:short_qty]
 	end
-    def vproc_chk_free_prdpurshpstk short_rec,delay,loca
-		short_qty = short_rec[:short_qty]
-	    ["insts","ords","stk","schs"].each do |tbl|
-		    unallocs = plsql.select(:all,sql_free_trngantt(tbl,short_rec,delay ,loca))   ### 未引当て 納期遅れなし　同一場所
-		    unallocs.each do |free_rec|
-		        qty_alloc = vproc_chng_free_to_alloc( free_rec, short_rec) ### 未引当てから引当てへ
-		        short_qty =  if  short_rec[:short_qty] > qty_alloc then short_rec[:short_qty] - short_rec[:qty_alloc] else  0 end
-			    break if short_qty <= 0
-		    end
-        end			
-		return short_qty
-	end
-	def vproc_add_key_next trngantt
-		add_key = plsql.select(:first,"select max(keynext) addkey from trngantts where orgtblname = '#{unallocs[0][:orgtblname]}'
-                                       and orgtblid = #{unallocs[0][:orgtblid]} and key = '#{trngantt[:key]}' ")[:addkey]		   
-		new_add_key = add_key.next
-	    if add_key >= "zz" ###ファイルの分割はzzまで
-	      fprnt " 
-		ary_trns =[] over line #{__LINE__} gantt_rec:#{gantt_rec}"
-          raise
+	def vproc_create_schs_from_gantt( str_gantt)  ##	
+		proc_command_c_to_instance(plsql.select(:first,"select * from r_trngantts where id = #{str_gantt[:id]}"))   ### @xxxxの作成
+		strsql = "select * from opeitms where itms_id = #{str_gantt[:itms_id]} and processseq = #{str_gantt[:processseq]} and priority = #{str_gantt[:priority]}"
+		@opeitm = plsql.select(:first,strsql)
+		if str_gantt[:key].size > 4 
+			strsql = "select * from trngantts where orgtblname = '#{str_gantt[:orgtblname]}' and orgtblid = #{str_gantt[:orgtblid]} and key = '#{str_gantt[:key][0..-4]}'"
+			pare_gantt = plsql.select(:first,strsql)	
+			strsql = "select * from opeitms where itms_id = #{pare_gantt[:itms_id]} and processseq = #{pare_gantt[:processseq]} and priority = #{pare_gantt[:priority]}"
+			@pare_opeitm = plsql.select(:first,strsql)
+			__send__("proc_tblink_mksch_trngantts_#{str_gantt[:prdpurshp]}schs_self10")
+		else
+			@pare_opeitm = @opeitm
+			__send__("proc_tblink_mksch_trngantts_#{str_gantt[:prdpurshp]}schs_self10") if str_gantt[:mlevel] == 1
 		end
-		new_add_key = "AA" if add_key == "99"
-		new_add_key = "aa" if add_key == "ZZ"
-		return new_add_key
-	end
-	def sql_free_trngantt tbl,short_rec,delay,loca
-	     %Q& select orgtblname,orgtblid, qty,qty_alloc from trngantts  a
-                   where orgtblname like '%#{tbl}%' 
-				   and a.itms_id = #{short_rec[:itms_id]} and a.processseq = #{short_rec[:processseq]}  and a.locas_id = #{short_rec[:locas_id]} 
-                   and tblname = orgtblname and tblid  = orgtblid  /* 未引当てを示す*/
-                   and  sno_prj = '#{short_rec[:sno_prj]}'
-				   and qty_alloc > 0 /*未引当てテーブルにまだ未引当てが残っている。 */				   
-                   and to_char(duedate,'yyyy/mm/dd HH24') #{if delay then  " > " else " <= " end}  '#{short_rec[:duedate].strftime("%Y/%m/%d %H")}'
-                   order by duedate #{if delay then  "  " else " desc" end} &
-    end 	
-	def vproc_chng_free_to_alloc( free_rec,short_rec )
-	    qty_alloc = if (free_rec[:qty_alloc]) >= short_qty then short_qty else (rec[:qty_alloc]) end
-		free_rec[:qty_alloc] -= qty_alloc 
-		plsql.trngantts.update free_rec   ### free tbl qty_alloc 減
-		short_rec[:id] = plsql.trngnatts_seq.nextval
-		short_rec[:qty_alloc] = qty_alloc 
-		add_key = vproc_add_key_next short_rec
-		short_rec[:key] = short_rec[:key][0..-3] + add_key 
-		short_rec[:tblname] = free_rec[:orgtblname]
-		short_rec[:tblid] = free_rec[:orgtblid]
-		short_rec[:nextkey] = add_key
-		plsql.trngantts.insert short_rec   ### free  --> alloc
-		#### free_trnganttから引当て分を加算
-		###構成が変わった時、余分な引当てが発生する対処　未処理
-	end
-	def psub_chk_over_alloc
-	end
 		
-	
-	def psub_chk_alloc_opeitm( free_rec,gantt_rec, short_qty )
-	    ## gantt_recにはあるがfree_recからの引当てにはないopeitms  途中で構成が変更された。
-	end
-	def psub_over_alloc_to_free over_alloc_itms
-	end
+    end
  end ## class
-
-class DbOrds  < ActionController::Base
-    def perform_mkords rec
+ 
+ 
+class DbReAllocs  < DbSchs
+    def perform_reallocs recs
 	  begin
 	    @sio_user_code = 0
         plsql.connection.autocommit = false
 	    @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
         @pare_class = "batch"
 		##fprnt " line #{__LINE__}  \n sql_mkord_search(rec) = #{sql_mkord_search(rec)}"
-		vproc_mkord rec	
-		rec[:result_f] = "1"  ## normal end
-		rec[:updated_at] = Time.now
-		rec[:cmpldate] = Time.now
-		rec[:incnt] = @incnt
-		rec[:outcnt] = @outcnt
-		rec[:skipcnt] = @skipcnt
-		rec[:inqty] = @inqty
-		rec[:outqty] = @outqty
-		rec[:skipqty] = @skipqty
-		rec[:inamt] = @inamt
-		rec[:outamt] = @outamt
-		rec[:skipamt] = @skipamt
-		rec[:where] = {:id =>rec[:id]}
-		plsql.mkords.update rec
+		recs.each do |rec|
+		    vproc_alloc_search rec	
+		    rec[:result_f] = "1"  ## normal end
+		    rec[:updated_at] = Time.now
+		    rec[:cmpldate] = Time.now
+		    rec[:incnt] = @incnt
+		    rec[:outcnt_alloc] = @outcnt_alloc
+		    rec[:inqty] = @inqty
+		    rec[:qty_alloc] = @qty_alloc
+		    rec[:inamt] = @inamt
+		    rec[:amt_alloc] = @amt_alloc
+		    rec[:where] = {:id =>rec[:id]}
+		    plsql.reallocs.update rec
+		end 
 		plsql.commit
+        plsql.connection.autocommit = true
+		rescue
+		        plsql.rollback
+                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		
+		        rec[:result_f] = "9"  ## error
+		        rec[:message_code] = $!.to_s[0..255]
+		        rec[:message_contents] = $@.to_s[0..3999]
+		        rec[:updated_at] = Time.now
+		        rec[:where] = {:id =>rec[:id]}
+		        plsql.reallocs.update rec
+		        plsql.commit
+	  end
+    end
+    handle_asynchronously :perform_reallocs
+	def sql_alloc_search rec,alloc_ord
+		org_strwhere = ""
+		trn_strwhere = ""
+		### orgtblnameの存在チェックを画面でする。 trnganttsのorgtblnameにあること。
+		gantt_show_data = get_show_data "r_trngantts"   if rec[:orgtblname]
+		@sch_show_data = get_show_data "r_#{rec[:prdpurshp]}schs" 
+		trn_show_data = get_show_data "r_trngantts"
+		org_search_key = {}
+		trn_search_key = {}
+		rec.each do |key,val|
+   		    next if val.nil?
+   		    next if val == "dummy"
+   		    skey = key.to_s
+   		    next if skey =~ /_id_/
+    		case skey
+        		when /_org$/
+	        		newkey = skey.gsub("_org","").to_sym
+					org_search_key[newkey] = val
+	    		when /_trn$/
+	        		newkey = skey.gsub("_trn","").to_sym
+					trn_search_key[newkey] = val
+    		end    
+		end
+		if org_search_key.size >=1
+    		org_strwhere = " and alloctbl_srctblid in (select id from r_trngantts "
+			org_strwhere << " where trngantt_orgtblname = '#{rec[:orgtblname]}'     "
+    		org_strwhere = proc_search_key_strwhere(org_search_key,org_strwhere,gantt_show_data )
+    		org_strwhere << ") "
+		end
+		if trn_search_key.size >=1
+    		trn_strwhere = "  and alloctbl_destblid in (select id from r_#{rec[:prdpurshp]}schs  where  "
+    		trn_strwhere = proc_search_key_strwhere(trn_search_key,trn_strwhere,@sch_show_data)
+    		trn_strwhere << ") "
+		end
+		%Q& #{if alloc_ord == "alloc" 
+				"select distinct trngantt_orgtblname,trngantt_orgtblid"
+			  else
+				"select trngantt_id,trngantt_strdate,trngantt_loca_id,trngantt_itm_id,alloctbl_qty,alloctbl_id,sch.* "
+			 end}
+		    from r_trngantts trngantt ,r_#{rec[:prdpurshp]}schs sch ,r_alloctbls
+		    where  alloctbl_srctblname = 'trngantts' and trngantt_id = alloctbl_srctblid
+			 and alloctbl_qty > 0 and alloctbl_destblname = '#{rec[:prdpurshp]}schs' and alloctbl_destblid = sch.id
+		    #{org_strwhere}
+		    #{trn_strwhere}
+			#{if alloc_ord == "alloc"
+				"order by trngantt.trngantt_strdate "
+			else
+				"order by trngantt.itm_code,trngantt.trngantt_loca_id,sch.loca_id_to,trngantt.trngantt_processseq,sch.opeitm_id,trngantt.trngantt_strdate"
+			end}&
+	end
+	### 子部品の置き換えのコーディングがまだ
+	def vproc_alloc_search rec
+		gantts = plsql.select(:all,sql_alloc_search(rec,"alloc"))
+		gantts.each do |gantt|
+			strsql = "select gantt.id ,gantt.itms_id,gantt.processseq,gantt.priority,gantt.key,gantt.sno_prj,sum(alloc.qty) unalloc_qty "
+			strsql << " from trngantts gantt,alloctbls alloc where orgtblname = '#{gantt[:orgtblname]}' and orgtblid = #{gantt[:orgtblid]} "
+			strsql << " and mlevel >0 and srctblname = 'trngantts' and gantt.id = alloc.srctblid and destblname like '%schs' "
+			strsql << " group by gantt.id,gantt.itms_id,gantt.processseq,gantt.priority,gantt.key,gantt.sno_prj  having sum(alloc.qty) > 0 order by  gantt.key"
+			unallocs = plsql.select(:all,strsql)
+			unallocs.each do |unalloc|
+				strsql = "select trn.id new_alloc_id,alloc.qty alloc_qty "
+				strsql << " from r_#{gantt[:prdpurshp]}ords trn,alloctbls alloc where srctblname = '#{gantt[:prdpurshp]}ords' "
+				strsql << " and trn.id = srctblid and trn.opeitm_itm_id = #{unalloc[:itms_id]} and trn.opeitm_processseq = #{unalloc[:processseq]} "
+				strsql << " and trn.opeitm_priority = #{unalloc[:priority]} and alloc.srctblname = alloc.desttblname and alloc.scrtblid = alloc.destblid "
+				strsql << " and gantt.sno_prj = trn.sno_prj "
+				allocs = plsql.select(:all,strsql)
+				allocs.each do |alloc|
+					if unalloc[:unalloc_qty] > alloc[:alloc_qty]
+						proc_alloc gantt,unalloc,alloc,alloc[:alloc_qty]
+						unalloc[:unalloc_qty] -= alloc[:alloc_qty]
+					else
+						proc_alloc gantt,unalloc,alloc,unalloc[:unalloc_qty]
+						break
+					end
+				end
+			end			
+		end
+	end
+	def	proc_alloc unalloc,alloc,dest_qty
+		###  新しいtrnganttとの関係
+        str_alloc ={:id=>plsql.alloctbls_seq.nextval,
+	        :srctblname=>"trngantts",:srctblid=>unalloc[:id],:destblname=>(gantt[:prdpurshp]+ "ords"),:destblid=>alloc[:new_alloc_id],
+			:qty=>@src_tbl[:dest_qty],
+			:expiredate=>"2099/12/31".to_date,
+			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"proc_realloc ",:persons_id_upd=>0} 
+		plsql.alloctbls.insert str_alloc
+		### 
+        str_alloc ={:id=>plsql.alloctbls_seq.nextval,
+	        :srctblname=>unalloc[:destblname],:srctblid=>unalloc[:destblid],:destblname=>(gantt[:prdpurshp]+"ords"),:destblid=>alloc[:new_alloc_id],
+			:qty=>@src_tbl[:dest_qty],
+			:expiredate=>"2099/12/31".to_date,
+			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"proc_realloc ",:persons_id_upd=>0} 
+		plsql.alloctbls.insert str_alloc		
+		org_allocs = plsql.select(:all," select * from alloctbls where srctblname = 'trngantts' and srctblid = #{unalloc[:id]} and destblname like '%schs' ")
+		####元の引当て関係
+		org_allocs.each do |org|
+			org[:where] = {:id=>org[:id]}
+			org[:updated_at] = Time.now
+			if dest_qty  > org[:qty]
+				org[:qty] = 0
+				plsql.alloctbls.update org
+				dest_qty -= org[:qty]
+			else
+				org[:qty] -=dest_qty
+				plsql.alloctbls.update org
+				break
+			end
+		end
+	end
+end
+class DbOrds  < DbReAllocs
+    def perform_mkords recs
+	  begin
+	    @sio_user_code = 0
+        plsql.connection.autocommit = false
+	    @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
+        @pare_class = "batch"
+		##fprnt " line #{__LINE__}  \n sql_mkord_search(rec) = #{sql_mkord_search(rec)}"
+		recs.each do |rec|
+		    vproc_mkord rec	
+		    rec[:result_f] = "1"  ## normal end
+		    rec[:updated_at] = Time.now
+		    rec[:cmpldate] = Time.now
+		    rec[:incnt] = @incnt
+		    rec[:outcnt] = @outcnt
+		    rec[:skipcnt] = @skipcnt
+		    rec[:inqty] = @inqty
+		    rec[:outqty] = @outqty
+		    rec[:skipqty] = @skipqty
+		    rec[:inamt] = @inamt
+		    rec[:outamt] = @outamt
+		    rec[:skipamt] = @skipamt
+		    rec[:where] = {:id =>rec[:id]}
+		    plsql.mkords.update rec
+		end
         dbcud = DbCud.new
         dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
+		plsql.commit
         plsql.connection.autocommit = true
 		rescue
 		        plsql.rollback
@@ -346,134 +449,65 @@ class DbOrds  < ActionController::Base
     end
     handle_asynchronously :perform_mkords
 		
-	def sql_mkord_search rec
-		org_strwhere = ""
-		tbl_strwhere = ""
-		trn_strwhere = ""
-		### orgtblnameの存在チェックを画面でする。 trnganttsのorgtblnameにあること。
-		org_show_data = get_show_data "r_#{rec[:orgtblname]}"   if rec[:orgtblname]
-		@sch_show_data = get_show_data "r_#{rec[:prdpurshp]}schs" 
-		@ord_show_data = get_show_data "r_#{rec[:prdpurshp]}ords" 
-		trn_show_data = get_show_data "r_trngantts"
-		org_search_key = {}
-		tbl_search_key = {}
-		trn_search_key = {}
-		dummy_itm_id = plsql.select(:first,"select * from itms where code = 'dummy'")[:id]  ###dummyは全レコード対象
-		dummy_loca_id = plsql.select(:first,"select * from locas  where code = 'dummy'")[:id]
-		dummy_chrgperson_id = plsql.select(:first,"select * from r_chrgpersons  where person_code = 'dummy'")[:id]
-		rec.each do |key,val|
-   		    next if val.nil?
-   		    next if val == "dummy"
-   		    skey = key.to_s
-   		    if skey =~ /itms_id/ 
-        		if val.to_i ==  dummy_itm_id 
-	     		next
-	    		end
-    	    end
-    	    if skey =~ /locas_id/ 
-        		if val.to_i ==  dummy_loca_id 
-	      		next
-	    		end
-    		end
-    	    if skey =~ /chrgpersons_id/ 
-        		if val.to_i ==  dummy_chrgperson_id
-	      		next
-	    		end
-    		end
-    		case skey
-        		when /_org$/
-	        		newkey = skey.gsub("_org","").gsub("mkord_","").to_sym
-					org_search_key[newkey] = val
-	    		when /_tbl$/
-	        		newkey = skey.gsub("_tbl","").gsub("mkord_","").to_sym
-					tbl_search_key[newkey] = val
-			
-	    		when /_trn$/
-	        		newkey = skey.gsub("_trn","").gsub("mkord_","").to_sym
-					trn_search_key[newkey] = val
-    		end    
-		end
-		if org_search_key.size >=1
-    		org_strwhere = " and trngantt_orgtblid in (select id from r_#{rec[:orgtblname]} where  "
-    		org_strwhere = proc_search_key_strwhere(org_search_key,org_strwhere,org_show_data )
-    		org_strwhere << ") "
-		end
-		if tbl_search_key.size >=1
-    		tbl_strwhere = " and trngantt_tblid in (select id from r_#{rec[:prdpurshp]}schs  where  "
-    		tbl_strwhere = proc_search_key_strwhere(tbl_search_key,tbl_strwhere,@sch_show_data)
-    		tbl_strwhere << ") "
-		end
-    	##tbl_strwhere << " and ( opeitm_autocreate_ord != '0' or opeitm_autocreate_ord is null) "  ###手動でordsを作成の時を除く
-		if trn_search_key.size >=1
-    		trn_strwhere = " and   "
-    		trn_strwhere = proc_search_key_strwhere(trn_search_key,trn_strwhere,trn_show_data)
-		end
-		%Q& select trngantt_id,trngantt_strdate,trngantt_qty_alloc,trngantt_tblname,trngantt_loca_id,sch.*
-		     from r_trngantts trngantt ,r_#{rec[:prdpurshp]}schs sch 
-		     where trngantt.trngantt_tblname = '#{rec[:prdpurshp]}schs' and trngantt.trngantt_qty_alloc > 0 and trngantt.trngantt_tblid = sch.id  
-		     #{org_strwhere}
-		     #{tbl_strwhere}
-		     #{trn_strwhere}
-		      order by trngantt.itm_code,trngantt.trngantt_loca_id,sch.loca_id_to,trngantt.trngantt_processseq,sch.opeitm_id,trngantt.trngantt_strdate &
-	end
+
 	def vproc_mkord rec
 	    opeitm_id = 0
 		@ord_show_data = get_show_data "r_#{rec[:prdpurshp]}ords"
-		bal_schs = plsql.select(:all,sql_mkord_search(rec))
+		bal_schs = plsql.select(:all,sql_alloc_search(rec,"ord"))
 		@incnt = bal_schs.size
 		@skipcnt = @outcnt = 0
 		@inqty = @outqty = @skipqty = 0
 		@inamt = @outamt = @skipamt = 0
 		@schpricesym = (rec[:prdpurshp] + "sch_price").to_sym
-		##fprnt "line #{__LINE__}  \n sql_mkord_search(rec) #{sql_mkord_search(rec)}"
+		##fprnt "line #{__LINE__}  \n sql_realloc_search(rec) #{sql_realloc_search(rec)}"
 		save_sch = {}
-		ary_trns =[]		
+		ary_alloc =[]		
 		@free_qty = 0
 		bal_schs.each do |sch|
-		    @inqty += sch[:trngantt_qty_alloc]
-			@inamt += (sch[:trngantt_qty_alloc] * (sch[@schpricesym]||=0))
+		    @inqty += sch[:alloctbl_qty]
+			@inamt += (sch[:alloctbl_qty] * (sch[@schpricesym]||=0))
 		    if opeitm_id != sch[:opeitm_id]
-			    vproc_chk_mkord_create_ord(save_sch,ary_trns) if opeitm_id != 0 					   
+			    vproc_chk_mkord_create_ord(save_sch,ary_alloc) if opeitm_id != 0 					   
 			    save_sch = sch.dup
-				ary_trns << sch[:trngantt_id]
+				ary_alloc << sch[:alloctbl_id]
 				vproc_mkord_opeitm (save_sch) ###set @opeitm
 				opeitm_id = @opeitm[:id]
 				@free_qty = 0
 			  else
-                if @opeitm[:maxqty] > save_sch[:trngantt_qty_alloc] + sch[:trngantt_qty_alloc] or 
+                if @opeitm[:maxqty] > save_sch[:alloctbl_qty] + sch[:alloctbl_qty] or 
 				    sch[:trngantt_strdate].to_date > save_sch[:trngantt_strdate].to_date + @opeitm[:opt_fixoterm] or
 				    sch[:trngantt_loca_id] != save_sch[:trngantt_loca_id] or sch[:loca_id_to] != save_sch[:loca_id_to]
 				    if  sch[:trngantt_loca_id] == save_sch[:trngantt_loca_id] and sch[:loca_id_to] == save_sch[:loca_id_to]
-					    if save_sch[:trngantt_qty_alloc] >= @free_qty 
-    						save_sch[:trngantt_qty_alloc] -= @free_qty 
+					    if save_sch[:alloctbl_qty] >= @free_qty 
+    						save_sch[:alloctbl_qty] -= @free_qty 
                             @free_qty = 0
                          else
-    						save_sch[:trngantt_qty_alloc] = 0
-                            @free_qty -= save_sch[:trngantt_qty_alloc]				
+    						save_sch[:alloctbl_qty] = 0
+                            @free_qty -= save_sch[:alloctbl_qty]				
                         end	
                        else
                         @free_qty = 0   					   
 					end
-				    vproc_chk_mkord_create_ord(save_sch,ary_trns)  if save_sch[:trngantt_qty_alloc] > 0 
+				    vproc_chk_mkord_create_ord(save_sch,ary_alloc)  if save_sch[:alloctbl_qty] > 0 
 			        save_sch = sch.dup
-				    ary_trns << sch[:trngantt_id]
+				    ary_alloc << sch[:alloctbl_id]
 				    vproc_mkord_opeitm (save_sch)   ###set @opeitm
 				    opeitm_id = @opeitm[:id]
                    else
-                    save_sch[:trngantt_qty_alloc] += sch[:trngantt_qty_alloc]  
-				    ary_trns << sch[:trngantt_id]  	 				   			   
+                    save_sch[:alloctbl_qty] += sch[:alloctbl_qty]  
+				    ary_alloc << sch[:alloctbl_id]  	 				   			   
                 end				
 		    end
 		end
-		vproc_chk_mkord_create_ord(save_sch,ary_trns)  if save_sch[:trngantt_qty_alloc] > 0
+		vproc_chk_mkord_create_ord(save_sch,ary_alloc)  if save_sch[:alloctbl_qty] > 0
 	end
-	def vproc_chk_mkord_create_ord save_sch,ary_trns
+	def vproc_chk_mkord_create_ord save_sch,ary_alloc
 		if @opeitm[:autocreate_ord] == "0" ##手動の時は作成しない。
 		   @skipcnt += 1
-		   @skipqty += save_sch[:trngantt_qty_alloc]
-		   @skipamt += (save_sch[:trngantt_qty_alloc] * (save_sch[@schpricesym]||=0))
+		   @skipqty += save_sch[:alloctbl_qty]
+		   @skipamt += (save_sch[:alloctbl_qty] * (save_sch[@schpricesym]||=0))
 		else   
-		    vproc_mkord_create_ord(save_sch,ary_trns)
+		    vproc_mkord_create_ord(save_sch,ary_alloc)
         end
 	end
     def vproc_mkord_opeitm save_sch
@@ -490,7 +524,7 @@ class DbOrds  < ActionController::Base
 		@opeitm[:packqty]  = 1 if @opeitm[:packqty] == 0
 		@opeitm[:autocreate_ord] ||= '0' ## 0:手動　1：自動　confirm=1  2:仮のxxxORDSを自動作成 confirm=0
 	end
-    def vproc_mkord_create_ord save_sch,ary_trns ###日付(@opeitm[:opt_fixoterm])による数量まとめは済んでいる。
+    def vproc_mkord_create_ord save_sch,ary_alloc ###日付(@opeitm[:opt_fixoterm])による数量まとめは済んでいる。
          ##仮オーダま他は本オーダ　仮は有効xx(仮に7日にしている。
 		 ## 包装単位での発注
 		mk_ord = {}
@@ -510,8 +544,8 @@ class DbOrds  < ActionController::Base
         mk_ord[:id] = mk_ord[(ordtblname.chop + "_id").to_sym] = plsql.__send__("#{ordtblname}_seq").nextval 
 		mk_ord[:sio_user_code] = 0		
 		mk_ord[(ordtblname.chop+"_expiredate").to_sym] = Confirmdate if @opeitm[:autocreate_ord] != "1" ##仮オーダ
-	    org_qty = (save_sch[:trngantt_qty_alloc].to_f/@opeitm[:packqty].to_f).ceil *  @opeitm[:packqty]
-		@free_qty = org_qty - save_sch[:trngantt_qty_alloc]
+	    org_qty = (save_sch[:alloctbl_qty].to_f/@opeitm[:packqty].to_f).ceil *  @opeitm[:packqty]
+		@free_qty = org_qty - save_sch[:alloctbl_qty]
         until org_qty <= 0
 		    ## maxqtyはpackqtyの整数倍であること。
 	        mk_ord[(ordtblname.chop+"_qty").to_sym] = if @opeitm[:maxqty] < org_qty then @opeitm[:maxqty] else org_qty end
@@ -524,16 +558,23 @@ class DbOrds  < ActionController::Base
 		    mk_ord[(ordtblname.chop+"_confirm").to_sym] = @opeitm[:autocreate_ord]
             sub_insert_sio_c    mk_ord 
             proc_update_table  mk_ord,1
-            vproc_chng_alloc ary_trns,mk_ord[(ordtblname.chop+"_qty").to_sym]
+            vproc_chng_alloc ary_alloc,mk_ord[(ordtblname.chop+"_qty").to_sym] do
+			  "'schs','ords'"
+			end			
 			vproc_create_free_trngantts save_sch if @free_qty > 0   ### free qty
 			org_qty -= @opeitm[:maxqty]   
 	    end		
 	end
-	def vproc_chng_alloc ary_trns ,qty
-		trn_ids = ary_trns.join(",") 
+	def vproc_chng_alloc ary_alloc ,qty
+		trn_ids = ary_alloc.join(",") 
 		trns = plsql.select(:all,"select * from trngantts where id in (#{trn_ids}) and qty_alloc > 0 ")
 	    trns.each do |trn|		
-			ord_trn = trn.dup
+			alloctbl = {}
+            alloctbl[:id] = plsql.alloctbls_seq.nextval
+            alloctbl[:srctblname] = trn[:tblname]
+            alloctbl[:srctblid] = trn[:id]
+            alloctbl[:qty] = trn[:qty_alloc]
+			nxt_trn = trn.dup
 			if qty >= trn[:qty_alloc]
 			    qty -= trn[:qty_alloc]				      
 			    trn[:qty_alloc] = 0
@@ -543,26 +584,16 @@ class DbOrds  < ActionController::Base
 			end
 			trn[:where] = {:id=>trn[:id]}
 			plsql.trngantts.update trn
-            ord_trn[:id] = plsql.trngantts_seq.nextval
-            ord_trn[:tblname] = trn[:tblname].sub("schs","ords")
-            ord_trn[:tblid] = @src_tbl[:id]	
-			ord_trn[:created_at] = Time.now
-			ord_trn[:updated_at] = Time.now
-            plsql.trngantts.insert ord_trn	
-			vproc_sch_update_fm_trngantt trn,trn[:qty_alloc]
+            nxt_trn[:id] = plsql.trngantts_seq.nextval
+            alloctbl[:destblname] = nxt_trn[:tblname].sub!(yield)
+            alloctbl[:destblid] = nxt_trn[:tblid] = @src_tbl[:id]	
+			nxt_trn[:created_at] = alloctbl[:created_at] = Time.now
+			nxt_trn[:updated_at] = alloctbl[:updated_at] = Time.now
+            plsql.trngantts.insert nxt_trn			
+            plsql.alloctbls.insert alloctbl			
 		end
 	end
-	def vproc_sch_update_fm_trngantt trn,qty_alloc
-		command_c = plsql.select(:first,"select * from r_#{trn[:tblname]} where id = #{trn[:tblid]}")
-		command_c[(trn[:tblname].chop+"_qty").to_sym] = qty_alloc
-		command_c[:sio_classname] = "plsql_auto_edit_by_trngantt"
-		command_c[:sio_viewname] = command_c[:sio_code] = "r_#{trn[:tblname]}"
-		command_c[:sio_user_code] = @sio_user_code 
-        command_c[:sio_recordcount] = 1
-		command_c[:sio_session_counter] = @new_sio_session_counter
-		sub_insert_sio_c    command_c 
-	    sub_userproc_chk_set    command_c
-	end
+	
 	def vproc_create_free_trngantts save_sch
 	    strsql = "select * from trngantts where orgtblname = '#{save_sch[:trngantt_tblname]}' and id = #{@src_tbl[:id]} and tblname = orgtblname"
      	trn = plsql.select(:first,strsql)
@@ -571,7 +602,7 @@ class DbOrds  < ActionController::Base
 			trn[:where] = {:id=>trn[:id]}
 			plsql.trngantts.update trn
 		  else	
-            str_trngantt ={:id=>plsql.trngantts_seq.nextval,:key=>"00000",:keynext=>"00",:subkey=>"00000",
+            str_gantt ={:id=>plsql.trngantts_seq.nextval,:key=>"000",
 	        :orgtblname=>save_sch[:trngantt_tblname],:orgtblid=>mk_ord[:id],
 	        :mlevel=>0,
 	        :sno_prj=>@src_tbl[:sno_prj],:strdate=>@src_tbl[:strdate]||=@src_tbl[:depdate],:strdate_est=>@src_tbl[:strdate]||=@src_tbl[:depdate],
@@ -581,7 +612,95 @@ class DbOrds  < ActionController::Base
 			:itms_id=>save_sch[:itm_id],:processseq=>save_sch[:opeitm_processseq],:locas_id=>save_sch[:loca_id],
 			:expiredate=>"2099/12/31".to_date,
 			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created free trngantts ",:persons_id_upd=>0} 
-			plsql.trngantts.insert str_trngantt
+			plsql.trngantts.insert str_gantt
 		end
     end		
 end
+
+class DbInsts  < DbOrds
+    def perform_mkinsts recs
+	  begin
+	    @sio_user_code = 0
+        plsql.connection.autocommit = false
+	    @new_sio_session_counter  = user_seq_nextval(@sio_user_code)
+        @pare_class = "batch"
+		@savekey = ""								
+		@cno_lineno = 0
+		recs.each do |rec|  ###recsはsumtypeでsortされていること
+		    vproc_mkinst rec
+		    rec[:result_f] = "1"  ## normal end
+		    rec[:updated_at] = Time.now
+		    rec[:cmpldate] = Time.now
+		    rec[:incnt] = @incnt
+		    rec[:outcnt] = @outcnt
+		    rec[:skipcnt] = @skipcnt
+		    rec[:inqty] = @inqty
+		    rec[:outqty] = @outqty
+		    rec[:skipqty] = @skipqty
+		    rec[:inamt] = @inamt
+		    rec[:outamt] = @outamt
+		    rec[:skipamt] = @skipamt
+		    rec[:where] = {:id =>rec[:id]}
+		    plsql.mkinsts.update rec
+		end
+        dbcud = DbCud.new
+        dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
+		plsql.commit
+        plsql.connection.autocommit = true
+		rescue
+		        plsql.rollback
+                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		
+		        rec[:result_f] = "9"  ## error
+		        rec[:message_code] = $!.to_s[0..255]
+		        rec[:message_contents] = $@.to_s[0..3999]
+		        rec[:updated_at] = Time.now
+		        rec[:where] = {:id =>rec[:id]}
+		        plsql.mkords.update rec
+		        plsql.commit
+	  end
+    end
+    handle_asynchronously :perform_mkinsts
+	def vproc_mkinst_fm_ord rec
+	    strsql = "select * from r_#{rec[:orgtblname]} where id = #{tblid} "
+		proc_command_c_to_instance command_c
+		command_c = plsql.select(:first,strsql)
+		proc_command_c_to_instance command_c		
+	    __send__("proc_tblink_#{rec[:tblname]}_to_#{rec[:tblname].sub('ords','insts')}_self10")
+	end
+	def vproc_inst rec
+		 ## tblname,tblid(keyの決定はsno又はcno)必須　オンラインでチェックしていること
+		command_c = plsql.select(:first,"select * from r_mkinsts where id = {rec[:id]}")
+		case rec[:sumtype]
+		    when "0"  ##ord:inst = 1:1
+				vproc_chk_inst rec if @savekey != ""
+				vproc_mkinst_fm_ord rec
+				@savekey = ""
+			when "1"   ###分割
+				vproc_chk_inst rec if @savekey != ""
+				vproc_mkinst_fm_ord rec
+				@savekey = "1," + rec[:tblname] + "," + rec[:tblid].to_s
+			when /^NO/  ###統合
+				vproc_chk_inst rec if @savekey != "" and @savekey != rec[:sumtype]
+				@cno = __send__("proc_view_field_#{@rec[:tblname].chop}_cno")
+				vproc_mkinst_fm_ord rec
+				@savekey = rec[:sumtype]
+		end
+	end
+	def vproc_chk_inst rec
+	    case @savekey
+			when /^1/
+				vproc_chk_ord_qty_inst_qty
+			when /^NO/
+				@cno_lineno = 0
+		end
+	end
+	def vproc_chk_inst rec
+	    case @savekey
+			when /^1/
+				vproc_chk_ord_qty_inst_qty
+			when /^NO/
+				@cno_lineno = 0
+		end
+	end
+end		

@@ -266,7 +266,7 @@ include  JqgridFilter
       strkeydata = %Q% "q":"#{@screen_code}","fieldname":keyname%
       @gridcolumns.each do |tcolm|
             ###debugger  if tcolm[:field] =~ /fieldcode_fieldlength/
-            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editrules][:required] != true)   
+            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editable] == true and tcolm[:editrules][:required] != true )   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
 	        end
             if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or  tcolm[:field] =~ /_id/ then 
@@ -316,17 +316,18 @@ include  JqgridFilter
       javascript_edit << "}"
       
        ##javascript_edit <<   ";}})(jQuery);"
-   end
-   def set_onInitializeForm addorcopy
-       require_fields =  "function(formid) {"
-       @gridcolumns.each do |tcolm|
+	end
+	def set_onInitializeForm addorcopy
+		require_fields =  "function(formid) {"
+		@gridcolumns.each do |tcolm|
 	        if (tcolm[:field].split("_")[0] == @screen_code.split("_")[1] and tcolm[:editable] == true ) or  (tcolm[:required] == true )
                require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
 			end
 			if addorcopy == "add"
-			   if respond_to?("proc_view_field_#{tcolm[:field]}_dflt")
-			      dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt")
-			      require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
+				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt")
+					debugger ### tcolm[:field]でnil[]のエラーが発生した　上のifはokなのに　原因がわかるまで残しておく　2014/12/20
+					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt")
+					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
 				 else 
 					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt")   ###tbl_field_xxxx_dfflt テーブル登録時
                            dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt")
@@ -488,7 +489,7 @@ include  JqgridFilter
             <p id="#{@jqgrid_id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
             <p id="#{@jqgrid_id}_select_button">  #{extbutton} </p>
             #{extdiv_id}%
-        ##screen_javascript.gsub!(/\s+/," ")
+        screen_javascript.gsub!(/\s+/," ")
         ##debugger
         ##fprnt " jqgrid #{a} "
         id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
