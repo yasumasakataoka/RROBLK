@@ -1,4 +1,4 @@
-# RorBlk
+﻿# RorBlk
 # 2099/12/31を修正する時は　2100/01/01の修正も
  module Ror_blkctl    
 	Blksdate = Date.today - 1  ##在庫基準日　sch,ord,instのこれ以前の納期は許さない。
@@ -15,6 +15,9 @@
         end 
         return grp_code
     end
+	def proc_blkgetpobj code,ptype
+		sub_blkgetpobj code,ptype
+	end
     def sub_blkgetpobj code,ptype    ###
         fstrsqly = ""
         grp_code =  sub_blkget_grpcode 
@@ -53,7 +56,7 @@
             rec = plsql.select(:first,basesql)
             orgcode =  if rec then rec[:pobject_code] else name end			
          end  ## if ocde
-      ##debugger ##fprnt " Line:#{__LINE__} Time:#{Time.now.to_s}  fstrsqly:#{fstrsqly}"
+      ##fprnt " Line:#{__LINE__} Time:#{Time.now.to_s}  fstrsqly:#{fstrsqly}"
       return orgcode ||= name
     end  ## def getpobj
     def fprnt str
@@ -62,13 +65,12 @@
       foo.close
 	  p str
     end   ##fprnt str
-    def user_seq_nextval sio_user_code 
-	  ##debugger
-      ses_cnt_usercode = "userproc_ses_cnt" + sio_user_code.to_s ###user_code 15char 以下
+    def user_seq_nextval
+      ses_cnt_usercode = "userproc_ses_cnt" + @sio_user_code.to_s ###user_code 15char 以下
       unless PLSQL::Sequence.find(plsql,ses_cnt_usercode) then 
              plsql.execute "CREATE SEQUENCE #{ses_cnt_usercode}"
-             plsql.execute "CREATE SEQUENCE userproc#{sio_user_code.to_s}s_seq"
-             userprocs = "CREATE TABLE userproc#{sio_user_code.to_s}s
+             plsql.execute "CREATE SEQUENCE userproc#{@sio_user_code.to_s}s_seq"
+             userprocs = "CREATE TABLE userproc#{@sio_user_code.to_s}s
                    ( id numeric(38)
 				     ,session_counter numeric(38)
                      ,tblname VARCHAR(30)
@@ -80,18 +82,18 @@
                      ,created_at timestamp(6)
                      ,Expiredate date
                      ,Updated_at timestamp(6)
-                     ,CONSTRAINT userproc#{sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
-					 ,CONSTRAINT userproc#{sio_user_code.to_s}s_uk1 UNIQUE(session_counter,tblname)
+                     ,CONSTRAINT userproc#{@sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
+					 ,CONSTRAINT userproc#{@sio_user_code.to_s}s_uk1 UNIQUE(session_counter,tblname)
                       )"					  
               plsql.execute userprocs
       end
       return plsql.__send__(ses_cnt_usercode).nextval 
     end
-    def user_parescreen_nextval sio_user_code 
-        parescreen_cnt_usercode = "parescreen_a" + sio_user_code.to_s 
+    def user_parescreen_nextval
+        parescreen_cnt_usercode = "parescreen_a" + @sio_user_code.to_s
         unless PLSQL::Sequence.find(plsql,parescreen_cnt_usercode) then 
             plsql.execute "CREATE SEQUENCE #{parescreen_cnt_usercode}"
-            parescreens = "CREATE TABLE parescreen#{sio_user_code.to_s}s
+            parescreens = "CREATE TABLE parescreen#{@sio_user_code.to_s}s
                    ( id numeric(38)
                     ,rcdkey VARCHAR(200)
                      ,strsql VARCHAR(4000)
@@ -101,7 +103,7 @@
                      ,created_at timestamp(6)
                      ,Expiredate date
                      ,Updated_at timestamp(6)
-                     , CONSTRAINT parescreen#{sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
+                     , CONSTRAINT parescreen#{@sio_user_code.to_s}s_id_pk PRIMARY KEY (id)
                       )"
               plsql.execute parescreens
         end
@@ -111,23 +113,48 @@
 		sub_insert_sio_c   command_c
 	end
     def sub_insert_sio_c   command_c   ###要求  無限ループにならないこと
-		proc_tblinks(command_c) do 
-			"before"
-		end if command_c[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
         command_c = char_to_number_data(command_c) ###画面イメージからデータtypeへ
         command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
         command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？ 
         command_c[:sio_command_response] = "C"
         command_c[:sio_add_time] = Time.now
-		##fprnt "line #{__LINE__} command_c=#{command_c}"   ##if command_c[:sio_code] == "r_nditms"
-        plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
-		proc_tblinks(command_c) do 
-			"after"
-		end if command_c[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
-    end   ## sub_insert_sio_c
+		command_c = vproc_command_c_dflt_set_fm_rubycoding(command_c) if command_c[:sio_classname] =~ /_add_|_edit_|_delete_/
+		begin
+			plsql.__send__("SIO_#{command_c[:sio_viewname]}").insert command_c
+		rescue
+			plsql.rollback
+			fprnt " proc_insert_sio_c err   ・・・・・　command_c = #{command_c}"
+			raise
+            fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+            fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 	
+		end
+    end   ## sub_insert_sio_c	
+	def vproc_command_c_dflt_set_fm_rubycoding command_c
+		command_c.each do |key,val|
+			if val.nil?
+				strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'view_field' 	and  pobject_code = '#{key.to_s}'
+							and rubycoding_code like '%dflt_for_tbl_set' &
+				rubycode_view = ActiveRecord::Base.connection.select_one(strsql)
+				if rubycode_view
+					dflt_rubycode = rubycode_view["rubycoding_code"] + if rubycode_view["rubycoding_hikisu"] then "," + rubycode_view["rubycoding_hikisu"] else "" end
+					command_c[key] = __send__(dflt_rubycode)
+				else
+					fld_tbl = key.to_s.split("_",2)[1] 
+					strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'tbl_field' 	and  pobject_code = '#{fld_tbl}'
+							and rubycoding_code like '%dflt_for_tbl_set' &
+					rubycode_tbl = ActiveRecord::Base.connection.select_one(strsql)
+					if rubycode_tbl
+						dflt_rubycode = rubycode_tbl["rubycoding_code"] + if rubycode_tbl["rubycoding_hikisu"] then "," + rubycode_tbl["rubycoding_hikisu"] else "" end
+						command_c[key] = __send__(dflt_rubycode)
+					end
+				end
+			end
+		end
+		return command_c
+	end
     def sub_userproc_insert command_c
         userproc = {}		
-        userproc[:id] = plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s_seq").nextval
+        userproc[:id] = plsql.__send__("userproc#{@sio_user_code.to_s}s_seq").nextval
 	    userproc[:session_counter] = command_c[:sio_session_counter]
         userproc[:tblname] = "sio_"+ command_c[:sio_viewname]
         userproc[:cnt] = command_c[:sio_recordcount]
@@ -137,24 +164,19 @@
         userproc[:updated_at] = Time.now
         userproc[:persons_id_upd] = 0
         userproc[:expiredate] = DateTime.parse("2099/12/31")
-        plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s").insert userproc
+        plsql.__send__("userproc#{@sio_user_code.to_s}s").insert userproc
     end     
-    def sub_userproc_chk_set command_c
-	    if PLSQL::Table.find(plsql, "userproc#{command_c[:sio_user_code].to_s}s")
-            strwhere = " where tblname = 'sio_#{command_c[:sio_viewname]}' and "
-		    strwhere << " session_counter = #{command_c[:sio_session_counter]} "
-            chkuserproc = plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s").first(strwhere)
-		    if chkuserproc
-			    chkuserproc[:cnt] += 1
-                chkuserproc[:where] = {:id=>chkuserproc[:id]}			
-                plsql.__send__("userproc#{command_c[:sio_user_code].to_s}s").update 	chkuserproc		  
-			else
-			    sub_userproc_insert command_c 
-			end
-		else	
-			sub_userproc_insert command_c
+    def sub_userproc_chk_set command_c		
+		strwhere = " where tblname = 'sio_#{command_c[:sio_viewname]}' and "
+		strwhere << " session_counter = #{command_c[:sio_session_counter]} "
+        chkuserproc = plsql.__send__("userproc#{@sio_user_code.to_s}s").first(strwhere)
+		if chkuserproc
+		    chkuserproc[:cnt] += 1
+            chkuserproc[:where] = {:id=>chkuserproc[:id]}			
+            plsql.__send__("userproc#{@sio_user_code.to_s}s").update 	chkuserproc		  
+		else
+		    sub_userproc_insert command_c 
 		end
-		@req_userproc = true
     end
     def sub_parescreen_insert hash_rcd
         parescreen = {}
@@ -166,19 +188,18 @@
         parescreen[:updated_at] = Time.now
         parescreen[:persons_id_upd] = 0
         parescreen[:expiredate] = Date.today + 1
-        plsql.__send__("parescreen#{current_user[:id].to_s}s").insert parescreen
+        plsql.__send__("parescreen#{@sio_user_code.to_s}s").insert parescreen
     end
     def sub_insert_sio_r command_r   ####レスポンス
-       ##fprnt " class #{self} : LINE #{__LINE__} command_r  = #{command_r}"
         command_r[:sio_id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
         command_r[:sio_command_response] = "R"
         command_r[:sio_add_time] = Time.now
-          ##debugger
         plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
-        return 
-      ##plsql.commit 
     end   ## sub_insert_sio_r 
-    def char_to_number_data command_r   ###根本解決を   
+    def proc_insert_sio_r command_r   ####レスポンス
+        sub_insert_sio_r command_r
+    end   ## sub_insert_sio_r
+    def char_to_number_data command_r   ###excel からのデータ取り込み　根本解決を   
        ##rubyXl マッキントッシュ excel windows excel not perfect
        @date1904 = nil
 	   viewtype = PLSQL::View.find(plsql,command_r[:sio_viewname]).columns
@@ -234,7 +255,7 @@
             end
         end
         strsql = "SELECT id FROM " + tmp_sql
-        tmp_sql << proc_strwhere(command_c)  ###if command_c[:sio_search]  == "true"
+        tmp_sql << proc_strwhere(command_c)  if command_c[:sio_search]  == "true"
         sort_sql = ""
         unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == "" then 
 	        sort_sql = " ROW_NUMBER() over (order by " +  command_c[:sio_sidx] + " " +  command_c[:sio_sord]  + " ) " 
@@ -245,7 +266,6 @@
         command_c[:sio_totalcount] =  plsql.select(:all,cnt_strsql).count  
         case  command_c[:sio_totalcount]
             when nil,0   ## 該当データなし　　回答
-                ## insert_sio_r recodcount,result_f,contents
 	            contents = "not find record"    ### 将来usergroup毎のメッセージへ
 	            command_c[:sio_recordcount] = 0
                 command_c[:sio_result_f] = "8"  ## no record
@@ -257,7 +277,7 @@
                 strsql = "select #{sub_getfield} from (SELECT #{sort_sql} cnt,a.* FROM #{tmp_sql} ) "
                 r_cnt = 0
                 strsql  <<    " WHERE  cnt <= #{command_c[:sio_end_record]}  and  cnt >= #{command_c[:sio_start_record]} "
-                ##debugger #fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
+                #fprnt " class #{self} : LINE #{__LINE__}   strsql = '#{ strsql}' "
                 pagedata = plsql.select(:all, strsql)
 	            all_sub_command_r  = []
 		        command_r = command_c.dup
@@ -268,17 +288,14 @@
                         command_r[j_key]   = j_val ## unless j_key.to_s == "id" ## sioのidとｖｉｅｗのｉｄが同一になってしまう
                         ## command_r[:id_tbl] = j_val if j_key.to_s == "id"
                     end  
-                    ##debugger
 	                command_r[:sio_recordcount] = r_cnt
                     command_r[:sio_result_f] = "1"
                     command_r[:sio_message_contents] = nil
 	                tmp = {}
                     sub_insert_sio_r(command_r)     ###回答
-	                ##debugger
 	                tmp.merge! command_r
 	                all_sub_command_r <<  tmp   ### all_sub_command_r << command_r にすると以前の全ての配列が最新に変わってしまう
 	            end  ##pagedata
-	            ##    plsql.select(:all, "#{strsql}").each do |j|
         end   ## case
         ###p  "e: " + Time.now.to_s 
         return all_sub_command_r
@@ -292,19 +309,21 @@
            strwhere = " WHERE "
         end
         ##xparams gridの生 
-	    ##if params[:commit] == "Export" then search_key = params[:export].dup else search_key = params.dup end
-		##strwhere = proc_search_key_strwhere search_key,strwhere,@show_data
-		strwhere = proc_search_key_strwhere strwhere,@show_data
+	    ###if (params[:commit]||="") == "Export" then search_key = params[:export].dup else search_key = params.dup end
+		strwhere = proc_search_key_strwhere command_c,strwhere,@show_data
+		##strwhere = proc_search_key_strwhere strwhere,@show_data
 	end	
-	def proc_search_key_strwhere strwhere,show_data
-        params.each  do |i,j|  ##xparams gridの生
+	def proc_search_key_strwhere search_key,strwhere,show_data
+        search_key.each  do |i,j|  ##xparams gridの生
             next if j.nil? or j == ""
-	        case show_data[:alltypes][i.to_sym]
-	            when "number"
+	        case show_data[:alltypes][i]
+				when nil
+					next
+	            when /number/
                     tmpwhere = " #{i} = #{j.to_i}     AND " 
 		            tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
 		            tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
-	            when /date|^timestamp/
+	            when /^date|^timestamp/
 		            case  j.size  
 			            when 7
 			                tmpwhere = " to_char( #{i},'yyyy/mm') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,01)
@@ -331,7 +350,7 @@
             end   ##show_data[:alltypes][i]
                 tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/ 
 	        strwhere << tmpwhere  if  tmpwhere 
-        end ### params.each  do |i,j|###
+        end ### command_c.each  do |i,j|###
         return strwhere[0..-7]
     end   ## proc_strwhere
     def  proc_pdfwhere pdfscript,command_c
@@ -366,18 +385,25 @@
     end
 
     def subpaging  command_c,screen_code
-        ###debugger
         tbldata = []
         command_c[:sio_viewname]  = @show_data[:screen_code_view] 
         sub_insert_sio_c command_c    ###ページング要求
         rcd = sub_plsql_blk_paging command_c,screen_code
+		allf = @show_data[:allfields]
+		allt = @show_data[:alltypes]
         rcd.each do |j|
             tmp_data = {}
-            @show_data[:allfields].each do |k|
-                tmp_data[k] = j[k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-                ## tmp_data[k] = rcd[j][:id_tbl] if k_to_s == "id"  ##idは2dcでは必須
-                tmp_data[k] = j[k].strftime("%Y/%m/%d") if  @show_data[:alltypes][k] == "date" and  !j[k].nil?
-                tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M") if  @show_data[:alltypes][k] =~ /^time/ and  !j[k].nil?
+            allf.each do |k|
+				if j[k]
+					case allt[k]
+						when /date/
+							tmp_data[k] = j[k].strftime("%Y/%m/%d")
+						when /time/
+							tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M")
+						else
+							tmp_data[k] = j[k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+					end
+				end
             end 
 	        tbldata << tmp_data
         end ## for
@@ -401,7 +427,6 @@
 
  
     def sub_get_ship_locas_frm_itm_id itms_id
-        ##debugger
       rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > current_date ) 
                                and Priority = (select max(Priority) from OpeItms where  itms_id = #{itms_id} and Expiredate > current_date )  order by expiredate")
        if rs then
@@ -445,7 +470,6 @@
     end
 
     def sub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-      ##debugger
       rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > current_date and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
       if rec
 	       ngantts = []
@@ -457,7 +481,6 @@
 		else
           ngantts = [{}]		
       end
-      ##debugger
       return ngantts
     end
     def sub_get_prev_opeitm p_opeitm  ###
@@ -490,7 +513,6 @@
     end
 	
     def sub_get_itm_locas_procssseq_frm_opeitm opeitm_id  ###
-       ##debugger
        rec = plsql.opeitms.first("where id  = #{opeitm_id} and Expiredate > current_date ")
         if rec
 	        rec
@@ -501,7 +523,6 @@
     end
 	
     def sub_get_next_opeitm_processseq_and_loca_id p_opeitm  ###
-        ##debugger
 	    if p_opeitm[:itms_id].nil? or p_opeitm[:priority].nil? or p_opeitm[:processseq].nil? or p_opeitm[:prdpursch].nil? 
 	        tmp = plsql.opeitms.first("where id = #{p_opeitm[:opeitms_id]} ")
 		    p_opeitm[:itms_id] = tmp[:itms_id]
@@ -526,7 +547,6 @@
     end
 	
     def sub_get_opeitms_id_fm_itm_processseq_priority p_opeitm  ###
-        ##debugger
         rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]||=999} and processseq = #{p_opeitm[:processseq]||=999}  ")
         if rec
 	        rec
@@ -536,27 +556,31 @@
         end
     end
 
-	def proc_get_amt qty ,price ,loca_id
+	def proc_get_amt qty ,price ,loca_id,itms_id
 	    (qty||=0)*(price||=0)
 	end
 
 	def sub_get_price loca_id,itm_id,isudatesym ,duedatesym
 	     1
     end	
-    def sub_get_chrgperson_fm_loca loca_id,prd_pur_shp
+    def proc_get_chrgperson_fm_loca loca_id,prd_pur_shp
         case prd_pur_shp
-	       when "pur"
-	           strwhere = "where locas_id_dealer = #{loca_id} and expiredate > current_date"
-               chrgperson = plsql.dealers.first(strwhere)
-			   chrgperson_id = chrgperson[:chrgpersons_id_dflt] if chrgperson			      
-          else	
-	           strwhere = "where locas_id_asstwh = #{loca_id} and expiredate > current_date"
-               chrgperson = plsql.asstwhs.first(strwhere)	
-			   chrgperson_id = chrgperson[:chrgpersons_id_dflt] if chrgperson	   
-	    end
-	    if chrgperson_id.nil?
-	       chrgperson = plsql.r_chrgpersons.first("where person_code =  'dummy'")
-	       if chrgperson.nil? then chrgperson_id = 0  else chrgperson_id = chrgperson[:id] end
+			when "pur"
+	           strsql = "select * from dealers where locas_id_dealer = #{loca_id} and expiredate > current_date"
+			else	
+			   strsql = "select * from asstwhs where locas_id_asstwh = #{loca_id} and expiredate > current_date"   
+	    end	
+        chrgperson = ActiveRecord::Base.connection.select_one(strsql)
+	    if chrgperson
+			chrgperson_id = chrgperson["chrgpersons_id_dflt"]
+		else
+			chrgperson = ActiveRecord::Base.connection.select_one("select * from r_chrgpersons where person_code =  'dummy'")
+			if chrgperson
+				chrgperson_id = chrgperson["id"]
+			else 
+				fprnt " proc_get_chrgperson_fm_loca  chrgpersons dummy code missing "
+				raise
+			end
 	    end 
 	    return chrgperson_id
     end
@@ -621,7 +645,6 @@
         ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
         ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
         n0 = ngantts.shift
-        ##debugger
 	    if n0.size > 0  ###子部品がいなかったとき{}になる。
             r0 =  plsql.opeitms.first("where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > current_date")
             if r0 then
@@ -662,7 +685,6 @@
         ##fprnt "n0:#{n0}"
 	    ##fprnt "r0:#{r0}"
         bgantt = {}
-        ##debugger  ###opeitmsに登録さ
         itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
 	    if n0[:loca_id]
             loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
@@ -720,13 +742,13 @@
         return 
     end    
     def proc_tblinks command_c
-     ##debugger
 	    strsql = " select * from r_tblinks where pobject_code_scr_src = '#{command_c[:sio_code]}' and tblink_expiredate > current_date "
 		strsql << " and tblink_beforeafter = '#{yield}' order by tblink_seqno "
         do_all = plsql.select(:all,strsql)
 		if do_all.size > 0
 			proc_command_instance_variable(command_c)
 			proc_set_src_tbl command_c
+			proc_opeitm_instance(command_c) if command_c[:opeitm_id]
 			do_all.each do |dorec|
 				if respond_to?(dorec[:tblink_code])
 				    if dorec[:tblink_hikisu] then __send__(dorec[:tblink_code],eval(dorec[:tblink_hikisu])) else __send__(dorec[:tblink_code]) end
@@ -746,10 +768,6 @@
 			    if  k 
 	                @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] = k 
                     @src_tbl[j_to_sfld.to_sym] = nil  if k  == "\#{nil}"  ##
-				  else	
-			        if respond_to?("proc_view_field_#{j.to_s}_dflt")  ###view_field_xxxx_dflt 画面表示
-			            @src_tbl[j_to_sfld.sub("_id","s_id").to_sym] =  __send__("proc_view_field_#{j.to_s}_dflt")
-					end
 				end	
             end   ## if j_to_s.
         end ## rec.each		
@@ -758,7 +776,6 @@
         @src_tbl[:created_at] = Time.now  if command_c[:sio_classname] =~ /_add_/
 	end
     def proc_command_instance_variable command_c
-     ##debugger
 	    command_tmp = {}
 	    if @pare_class == "batch"
     	    tblnamechop = command_c[:sio_viewname].split("_")[1].chop
@@ -793,18 +810,15 @@
 		        when val.class == NilClass 
 	                str << "@#{key.to_s} = nil\n"
 		        else 
-			      ##debugger
 	                str << "@#{key.to_s} = #{val}\n"
 	        end
 	    end
-	    ##debugger
 	    eval(str)
 	end
     def undefined
       nil   
     end
     def get_screen_code 
-      ###debugger ## 画面の項目
         case
             when params[:q]   then ##disp
                @jqgrid_id   =  params[:q]
@@ -837,6 +851,7 @@
 		    strdef << src_tbl[:rubycode]
 		    strdef <<"\n end"
 		    eval(strdef)
+			fprnt strdef
 		end
     end
 	def str_init_command_c tbl_dest
@@ -844,17 +859,30 @@
 		command_c = {} 
 		command_c[:sio_session_counter] =   @new_sio_session_counter 
 		command_c[:sio_recordcount] = 1
-		command_c[:sio_classname] = @sio_classname
 		command_c[:sio_user_code] =   @sio_user_code
-		command_c[:sio_code] = command_c[:sio_viewname] =  tbl_dest
+		command_c[:sio_code] = command_c[:sio_viewname] =  "#{tbl_dest}"
+		command_c[:sio_classname] = @sio_classname
 		command_c  = vproc_tblinkfld_id_set(command_c)	 
 		%
 	end
+	def proc_set_command_c(command_c,view_dest)		
+		command_c[:sio_session_counter] =   @new_sio_session_counter 
+		command_c[:sio_recordcount] = 1
+		command_c[:sio_classname] = @sio_classname
+		command_c[:sio_user_code] =   @sio_user_code
+		command_c[:sio_code] = command_c[:sio_viewname] =  view_dest
+		yield
+		return command_c
+	end
+	def proc_simple_sio_insert command_c
+		proc_insert_sio_c    command_c
+        ### @src_tbl作成はproc_update_tableで実施
+		proc_update_table command_c,1
+		proc_command_c_to_instance command_c  ###@xxxx_yyyy作成
+	end
 	def str_sio_set
 		%Q%
-		sub_insert_sio_c    command_c
-		sub_userproc_chk_set    command_c
-		proc_command_c_to_instance command_c
+		proc_simple_sio_insert command_c
 		end
 		%
 	end
@@ -879,7 +907,7 @@
 				if src_screen != rec[:pobject_code_scr_src] or 	tblchop != rec[:pobject_code_tbl_dest].chop or
 				   beforeafter != rec[:tblink_beforeafter] or seqno != rec[:tblink_seqno]
 					streval << str_sio_set
-					##fprnt streval
+					fprnt streval
 				    eval(streval)
 					src_screen = rec[:pobject_code_scr_src]
 					tblchop = rec[:pobject_code_tbl_dest].chop
@@ -889,18 +917,45 @@
 					streval << str_init_command_c("r_#{rec[:pobject_code_tbl_dest]}")
 				end
 			end
-	        streval << %Q%	command_c[:#{(tblchop+"_"+rec[:pobject_code_fld].sub("s_id","_id"))}] = #{rec[:tblinkfld_command_c]} \n% if  rec[:tblinkfld_command_c]
+			fld = tblchop+"_"+rec[:pobject_code_fld].sub("s_id","_id")
+			if  rec[:tblinkfld_rubycode]
+				streval << %Q&	command_c[:#{fld}] = #{rec[:tblinkfld_rubycode]} \n&
+			else
+				str = vproc_tblinkfld_dflt_set_fm_rubycoding(fld)
+				if str
+					streval << %Q&	command_c[:#{fld}] = #{str} \n&
+				end
+			end
 	    end ##
 		if recs.size > 0
 			streval << str_sio_set
 			eval(streval)
-			###fprnt streval
+			fprnt streval
 		end
     end
+	def vproc_tblinkfld_dflt_set_fm_rubycoding fld
+		dflt_rubycode = nil
+		strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'view_field' 	and  pobject_code = '#{fld}'
+							and rubycoding_code like '%dflt_for_tbl_set' &
+		rubycode_view = ActiveRecord::Base.connection.select_one(strsql)
+		if rubycode_view
+			dflt_rubycode = rubycode_view["rubycoding_code"] + " " +(rubycode_view["rubycoding_hikisu"]||="" )
+		else
+			fld_tbl = fld.split("_",2)[1] 
+			strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'tbl_field' 	and  pobject_code = '#{fld_tbl}'
+					and rubycoding_code like '%dflt_for_tbl_set' &
+			rubycode_tbl = ActiveRecord::Base.connection.select_one(strsql)
+			if rubycode_tbl
+				dflt_rubycode = rubycode_tbl["rubycoding_code"] + " " + (rubycode_tbl["rubycoding_hikisu"]||="")
+			end
+		end
+		return dflt_rubycode
+	end
 	def  vproc_tblinkfld_id_set command_c	
 		if command_c[:sio_classname] =~ /_add_/
 			command_c[:id] = plsql.__send__("#{command_c[:sio_viewname].split("_")[1]}_seq").nextval
-			command_c[(command_c[:sio_viewname].split("_")[1].chop+"_id").to_sym] = command_c[:id]
+			@newtblid = command_c[(command_c[:sio_viewname].split("_")[1].chop+"_id").to_sym] = command_c[:id]
+			###変更の時は以前のテーブルの内容も返すこと。
 		end
 		return command_c
 	end
@@ -912,25 +967,52 @@
         end ##
         return command_c
     end
-	def proc_set_command_c(command_c,view_dest)		
-		command_c[:sio_session_counter] =   @new_sio_session_counter 
-		command_c[:sio_recordcount] = 1
-		command_c[:sio_classname] = @sio_classname
-		command_c[:sio_user_code] =   @sio_user_code
-		command_c[:sio_code] = command_c[:sio_viewname] =  view_dest
-	end
     def proc_opeitm_instance opeitm_flds
 	    @opeitm = {}
 		opeitm_flds.each do |key,val|
 		    @opeitm[key.to_s.split("_",2)[1].to_sym] = val if key.to_s =~ /^opeitm/
 		end
 		@opeitm[:minqty] ||= 0
-		@opeitm[:maxqty] ||= 999999999
-		@opeitm[:maxqty] = 9999999999 if @opeitm[:maxqty] == 0
-		@opeitm[:opt_fixoterm] ||= 999999999
-		@opeitm[:opt_fixoterm] = 9999999999 if  @opeitm[:opt_fixoterm] == 0 
-		@opeitm[:packqty] ||= 1 
-		@opeitm[:packqty]  = 1 if @opeitm[:packqty] == 0
-		@opeitm[:autocreate_ord] ||= '0' ## 0:手動　1：自動　confirm=1  2:仮のxxxORDSを自動作成 confirm=0
+		@opeitm[:maxqty] = 9999999999 if @opeitm[:maxqty] == 0 or @opeitm[:maxqty].nil?
+		@opeitm[:opt_fixoterm] = 365 if  @opeitm[:opt_fixoterm] == 0  or @opeitm[:opt_fixoterm].nil?
+		@opeitm[:packqty]  = 1 if @opeitm[:packqty] == 0 or @opeitm[:packqty].nil?
+	end	
+    def init_from_screen value
+		get_screen_code
+        ###@screen_code,@jqgrid_id  = get_screen_code						
+		@sio_user_code = ActiveRecord::Base.connection.select_one("select * from persons where email = '#{current_user[:email]}'")["id"]
+	    @show_data = get_show_data @screen_code   #####popup画面もあるので@screen_codeをもパラメータにしている。
+	    if @show_data.nil?
+	       render :text=> "Create screen #{@screen_code} " and return
+	    end
+	    command_c = vproc_set_fields_from_allfields	value
+	    command_c[:sio_user_code] = @sio_user_code  ###########   LOGIN USER
+	    command_c[:sio_viewname]  = @show_data[:screen_code_view] 
+	    command_c[:sio_code]  = @screen_code
+        return command_c
+    end	
+	def proc_get_inst_alloc destblname,inst_id,sno,qty
+		if inst_id.nil?
+			strsql = "select * from #{destblname} where sno = '#{sno}' "
+			inst_id = ActiveRecord::Base.connection.select_one(strsql)["id"]
+		end
+		strsql = "select * from r_alloctbls where alloctbl_destblname = '#{destblname}' and alloctbl_destblid = #{inst_id} and alloctbl_qty > 0 "
+		ary_alloc = []
+		allocs = ActiveRecord::Base.connection.select_all(strsql)
+		allocs.each do |alloc|
+			if qty > 0
+				if qty >= alloc["alloctbl_qty"]	
+					ary_alloc << alloc
+					qty -= alloc["alloctbl_qty"]
+				else
+					alloc[:alloctbl_qty] = qty
+					ary_alloc << alloc
+					qty = 0
+				end
+			else
+				break
+			end
+		end
+		return ary_alloc
 	end
 end   ##module Ror_blk

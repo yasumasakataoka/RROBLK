@@ -8,20 +8,20 @@ class ImportfmxlsxController < ScreenController
    ##insertの時idは無視される
    ### 事前チックokかどうかexcelで返す
     def index
-	   get_screen_code  ## set @screen_code,@jqgrid_id  
-	  init_from_screen params
-      @tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
-      #dupchk
+		init_from_screen params
+		@tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
+		#dupchk
     end
 ###By default, cell load errors (ex. if a date cell contains the string 'hello')
 ### result in a SimpleXlsxReader::CellLoadError.
 ###If you would like to provide better error feedback to your users, you can set 
 ###SimpleXlsxReader.configuration.catch_cell_load_errors = true, and load errors will instead be inserted into Sheet#load_errors keyed by [rownum, colnum].
     def import
-	  @rendererrmsg = []
-	  @pare_class = "online"
-	  get_screen_code
-	  command_c = init_from_screen params
+		@rendererrmsg = []
+		@pare_class = "online"
+		command_c = init_from_screen params	  
+	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
+	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
       if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
       if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
@@ -78,7 +78,7 @@ class ImportfmxlsxController < ScreenController
         	            when nil then
                            break
                         else
-		                   @rendererrmsg  << [ws[iws].sheet_name,"sheet name err must be add or edit or delete"]
+		                   @rendererrmsg  << [ws[iws].sheet_name,"sheet name err..... must be add or edit or delete"]
 			                break
 	                 end  ##case
 					 if @errmsg == "" and commit_flg

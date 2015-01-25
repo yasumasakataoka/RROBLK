@@ -17,8 +17,10 @@ end
             pdfscript = plsql.r_reports.first("where pobject_code_rep = '#{params[:pdflist]}' and  report_Expiredate > sysdate")
 	        if pdfscript
 	            f = File.open(".#{pdfscript[:report_filename]}", "r:UTF-8")	                        
-                @screen_code =  params[:q]
-                command_c = init_from_screen params  ###gridの選択項目をセットするため
+                command_c = init_from_screen params  ###gridの選択項目をセットするため	@sio_user_code set			
+				@new_sio_session_counter  = user_seq_nextval
+				plsql.connection.autocommit = false
+				command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
 		        sqlstr = proc_pdfwhere(pdfscript,command_c)
 				viewname = pdfscript[:pobject_code_view]
 	            if f
@@ -106,7 +108,11 @@ end
                 end ## to_pdf	   
                 @text = ""
                 send_data output,:filename => "#{sub_blkgetpobj(params[:pdflist],'report')}_#{Time.now.strftime("%y%m%d%H%M%S")}.pdf",
-				                 :type => "application/pdf" 	unless records.empty?
+				                 :type => "application/pdf" 	unless records.empty?																															
+				plsql.commit
+				dbcud = DbCud.new
+				dbcud.perform(command_c[:sio_session_counter],@sio_user_code,"")
+				plsql.connection.autocommit = true
                 @text = " no record     --->click   here  close the window "
 	            render :action=>"index" and return if records.empty?
             end  #pdfscript
@@ -119,24 +125,26 @@ end
     def  insert_hisofrprts pdfscript,record
 	    rec = {}
 	    rec[:id] = plsql.hisofrprts_seq.nextval
-	    rec[:tblname] = pdfscript[:pobject_code_view]
+	    rec[:tblname] = pdfscript[:pobject_code_view]  ##tblname = viewname
 	    rec[:recordid] = record[:id]
 	    rec[:reports_id] = pdfscript[:id]
 	    rec[:issuedate] = Time.now
 	    rec[:expiredate] = Date.strptime("2099/12/31", "%Y/%m/%d")
-	    rec[:persons_id_upd] =  plsql.persons.first(:email =>current_user[:email])[:id]
+	    rec[:persons_id_upd] =  @sio_user_code
 	    rec[:update_ip] = request.remote_ip
 	    rec[:created_at] = Time.now
 	    rec[:updated_at] = Time.now
 	    plsql.hisofrprts.insert rec
-		if pdfscript[:pobject_code_rep] =~ /order_list/
-		   order = {}
-		   order[:expiredate ] = Date.strptime("2099/12/31", "%Y/%m/%d")
-	       order[:persons_id_upd] =  plsql.persons.first(:email =>current_user[:email])[:id]
-	       order[:update_ip] = request.remote_ip
-		   order[:confirm] = "1"
-		   order[:where] = {:id=>record[:id]}
-		   plsql.__send__(pdfscript[:pobject_code_view].split("_")[1]).update order 
+		###オーダ確定
+		confirm_sym = (pdfscript[:pobject_code_view].split("_")[1].chop + "_confirm").to_sym
+		if pdfscript[:pobject_code_rep] =~ /order_list/ and record[confirm_sym] != "1"
+			command_c = record.dup
+			command_c = proc_set_command_c(command_c,pdfscript[:pobject_code_view]) do 
+				command_c[confirm_sym] = "1"
+				command_c[:sio_classname] = "pdfscript_edit_confirm"
+			end
+			sub_insert_sio_c    command_c 
+			sub_userproc_chk_set command_c 
 		end
     end
 end  ###class

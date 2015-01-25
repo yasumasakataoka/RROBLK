@@ -12,25 +12,19 @@ class ExcelexportController < ScreenController
     def index
     end
     def export
-        ##@fields =   plsql.__send__(params[:id]).column_names  ##show_dataのfieldに変更
 	    #該当データなしの時処理　
 	    get_screen_code 
         tblidsym = (@screen_code.split("_")[1].chop + "_id").to_sym
-	    @show_data = get_show_data @screen_code
-	    ##debugger
 	    command_c = init_from_screen params
-        ##debugger
         fields = {}
         col_type =[]
         command_c[:sio_start_record] =  1
         command_c[:sio_end_record] =  params[:maxcount].to_i 
         command_c[:sio_session_id] = 1
-        command_c[:sio_classname] = "plsql_blk_export"
-        ##@tbldata = []
-        ##debugger
+        command_c[:sio_search] = if params[:_search] == "true" or params[:undefined_search] == "true" then "true" else "false" end
+        command_c[:sio_classname] = "blk_export_"
         rcds = subpaging(command_c,@screen_code) 
         ##fields.delete(:msg_ok_ng)    ####近いうちに  照会・修正の時はとる。　　確認の時のみ
-        ## @tbldata =   plsql.__send__(params[:export][:screen_code]).all
         pkg = Axlsx::Package.new
         pkg.workbook do |wb|
             wb.add_worksheet(:name => 'export') do |ws|   # シート名の指定は省略可
@@ -57,11 +51,11 @@ class ExcelexportController < ScreenController
                             fcolors << nil
                         end  ##if i[:editable] == true
 		                case @show_data[:alltypes][i[:field].to_sym]
-		                    when    /^timestamp/
+		                    when    /timestamp/
                                 fcolors1 << (wb.styles.add_style :format_code => 'YYYY/MM/DD hh:mm:ss')
-		                    when "date"
+		                    when /date/
                                 fcolors1 << (wb.styles.add_style :format_code => 'YYYY/MM/DD')
-		                    when "number"
+		                    when /number/
                                 fcolors1 << (wb.styles.add_style :format_code => '#,##0')  ###小数点以下の対応ができてない。
 			                else
 			                    fcolors1 << (wb.styles.add_style :format_code => '@') 
@@ -72,7 +66,7 @@ class ExcelexportController < ScreenController
                 rcds[0].each do  |i|  ###rcds[0] :全レコード　　rcds[1]:件数
 		            rowvalue = []
 		            fields.keys.each do |key|
-		                rowvalue << i[key] if i.key?(key)
+		                rowvalue << if i[key] =~ /^@/ and key.to_s =~ /rubycode/ then "(" + i[key] + ")" else i[key] end #### if i.key?(key)
                     end
 		            ws.add_row rowvalue,:style =>fcolors1
                 end

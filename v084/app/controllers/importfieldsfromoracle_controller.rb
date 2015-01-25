@@ -159,7 +159,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:expiredate]=Time.parse("2099-12-31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
-       tmp[:remark] = " from oracle"
+       tmp[:remark] = " set by prv_add_blktbsfieldcodes"
        plsql.blktbsfieldcodes.insert tmp
   end
   def prv_chk_pobjects field,objecttype
@@ -192,7 +192,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:expiredate] = Time.parse("2099/12/31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
-       tmp[:remark] = " from oracle"
+       tmp[:remark] = " set by prv_add_fieldcode"
        ###debugger
        plsql.fieldcodes.insert tmp
        return tmp

@@ -1,4 +1,4 @@
-require '2dc_jqgrid/3dc_jqgrid'
+﻿require '2dc_jqgrid/3dc_jqgrid'
 module Jqgrid
 include  JqgridFilter
 
@@ -79,25 +79,19 @@ include  JqgridFilter
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
              replace_end = "'); "
       end
-     ##p "001 #{Time.now} "
      show_cache_key =  "show" + @screen_code +  sub_blkget_grpcode
-     ###debugger
      @show_data = Rails.cache.read(show_cache_key)
-	 ###fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}" if @show_data.nil? 
 	 @show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
      fprnt "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
      @gridcolumns = @show_data[:gridcolumns]
-     ###@evalstr = @show_data[:evalstr]
      id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
      id_data_javascript = Rails.cache.read(id_cache_key)
 	 if id_data_javascript
         id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
 	    id_data_html = Rails.cache.read(id_cache_key)
 	   else	
-        ##id_data_javascript,id_data_html = create_screen_field(screen_code,title, id, options )
         id_data_javascript,id_data_html = create_screen_field(  options )
      end		
-     ##debugger
      screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{@jqgrid_id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
        screen <<   nst_div
        screen << id_data_javascript
@@ -105,7 +99,6 @@ include  JqgridFilter
        screen << " <p> #{options[:pare_contents]}</p>   "
        screen << id_data_html
        screen <<  replace_end
-       ##fprnt screen
        screen.gsub!(/\s+/," ")    if init_jq  =~ /replaceWith/  ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
      return screen 
     end  ## 
@@ -211,7 +204,6 @@ include  JqgridFilter
     end 
      ################
     def set_extbutton pare_screen_code     ### 子画面用のラジオボ タンセット
-        ##debugger
         ### 同じボタンで有効日が>sysdateのデータが複数あると複数ボタンがでる
         rad_screen = plsql.select(:all,"select pobject_code_scr,pobject_code_scr_ch from r_chilscreens where chilscreen_Expiredate > sysdate 
                                             and pobject_code_scr = '#{pare_screen_code}' group by  chilscreen_grp,pobject_code_scr,pobject_code_scr_ch")
@@ -227,32 +219,35 @@ include  JqgridFilter
             end   ### rad_screen.each
 	    return  t_extbutton,t_extdiv_id
     end    ## set_extbutton pare_screen  
-    def get_return_name_val scrfield,paragraph  ###paragrapf 検索key 
-      tmp_val = ""
-      viewname,delm = paragraph.split(":")
-      delm  ||= ""
+    def get_return_name_val scrfield,paragraph  ###paragrapf 検索key = viewname + dlem
+		tmp_val = ""
+		if scrfield =~ /_sno_/  ### 項目xxxx_sno_yyyy のparagrapfにviewをセットすると　view の内容を r_xxxxsに移行する。
+			viewname = "r_#{scrfield.split("_",2)[0]}s"
+			delm = ""
+		else
+			viewname,delm = paragraph.split(":")
+			delm  ||= ""
+		end
 	  begin
 	        secgridc = get_show_data(viewname)[:allfields]
 		  rescue  ###検索項目に指定しているviewがない。
 		   	raise  "shoud be seach_view invalid ;view_name is:#{viewname} "   
 	  end
-      @gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ
-        if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true 
-              tmp_val  << "if(data.#{tcolm[:field]}){"   
-              tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
-              tmp_val  << "}"   
-        end
-      end  ### secgridc.each do |tcolm| 
-       ##debugger
-      fmfield = viewname.split("_")[1].chop+"_id"
-      tofield = @screen_code.split("_")[1].chop+"_"+fmfield
-      if  delm 
-             fmfield += delm
-             tofield += delm
-      end 
-      tmp_val  << %Q% jQuery("##{tofield}",formid).val(data.#{fmfield});%
-      ##tmp_val << %Q%if(data.errmsg){alert(data.errmsg);}%
-      return tmp_val
+		@gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ
+			if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true 
+				tmp_val  << "if(data.#{tcolm[:field]}){"   
+				tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
+				tmp_val  << "}"   
+			end
+		end  ### secgridc.each do |tcolm| 
+		fmfield = viewname.split("_")[1].chop+"_id"
+		tofield = @screen_code.split("_")[1].chop+"_"+fmfield
+		if  delm 
+            fmfield += delm
+            tofield += delm
+		end 
+		tmp_val  << %Q% jQuery("##{tofield}",formid).val(data.#{fmfield});%
+		return tmp_val
     end
     def set_aftershowform oper
       ###外部テーブルのリンクに関係ない項目は　enable == true and require == false
@@ -265,7 +260,6 @@ include  JqgridFilter
       strsenddata = %Q% "q":"#{@screen_code}","chgname":p_chgname,"code_to_name_oper":"#{oper}",%
       strkeydata = %Q% "q":"#{@screen_code}","fieldname":keyname%
       @gridcolumns.each do |tcolm|
-            ###debugger  if tcolm[:field] =~ /fieldcode_fieldlength/
             if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editable] == true and tcolm[:editrules][:required] != true )   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
 	        end
@@ -284,15 +278,18 @@ include  JqgridFilter
 
      javascript_edit << %Q% jQuery("#sData").show();% 
       ###既定値等セット  ### jQuery("##{tcolm[:field]}",formid).val()にセットすべきもの
-     recs = plsql.select(:all,"select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph")
-     recs.each do |rec|
-         seartbls = plsql.r_screenfields.all("where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  = '#{rec[:screenfield_paragraph]}' AND screenfield_expiredate > sysdate ")
-         seartbls.each do |tcolm|
-            tmp_code_to_name << %Q% if(p_chgname=="#{tcolm[:pobject_code_sfd]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
+        strsql = "select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  
+			and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph"
+		recs = ActiveRecord::Base.connection.select_all(strsql)
+		recs.each do |rec|
+			strsql = " select * from r_screenfields where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  = '#{rec["screenfield_paragraph"]}' AND screenfield_expiredate > sysdate "
+			seartbls = ActiveRecord::Base.connection.select_all(strsql)
+			seartbls.each do |srtcolm|
+				tmp_code_to_name << %Q% if(p_chgname=="#{srtcolm["pobject_code_sfd"]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
                                           {#{strsenddata.chop}},function(data){
-      					  #{get_return_name_val(tcolm[:pobject_code_sfd],tcolm[:screenfield_paragraph])}})}%
-         end
-     end
+      					  #{get_return_name_val(srtcolm["pobject_code_sfd"],srtcolm["screenfield_paragraph"])}})}%
+			end
+		end
      tmp_code_to_name << ";"
      javascript_edit << %Q%
                                                            jQuery("input",formid).change(function(){ 
@@ -325,18 +322,17 @@ include  JqgridFilter
 			end
 			if addorcopy == "add"
 				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt")
-					debugger ### tcolm[:field]でnil[]のエラーが発生した　上のifはokなのに　原因がわかるまで残しておく　2014/12/20
+					##debugger ### tcolm[:field]でnil[]のエラーが発生した　上のifはokなのに　原因がわかるまで残しておく　2014/12/20
 					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt")
 					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
 				 else 
-					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt")   ###tbl_field_xxxx_dfflt テーブル登録時
-                           dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt")
+					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
+						   dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen")
 			               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
 					end
 			   end
 			end
         end
-	    ##debugger
         require_fields << %Q% jQuery("#sData").show();% 
         require_fields << "}"
         return  require_fields
@@ -354,8 +350,7 @@ include  JqgridFilter
     end
 	##def custom_button
 	##    strsql = "select * from r_usebuttons where pobject_code_scr_ub = '#{@screen_code}' and button_onclickbutton is not null and "
-	##	strsql << " usebutton_expiredate > sysdate "
-	##    custom_button_scripts = plsql.select(:all, strsql)
+	##	strsql << " usebutton_expiredate > sysdate 
 	##	strscript = ""
 	##	custom_button_scripts.each do |script|
 	##	    strscript << eval(script[:button_onclickbutton])
@@ -368,8 +363,9 @@ include  JqgridFilter
         col_names, col_model,cellnames = gen_columns
 
         # Enable filtering (by default)
-        screen_options = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate")  
-        p " line #{__LINE__} logic err screen_code = #{@screen_code} " and return if screen_options.nil?
+        strsql = "select * from r_screens where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >sysdate"  
+        screen_options = ActiveRecord::Base.connection.select_one(strsql)
+        ##p " line #{__LINE__} logic err screen_code = #{@screen_code} " and return if screen_options.nil?
      
         # Enable selection link, button
          extbutton = "" 
@@ -457,13 +453,13 @@ include  JqgridFilter
                 colNames:#{col_names},
                 colModel:#{col_model},
                 pager: jQuery("##{@jqgrid_id}_pager"),
-                rowNum:#{screen_options[:screen_rows_per_page]},
-                rowList:[#{screen_options[:screen_rowlist]}],
+                rowNum:#{screen_options["screen_rows_per_page"]},
+                rowList:[#{screen_options["screen_rowlist"]}],
                 imgpath: "/images/jqgrid",
                 viewrecords: true,
-                width:#{screen_options[:screen_width] ||= 1900},
-                height: #{screen_options[:screen_height]},
-                sortname: "#{screen_options[:screen_sort_column]}",
+                width:#{screen_options["screen_width"] ||= 1900},
+                height: #{screen_options["screen_height"]},
+                sortname: "#{screen_options["screen_sort_column"]}",
                 sortorder: "",
 	            multiSort:true,
                 shrinkToFit: #{options[:shrinkToFit]},
@@ -489,8 +485,7 @@ include  JqgridFilter
             <p id="#{@jqgrid_id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
             <p id="#{@jqgrid_id}_select_button">  #{extbutton} </p>
             #{extdiv_id}%
-        screen_javascript.gsub!(/\s+/," ")
-        ##debugger
+        ##screen_javascript.gsub!(/\s+/," ")
         ##fprnt " jqgrid #{a} "
         id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
         Rails.cache.write(id_cache_key,screen_javascript)
@@ -499,18 +494,15 @@ include  JqgridFilter
         return screen_javascript,screen_html
     end
     def set_navbutton
-      person =  plsql.r_persons.first(:person_email =>current_user[:email])
       buttons = plsql.r_usebuttons.all("where pobject_code_scr_ub = '#{@screen_code}' and  usebutton_Expiredate > sysdate order by  button_seqNo ")
       str_navbuttonadd = ""
-      br_screen = {}
       inline = %Q%onSelectRow: function(rowid){if(inLineFlg){
                     if( inLineFlg=="inlineedit" || rowid == addline){ 
                     jQuery("##{@jqgrid_id}").jqGrid("saveRow",rowid,{ extraparam : {q:id,copy:inLineFlg,authenticity_token :p_authenticity_token ,ss_id:p_ss_id}});
                     lastsel=rowid;%
       tmpinline = ""  ###jqgridマニュアルによるとformat共存しないほうがいい
-      ##debugger
+        br_screen = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and screen_expiredate > sysdate  order by  screen_expiredate ")
       buttons.each do |button|
-             br_screen = plsql.r_screens.first("where pobject_code_scr = '#{@screen_code}' and screen_expiredate > sysdate  order by  screen_expiredate ") if  br_screen == {}
              if button[:button_title] == "navSeparatorAdd"  then    ###セパレータ
                    str_navbuttonadd << %Q%.navSeparatorAdd("##{@jqgrid_id}_pager",{sepclass:"ui-separator",sepcontent:""})%
                 else
@@ -577,7 +569,7 @@ include  JqgridFilter
                            when "edit","copyandadd"
                                       str_navbuttonadd << %Q%
                              ,onClickButton:function(){
-                              btn = "#{ button[:button_editgridrow]}";                              
+                              btn = "#{button[:button_editgridrow]}";                              
                               if(inLineFlg){alert(" Now inline mode ") } 
                               else{var gsr = jQuery("##{@jqgrid_id}").getGridParam("selrow");
                                    if(gsr){ jQuery("##{@jqgrid_id}").editGridRow(
@@ -628,7 +620,6 @@ include  JqgridFilter
               end ##    button[:button_title] == "navSeparatorAdd"            
       end   ## buttons.each
       if tmpinline == "" then inline = "" else inline << (tmpinline + "}}}," ) end
-      ##debugger
       return str_navbuttonadd,inline
     end
     def set_beforesubmit

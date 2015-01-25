@@ -27,6 +27,7 @@ module JqgridJson
         attributes.each do |atr|
           value =elem[atr]
           value = escape_javascript(value) if value and value.is_a? String
+          value.gsub!("\\\\","\\")  if value and value.is_a? String
           value.gsub!("\\n","\n")  if value and value.is_a? String
           value.gsub!("<","&lt;")   if value and value.is_a? String ###xml 禁止文字対策
           value.gsub!(">","&gt;")   if value and value.is_a? String ###xml 禁止文字対策
@@ -90,103 +91,98 @@ module JqgridFilter
     end
     conditions.chomp("AND ")
   end
-  def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
-     ##debugger
-     show_cache_key =  "show" + (screen_code||=" coding err missing screen_code") +  sub_blkget_grpcode
-     show_data = Rails.cache.read(show_cache_key)
-     ###fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}" if show_data.nil?
-     show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
-     return show_data  ###popup画面もあるのでここで@show_dataにはできない。
-  end
-  def set_detail screen_code
-      show_data = {}  
-      det_screen = plsql.r_screenfields.all(
+	def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
+		show_cache_key =  "show" + (screen_code||=" coding err missing screen_code") +  sub_blkget_grpcode
+		show_data = Rails.cache.read(show_cache_key)
+		fprnt " JqgridJson line #{__LINE__} show_cache_key:#{show_cache_key}" if show_data.nil?
+		show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
+		raise if show_data.nil? 
+		return show_data  ###popup画面もあるのでここで@show_dataにはできない。
+	end
+	def set_detail screen_code
+		show_data = {}  
+		det_screen = plsql.r_screenfields.all(
                                 "where pobject_code_scr = '#{screen_code}'  
                                  and screenfield_expiredate > sysdate 
                                  and screenfield_selection = '1' order by screenfield_seqno ")  ###
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
-           if det_screen.empty?
+        if det_screen.empty?
 	         fprnt "line #{(__LINE__).to_s }  #{if screen_code =~ /coding*err/ then screen_code else  ' create screen_code ' + screen_code  end}" 
 	          show_data = nil
               return show_data 
-           end   
+        end   
            ###
            ### pare_screen = det_screen[0][:screenfield_screens_id]
-           pare_screen = det_screen[0][:screenfield_screen_id]
-           screen_code_view = det_screen[0][:pobject_code_view]
-           ##debugger ## 詳細項目セット
+        pare_screen = det_screen[0][:screenfield_screen_id]
+        screen_code_view = det_screen[0][:pobject_code_view]
 	    3.times {fprnt "error screen_id is null "} and return if pare_screen.nil?
-	   gridcolumns = []
-           allfields = []
-           alltypes = {} 
-	   icnt = 0
-	   evalstr = {} 
+		gridcolumns = []
+		allfields = []
+		alltypes =  {}
+		icnt = 0
 	    det_screen.each do |i|  
             ## lable名称はユーザgroup固有よりセット    editable はtblから持ってくるように将来はする。
             ##fprnt " i #{i}"
             tmp_editrules = {}
-            tmp_columns = {}
+			tmp_columns = {}
             if i[:screenfield_indisp] == 1 then tmp_editrules[:required] = true   else tmp_editrules[:required] = false end
             if i[:screenfield_type] == "number"
                 tmp_columns[:align] = "right"
 				tmp_editrules[:number] = true 
 			end
-            if  i[:screenfield_type] == "date" or i[:screenfield_type]  =~ /^timestamp/ then
-               tmp_editrules[:date] = true 
-               tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
-               tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
-               tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
+            if  i[:screenfield_type]  =~ /^timestamp|^date/ then
+				tmp_editrules[:date] = true 
+				tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
+				tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
+				tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
             end
-           tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
-           tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
-           ### tmp_columns[:label] ||=  i[:screenfield_code]
-           tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
-           tmp_columns[:editrules] = tmp_editrules 
-           tmp_columns[:width] = i[:screenfield_width]
-		   if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
-		      tmp_columns[:editable] = true
-		      tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  
-		     else
-		      tmp_columns[:editable] = false
-		   end
-		   tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox","text"].index(i[:screenfield_type]) 
-		   if i[:screenfield_type] == "select" or  i[:screenfield_type] == "checkbox" then
-		      strselect = i[:screenfield_edoptvalue]
-		      tmp_columns[:editoptions] = {:value => eval(strselect) } 
-		      tmp_columns[:formatter] = "select"
-		      tmp_columns[:searchoptions] = {:value => eval(strselect) } 
-		   end
-		   if i[:screenfield_type] == "textarea" then
-		      tmp_columns[:editoptions] =  {:rows =>"#{i[:screenfield_edoptrow]}",:cols =>"#{i[:screenfield_edoptcols]}"}
-		   end
-       if i[:screenfield_formatter]  then
-		      tmp_columns[:formatter] = i[:screenfield_formatter] 
-		   end
-       if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
+			tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
+			tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
+			### tmp_columns[:label] ||=  i[:screenfield_code]
+			tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
+			tmp_columns[:editrules] = tmp_editrules 
+			tmp_columns[:width] = i[:screenfield_width]
+			if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
+				tmp_columns[:editable] = true
+				tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  
+		    else
+				tmp_columns[:editable] = false
+			end
+			tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox","text"].index(i[:screenfield_type]) 
+			if i[:screenfield_type] == "select" or  i[:screenfield_type] == "checkbox" then
+				strselect = i[:screenfield_edoptvalue]
+				tmp_columns[:editoptions] = {:value => eval(strselect) } 
+				tmp_columns[:formatter] = "select"
+				tmp_columns[:searchoptions] = {:value => eval(strselect) } 
+			end
+			if i[:screenfield_type] == "textarea" then
+				tmp_columns[:editoptions] =  {:rows =>"#{i[:screenfield_edoptrow]}",:cols =>"#{i[:screenfield_edoptcols]}"}
+			end
+			if i[:screenfield_formatter]  then
+				tmp_columns[:formatter] = i[:screenfield_formatter] 
+			end
+			if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
                    ## tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox"].index(i[:screenfield_type]) 
-		   ##debugger
-      if  i[:screenfield_rowpos]     then
+			if  i[:screenfield_rowpos]     then
 			    if  i[:screenfield_rowpos]  < 999
-              tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] ,:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize]}
+				tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] ,:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize]}
 			        icnt = i[:screenfield_rowpos] if icnt <  i[:screenfield_rowpos] 
 		        else
 			        tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
 			    end
-		     else
+		    else
               tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
-		   end 	      
-		   gridcolumns << tmp_columns 
-                   allfields << i[:pobject_code_sfd].to_sym  #**
+			end 	      
+			gridcolumns << tmp_columns 
+            allfields << i[:pobject_code_sfd].to_sym  #**
 
-                   alltypes [i[:pobject_code_sfd].to_sym] =  i[:screenfield_type].downcase
-		     ##    evalstr[i[:pobject_code_sfd].to_sym] = i[:screenfield_rubycode] if i[:screenfield_rubycode] 
-           end   ## screenfields.each
-	         show_data[:allfields] =  allfields  
-           show_data[:alltypes]  =  alltypes  
-           show_data[:screen_code_view] = screen_code_view
-           show_data[:gridcolumns] = gridcolumns
-           show_data[:evalstr] = evalstr
+            alltypes [i[:pobject_code_sfd].to_sym] =  i[:screenfield_type].downcase
+        end   ## screenfields.each
+	    show_data[:allfields] =  allfields  
+        show_data[:alltypes]  =  alltypes  
+        show_data[:screen_code_view] = screen_code_view
+        show_data[:gridcolumns] = gridcolumns
         show_cache_key =  "show" + screen_code +  sub_blkget_grpcode
 	    ## fprnt "line #{__LINE__} show_cache_key:#{show_cache_key}"
         Rails.cache.write(show_cache_key,show_data) 
