@@ -64,3 +64,4 @@ gem 'dalli'
 ###barcode code39,QR  ・・・・
 gem 'barby'
 gem 'prawn-qrcode'
+gem 'clockwork'

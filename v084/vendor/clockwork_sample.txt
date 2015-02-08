@@ -1,0 +1,255 @@
+﻿
+(1)install 
+  gem install clockwork
+
+(2)メソッド名	
+  every		定期実行するジョブを定義するメソッド。
+  handler	ジョブ実行時に呼び出される処理を定義するメソッド。
+			ジョブを実行できる handler は１つだけ。
+  Numeric#seconds, Numeric#minutes, Numeric#hour, Numeric#day	時間の指定を書きやすくしてくれる拡張です。
+  configure*1	Clockwork の初期化時に呼び出され、Clockwork のマルチスレッド／ロギング／タイムゾーンに関する設定を定義するメソッド。
+
+	(2-1)every
+	単位	単数形	複数形	Source
+	秒	second	seconds	period * 1
+	分	minute	minutes	period * 60
+	時	hour	hours	period * 3600
+	日	day	days	period * 86400
+	週	week	weeks	period * 604800
+	Example
+
+	every(4.seconds, '4.seconds.job')  # 4秒間隔
+	every(2.hours, '2.hours.job')      # 2時間間隔
+	every(1.day, '1.day.job')          # 1日間隔
+	Options
+		at
+			何時にジョブを実行するか指定します。
+			'[時]:[分]' で設定します。
+
+			(時間は複数の指定ができます。また、曜日を指定できます。)
+			List
+				指定	period	at	処理される時間
+				時分	1.day	'01:30'	1時30分
+				0省略	1.day	'1:30'	1時30分
+				毎時	1.hour	'**:30'	毎時30分
+				複数	1.hour	['12:00', '18:00']	12時と18時
+				曜日	1.week	'Saturday 12:00'	土曜日の12時		
+				Week day list
+
+					曜日は省略を合わせると4パターンあります。
+					曜日	指定1	指定2	指定3	指定4
+					日	sunday	Sunday	sun	Sun
+					月	monday	Monday	mon	Mon
+					火	tuesday	Tuesday	tue	Tue
+					水	wednesday	Wednesday	wed	Wed
+					木	thursday	Thursday	thu	Thu
+					金	friday	Friday	fri	Fri
+					土	saturday	Saturday	sat	Sat
+						every(1.day, 'job', at: '01:30')             # 1時30分
+						every(1.day, 'job', at: '1:30')              # 1時30分
+						every(1.hour, 'job', at: '**:30')            # 毎時30分
+						every(1.hour, 'job', at: ['12:00', '18:00']) # 12時と18時
+						every(1.week, 'job', at: 'Saturday 12:00')   # 土曜日の12時
+		if
+			lambda { |t| [式] } で設定します。
+			(式に時間が不要なら`|t|`を`|_|`に変更します。)
+			Example
+			月初や月末で指定できます。
+			every(1.day, 'job', at: '9:00', if: lambda { |t| t.day == 1 }) # 月初の9時
+			every(1.day, 'job', at: '21:00', if: lambda { |t| t.day == Date.new(t.year, t.month, -1).day }) # 月末の21時
+
+
+	(3)サンプルソース *
+	(3-1)
+	fileclock.rb
+		require 'clockwork'
+		module Clockwork
+			handler do |job|
+				puts "Running #{job}"
+			end
+			every(10.seconds, 'frequent.job')
+			every(3.minutes, 'less.frequent.job')
+			every(1.hour, 'hourly.job')
+			every(1.day, 'midnight.job', :at => '00:00')
+		end
+
+
+    もしも every や handler が他の機能の名前と衝突する場合は、以下のようにして使います。
+
+    module Clockwork を削除する。
+    every の代わりに Clockwork::every を使う。
+    handler の代わりに Clockwork::handler を使う。
+
+	
+	(3-2)
+	case 文の利用 *
+		require 'clockwork'
+		module Clockwork
+			handler do |job|
+				case job
+					when 'less.frequent.job'
+					# 3 分毎の処理
+					when 'hourly.job'
+					# 1 時間毎の処理
+					when 'midnight.job'
+					# 夜中の処理
+				end
+			end
+			every(3.minutes, 'less.frequent.job')
+			every(1.hour, 'hourly.job')
+			every(1.day, 'midnight.job', :at => '00:00')
+		end
+	
+	(3-3)
+	module Clockwork
+		handler do |job|
+			job.call
+		end
+		every(
+			10.seconds,
+			lambda do
+			# 10 秒毎の処理
+			end
+		)
+
+		less_frequent_job = lambda do
+			# 3 分毎の処理
+		end
+		every(3.minutes, less_frequent_job)
+		every(
+			1.hours,
+				Proc.new do
+				# 1 時間毎の処理
+				end
+		)
+
+		every(
+			1.day,
+			lambda do
+			# 夜中の処理（どう書こうとなんだかエロい…）
+			end, :at => '00:00'
+		)
+	(3-5)
+	長時間job スレッド
+	every(10.seconds, 'long_time.job', :thread => true)
+	最大スレッド数は configure にて設定が可能です。
+
+		configure do |config|
+			config[:max_threads] = 100
+		end
+		
+		起動時にスレッド数が最大数を超えた場合、ジョブは実行されず、ログにその旨のメッセージが出力されます。
+		config[:max_threads] の初期値は 10 です。
+	require 'clockwork'
+	module Clockwork
+		handler do |job|
+			Thread.new do
+			# ジョブごとの処理を実行する。
+			# Thread.pass を適度に呼び、他のスレッドに処理を渡す。
+			# 同一のジョブが多重で実行されないようにするには適宜 Mutex を利用する。
+			end
+		end
+		every(3.minutes, 'less.frequent.job')
+		every(1.hour, 'hourly.job')
+		every(1.day, 'midnight.job', :at => '00:00')
+	end
+
+	(3-6)
+	require 'clockwork'
+	module Clockwork
+		def one_minute
+			p "minutely job"
+		end
+
+		def one_hour
+			p "hourly job"
+		end
+		handler do |job|
+			self.send(job.to_sym)
+		end
+		every(1.minute, 'one_minute')
+		every(1.hour, 'one_hour')
+	end
+		
+	(3-7)Railsと使う
+	アプリケーションと一緒に使うことでより実用的になります。Railsの場合はclockworkをrequireしたあとでRailsの環境をrequireすることでRailsのコードを使えるようになります。
+	Railsの環境を読み込むにはconfig/bootとconfig/environmentをrequireします。requireする際のパスに注意して書く必要があるのですが、
+	clockworkのコンフィグファイルがbootなどと同じくconfigにある場合は、
+
+	require 'clockwork'
+	require File.expand_path('../boot', __FILE__)
+	require File.expand_path('../environment', __FILE__)
+
+	module Clockwork
+
+		handler do |job|
+			p "#{job}: user count => #{User.count}"
+		end
+		every(1.minute, 'minute')
+	end
+	
+	(3-8)
+	clock.rb
+	require_relative '../config/boot'
+	require_relative '../config/environment'
+
+	require 'clockwork'
+	include Clockwork
+
+	case Rails.env
+		when 'development'
+			every(1.second, 'seconds.job') do
+				puts "Running development job"
+			end
+		when 'test'
+			every(1.minute, 'minutes.job') do
+				puts "Running test job"
+			end
+		when 'production'
+			every(1.hour, 'hours.job') do
+			puts "Running test job"
+		end
+		else # Unknown
+			every(1.day, 'days.job') do
+			puts "Running production job"
+		end  
+	end
+
+	# Shared jobs
+	every(1.week, 'weeks.job') do
+		puts "Running common job"
+	end
+
+   (4)clockwork  実行 	sample
+	clockwork clock.rb
+     clockwork を止める *
+     SIGINT シグナルを送れば Exit と表示されて正常終了します。Windows なら Ctrl + C を押してください。
+
+     その他、StandardError 以
+	外の例外が発生すると止まります。
+
+↑	clockwork はシングルスレッドで動作するため、並列に動作させたい場合は :thread オプションを利用する *
+	clockwork はシングルスレッドで動作します。handler の呼び出しもシングルスレッドです。
+	従って、handler 内でループなどの長期処理を実行した場合、その他のジョブの実行は待たされることになります。
+	
+	(4-2) sample2 
+	$ bundle exec rails server &
+	$ bundle exec rake jobs:work & 
+	$ bundle exec clockwork app/clock.rb &
+	
+	(4-3)clockworkdのコマンド
+	$ clockworkd --help
+	Usage: clockworkd -c FILE [options] start|stop|restart|run
+
+        --pid-dir=DIR                Alternate directory in which to store the process ids. Default is /.../clockwork/tmp.
+		-i, --identifier=STR             An identifier for the process. Default is clock file name.
+		-l, --log                        Redirect both STDOUT and STDERR to a logfile named clockworkd[.<identifier>].output in the pid-file directory.
+        --log-dir=DIR                A specific directory to put the log files into (default location is pid directory).
+		-m, --monitor                    Start monitor process.
+		-c, --clock=FILE                 Clock .rb file. Default is /.../clockwork/clock.rb.
+		-h, --help                       Show this message
+		logを出力させる設定で起動
+
+		$ clockworkd -c crontweet.rb --log start
+		logは tmp/clockworkd.（スクリプト名crontweet）.output に出力されます。
+		tail -Fを使うと自動更新してくれます。

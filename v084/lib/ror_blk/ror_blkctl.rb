@@ -109,13 +109,104 @@
         end
         return plsql.__send__(parescreen_cnt_usercode).nextval 
     end
+    def proc_update_table rec,r_cnt0  ##rec = command_c command_rとの混乱を避けるためrecにした。
+	    tblname = rec[:sio_viewname].split("_")[1]
+        begin 	       
+            command_r = rec.dup ###sio_xxxxx の　レスポンス用
+            tmp_key = {}
+            if  command_r[:sio_message_contents].nil? 
+				proc_tblinks(command_r) do 
+					"before"
+				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
+				proc_set_src_tbl  rec ### @src_tblの項目作成
+				command_r[:sio_recordcount] = r_cnt0
+			    case command_r[:sio_classname]
+			        when /_add_/ then
+	                    plsql.__send__(tblname).insert @src_tbl  
+	                when /_edit_/ then
+                         @src_tbl[:where] = {:id => rec[:id]}             ##変更分のみ更新
+                         plsql.__send__(tblname).update  @src_tbl
+                    when  /_delete_/ then 
+                         plsql.__send__(tblname).delete(:id => rec[:id])
+	            end   ## case iud 
+				proc_tblinks(command_r) do 
+					"after"
+				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
+            end  ##@src_tbl[:sio_message_contents].nil
+          rescue
+                plsql.rollback
+                @sio_result_f = command_r[:sio_result_f] =   "9"  ##9:error 
+                command_r[:sio_message_contents] =  "class #{self} : LINE #{__LINE__} $!: #{$!} "    ###evar not defined
+                command_r[:sio_errline] =  "class #{self} : LINE #{__LINE__} $@: #{$@} "[0..3999]
+                @src_tbl.each do |i,j| 
+                    if i.to_s =~ /s_id/  
+                        newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
+                        command_r[newi] = j if j 
+                    end
+                    command_r[i] = j if i == :id
+                end
+                command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
+                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
+                fprnt"LINE #{__LINE__} command_r: #{command_r} " 
+          else
+            @sio_result_f = command_r[:sio_result_f] =  "1"   ## 1 normal end
+            command_r[:sio_message_contents] = nil
+            command_r[(tblname.chop + "_id").to_sym] =  command_r[:id] = @src_tbl[:id]
+			vproc_delayjob_or_optiontbl(tblname,command_r[:id]) if vproc_optiontabl(tblname)
+            ##crt_def_tb if  tblname == "blktbs"   
+          ensure
+            sub_insert_sio_r   command_r    ## 結果のsio書き込み
+            ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
+        end ##begin
+        raise if @sio_result_f ==   "9" 
+    end
+	def vproc_optiontabl tblname
+		if tblname =~ /rubycodings|tblink|rplys$|mkschs|mkords|mkinsts|mkacts/ then true else false end
+	end
+	def vproc_delayjob_or_optiontbl tblname,id	
+        case tblname
+             when 	/rubycodings|tblink/
+			##undef dummy_def if respond_to?("dummy_def")
+				crt_def_all
+			when   /mkschs|mkords|mkinsts/
+		        vproc_tbl_mk  tblname,id do 
+					case tblname
+						when  /mkschs/
+							DbSchs.new
+						when  /mkords/
+							DbOrds.new
+						when  /mkinsts/
+							DbInsts.new
+						when  /mkacts/
+							DbInsts.new
+					end
+				end
+				 ####when   /schs$|ords$|insts$|acts$/				 
+			when   /rplys$/
+				dbrply = DbReplys.new
+			    dbrply.perform_setreplys tblname,id,@sio_user_code  ###reply のuser_id はinteger
+        end				 					
+	end
+	def vproc_tbl_mk tblname,id
+		str_id = if id then " and id = #{id} " else "" end
+	    if tblname == "mkinsts"  then order_by_add = " autocreate_inst, "  else order_by_add = "" end
+	    recs = plsql.select(:all,"select * from #{tblname} where result_f = '0' #{str_id}  order by #{order_by_add} id")   ##0 未処理
+        dbmk = yield
+		recs.each do |rec|
+			rec[:result_f] = "5"  ## Queueing
+			rec[:where] = {:id =>rec[:id]}
+			plsql.__send__(tblname).update rec
+		end
+		dbmk.__send__("perform_#{tblname}", recs)
+	end	
 	def proc_insert_sio_c command_c
 		sub_insert_sio_c   command_c
 	end
     def sub_insert_sio_c   command_c   ###要求  無限ループにならないこと
         command_c = char_to_number_data(command_c) ###画面イメージからデータtypeへ
         command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
-        command_c[:sio_term_id] =  request.remote_ip  if request  ## batch処理ではrequestはnil　　？？ 
+        command_c[:sio_term_id] =  request.remote_ip  if respond_to?("request.remote_ip")  ## batch処理ではrequestはnil　　？？ 
         command_c[:sio_command_response] = "C"
         command_c[:sio_add_time] = Time.now
 		command_c = vproc_command_c_dflt_set_fm_rubycoding(command_c) if command_c[:sio_classname] =~ /_add_|_edit_|_delete_/
@@ -124,9 +215,9 @@
 		rescue
 			plsql.rollback
 			fprnt " proc_insert_sio_c err   ・・・・・　command_c = #{command_c}"
-			raise
             fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
             fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 	
+			raise
 		end
     end   ## sub_insert_sio_c	
 	def vproc_command_c_dflt_set_fm_rubycoding command_c
@@ -162,7 +253,7 @@
         userproc[:status] = "request"
         userproc[:created_at] = Time.now
         userproc[:updated_at] = Time.now
-        userproc[:persons_id_upd] = 0
+        userproc[:persons_id_upd] = ActiveRecord::Base.connection.select_one("select * from persons where code = '0'")["id"]
         userproc[:expiredate] = DateTime.parse("2099/12/31")
         plsql.__send__("userproc#{@sio_user_code.to_s}s").insert userproc
     end     
@@ -186,7 +277,7 @@
         parescreen[:ctltbl] = hash_rcd[:ctltbl]
         parescreen[:created_at] = Time.now
         parescreen[:updated_at] = Time.now
-        parescreen[:persons_id_upd] = 0
+        parescreen[:persons_id_upd] = ActiveRecord::Base.connection.select_one("select * from persons where code = '0'")["id"]
         parescreen[:expiredate] = Date.today + 1
         plsql.__send__("parescreen#{@sio_user_code.to_s}s").insert parescreen
     end
@@ -544,8 +635,7 @@
             p "logic err 	sub_get_next_opeitm_processseq_and_loca_id   p_opeitm:#{p_opeitm} "	  
             raise		  
         end
-    end
-	
+    end	
     def sub_get_opeitms_id_fm_itm_processseq_priority p_opeitm  ###
         rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]||=999} and processseq = #{p_opeitm[:processseq]||=999}  ")
         if rec
@@ -554,8 +644,17 @@
             p "logic err 	sub_get_opeitms_id_fm_itm_processseq_priority   p_opeitm:#{p_opeitm} "	  
             raise		  
         end
+    end	
+    def proc_get_opeitms_id_fm_itm_loca itms_id,locas_id,processseq = nil,priority = nil  ###
+		strsql = "select * from opeitms where itms_id = #{itms_id} and locas_id = #{locas_id} and processseq = #{processseq ||= 999} and priority = = #{priority ||= 999} and expiredate > current_date "
+		rec = ActiveRecord::Base.connection.select_one(strsql)
+        if rec
+	        rec
+		  else
+            fprnt "logic err proc_get_opeitms_id_fm_itm_loca itms_id = #{itms_id} ,locas_id = #{locas_id}, processseq = #{processseq ||= 999} , priority = = #{priority ||= 999} ,expiredate > #{Date.today}"	  
+            raise		  
+        end
     end
-
 	def proc_get_amt qty ,price ,loca_id,itms_id
 	    (qty||=0)*(price||=0)
 	end
@@ -1014,5 +1113,13 @@
 			end
 		end
 		return ary_alloc
+	end
+	def proc_get_nextval tbl_seq
+		case ActiveRecord::Base.configurations[Rails.env]['adapter']
+			when /post/
+				ActiveRecord::Base.connection.select_value("SELECT nextval('#{tbl_seq}')")  ##post
+			when /oracle/
+				ActiveRecord::Base.connection.select_value("select #{tbl_seq}.nextval from dual")  ##oracle
+		end
 	end
 end   ##module Ror_blk

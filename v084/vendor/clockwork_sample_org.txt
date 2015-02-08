@@ -1,0 +1,584 @@
+﻿gem install clockwork
+バージョン 0.7.0 からネイティブコードを含むパッケージを使うようになったため、コンパイルエラーがでる場合は DEVELOPMENT KIT のセットアップを行う必要があります。
+
+もしくは以下の方法で 0.6.2 をインストールする方法もあります。
+
+gem install clockwork --version "= 0.6.2"
+↑
+clockwork が提供してくれるメソッドについて *
+
+clockwork は以下のメソッドを提供してくれます。
+
+メソッド名	概要
+every	定期実行するジョブを定義するメソッド。
+handler	ジョブ実行時に呼び出される処理を定義するメソッド。
+Numeric#seconds, Numeric#minutes, Numeric#hour, Numeric#day	時間の指定を書きやすくしてくれる拡張です。
+configure*1	Clockwork の初期化時に呼び出され、Clockwork のマルチスレッド／ロギング／タイムゾーンに関する設定を定義するメソッド。
+これらのメソッドを組合せて定期実行をプログラムし、clockwork コマンドでそれを実行します。
+
+↑
+サンプルソース *
+
+fileclock.rb
+require 'clockwork'
+
+module Clockwork
+  handler do |job|
+    puts "Running #{job}"
+  end
+
+  every(10.seconds, 'frequent.job')
+  every(3.minutes, 'less.frequent.job')
+  every(1.hour, 'hourly.job')
+
+  every(1.day, 'midnight.job', :at => '00:00')
+end
+参照
+README.md at master from tomykaira/clockwork - GitHub
+↑
+解説 *
+
+↑
+基本 *
+基本は、以下の通りです。
+
+handler にジョブ実行時の処理を定義する。
+every でジョブを定義する。
+every でジョブの実行タイミングを指定する際に Numeric#seconds, Numeric#minutes, Numeric#hour, Numeric#day を使う。
+module Clockwork は handler, every を呼びやすくするためのもので、特別な事情がなければそのままで良い（必要な状況は後述）。
+↑
+every でジョブ定義 *
+サンプルでは４つのジョブを定義しています。
+
+実行タイミング	ジョブ名
+10 秒毎に実行	frequent.job（頻繁なジョブ）
+3 分毎に実行	less.frequent.job（ちょっと頻繁なジョブ）
+1 時間毎に実行	hourly.job（１時間毎のジョブ）
+毎日夜中の１２時に実行	midnight.job（真夜中のジョブ*2）
+↑
+handler でジョブ実行 *
+every で定義したタイミングで handler のブロックが呼び出されます。
+
+ジョブを実行できる handler は１つだけ。
+job は every の 2 つ目の引数で指定したオブジェクト。
+サンプルでは全ての every 呼び出しで文字列を渡しているので 10 秒毎に
+
+Running frequent.job
+と表示されます。他のジョブも同様です。
+
+1.day を除き、他のジョブは起動時にまず最初に実行され、そこから時間の計測がはじまります。
+
+↑
+every や handler の名前が他と衝突するとき *
+もしも every や handler が他の機能の名前と衝突する場合は、以下のようにして使います。
+
+module Clockwork を削除する。
+every の代わりに Clockwork::every を使う。
+handler の代わりに Clockwork::handler を使う。
+↑
+clockwork を動かす *
+以下のコマンドを実行して clockwork を起動します。
+
+clockwork clock.rb
+clock.rb はよく使われる名前なだけで、ファイルの名前は任意である。
+clockwork コマンドは指定されたファイルを Ruby のプログラムとして実行し、handler と every で指定された情報に基づきジョブを実行し続けてくれる。
+clockwork は clock.rb を動かしてくれる Ruby で作られた単なるラッパープログラムである。
+clockwork は指定されたファイルを Ruby のプログラムとして実行しているだけなので、clock.rb は handler と every の呼び出しさえすれば、他の Ruby のプログラムとの違いはない。
+↑
+clockwork を止める *
+SIGINT シグナルを送れば Exit と表示されて正常終了します。Windows なら Ctrl + C を押してください。
+
+その他、StandardError 以外の例外が発生すると止まります。
+
+↑
+基本的なプログラムの書き方 *
+
+handler にすべてのジョブが集まります。
+
+ジョブが１種類だけであれば handler に単純に処理を書けば良いですが、複数種類のジョブを扱うには工夫が必要です。
+
+複数のジョブを処理するにはいくつかの書き方があります。以下に事例を挙げたいと思います。
+
+handler ブロックに case 文を書いて処理を振り分ける。
+lambda/Proc/Fiber/ を使って every メソッド呼び出し毎に処理を定義し、handler ブロッグで呼び出す。
+個々の処理をクラスとして定義し every メソッド呼び出し毎に対応するオブジェクトを生成して渡し、ポリモフィズムを使って呼び出し先を自動で分ける。
+↑
+case 文の利用 *
+require 'clockwork'
+
+module Clockwork
+  handler do |job|
+    case job
+    when 'frequent.job'
+      # 10 秒毎の処理
+    when 'less.frequent.job'
+      # 3 分毎の処理
+    when 'hourly.job'
+      # 1 時間毎の処理
+    when 'midnight.job'
+      # 夜中の処理（なんだかエロい…）
+    end
+  end
+
+  every(10.seconds, 'frequent.job')
+  every(3.minutes, 'less.frequent.job')
+  every(1.hour, 'hourly.job')
+
+  every(1.day, 'midnight.job', :at => '00:00')
+end
+単純な場合は、これでも良いと思います。
+
+↑
+lambda/Proc/Fiber の利用 *
+lambda と Proc の呼び出しは call という同じ名前のメソッドなので一緒に使えます。
+
+しかし、Fiber の呼び出しは resume なので lambda と Proc と一緒に使うことはできないので、
+
+lambda と Proc で全てのジョブを定義する。
+Fiber で全てのジョブを定義する。
+のいずれかの場合に利用できる方法です。
+
+番外編として
+
+Proc と Fiber を case で振り分けて呼び出すよう handler を定義する。
+という方法もありますが、恐らく 1 番の方法を利用する機会が多いと思うので、その事例を示します。
+
+every 呼び出しに lambda や Proc を使って処理を定義する。
+handler で call を呼び出して、それぞれのブロックを呼び出す。
+fiber を使う場合、handler では call ではなく resume を使う。
+require 'clockwork'
+
+module Clockwork
+  handler do |job|
+    job.call
+  end
+
+  # こういう書き方もＯＫ 
+  every(
+    10.seconds,
+    lambda do
+      # 10 秒毎の処理
+    end
+  )
+
+  # こういう書き方もＯＫ
+  less_frequent_job = lambda do
+    # 3 分毎の処理
+  end
+  every(3.minutes, less_frequent_job)
+
+  # こういう書き方もＯＫ
+  every(
+    1.hours,
+    Proc.new do
+      # 1 時間毎の処理
+    end
+  )
+
+  every(
+    1.day,
+    lambda do
+      # 夜中の処理（どう書こうとなんだかエロい…）
+    end, :at => '00:00'
+  )
+↑
+ポリモフィズムの利用 *
+この方法が一番汎用的なので、プログラムが大きくなればこの方法を採ることになると思います。
+
+個々のジョブをファイル／クラスに分けて定義する。
+clock.rb から require する。
+クラスで定義するメソッドの名前は同じにする（事例では call としているが、統一されていれば何でも良い。lambda や Proc と組合せて使うことも考慮すると call が一番いいと思う）。
+every でそれぞれのオブジェクトを生成して渡す。
+handler で call を呼ぶ。
+clock.rb
+require 'clockwork'
+
+require 'frequent_job'
+require 'less_frequent_job'
+require 'hourly_job'
+require 'midnight_job'
+
+module Clockwork
+  handler do |job|
+    job.call
+  end
+
+  every(10.seconds, FrequentJob.new)
+  every(3.minutes, LessFrequentJob.new)
+  every(1.hour, HourlyJob.new)
+
+  every(1.day, MidnightJob.new, :at => '00:00')
+end
+frequent_job.rb
+class FrequentJob
+  def call
+    # 10 秒毎の処理
+  end
+end
+less_frequent_job.rb
+class LessFrequentJob
+  def call
+    # 3 分毎の処理
+  end
+end
+hourly_job.rb
+class HourlyJob
+  def call
+    # 1 時間毎の処理
+  end
+end
+midnight_job.rb
+class MidnightJob
+  def call
+    # 夜中の処理（ファイルが分けられ密閉度上昇…、さらにエロい…）
+  end
+end
+↑
+備考 *
+
+↑
+clockwork はシングルスレッドで動作するため、並列に動作させたい場合は :thread オプションを利用する *
+clockwork はシングルスレッドで動作します。handler の呼び出しもシングルスレッドです。
+
+従って、handler 内でループなどの長期処理を実行した場合、その他のジョブの実行は待たされることになります。
+
+every で指定した個々のジョブの実行タイミングは、前回実行を開始した時間を基点としてカウントされます。
+
+特定の長期ジョブにより handler が占有され、開始時刻を過ぎたジョブは、長期ジョブの終了を契機に一気に実行されることになります。
+
+このように特定のジョブにより handler が占有されないようにするには、スレッドを利用する必要があります。
+
+version 0.5.1 からジョブ定義に :thread オプションを指定することで別スレッドでハンドラを動かす機能が追加されたようです。
+
+例えば以下のように書くことで該当のジョブを別スレッドにできます。
+
+# 長期処理
+every(10.seconds, 'long_time.job', :thread => true)
+最大スレッド数は configure にて設定が可能です。
+
+configure do |config|
+  config[:max_threads] = 100
+end
+起動時にスレッド数が最大数を超えた場合、ジョブは実行されず、ログにその旨のメッセージが出力されます。
+
+config[:max_threads] の初期値は 10 です。
+
+この max_threads の値は、Clockwork が管理するスレッドだけではなく、全てのスレッド数を監視しているので、自分で独自に内部処理でスレッドを作っている場合はそのスレッドもカウントされます。
+
+以降の情報は古いので不要かもしれませんが残しておきます。version 0.5.0 以前にマルチスレッドの機能はないので、自分でそれぞれのジョブを handler 内でスレッドにして実行する必要がありました。
+
+require 'clockwork'
+
+module Clockwork
+  handler do |job|
+    Thread.new do
+      # ジョブごとの処理を実行する。
+      # Thread.pass を適度に呼び、他のスレッドに処理を渡す。
+      # 同一のジョブが多重で実行されないようにするには適宜 Mutex を利用する。
+    end
+  end
+
+  every(10.seconds, 'frequent.job')
+  every(3.minutes, 'less.frequent.job')
+  every(1.hour, 'hourly.job')
+
+  every(1.day, 'midnight.job', :at => '00:00')
+end
+
+通常実行
+
+clockworkコマンドを使います。rubyコマンドじゃないです。
+
+$ clockwork crontweet.rb
+daemonとして起動
+
+clockworkdヘルプ
+
+clockworkdはclockworkとは別のgemなので、別途gem install clockworkdしてください。
+必要なのはdaemons gemでしたm(_ _)m
+
+$ clockworkd --help
+Usage: clockworkd -c FILE [options] start|stop|restart|run
+
+        --pid-dir=DIR                Alternate directory in which to store the process ids. Default is /.../clockwork/tmp.
+    -i, --identifier=STR             An identifier for the process. Default is clock file name.
+    -l, --log                        Redirect both STDOUT and STDERR to a logfile named clockworkd[.<identifier>].output in the pid-file directory.
+        --log-dir=DIR                A specific directory to put the log files into (default location is pid directory).
+    -m, --monitor                    Start monitor process.
+    -c, --clock=FILE                 Clock .rb file. Default is /.../clockwork/clock.rb.
+    -h, --help                       Show this message
+logを出力させる設定で起動
+
+$ clockworkd -c crontweet.rb --log start
+logは tmp/clockworkd.（スクリプト名crontweet）.output に出力されます。
+tail -Fを使うと自動更新してくれます。
+
+clockworkd.crontweet: process with pid 74526 started.
+I, [2013-06-25T13:45:02.774780 #74526]  INFO -- : Starting clock for 12 events: [ cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet cyclerrtvtweet  ]
+I, [2013-06-25T13:45:02.775175 #74526]  INFO -- : Triggering 'cyclerrtvtweet'
+　：
+
+
+
+
+
+Register
+
+定期的に処理する内容をeveryに記述します。
+everyは期間、処理(ジョブ)、条件を指定します。
+
+every([period], [job name], [options]) [{job block}]
+Period
+
+ジョブを実行する期間(間隔)を指定します。
+期間の単位は秒、分、時、日、週です。
+
+[数字].[単位のキーワード]で設定します。
+
+キーワードの単数形と複数形はエイリアスです。
+(数字が1なら単数形、2以上なら複数形を使うとよいです。)
+List
+
+単位	単数形	複数形	Source
+秒	second	seconds	period * 1
+分	minute	minutes	period * 60
+時	hour	hours	period * 3600
+日	day	days	period * 86400
+週	week	weeks	period * 604800
+Example
+
+Ruby
+every(4.seconds, '4.seconds.job')  # 4秒間隔
+every(2.hours, '2.hours.job')      # 2時間間隔
+every(1.day, '1.day.job')          # 1日間隔
+Options
+
+ジョブを実行する条件を指定します。
+条件にはatとifがあります。
+
+at
+
+何時にジョブを実行するか指定します。
+
+'[時]:[分]' で設定します。
+
+(時間は複数の指定ができます。また、曜日を指定できます。)
+List
+
+指定	period	at	処理される時間
+時分	1.day	'01:30'	1時30分
+0省略	1.day	'1:30'	1時30分
+毎時	1.hour	'**:30'	毎時30分
+複数	1.hour	['12:00', '18:00']	12時と18時
+曜日	1.week	'Saturday 12:00'	土曜日の12時
+Week day list
+
+曜日は省略を合わせると4パターンあります。
+エイリアスなので好きなキーワードを使えます。
+
+曜日	指定1	指定2	指定3	指定4
+日	sunday	Sunday	sun	Sun
+月	monday	Monday	mon	Mon
+火	tuesday	Tuesday	tue	Tue
+水	wednesday	Wednesday	wed	Wed
+木	thursday	Thursday	thu	Thu
+金	friday	Friday	fri	Fri
+土	saturday	Saturday	sat	Sat
+Example
+
+Ruby
+every(1.day, 'job', at: '01:30')             # 1時30分
+every(1.day, 'job', at: '1:30')              # 1時30分
+every(1.hour, 'job', at: '**:30')            # 毎時30分
+every(1.hour, 'job', at: ['12:00', '18:00']) # 12時と18時
+every(1.week, 'job', at: 'Saturday 12:00')   # 土曜日の12時
+Anti-pattern
+
+periodとatの組合せに注意が必要です。
+
+例では毎時30分の指定ですが期間が1日間隔なので、Clockworkが12時にスタートすると
+初回は12時30分に実行されて、次回は翌日の12時30分に実行されます。
+
+Ruby
+every(1.day, 'job', at: '**:30') # 毎時30分では実行しない！
+if
+
+ジョブを実行する条件を指定します。
+
+lambda { |t| [式] } で設定します。
+
+(式に時間が不要なら`|t|`を`|_|`に変更します。)
+Example
+
+月初や月末で指定できます。
+
+Ruby
+every(1.day, 'job', at: '9:00', if: lambda { |t| t.day == 1 }) # 月初の9時
+every(1.day, 'job', at: '21:00', if: lambda { |t| t.day == Date.new(t.year, t.month, -1).day }) # 月末の21時
+Practical
+
+処理の失敗をモニタリングしてアラートを通知することが簡単に実装できます。
+(Sidekiqを利用すると非同期処理の実装が簡単です。)
+
+Ruby
+every(1.minute, 'Failure::Worker', if: lambda { |_| Failure.all.count > 0 }) do 
+  Failure::Worker.perform_async
+end
+Job
+
+実行するジョブを指定します。
+(ジョブはSidekiqなどを利用が必要です。)
+
+every(period, [job name], options) [{job block}] で設定します。
+
+{job block}に記述する方法と[job name]を利用してhandlerに記述する方法があります。
+Job block
+
+期間、条件、ジョブをまとめて記述できます。
+
+Ruby
+every(1.second, '1.second.job') do
+  puts "Running job"
+end
+handler
+
+期間、条件とジョブを分けて記述できます。
+
+Ruby
+handler do |job|
+  case job
+  when '1.second.job'
+    "Running job"
+  end 
+end
+
+every(1.second, '1.second.job')
+Example
+
+Practical
+
+Railsの例ですが、環境(開発や本番)に合わせて制御できます。
+
+clock.rb
+require_relative '../config/boot'
+require_relative '../config/environment'
+
+require 'clockwork'
+include Clockwork
+
+case Rails.env
+when 'development'
+  every(1.second, 'seconds.job') do
+    puts "Running development job"
+  end
+when 'staging'
+  every(1.minute, 'minutes.job') do
+    puts "Running staging job"
+  end
+when 'production'
+  every(1.hour, 'hours.job') do
+    puts "Running staging job"
+  end
+else # Unknown
+  every(1.day, 'days.job') do
+    puts "Running production job"
+  end  
+end
+
+# Shared jobs
+every(1.week, 'weeks.job') do
+  puts "Running common job"
+end
+Anti-pattern
+
+Rubyはマルチスレッドの処理をしないとジョブが期待した時間に実行されません。
+
+例では1秒間隔と10秒間隔のジョブを実行します。しかし、10秒間隔のジョブで
+20秒の待ちが発生するので1秒間隔のジョブも20秒待たされます。
+
+Ruby
+every(1.second, '1.second.job') {sleep 0}
+every(10.seconds, '10.seconds.job') {sleep 20}
+
+
+単独で使う
+まずはRuby単独で使う方法です。ローカルマシンで定期的にスクリプトを動かしたいときなどに使えます（そんなときあるか！？）。
+
+まずgemを導入します。普通にgem installでいけます。
+
+$ gem install clockwork
+次にコンフィグファイル的なものを書きます。例えばclock.rbというような名前で作るとします。
+
+require 'clockwork'
+
+module Clockwork
+
+  def one_minute
+    p "minutely job"
+  end
+
+  def one_hour
+    p "hourly job"
+  end
+
+
+  handler do |job|
+    self.send(job.to_sym)
+  end
+
+  every(1.minute, 'one_minute')
+  every(1.hour, 'one_hour')
+end
+最後の2行で1分ごとのジョブと1時間ごとのジョブを設定しています。そしてhandlerに処理記述します。この例ではジョブ名と同じメソッドを定義しておいて、sendによってそちらを呼ぶようにしています。
+
+フォアグラウンド実行
+フォアグラウンド実行を行うときは次のように実行します。
+
+$ clockwork clock.rb
+I, [2014-02-16T11:11:17.128897 #97926]  INFO -- : Starting clock for 2 events: [ one_minute one_hour ]
+I, [2014-02-16T11:11:17.129034 #97926]  INFO -- : Triggering 'one_minute'
+"minutely job"
+I, [2014-02-16T11:11:17.129107 #97926]  INFO -- : Triggering 'one_hour'
+"hourly job"
+I, [2014-02-16T11:12:17.182378 #97926]  INFO -- : Triggering 'one_minute'
+"minutely job"
+I, [2014-02-16T11:13:17.231925 #97926]  INFO -- : Triggering 'one_minute'
+"minutely job"
+実行すると同時に1時間毎のジョブと1分ごとのジョブが実行され、それ以降は指定した間隔でジョブが動いていきます。
+
+atオプションを使うことでcronのように◯時XX分に実行する、というような指定も可能です。
+
+every(1.hour, 'hourly', :at => '**:30')
+バックグラウンド実行（デーモン）
+定期実行という機能の特性を考えるとバックグラウンドで実行したいケースがほとんどだと思います。そのためにはclockworkと一緒についてくるclockworkdを使います。
+
+$ clockworkd -c clock.rb start --log
+-cはコンフィグファイルを指定というようなニュアンスだと思われます。clock.rbファイルを指定してstartすればバックグラウンドで起動します。--logオプションを付けることにより、フォアグラウンド実行のとき標準出力されていたログがファイルに出るようになります。
+
+Railsと使う
+アプリケーションと一緒に使うことでより実用的になります。Railsの場合はclockworkをrequireしたあとでRailsの環境をrequireすることでRailsのコードを使えるようになります。
+
+Railsの環境を読み込むにはconfig/bootとconfig/environmentをrequireします。requireする際のパスに注意して書く必要があるのですが、clockworkのコンフィグファイルがbootなどと同じくconfigにある場合は、
+
+require File.expand_path('../boot', __FILE__)
+require File.expand_path('../environment', __FILE__)
+などと書きます。
+
+これをやっておくことでRailsのモデルなどにアクセスできるようになって、より実用的な使い方をできるようになりますね。
+
+require 'clockwork'
+
+require File.expand_path('../boot', __FILE__)
+require File.expand_path('../environment', __FILE__)
+
+module Clockwork
+
+  handler do |job|
+    p "#{job}: user count => #{User.count}"
+  end
+
+  every(1.minute, 'minute')
+end
+
+
+

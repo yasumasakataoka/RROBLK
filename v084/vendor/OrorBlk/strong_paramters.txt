@@ -1,0 +1,10 @@
+﻿Rails 3からRails 4に移行する場合の対処
+
+Railsのコアチームがstrong_parametersというgemを出してくださっています。このgemを使うとRails 3のアプリでもRails 4と同じ方法でmass assignmentの防止ができるようになります。
+
+具体的には既存のRails 3のアプリに対して以下の変更を加えます。
+
+Gemfileにstrong_parametersのgemを追加する。
+application.rbの中でconfig.active_record.whitelist_attributesをfalseに設定する。
+対象となるモデル（例えば上の例ではArticleモデル）にinclude ActiveModel::ForbiddenAttributesProtectionを追加する。
+コントローラの中で（上の例のように）params.require(:article).permit(:title, :content)のようなパラメータの扱いにかえる。

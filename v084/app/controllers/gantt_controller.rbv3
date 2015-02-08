@@ -16,6 +16,7 @@ class   GanttController  <  ScreenController
         @xnum1 = "parent_number"
         @xnum1witdth = 30   
         render :json =>@ganttdata
+
     end
     def  proc_mst_gantt  mst_code,id
         ngantts = []
@@ -56,7 +57,7 @@ class   GanttController  <  ScreenController
     end  
 	def sql_proc_trn_gantt trn_code,id
 	    ### a.trngantt 引当て先　　b.trngantt オリジナル
-        %Q& select a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_prdpurshp prdpurshp,
+        %Q& select a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,
                             alloctbl_destblname,alloctbl_destblid,
 							min(a.TRNGANTT_STRDATE) org_strdate,max(a.TRNGANTT_MLEVEL) mlevel,
 							max(a.TRNGANTT_dueDATE) org_duedate,max(a.trngantt_qty) qty,
@@ -69,7 +70,7 @@ class   GanttController  <  ScreenController
 					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
 					  where   a.trngantt_orgtblname = '#{trn_code}' and a.trngantt_orgtblid = #{id}  
 					  group by a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_orgtblname,a.trngantt_orgtblid,
-								alloctbl_destblname,alloctbl_destblid,a.trngantt_prdpurshp
+								alloctbl_destblname,alloctbl_destblid
 					  order by a.trngantt_key&
 	end
     def  proc_trn_gantt  trn_code,id
@@ -88,15 +89,14 @@ class   GanttController  <  ScreenController
 					   value["loca_code"] = custtrn["loca_code_cust"]
 					   value["loca_name"] = custtrn["loca_name_cust"]
 					   alloc["strdate"] = value["org_strdate"]  ###c
-					   alloc["end"] = value["org_strdate"]  ###c
 					end
 			    else
 					alloc =  ActiveRecord::Base.connection.select_one(%Q& select * from #{value["alloctbl_destblname"]} where id = #{value["alloctbl_destblid"]}&)
                   ###  trn_sno = plsql.select(:first,"select * from #{value[:trngantt_tblname]} where id = #{value[:trngantt_tblid]} ")				
 		    end
             tmpgantt[value["trngantt_key"].to_sym] = {:id=>(idx += 1).to_s,:itm_code=>value["itm_code"],:itm_name=>value["itm_name"],
-			                                            :loca_code=>"#{value["loca_code"]}",:loca_name=>value["loca_name"],
-														:prdpurshp=>"#{value["prdpurshp"]}",:sno=>alloc["sno"],
+			                                            :loca_code=>"#{value["loca_code"]}",:loca_name=>"#{value["loca_name"]}",
+														:prdpurshp=>"#{value[:trngantt_prdpurshp]}",:sno=>alloc["sno"],
                                                         :qty=>"#{value["qty"]||=0}",
 														:qty_sch=>"#{value["qty_alloc_sch"]||=0}",:qty_ord=>"#{value["qty_alloc_ord"]||=0}",
 														:qty_inst=>"#{value["qty_alloc_inst"]||=0}",:qty_stk=>"#{value["qty_alloc_stk"]||=0}",
@@ -107,16 +107,17 @@ class   GanttController  <  ScreenController
 														:level=>if value["trngantt_key"] == '000' then 0 else 1 end,
 														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>""}
             if value["trngantt_key"].size > 3
+				debugger
 			    tmpgantt[value["trngantt_key"][0..-4].to_sym][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]},"  if tmpgantt[value["trngantt_key"].to_sym]
 			  else
 			    tmpgantt[:"001"][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]}," if value["trngantt_key"].to_s > "001"
 			end
-		end		
+		end	
         strgantt = '{"tasks":['
         tmpgantt.sort.each  do|key,gantt|
             strgantt << %Q&{"id":"#{gantt[:id]}","itm_code":"#{gantt[:itm_code]}","itm_name":"#{gantt[:itm_name]}","loca_code":"#{gantt[:loca_code]}","loca_name":"#{gantt[:loca_name]}",
             "start":#{gantt[:start]},"org_start":#{gantt[:start]},"end":#{gantt[:end]||=gantt[:org_end]},"org_end":#{gantt[:org_end]},			
-			"prdpurshp":"#{gantt[:prdpurshp]}","sno":"#{gantt[:sno]}",
+			"prdpurshp":"#{gantt[:prdpurshp]}","sno":#{gantt[:sno]},
 			"qty":#{gantt[:qty]},"qty_sch":#{gantt[:qty_sch]},"qty_ord":#{gantt[:qty_ord]},"qty_inst":#{gantt[:qty_inst]},"qty_stk":#{gantt[:qty_stk]},
 			"assigs":[],"level":#{gantt[:level]},"mlevel":#{gantt[:mlevel]},"subtblid":"#{gantt[:subtblid]}","paretblcode":"","depends":"#{gantt[:depends].chop}"},&
         end

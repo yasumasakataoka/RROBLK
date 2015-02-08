@@ -1,8 +1,12 @@
-select trngantt_id,trngantt_strdate,trngantt_loca_id,trngantt_itm_id,trngantt_prdpurshp,trngantt_processseq,
-			alloctbl_id,alloctbl_srctblname,alloctbl_srctblid,alloctbl_destblname,alloctbl_destblid,alloctbl_qty,alloctbl_id,trn.* 
-		    from r_trngantts trngantt ,r_purschs trn ,r_alloctbls
-		    where  alloctbl_srctblname = 'trngantts' and trngantt_id = alloctbl_srctblid
-			and alloctbl_qty > 0 and alloctbl_destblname = 'purschs' and alloctbl_destblid = trn.id		    
-			order by trngantt.itm_code,trngantt.trngantt_loca_id,trn.loca_id_to,trngantt.trngantt_processseq,trn.opeitm_id,
-			trngantt.trngantt_strdate
-			;
+select * from mkords a where result_f = 's'
+and expiredate > current_date
+and to_char(runtime,'##') = substr(to_char(current_date,'yyyy/mm/dd hh24'),12,2)
+and not exists (select 1 from mkords b
+                where result_f = '0'
+				and a.RUNTIME = b.RUNTIME
+				and a.prdpurshp = b.PRDPURSHP)
+				;
+select substr(to_char(current_timestamp,'yyyy/mm/dd hh24'),12,2) from dual
+;
+select to_char(id,'00') from persons
+;

@@ -37,6 +37,8 @@
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_parenum</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_chilnum</th>
 <% else %>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">prdpurshp</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">sno</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_sch</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_ord</th>
@@ -72,6 +74,8 @@
 <td class="gdfCell"><input type="text" name="nditm_parenum" value="(#=obj.nditm_parenum#)"></td>
 <td class="gdfCell"><input type="text" name="nditm_chilnum" value="(#=obj.nditm_chilnum#)"></td>
 <% else %>
+<td class="gdfCell"><input type="text" name="prdpurshp"  style="text-align:right" value="(#=obj.prdpurshp#)"></td>
+<td class="gdfCell"><input type="text" name="sno" style="text-align:right" value="(#=obj.sno#)"></td>
 <td class="gdfCell"><input type="text" name="qty"  style="text-align:right" value="(#=obj.qty#)"></td>
 <td class="gdfCell"><input type="text" name="qty_sch" style="text-align:right" value="(#=obj.qty_sch#)"></td>
 <td class="gdfCell"><input type="text" name="qty_ord"  style="text-align:right" value="(#=obj.qty_ord#)"></td>
@@ -148,6 +152,8 @@
 <td><label for="nditm_parenum">nditm_parenum</label><br><input type="text" name="nditm_parenum" id="nditm_parenum" value="" class="formElements"></td>
 <td><label for="nditm_chilnum">nditm_chilnum</label><br><input type="text" name="nditm_chilnum" id="nditm_chilnum" value=""  class="formElements"></td>
 <% else %>
+<td><label for="prdpurshp">prdpurshp</label><br><input type="text" name="prdpurshp" id="prdpurshp" value=""  class="formElements"></td>
+<td><label for="sno">sno</label><br><input type="text" name="sno" id="sno" value=""  class="formElements"></td>
 <td><label for="qty">qty</label><br><input type="text" name="qty" id="qty" value=""  class="formElements"></td>
 <td><label for="qty_sch">qty_sch</label><br><input type="text" name="qty_sch" id="qty_sch" value=""  class="formElements"></td>
 <td><label for="qty_ord">qty_ord</label><br><input type="text" name="qty_ord" id="qty_ord" value=""  class="formElements"></td>

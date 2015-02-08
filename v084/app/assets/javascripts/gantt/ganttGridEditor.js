@@ -121,6 +121,8 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   row.find("[status]").attr("status", task.status);
   row.find("[name=nditm_parenum]").val(task.nditm_parenum);  //add
   row.find("[name=nditm_chilnum]").val(task.nditm_chilnum);  //add
+  row.find("[name=prdpurshp]").val(task.prdpurshp);  //add v2
+  row.find("[name=sno]").val(task.sno);  //add v2
   row.find("[name=qty]").val(task.qty);  //add v2
   row.find("[name=qty_sch]").val(task.qty_sch);  //add v2
   row.find("[name=qty_ord]").val(task.qty_ord);  //add v2
@@ -390,6 +392,8 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   taskEditor.find("#itm_code").val(task.itm_code);  //add
   taskEditor.find("#loca_name").val(task.loca_name); //add
   taskEditor.find("#loca_code").val(task.loca_code);  //add
+  taskEditor.find("#prdpurshp").val(task.prdpurshp);  //add v2
+  taskEditor.find("#sno").val(task.sno);  //add v2
   taskEditor.find("#qty").val(task.qty);  //add v2
   taskEditor.find("#qty_sch").val(task.qty_sch);  //add v2
   taskEditor.find("#qty_ord").val(task.qty_ord);  //add v2
@@ -518,6 +522,8 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       task.loca_code = taskEditor.find("#loca_code").val();
       task.nditm_parenum = taskEditor.find("#nditm_parenum").val();
       task.nditm_chilnum = taskEditor.find("#nditm_chilnum").val();
+      task.prdpurshp = taskEditor.find("#prdpurshp").val();
+      task.sno = taskEditor.find("#sno").val();
       task.qty = taskEditor.find("#qty").val();
       task.qty_sch = taskEditor.find("#qty_sch").val();
       task.qty_ord = taskEditor.find("#qty_ord").val();

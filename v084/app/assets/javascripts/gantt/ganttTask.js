@@ -30,17 +30,22 @@ function TaskFactory() {
   /**
    * Build a new Task
    */
-  this.build = function(id, subtblid, paretblcode, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) {
+  /*this.build = function(id, subtblid, paretblcode, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) { */
+	this.build = function(id, subtblid,paretblcode,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end){
     // Set at beginning of day
     //var adjusted_end = computeEnd(end);    //blk modify
     //var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration); blk modify
 
-    return new Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum);
+   /* return new Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum); */
+   return new Task(id, subtblid,paretblcode,level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end);
   };
 
 }
 
-function Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) {
+function Task(id, subtblid,paretblcode,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end) {
   this.id = id;
   this.subtblid = subtblid;
   this.paretblcode = paretblcode;
@@ -56,8 +61,18 @@ function Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlev
   this.loca_name = loca_name;
   this.itm_code = itm_code;
   this.itm_name = itm_name;
-  this.nditm_paenum = nditm_paenum;
+  this.nditm_parernum = nditm_parenum;
   this.nditm_chilnum = nditm_chilnum;
+  
+  this.prdpurshp = prdpurshp;
+  this.sno = sno;
+  this.qty = qty;
+  this.qty_sch = qty_sch;
+  this.qty_ord = qty_ord;
+  this.qty_inst = qty_inst;
+  this.qty_stk = qty_stk;
+  this.org_start = org_start;
+  this.org_end = org_end;
 
   this.startIsMilestone = false;
   this.endIsMilestone = false;

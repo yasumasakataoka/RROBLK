@@ -52,100 +52,6 @@
       ##Rails.cache.delete_matched(cache_key) ###delay_jobからcallされるので、grp_codeはbatch
 	  Rails.cache.clear(nil) ###delay_jobからcallされるので、grp_codeはbatch
     end
-    def proc_update_table rec,r_cnt0  ##rec = command_c command_rとの混乱を避けるためrecにした。
-	    tblname = rec[:sio_viewname].split("_")[1]
-        begin 	       
-            command_r = rec.dup ###sio_xxxxx の　レスポンス用
-            tmp_key = {}
-            if  command_r[:sio_message_contents].nil? 
-				proc_tblinks(command_r) do 
-					"before"
-				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
-				proc_set_src_tbl  rec ### @src_tblの項目作成
-				command_r[:sio_recordcount] = r_cnt0
-			    case command_r[:sio_classname]
-			        when /_add_/ then
-	                    plsql.__send__(tblname).insert @src_tbl  
-	                when /_edit_/ then
-                         @src_tbl[:where] = {:id => rec[:id]}             ##変更分のみ更新
-                         plsql.__send__(tblname).update  @src_tbl
-                    when  /_delete_/ then 
-                         plsql.__send__(tblname).delete(:id => rec[:id])
-	            end   ## case iud 
-				proc_tblinks(command_r) do 
-					"after"
-				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
-            end  ##@src_tbl[:sio_message_contents].nil
-          rescue
-                plsql.rollback
-                @sio_result_f = command_r[:sio_result_f] =   "9"  ##9:error 
-                command_r[:sio_message_contents] =  "class #{self} : LINE #{__LINE__} $!: #{$!} "    ###evar not defined
-                command_r[:sio_errline] =  "class #{self} : LINE #{__LINE__} $@: #{$@} "[0..3999]
-                @src_tbl.each do |i,j| 
-                    if i.to_s =~ /s_id/  
-                        newi = (tblname.chop + "_" + i.to_s.sub("s_id","_id")).to_sym
-                        command_r[newi] = j if j 
-                    end
-                    command_r[i] = j if i == :id
-                end
-                command_r[(command_r[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_r[:id]
-                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 
-                fprnt"LINE #{__LINE__} command_r: #{command_r} " 
-          else
-            @sio_result_f = command_r[:sio_result_f] =  "1"   ## 1 normal end
-            command_r[:sio_message_contents] = nil
-            command_r[(tblname.chop + "_id").to_sym] =  command_r[:id] = @src_tbl[:id]
-			vproc_delayjob_or_optiontbl(tblname,command_r[:id]) if vproc_optiontabl(tblname)
-            ##crt_def_tb if  tblname == "blktbs"   
-          ensure
-            sub_insert_sio_r   command_r    ## 結果のsio書き込み
-            ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
-        end ##begin
-        raise if @sio_result_f ==   "9" 
-    end
-	def vproc_optiontabl tblname
-		if tblname =~ /rubycodings|tblink|rplys$|mkschs|mkords|mkinsts|mkacts/ then true else false end
-	end
-	def vproc_delayjob_or_optiontbl tblname,id	
-        case tblname
-             when 	/rubycodings|tblink/
-			##undef dummy_def if respond_to?("dummy_def")
-				crt_def_all
-			when   /mkschs|mkords|mkinsts/
-		        vproc_tbl_mk  tblname,id do 
-					case tblname
-						when  /mkschs/
-							DbSchs.new
-						when  /mkords/
-							DbOrds.new
-						when  /mkinsts/
-							DbInsts.new
-						when  /mkacts/
-							DbInsts.new
-					end
-				end
-				 ####when   /schs$|ords$|insts$|acts$/				 
-			when   /rplys$/
-				dbrply = DbReplys.new
-			    dbrply.perform_setreplys tblname,id,@sio_user_code  ###reply のuser_id はinteger
-        end				 					
-	end
-	def vproc_tbl_mk tblname,id
-		str_id = if id then " and id = #{id} " else "" end
-	    if tblname == "mkinsts"  then order_by_add = " autocreate_inst, "  else order_by_add = "" end
-	    recs = plsql.select(:all,"select * from #{tblname} where result_f = '0' #{str_id}  order by #{order_by_add} id")   ##0 未処理
-        dbmk = yield
-		recs.each do |rec|
-		    if rec[:runtime] == -1
-			   rec[:result_f] = "5"  ## Queueing
-			   rec[:where] = {:id =>rec[:id]}
-			   plsql.__send__(tblname).update rec
-			   ##fprnt "line:#{__LINE__} rec:#{rec}"
-            end			 
-		end
-		dbmk.__send__("perform_#{tblname}", recs)
-	end	
 	def proc_update_gantt_alloc_fm_trn trn,allocs,trngantt_id  ### allocs:ord等の作成元　ordなら　sch; trngantt_id xxxschsの作成時
 		self_gantt = proc_create_self_gantt yield   ###schやord自身のtrngantts作成
 		str_alloctbl = {}		
@@ -210,7 +116,7 @@
 				alloc[:id] = plsql.alloctbls_seq.nextval 
 				alloc[:created_at] = Time.now
 				alloc[:updated_at] = Time.now
-				alloc[:persons_id_upd] = 0
+				alloc[:persons_id_upd] = ActiveRecord::Base.connection.select_one("select * from persons where code = '0'")["id"]
 				plsql.alloctbls.insert alloc
 			when /_edit_|_delete_/
 				strsql = %Q& select * from alloctbls where srctblname = 'trngantts' and destblname = '#{alloc[:destblname]}' and destblid = #{alloc[:destblid]} order by id desc &
@@ -254,7 +160,8 @@
 					:qty=>@src_tbl[:qty],:prdpurshp=>@opeitm[:prdpurshp],
 					:itms_id=>@opeitm[:itms_id],:processseq=>@opeitm[:processseq],:locas_id=>@opeitm[:locas_id],
 					:expiredate=>"2099/12/31".to_date,
-					:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created gantts from tran ",:persons_id_upd=>0} 
+					:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created gantts from tran ",
+					:persons_id_upd=>ActiveRecord::Base.connection.select_one("select * from persons where code = '0'")["id"]} 
 				plsql.trngantts.insert str_gantt	### sch,ord,inst,act自身のtrngantts
 				str_gantt[:id] = plsql.trngantts_seq.nextval 
 				str_gantt[:key] = "001" 
@@ -362,9 +269,10 @@ class DbSchs  < DbCud    ###custordが変更、キャンセルされた時
 			:qty=>value[:qty],:prdpurshp=>value[:prdpurshp],
 			:itms_id=>opeitm[:itms_id],:processseq=>opeitm[:processseq],:locas_id=>opeitm[:locas_id],
 			:expiredate=>"2099/12/31".to_date,
-			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created_by perform_mkschs ",:persons_id_upd=>0}
+			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created_by perform_mkschs ",
+			:persons_id_upd=>ActiveRecord::Base.connection.select_one("select * from persons where code = '0'")["id"]}
 		    plsql.trngantts.insert str_gantt
-			if str_gantt[:mlevel] > 1
+			if str_gantt[:mlevel] > 0  ###  レベル 0のtrnganttsにはprdpurshpは作成しない。
 				vproc_create_sch_from_gantt(str_gantt)			
 				vproc_pre_chk_free_alloc(str_gantt)
 			end
@@ -385,7 +293,7 @@ class DbSchs  < DbCud    ###custordが変更、キャンセルされた時
 		free_stks = plsql.select(:all,sql_pre_chk_free_alloc(str_gantt))
 		free_stks.each do |free_stk|		
 			break if str_gantt[:qty] <= 0
-			if shuffle_loca = "1" or trngantt_loca_id == lotstkhist_loca_id
+			if shuffle_loca == "1" or trngantt_loca_id == lotstkhist_loca_id
 				destbl = {}
 				destbl[:alloctbl_srctblname] = "trngantts"
 				destbl[:alloctbl_srctblid] = str_gantt[:id]
@@ -519,7 +427,6 @@ class DbOrds  < DbSchs
 		@inqty = @outqty = @skipqty = 0
 		@inamt = @outamt = @skipamt = 0
 		@schpricesym = (rec[:prdpurshp] + "sch_price")
-		##fprnt "line #{__LINE__}  \n sql_realloc_search(rec) #{sql_realloc_search(rec)}"
 		save_sch = {}
 		ary_alloc =[]		
 		@free_qty = 0
