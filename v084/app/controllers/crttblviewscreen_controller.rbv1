@@ -109,7 +109,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                      if update_rec[:screenfield_remark].size < 120  then " set paragraph = '#{screen_code}'  by crtviewscreen" else "" end
           end
           tmp_rec[:where] = {:id => update_rec[:id]}
-          ##debugger
           plsql.screenfields.update tmp_rec
       end 
   end
@@ -144,7 +143,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                                                    and objecttype = 'tbl_field' and expiredate  > sysdate)")[:id]
           plsql.blktbsfieldcodes.insert rec0 if rec0
        end
-       ##debugger
        tmpstrsql.sort.each do |key,value|
           @strsql0 << value         
        end
@@ -158,7 +156,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
       mandatory_field =  prv_init
       allrecs.each do |rec|
           frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
-          ##debugger
           next if frec.nil?		  
           key = frec[:pobject_code_fld].to_sym
           keys << key
@@ -171,6 +168,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                  frec[:fieldcode_dataprecision] = 38 if  frec[:fieldcode_dataprecision] == 0 or frec[:fieldcode_dataprecision].nil?
                 if ((columns[key][:data_precision]||=38  < frec[:fieldcode_dataprecision]) or  columns[key][:data_scale]||=0 != (frec[:fieldcode_datascale]||=0)) and  frec[:fieldcode_ftype] == "number" then
                    @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_dataprecision]},#{frec[:fieldcode_datascale]});\n"
+				   debugger
                 end
                else 
                    if columns[key][:data_type].downcase =~ /date|timestamp/ and frec[:fieldcode_ftype]  =~ /date|timestamp/ 

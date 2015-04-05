@@ -24,10 +24,10 @@ gem 'jquery-rails'
 
 gem 'ruby-oci8'
 gem 'memcache-client'
-gem 'devise'
+gem 'devise','3.0.0'
 gem 'ruby-plsql'
 gem 'git-rails'
-gem 'activerecord-oracle_enhanced-adapter'
+gem 'activerecord-oracle_enhanced-adapter','1.4.2'
 
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
@@ -53,13 +53,14 @@ gem 'activerecord-oracle_enhanced-adapter'
  gem "axlsx"
 ## gem "simple-spreadsheet"
 ##  gem 'roo'
- gem "rubyXL"
+ gem "rubyzip",'0.9.9'
+ gem "rubyXL",'1.2.10'
 ## gem 'google-spreadsheet-ruby'
 ## gem 'simple_xlsx_reader'
 ### 普通にObjectをStoreしたい
 ### Dalli is a high performance pure Ruby client for accessing memcached servers.
 gem 'dalli'
- gem 'prawn'
+ gem 'prawn','0.12.0'
 ##gem 'prawn_rails'
 ###barcode code39,QR  ・・・・
 gem 'barby'

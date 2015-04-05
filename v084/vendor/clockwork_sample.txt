@@ -233,9 +233,9 @@
 	従って、handler 内でループなどの長期処理を実行した場合、その他のジョブの実行は待たされることになります。
 	
 	(4-2) sample2 
-	$ bundle exec rails server &
-	$ bundle exec rake jobs:work & 
-	$ bundle exec clockwork app/clock.rb &
+	 bundle exec rails server &
+	 bundle exec rake jobs:work & 
+	 bundle exec clockwork app/clock.rb &
 	
 	(4-3)clockworkdのコマンド
 	$ clockworkd --help

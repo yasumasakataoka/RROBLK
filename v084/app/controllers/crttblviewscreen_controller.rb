@@ -32,7 +32,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
              @errmsg = " id not found"
          end
       end
-      ##debugger
      ##allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate order by connectseq")
 	 allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate ")
      if allrecs.size>0 then
@@ -113,109 +112,120 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		@strsql0 = "create table #{tblname} ("
 		tmpstrsql ={}
 		allrecs.each do |rec|
-			frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
-			##debugger
+			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
 			next if frec.nil?		  
-			tmpstrsql[frec[:pobject_code_fld].to_sym]= frec[:pobject_code_fld] + " " + frec[:fieldcode_ftype] + 
-                case frec[:fieldcode_ftype]
+			tmpstrsql[frec["pobject_code_fld"].to_sym]= frec["pobject_code_fld"] + " " + frec["fieldcode_ftype"] + 
+                case frec["fieldcode_ftype"]
                     when "char","varchar","varchar2" then
-                        "(#{frec[:fieldcode_fieldlength]}) ,"
+                        "(#{frec["fieldcode_fieldlength"]}) ,"
                     when "number","numeric" then
-                        %Q%(#{if frec[:fieldcode_dataprecision] == 0  or frec[:fieldcode_dataprecision].nil? then "38),\n" else frec[:fieldcode_dataprecision].to_s + "," + (frec[:fieldcode_datascale]||0).to_s + " ) ,\n" end }%
+                        %Q%(#{if frec["fieldcode_dataprecision"] == 0  or frec["fieldcode_dataprecision"].nil? then "38),\n" 
+								else frec["fieldcode_dataprecision"].to_s + "," + (frec["fieldcode_datascale"]||0).to_s + " ) ,\n" end }%
 					else
                              ","
                  end
-			mandatory_field.delete( frec[:pobject_code_fld].to_sym) 
+			mandatory_field.delete( frec["pobject_code_fld"].to_sym) 
          end
 		rec0 = allrecs[0]
-		rec0[:expiredate]=Time.parse("2099-12-31")
+		rec0[:expiredate]=Time.parse("2099/12/31")
 		rec0[:created_at] = Time.now
 		rec0[:updated_at] = Time.now
 		mandatory_field.each do |key,value|
 			tmpstrsql[value[0].to_sym] = value[1] +  value[2]
-			rec0[:id] = plsql.blktbsfieldcodes_seq.nextval
-			##debugger
-			id = plsql.fieldcodes.first("where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
-                                                   and objecttype = 'tbl_field' and expiredate  > sysdate)")
+			rec0[:id] = proc_get_nextval blktbsfieldcodes_seq
+			id = ActiveRecord::Base.connection.select_one("select * from fieldcodes where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
+                                                   and objecttype = 'tbl_field' and expiredate  > current_date)")
 			if id
-				rec0[:fieldcodes_id]  = id[:id] 
-				plsql.blktbsfieldcodes.insert rec0 
+				rec0[:fieldcodes_id]  = id["id"] 
+				###plsql.blktbsfieldcodes.insert rec0 
+				Blktbsfieldcode.create(rec0)
 			end
 		end
-		##debugger
 		tmpstrsql.sort.each do |key,value|
 			@strsql0 << value         
 		end
 		@strsql0 <<  " CONSTRAINT #{tblname}_id_pk PRIMARY KEY (id),"
 		##  primkey key対応
 		@strsql0 = @strsql0.chop + ")"
-		plsql.execute @strsql0
+		###plsql.execute @strsql0
+		ActiveRecord::Base.connection.execute @strsql0
 	end
-  def prv_modify_tbl_field tblname,allrecs,columns
-      keys = []
-      mandatory_field =  prv_init
-      allrecs.each do |rec|
-          frec = plsql.r_fieldcodes.first("where id = #{rec[:fieldcodes_id]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
-          ##debugger
-          next if frec.nil?		  
-          key = frec[:pobject_code_fld].to_sym
-          keys << key
-          if columns[key] then 
-             if columns[key][:data_type].downcase == frec[:fieldcode_ftype] then 
-                if columns[key][:data_length] < frec[:fieldcode_fieldlength] and  frec[:fieldcode_ftype] =~ /char/ then
-                   ##varchar2 100 バイトを超えると data_length *4 になる？
-                   @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_fieldlength] });\n"
-                end
-                 frec[:fieldcode_dataprecision] = 38 if  frec[:fieldcode_dataprecision] == 0 or frec[:fieldcode_dataprecision].nil?
-                if ((columns[key][:data_precision]||=38  < frec[:fieldcode_dataprecision]) or  columns[key][:data_scale]||=0 != (frec[:fieldcode_datascale]||=0)) and  frec[:fieldcode_ftype] == "number" then
-                   @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_dataprecision]},#{frec[:fieldcode_datascale]});\n"
-                end
-               else 
-                   if columns[key][:data_type].downcase =~ /date|timestamp/ and frec[:fieldcode_ftype]  =~ /date|timestamp/ 
-                       ##debugger
-                       @strsql0 << "alter table #{tblname} modify #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n" if columns[key][:data_type].downcase[0,4] != frec[:fieldcode_ftype][0,4]
-                      else
-                       @strsql0 << "alter table #{tblname} drop (#{frec[:pobject_code_fld]});\n"
-                       prv_add_field tblname,frec
-                   end
-              end ##if columns[key][:data_type].downcase == frec[:ftype
-             else
+	def prv_modify_tbl_field tblname,allrecs,columns
+		keys = []
+		mandatory_field =  prv_init
+		allrecs.each do |rec|
+			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec[:fieldcodes_id]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
+			next if frec.nil?		  
+			key = frec["pobject_code_fld"].to_sym
+			keys << key
+			if columns[key] then 
+				if columns[key][:data_type].downcase == frec["fieldcode_ftype"]
+					case frec["fieldcode_ftype"]
+						when /char/
+							if columns[key][:data_length] < frec["fieldcode_fieldlength"] 
+								##varchar2 100 バイトを超えると data_length *4 になる？
+								@strsql0 << "alter table #{tblname} modify #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]}(#{frec["fieldcode_fieldlength"] });\n"
+							end
+						when "number"
+							frec["fieldcode_dataprecision"] = 38 if  frec["fieldcode_dataprecision"] == 0 or frec["fieldcode_dataprecision"].nil?
+							if (columns[key][:data_precision]||=38)  < frec["fieldcode_dataprecision"] or  \
+								(columns[key][:data_scale]||=0) < (frec["fieldcode_datascale"]||=0) 
+								@strsql0 << "alter table #{tblname} modify #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]}(#{frec["fieldcode_dataprecision"]},#{frec["fieldcode_datascale"]});\n"
+							end
+					end
+				else 
+					if columns[key][:data_type].downcase =~ /date|timestamp/ and frec["fieldcode_ftype"]  =~ /date|timestamp/ 
+						@strsql0 << "alter table #{tblname} modify #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]};\n" if columns[key][:data_type].downcase[0,4] != frec["fieldcode_ftype"][0,4]
+                    else
+						@strsql0 << "alter table #{tblname} drop (#{frec["pobject_code_fld"]});\n"
+						prv_add_field tblname,frec
+					end
+				end ##if columns[key][:data_type].downcase == frec[:ftype
+            else
                    prv_add_field tblname,frec
-          end ###if columns[key]
-     end  ##allrecs.each do |rec|
-     columns.each do |k,j|
-         unless keys.index(k) then
-             unless mandatory_field.key?(k) then
+			end ###if columns[key]
+		end  ##allrecs.each do |rec|
+		columns.each do |k,j|
+			unless keys.index(k) then
+				unless mandatory_field.key?(k) then
                     @strsql0 << "alter table #{tblname} drop (#{k.to_s});\n"
-             end
-         end
-
-     end 
-     ##debugger
-     if  @strsql0.size > 1 then
-	     ###同一日のbkは一回のみ
-         bk_sql = "create table bk_#{tblname}_#{Time.now.strftime("%m%d")} as select * from #{tblname}"
-         plsql.execute bk_sql  unless PLSQL::Table.find(plsql, "bk_#{tblname}_#{Time.now.strftime("%m%d")}".to_sym) 
-     end
-     @strsql0.split(";").each do |i|
-        fprnt "line #{__LINE__} \n plsql.execute #{i}"
-        plsql.execute i if i =~ /\w/
-     end
-  end
+				end
+			end
+		end 
+		if  @strsql0.size > 1 then
+			###同一日のbkは一回のみ
+			bk_sql = "create table bk_#{tblname}_#{Time.now.strftime("%m%d")} as select * from #{tblname}"
+			ActiveRecord::Base.connection.execute(bk_sql)  if (proc_chk_tble_exist(%Q&bk_#{tblname}_#{Time.now.strftime("%m%d")}&)).nil? 
+		end
+		proc_drop_index tblname   ###importffieldsfromoracle  でも同様処理有
+		@strsql0.split(";").each do |i|
+			fprnt "line #{__LINE__} \n plsql.execute #{i}"
+			ActiveRecord::Base.connection.execute(i) if i =~ /\w/
+		end
+	end
+	def proc_drop_index tblname
+		### ＯＲＡＣＬＥの時	
+		constr = plsql.blk_constraints.all("where table_name = '#{tblname.upcase}'  and  constraint_type = 'U' order by  constraint_name,position")
+		orakeyarray = []
+		constr.each do |rec|
+           unless  orakeyarray.index(rec[:constraint_name]) then  orakeyarray << rec[:constraint_name]   end  
+		end 
+        prv_drop_constr tblname,orakeyarray if orakeyarray.size > 0
+	end
   def prv_add_field tblname,frec
-      case frec[:fieldcode_ftype] 
+      case frec["fieldcode_ftype"] 
            when "varchar2","char"
-                @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}(#{frec[:fieldcode_fieldlength] });\n"
+                @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]}(#{frec["fieldcode_fieldlength"] });\n"
            when "number"
-                if  frec[:fieldcode_dataprecision] then 
-                    @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]}
-                                                           (#{if frec[:fieldcode_dataprecision] == 0 then 38 else frec[:fieldcode_dataprecision] end },#{frec[:fielcode_datascale]||0});\n"
+                if  frec["fieldcode_dataprecision"] then 
+                    @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]}
+                                                           (#{if frec["fieldcode_dataprecision"] == 0 then 38 else frec["fieldcode_dataprecision"] end },#{frec["fielcode_datascale"]||0});\n"
                   else
-                    @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n"
+                    @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]};\n"
                 end
 		   when "vf"
            else
-               @strsql0 << "alter table #{tblname} add #{frec[:pobject_code_fld]} #{frec[:fieldcode_ftype]};\n"
+               @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]};\n"
        end
   end
  def sio_fields viewname

@@ -66,7 +66,7 @@ class   GanttController  <  ScreenController
 							sum(case  when b.alloctbl_destblname like '%act%' then  b.alloctbl_qty else 0 end) qty_alloc_stk,
 							a.trngantt_orgtblname,a.trngantt_orgtblid
                       from r_trngantts a 
-					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
+					  inner join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
 					  where   a.trngantt_orgtblname = '#{trn_code}' and a.trngantt_orgtblid = #{id}  
 					  group by a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_orgtblname,a.trngantt_orgtblid,
 								alloctbl_destblname,alloctbl_destblid,a.trngantt_prdpurshp
@@ -87,10 +87,11 @@ class   GanttController  <  ScreenController
 					   custtrn = ActiveRecord::Base.connection.select_one(%Q& select * from  r_#{value["trngantt_orgtblname"]} where id = #{value["trngantt_orgtblid"]}&)
 					   value["loca_code"] = custtrn["loca_code_cust"]
 					   value["loca_name"] = custtrn["loca_name_cust"]
-					   alloc["strdate"] = value["org_strdate"]  ###c
-					   alloc["end"] = value["org_strdate"]  ###c
+					   alloc["strdate"] = alloc["depdate"] = value["org_strdate"]  ###c
+					   alloc["duedate"] = custtrn["custord_duedate"]  ###c
 					end
 			    else
+					debugger if value["alloctbl_destblname"].nil?
 					alloc =  ActiveRecord::Base.connection.select_one(%Q& select * from #{value["alloctbl_destblname"]} where id = #{value["alloctbl_destblid"]}&)
                   ###  trn_sno = plsql.select(:first,"select * from #{value[:trngantt_tblname]} where id = #{value[:trngantt_tblid]} ")				
 		    end
@@ -120,6 +121,7 @@ class   GanttController  <  ScreenController
 			"qty":#{gantt[:qty]},"qty_sch":#{gantt[:qty_sch]},"qty_ord":#{gantt[:qty_ord]},"qty_inst":#{gantt[:qty_inst]},"qty_stk":#{gantt[:qty_stk]},
 			"assigs":[],"level":#{gantt[:level]},"mlevel":#{gantt[:mlevel]},"subtblid":"#{gantt[:subtblid]}","paretblcode":"","depends":"#{gantt[:depends].chop}"},&
         end
+		fprnt strgantt
         @ganttdata = strgantt.chop + %Q&],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }&
     end
 

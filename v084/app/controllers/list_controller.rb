@@ -10,11 +10,12 @@ before_filter :authenticate_user!
         else
           render :text=>"error"
        end
-	   testlinks
+	   testlinks if ENV["RACK_ENV"] == "development" ###開発環境のみで動く
        crt_def_all
        Rails.cache.clear	   
     ##debugger
     end	
+	#### code index　チッェクを入れる。
     def crtcachelist grpcode
           ##debugger # breakpoint
         if   Rails.cache.exist?("listindex" + grpcode) then
@@ -46,7 +47,7 @@ before_filter :authenticate_user!
      render :text => "no screen data "  and return   if @cate_list.nil?
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
-	def testlinks	###開発環境のみで動くようにすること。  ###項目が削除されているときの対応、現在項目を削除している。
+	def testlinks	###開発環境のみで動く
 	        recs = plsql.r_tblinks.all("where tblink_expiredate > current_date")  
 			recs.each do |rec|
 			        str_select = "select distinct a.id ,a.blktbsfieldcode_seqno from r_blktbsfieldcodes a "
@@ -77,4 +78,3 @@ before_filter :authenticate_user!
 			plsql.tblinkflds.delete(strwhere)
 	end
 end
-

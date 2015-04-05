@@ -5,7 +5,7 @@
 class ScreenController < ListController
   respond_to :html ,:xml ##  将来　タイトルに変更
    def index
-      init_from_screen params
+      init_from_screen ###params
       @pare_class = "online"
       @scriptopt = @options = {}
       @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
@@ -20,11 +20,11 @@ class ScreenController < ListController
         params[:page] ||= 1 
         params[:rows] ||= 50
         ##fprnt "class #{self} : LINE #{__LINE__} screen_code #{screen_code}"		
-	    command_c = init_from_screen params
+	    command_c = init_from_screen ###params
         rdata =  []
         ##fprnt "class #{self} : LINE #{__LINE__} command_r #{command_r}"
         command_c[:sio_strsql] = get_strsql if params[:ss_id] and  params[:ss_id] != ""  ##親画面情報引継
-        command_c[:sio_classname] = @sio_classname = "plsql_blk_paging"
+        command_c[:sio_classname] = @sio_classname = "screen_blk_paging"
         command_c[:sio_start_record] = (params[:page].to_i - 1 ) * params[:rows].to_i + 1
         command_c[:sio_end_record] = params[:page].to_i * params[:rows].to_i 
         command_c[:sio_sord] = params[:sord]
@@ -37,7 +37,7 @@ class ScreenController < ListController
         respond_with @tbldata
     end  ##disp
     def nst  ###子画面　
-        init_from_screen params
+        init_from_screen ###params
         pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
         chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
         @title =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
@@ -95,13 +95,26 @@ class ScreenController < ListController
 				else
 					render :nothing => true
 				end
-			when /_sno_/
+			when /_sno_|_cno_/
+		end
+	end
+	def  set_price_and_amt  ###画面
+		tblnamechop = params[:q].split("_")[1].chop
+		@getprice = {}
+		if params[:itm_code] and params[(tblnamechop+"_qty").to_sym] and ( params[:loca_code_dealer] or params[:loca_code_cust])\
+			and params[(tblnamechop+"_contract_price").to_sym]  != "Z"  ###  手入力の時は何もしない
+			command_c = params.dup  ### paramsをパラメータで渡すと　excelの取り込みが変わってしまう
+			@getprice = proc_price_amt(command_c)
+		else
+			@getprice = {}
 		end
 	end
 	def  code_to_name    ### 必須keyとして登録された_codeが変化したときcall　　該当データなしの時の表示方法
 		case 	params[:chgname]
 			when /_sno_/
 				sw = vproc_get_contents_frm_sno
+			when /_cno_/
+				sw = vproc_get_contents_frm_cno
 			else  ###codeの時は複数の項目でkeyになることがある。
 				keyfields = {}
 				tblnamechop,field,delm = params[:chgname].split("_",3)
@@ -110,7 +123,7 @@ class ScreenController < ListController
 				## 前処理
 				@errmsg = ""								
 				if respond_to?("proc_view_field_#{params[:chgname]}_chk")
-					__send__("proc_view_field_#{params[:chgname]}_chk",params,params[params[:chgname].to_sym])
+					__send__("proc_view_field_#{params[:chgname]}_chk",params)
 					if @errmsg != ""
 						@getname = {}
 						@getname[params[:chgname].to_sym] = @errmsg
@@ -133,11 +146,12 @@ class ScreenController < ListController
 						when "vf"+params[:q].split("_")[1].chop
 							sw = get_view_code_frm_screen_tblname  ###tblname対応
 						else
-								sw = oth_tbl_code_to_name tblnamechop  
+							sw = oth_tbl_code_to_name ####tblnamechop  
 					end
 				end
 		end
-		if sw == "ON" 
+		debugger if @getname.has_key?(:custinst_loca_id_custrcvplc)
+		if sw == "ON" or sw == "MISSING"
 			render :json => @getname and return
 		else
 			render :nothing => true
@@ -160,27 +174,26 @@ class ScreenController < ListController
 		end
 		return akeyfs,viewname,delm
 	end	
-	def    oth_tbl_code_to_name tblnamechop
-      akeyfs,viewname,delm =  get_ary_find_field params[:q],params[:chgname]
-      keyfields = {}
-      sw = "ON"
-      params.each do |key,val|
-           if  akeyfs.index(key.to_s) then
-               if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
-           end
-      end
-      rec = get_tblfieldval_from_code keyfields,viewname,delm  if sw == "ON" 
-      @getname ={}
-      if   rec then
-             mytbl = params[:q].split("_")[1].chop
-             rec.each do |key,val|
-                  if  delm then nkey = (key.to_s+"_"+delm).to_sym else nkey = key end
-                  if  nkey.to_s != "id" then  @getname[nkey] = rec[key].to_s end  ### 
-             end
-           else
-		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
-      end
-      return sw
+	def    oth_tbl_code_to_name ####tblnamechop
+		akeyfs,viewname,delm =  get_ary_find_field params[:q],params[:chgname]
+		keyfields = {}
+		sw = "ON"
+		params.each do |key,val|
+			if  akeyfs.index(key.to_s) then
+				if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
+			end
+		end
+		rec = get_tblfieldval_from_code keyfields,viewname,delm  if sw == "ON"   ###data get
+		@getname ={}
+		if  rec then
+			rec.each do |key,val|
+				if  delm.nil? then nkey = key else nkey = (key.to_s+"_"+delm).to_sym  end
+				if  nkey.to_s != "id" then  @getname[nkey] = rec[key].to_s end  ### 
+			end
+          else
+			@getname[params[:chgname].to_sym] = "???"  if sw == "ON" ### ""だとスペースにならない。
+		end
+		return sw
     end
 
    def  same_tbl_code_to_name tblnamechop,field
@@ -321,12 +334,75 @@ class ScreenController < ListController
 		bal = ActiveRecord::Base.connection.select_one(strsql)
 		if bal then bal["bal_qty"] else 0 end
 	end
+	def   vproc_get_contents_frm_cno   ###cnoの時は　itms_idとcusts_idは必須
+		sw = "ON"
+		strsql = %Q& select * from r_screens where pobject_code_scr  = (
+		                      select screenfield_paragraph from r_screenfields where pobject_code_sfd = '#{params[:chgname]}' 
+							  and pobject_code_scr = '#{params[:q]}' AND screenfield_expiredate > current_date)& 
+		cno_screen = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
+		@getname ={}
+		if params[:itm_code].nil? or params[:itm_code] == "" 
+			sw = "MISSing"
+			@getname[params[:chgname].to_sym] = "missing item_cod" 
+			@getname[:itm_code] = "???"
+			return sw
+		end		
+		if params[:loca_code_cust].nil? or params[:loca_code_cust] == "" 
+			sw = "MISSING"
+			@getname[params[:chgname].to_sym] = "missing cust_cod" 
+			@getname[:loca_code_cust] = "???"
+			return sw
+		end
+		if cno_screen
+			strsql = "select * from #{cno_screen["pobject_code_view"]} 
+								where #{cno_screen["pobject_code_view"].split("_",2)[1].chop}_cno = '#{params[params[:chgname].to_sym]}'  
+			                    and itm_code = '#{params[:itm_code]}' and loca_code_cust = '#{params[:loca_code_cust]}'
+								and #{cno_screen["pobject_code_view"].split("_",2)[1].chop}_expiredate > current_date "
+			cno_rec = ActiveRecord::Base.connection.select_one(strsql)    ### cnoのrec
+			if   cno_rec then
+				screen_show_data = get_show_data(params[:q])[:allfields]
+				flds_cno_show_data = get_show_data(cno_screen["pobject_code_scr"])[:allfields]
+				type_cno_show_data = get_show_data(cno_screen["pobject_code_scr"])[:alltypes]
+				screen_show_data.each do |scrf|
+					if flds_cno_show_data.index(scrf) and cno_rec[scrf.to_s]
+						case type_cno_show_data[scrf]
+							when /date/
+								@getname[scrf] = cno_rec[scrf.to_s].strftime("%Y/%m/%d")
+							when /time/
+								@getname[scrf] = cno_rec[scrf.to_s].strftime("%Y/%m/%d %H:%M")
+							else
+								@getname[scrf] = cno_rec[scrf.to_s] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+						end
+					else
+						fld = if scrf.to_s.split("_",2)[1]  then (cno_screen["pobject_code_view"].split("_",2)[1].chop + "_" + scrf.to_s.split("_",2)[1]) else "" end
+						if cno_rec[fld] and  fld =~/_qty|_duedate/  ###cnoの引き継ぎ項目 get_return_name_valの修正も必要 ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
+							case type_cno_show_data[fld.to_sym]
+								when /date/
+									@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d")
+								when /time/
+									@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d %H:%M")
+								else
+									@getname[scrf] = cno_rec[fld] ## if k_to_s != "id"  									   
+							end
+						end
+					end
+				end
+			else
+				@getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
+				sw = "MISSing"
+            end   
+		else
+			@getname[params[:chgname].to_sym] = " paragraph set error "  ### 画面登録時にチェックしている　チェック漏れがない限り発生しない。
+			sw = "MISSing"
+        end
+		return sw
+    end
     def preview_prnt 
         rdata =  []
         pdfscript = plsql.r_reports.first("where pobject_Code_rep = '#{params[:pdflist]}' and  report_Expiredate > current_date")
         if  pdfscript
             reports_id = pdfscript[:id]
-		    command_c = init_from_screen params   ##get @show_data
+		    command_c = init_from_screen ###params   ##get @show_data
             strwhere = proc_pdfwhere(pdfscript,command_c)
             command_c[:sio_strsql] = " (select * from #{@show_data[:screen_code_view]} " + strwhere + " ) a"
 	        command_c[:sio_end_record] = 1000
@@ -375,7 +451,7 @@ class ScreenController < ListController
          @errmsg << "err:duplicate #{strwhere[6..-5]} " if rec
       end
    end
-   def updatechk_edit command_c
+   def updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか
       ## updateのとき
       ## 外部keyとして参照されているとき　codeの変更は不可
 	  updtbl = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first("where id = #{command_c[:id]}")
@@ -402,16 +478,19 @@ class ScreenController < ListController
 		end
 	end
     def updatechk_del command_c
-      ## delのとき
-      ##すでに外部keyとして参照されているときは削除不可
-	  constr = plsql.blk_constraints.all("where column_name like '#{command_c[:sio_viewname].split("_")[1].upcase}_ID%'  and  constraint_type = 'R' ")
-	  constr.each do |rec|
-	        ex = plsql.__send__(rec[:table_name]).first ("where  #{rec[:column_name]} = #{command_c[:id]}")
+		## delのとき
+		##すでに外部keyとして参照されているときは削除不可
+		### idだけでなくなくcodeとの整合性も確認のこと
+		strsql = %Q& select * from blk_constraints where column_name like '#{command_c[:sio_viewname].split("_",2)[1].upcase}_ID%'  and  constraint_type = 'R' &
+		constr = ActiveRecord::Base.connection.select_all(strsql)
+		constr.each do |rec|
+			ex = ActiveRecord::Base.connection.select_one(%Q& select * from #{rec["table_name"]}  where  #{rec["column_name"]} = #{command_c[:id]} &)
+			debugger if ex
 		    @errmsg << " #{rec[:table_name]}," if ex
-	  end 
-	  if @errmsg.size> 1
-         @errmsg = ("err:code already use  table " + @errmsg).chop	  
-	  end
+		end 
+		if @errmsg.size> 1
+			@errmsg = ("err:code already use  table " + @errmsg).chop	  
+		end
     end
     def updatechk_foreignkey command_c   ###画面の必須keyになっていれば、不要
         constr = plsql.blk_constraints.all("where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'R' ")
@@ -422,7 +501,7 @@ class ScreenController < ListController
 	            ex = plsql.__send__(rec[:column_name].split("_")[0]).first ("where id =  #{command_c[fsym]}")
 		        @errmsg << " #{rec[:column_name].split("_")[0]}," if ex.nil?
 			else
-				@errmsg << " #{rec[:column_name].split("_")[0]}," 
+				@errmsg << " #{rec[:column_name].split("_")[0]},"
 		    end
 	    end 
 	    if @errmsg.size> 1

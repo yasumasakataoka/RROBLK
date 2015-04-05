@@ -90,12 +90,10 @@ class ImportfieldsfromoracleController < ApplicationController
              unless fkey.index("#{tblname.chop}_#{v.upcase}") then
                     @tsqlstr = " ALTER TABLE #{tblname} ADD CONSTRAINT #{tblname.chop}_#{v} "
                     @tsqlstr << " FOREIGN KEY(#{v}) REFERENCES #{v.split("_")[0]}(id)"  #####custord
-                    ##debugger
                     plsql.execute @tsqlstr
              end
 		end
 		####ユニークindex
-		##debugger
 		ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
 		keyarray={}
 		ukeys.each do |rec|
@@ -107,7 +105,6 @@ class ImportfieldsfromoracleController < ApplicationController
 		constr.each do |rec|
            unless  orakeyarray.index(rec[:constraint_name]) then  orakeyarray << rec[:constraint_name]   end  
 		end
-		##debugger
 		case  keyarray.size 
             when 0 then
                 case  orakeyarray.size
@@ -155,7 +152,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:blktbs_id] = rec_id
        ##tmp[:ctblname] = "fieldcodes"
        tmp[:fieldcodes_id] = fieldcode[:id]
-       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0
+       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id] 
        tmp[:expiredate]=Time.parse("2099-12-31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
@@ -171,7 +168,6 @@ class ImportfieldsfromoracleController < ApplicationController
   end 
   def  prv_chk_fieldcodes field,attr
        rec =  prv_chk_pobjects field,"tbl_field"
-       ##debugger
        fieldcode = plsql.r_fieldcodes.first("where pobject_code_fld = '#{field}' and pobject_objecttype_fld = 'tbl_field' and fieldcode_expiredate > current_date")
        if fieldcode then
           prv_chk_attr field,fieldcode,attr
@@ -188,7 +184,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:fieldlength] = attr[:data_length]
        tmp[:dataprecision] = attr[:data_precision]
        tmp[:datascale] =   attr[:data_scale]||=0
-       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
+       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]
        tmp[:expiredate] = Time.parse("2099/12/31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
@@ -201,7 +197,7 @@ class ImportfieldsfromoracleController < ApplicationController
       tmp ={}
       tmp[:id] = plsql.pobjects_seq.nextval
       tmp[:objecttype] = objecttype
-      tmp[:persons_id_upd] =plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 
+      tmp[:persons_id_upd] =plsql.persons.first(:email =>current_user[:email])[:id] 
       tmp[:created_at] = Time.now
       tmp[:updated_at] = Time.now
       tmp[:expiredate] = Time.parse("2099/12/31")
@@ -238,7 +234,7 @@ class ImportfieldsfromoracleController < ApplicationController
   end
   def prv_init
       mandatory_field ={:id=>["000","id"," number(38),"],
-                        :contents=>["90","contents","  varchar2(4000),"],
+                        :contents=>["900","contents","  varchar2(4000),"],
                         :remark=>["901","remark","  varchar2(100),"],
                         :expiredate=>["902","expiredate","  date ,"],
                         :persons_id_upd=>["903","persons_id_upd"," number(38),"],
@@ -252,7 +248,7 @@ class ImportfieldsfromoracleController < ApplicationController
          {:selection   =>  1,
           :expiredate   => Time.parse("2099/12/31"),
           :remark   => "auto_crt",
-          :persons_id_upd   => plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 ,
+          :persons_id_upd   => plsql.persons.first(:email =>current_user[:email])[:id]  ,
           :update_ip   => @myip,
           :created_at   => Time.now,
           :updated_at   => Time.now,
@@ -276,7 +272,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
     @tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
     @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
     @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-    @tsqlstr << "  USER_TAB_COLUMNS where table_name = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
+    @tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
     @tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
     @tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
     @tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
@@ -287,7 +283,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
     @tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
     @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
     @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-    @tsqlstr << "  USER_TAB_COLUMNS where table_name = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
+    @tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
     @tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
     @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
     @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
@@ -522,7 +518,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
                     :screens_id_chil => y[:id],
                     :expiredate => Time.parse("2099/12/31"),
                     :remark => "auto_create", 
-                    :persons_id_upd => plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0 , 
+                    :persons_id_upd => plsql.persons.first(:email =>current_user[:email])[:id]  , 
                     :update_ip =>  "1",
                     :created_at => Time.now,
                     :updated_at => Time.now
@@ -533,21 +529,40 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 		end    ## i
 		plsql.commit 
 	end  #end crt_chil_screen 
-	def prv_create_index_pk ltblname
-		tblname = ltblname.upcase
-		unless PLSQL::Sequence.find(plsql,"#{tblname}_seq".to_sym) then 
-             @tsqlstr =  "create sequence " + tblname + "_seq" 
-             plsql.execute @tsqlstr
+	def prv_create_index_pk tblname
+		case Db_adapter 
+			when /oracle/
+				seq = ActiveRecord::Base.connection.select_one("select sequence_name from user_sequences where sequence_name = '#{tblname.upcase}_SEQ'")
+				### BLK_CONSTRAINTSは独自に作成したview  table_name, constraint_name, constraint_type, position, column_name
+				strsql = " select * from BLK_CONSTRAINTS where table_name = '#{tblname.upcase}' and constraint_type in( 'P') "   ### 主keyとunique key
+			when /post/
+				seq = ActiveRecord::Base.connection.select_one("select relname from pg_statio_all_sequences where sequence_name = '#{tblname}_seq}'")
+				strsql = " SELECT attr.attname AS column_name,cons.contype AS constraint_type
+							FROM pg_attribute AS attr
+							INNER JOIN pg_stat_user_tables AS stat
+									ON attr.attrelid = stat.relid      AND stat.relname = '#{tblname}'
+							INNER JOIN pg_constraint cons
+									ON attr.attnum = ANY (cons.conkey)   AND cons.contype IN('p')   AND cons.conrelid = stat.relid"
+
 		end
-		c_key = plsql.user_constraints.first("where table_name = '#{tblname}' and constraint_type = 'P' ")  ###主key
-		if c_key then
-                keys = plsql.user_ind_columns.all(" where table_name = '#{tblname}' and index_name =  '#{c_key[:constraint_name]}' ")
-                      keys.each do |rec|
-                      @errmsg << "PRIMARY KEY diffrent"  if  rec[:column_name] != "ID" 
-                end
-           else
+		c_keys = ActiveRecord::Base.connection.select_all(strsql)  ###主key
+		if seq.nil? 
+             @tsqlstr =  "create sequence " + tblname + "_seq" 
+             ActiveRecord::Base.connection.execute @tsqlstr
+		end
+		id_sw = "on" 
+		c_keys.each do |key|
+			if key["column_name"].upcase == "ID" 
+				id_sw = "off"
+			else
+				id_sw = "err"
+				@errmsg << "#{key["column_name"]} is PRIMARY KEY"
+				break
+			end ### 主keyはidのみ   
+		end
+		if id_sw == "on" 
               @tsqlstr =  "ALTER TABLE " + tblname + "  add  CONSTRAINT #{tblname}_id_pk PRIMARY KEY(id) " 
-              plsql.execute @tsqlstr     
+              ActiveRecord::Base.connection.execute  @tsqlstr     
 		end
 	end
 end

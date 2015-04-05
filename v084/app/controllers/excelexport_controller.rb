@@ -15,7 +15,7 @@ class ExcelexportController < ScreenController
 	    #該当データなしの時処理　
 	    get_screen_code 
         tblidsym = (@screen_code.split("_")[1].chop + "_id").to_sym
-	    command_c = init_from_screen params
+	    command_c = init_from_screen
         fields = {}
         col_type =[]
         command_c[:sio_start_record] =  1

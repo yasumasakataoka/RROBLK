@@ -5,10 +5,11 @@ class ImportfmxlsxController < ScreenController
   ###   public/rubyxl/  のrubyxlディレクトリーを作成済のこと。
   ###   入力がシートがフォーマット間違いの時、エラーで落ちる。　4/12
    ##  excelのタイプチェック　がまだできてない。　例　excel 日付　db char
-   ##insertの時idは無視される
+   ##insertの時左端のidは無視される
    ### 事前チックokかどうかexcelで返す
+  ##   excelを　漢字等で修正するとカタカナに変換されてセットされる。　'1.2.10'　　バージョンを上げるには　rubyzip rubyのバージョンを上げる必要がある。
     def index
-		init_from_screen params
+		init_from_screen ###params
 		@tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
 		#dupchk
     end
@@ -19,7 +20,7 @@ class ImportfmxlsxController < ScreenController
     def import
 		@rendererrmsg = []
 		@pare_class = "online"
-		command_c = init_from_screen params	  
+		command_c = init_from_screen ###params	  
 	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
 	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
@@ -33,7 +34,7 @@ class ImportfmxlsxController < ScreenController
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
       for iws in 0..99
            break if ws[iws].nil?
-           command_c[:sio_session_counter]  = user_seq_nextval(command_c[:sio_user_code] )   ###シート毎にCOMMIT
+           command_c[:sio_session_counter]  = user_seq_nextval  ###シート毎にCOMMIT
            ##maxj = sh.UsedRange.CoLumns.Count
            ##maxi = sh.UsedRange.Rows.Count
            dupchk  ws[iws].sheet_name
@@ -42,37 +43,34 @@ class ImportfmxlsxController < ScreenController
            for count in 0..999999
 		        @errmsg == ""
 	            if  count == 0
-	                 ##debugger
 	                 nchk ws[iws][count] if count == 0  ###先頭は項目名
-	                  ##debugger
-                    break  unless  @errmsg == ""
+                    next  unless  @errmsg == ""
                   else
-                    ##debugger
-                    break  if  ws[iws][count].nil?
-                    break  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
+                    next  if  ws[iws][count].nil?
+                    next  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
                     @inxrow0.each do |key,cnt|
                         if  ws[iws][count][cnt] then command_c[key] = ws[iws][count][cnt].value  else command_c[key] = nil end
 	                end  ##column
-					##debugger
 					command_c = get_id_from_code keys,command_c
 					command_c[:sio_recordcount] = command_c[:sio_session_id] = count
                     case ws[iws].sheet_name.upcase
 	                    when /^ADD/ then
 							updatechk_add command_c  ###同一レコード内での重複チェックができてない。
 			                updatechk_foreignkey command_c  if  @errmsg == ""
+							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
                             if  @errmsg == "" then
-                                command_c[:sio_classname] = "plsql_blk_add_"
+                                command_c[:sio_classname] = "sheet_blk_add_"
                                 command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                             end 
                         when  /^EDIT/ then
-                            command_c[:sio_classname] = "plsql_blk_edit_"
+                            command_c[:sio_classname] = "sheet_blk_edit_"
                             command_c[:id] = command_c[tblidsym]
-							##debugger
 					        updatechk_edit command_c
+							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
 			                updatechk_foreignkey command_c if  @errmsg == ""
 	                    when /^DELETE/ then
-                           command_c[:sio_classname] = "plsql_blk_delete_"
+                           command_c[:sio_classname] = "sheet_blk_delete_"
                            command_c[:id] = command_c[tblidsym]
 						   updatechk_del command_c
         	            when nil then
@@ -167,11 +165,38 @@ class ImportfmxlsxController < ScreenController
 			vals.each do |val|
 			    strwhere << " #{val.sub(delm,"")} = '#{command_c[val.to_sym]}' and "
 			end
-			##debugger
 			strwhere << %Q% #{tblnamechop + "_expiredate" } > current_date %
 			get_id = plsql.__send__(key.to_s.split(":_")[0]).first(strwhere)
 			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
 			if get_id then command_c[sym_key] = get_id[:id] else command_c[sym_key] = -1 end
+		end
+		return command_c
+	end	
+	def vproc_price_chk_set(command_c)  ###excelからの取り込み
+		getprice = proc_price_amt(command_c)
+		if getprice.size > 0
+			if getprice[:price]
+				pricesym = (@screen_code.split("_",2)[1].chop+"_price").to_sym   ###excelでは実行前に入力不可はできない。
+				amtsym = (@screen_code.split("_",2)[1].chop+"_amt").to_sym
+				contract_pricesym = (@screen_code.split("_",2)[1].chop+"_contract_price").to_sym
+				rule_pricesym = (@screen_code.split("_",2)[1].chop+"_rule_price").to_sym
+				if command_c[contract_pricesym] == "Z"  ###手入力
+					if command_c[rule_pricesym] == "0"  ###手入力不可
+						@errmsg << %Q% program miss?  command_c[contract_pricesym] == "Z" ,command_c[rule_pricesym] == "0"%
+					else
+						### なにもしない。
+					end
+				else
+					if command_c[pricesym].nil? or command_c[pricesym] == 0 or command_c[pricesym] == getprice[:price]
+						command_c[pricesym] = getprice[:price]
+						command_c[amtsym] = getprice[:amt]
+					else
+						if command_c[rule_pricesym] == "0"
+							@errmsg << "price unmatch master #{getprice[:price].to_s} ,input #{command_c[pricesym].to_s}"
+						end
+					end
+				end
+			end
 		end
 		return command_c
 	end

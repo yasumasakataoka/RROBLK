@@ -39,6 +39,7 @@ include  JqgridFilter
       js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
    end
    def jqgrid( options = {},authenticity_token,ss_id)
+		fprnt " @screen_code  strart #{@scren_code} #{Time.now}" 
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
       # Default options
           options = 
@@ -100,6 +101,7 @@ include  JqgridFilter
        screen << id_data_html
        screen <<  replace_end
        screen.gsub!(/\s+/," ")    if init_jq  =~ /replaceWith/  ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
+	   	fprnt " @screen_code  end #{@scren_code} #{Time.now}"
      return screen 
     end  ## 
     ##def sub_get_select_list_value edoptvalue   ##固定文字を個別文字に
@@ -219,28 +221,39 @@ include  JqgridFilter
             end   ### rad_screen.each
 	    return  t_extbutton,t_extdiv_id
     end    ## set_extbutton pare_screen  
-    def get_return_name_val scrfield,paragraph  ###paragrapf 検索key = viewname + dlem
+	def get_return_price_amt_val hprice
+		%Q% jQuery("##{hpeice[:price]}",formid).val(data.#{hpeice[:price]});%
+		%Q% jQuery("##{hpeice[:amt]}",formid).val(data.#{hpeice[:amt]});%
+		%Q% if(data.pricef){jQuery("##{hpeice[:price]}",formid).attr("disabled",true);}%   
+		%Q% if(data.amtf){jQuery("##{hpeice[:amt]}",formid).attr("disabled",true);}%
+	end
+    def get_return_name_val scrfield,paragraph  ###paragrapf 検索key = pscreen_code + dlem
 		tmp_val = ""
-		if scrfield =~ /_sno_/  ### 項目xxxx_sno_yyyy のparagrapfにviewをセットすると　view の内容を r_xxxxsに移行する。
-			viewname = "r_#{scrfield.split("_",2)[0]}s"
-			delm = ""
-		else
-			viewname,delm = paragraph.split(":")
-			delm  ||= ""
+		pscreen_code,delm = paragraph.split(":")
+		delm  ||= ""
+		begin
+	        secgridc = get_show_data(pscreen_code)[:allfields]
+		rescue  ###検索項目に指定しているviewがない。
+		   	raise  "shoud be seach_screen_code invalid ;screen_code is:#{pscreen_code} "   
 		end
-	  begin
-	        secgridc = get_show_data(viewname)[:allfields]
-		  rescue  ###検索項目に指定しているviewがない。
-		   	raise  "shoud be seach_view invalid ;view_name is:#{viewname} "   
-	  end
-		@gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ
-			if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true 
-				tmp_val  << "if(data.#{tcolm[:field]}){"   
-				tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
-				tmp_val  << "}"   
+		@gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ 
+			case scrfield
+				when /_code/
+				if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true
+					tmp_val  << "if(data.#{tcolm[:field]}){"   
+					tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
+					tmp_val  << "}"   
+				end
+				when /_sno_/
+				when /_cno_/
+				if tcolm[:editable] == true and tcolm[:field] =~/_qty|_duedate|#{scrfield}/  ###cnoの引き継ぎ項目
+					tmp_val  << "if(data.#{tcolm[:field]}){"   
+					tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
+					tmp_val  << "}"   
+				end
 			end
 		end  ### secgridc.each do |tcolm| 
-		fmfield = viewname.split("_")[1].chop+"_id"
+		fmfield = pscreen_code.split("_")[1].chop+"_id"
 		tofield = @screen_code.split("_")[1].chop+"_"+fmfield
 		if  delm 
             fmfield += delm
@@ -250,34 +263,61 @@ include  JqgridFilter
 		return tmp_val
     end
     def set_aftershowform oper
-      ###外部テーブルのリンクに関係ない項目は　enable == true and require == false
-      ## 変更項目の修正不可は固定にはしないで、関数で対応
-      ## javascript_edit = %Q%(function($) {
-      ##                      jQuery.fn.pinCodeToName = function(formid) { 
-      javascript_edit =  "function(formid) {"
-      tmp_code_to_name = ""
-      require_fields = ""
-      strsenddata = %Q% "q":"#{@screen_code}","chgname":p_chgname,"code_to_name_oper":"#{oper}",%
-      strkeydata = %Q% "q":"#{@screen_code}","fieldname":keyname%
-      @gridcolumns.each do |tcolm|
+		###外部テーブルのリンクに関係ない項目は　enable == true and require == false
+		## 変更項目の修正不可は固定にはしないで、関数で対応
+		## javascript_edit = %Q%(function($) {
+		##                      jQuery.fn.pinCodeToName = function(formid) { 
+		javascript_edit =  "function(formid) {"
+		tmp_code_to_name = ""
+		require_fields = ""
+		strsenddata = %Q% "q":"#{@screen_code}","chgname":p_chgname,"code_to_name_oper":"#{oper}",%
+		strkeydata = %Q% "q":"#{@screen_code}","fieldname":keyname%
+		hprice = {}
+		@gridcolumns.each do |tcolm|
             if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editable] == true and tcolm[:editrules][:required] != true )   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
 	        end
-            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or  tcolm[:field] =~ /_id/ then 
-               require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
-               strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
-	          end
+            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or
+				  (tcolm[:field] =~ /_id|_sno|_cno|_ano|_prjno|_gno/ and  tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop)
+                require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
+                strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
+				hprice[:itm] = true if tcolm[:field]  == "itm_code"
+				hrpice[:tblname] = tcolm[:field] if tcolm[:field]  == "loca_code_cust" or  tcolm[:field]  == "loca_code_dealer"
+	        end
             if tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true  then 
-               if  oper != "add" and  oper != "copyandadd"  then javascript_edit << ""  ### 中止　外部keyでチェックする。jQuery("##{tcolm[:field]}",formid).attr("disabled",true); 
-                   else  javascript_edit << %Q%
-                                                           jQuery("##{tcolm[:field]}",formid).attr("disabled",false);%
-                                            require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
-                                            strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%  end
-	          end
-      end
-
-     javascript_edit << %Q% jQuery("#sData").show();% 
-      ###既定値等セット  ### jQuery("##{tcolm[:field]}",formid).val()にセットすべきもの
+                if  oper != "add" and  oper != "copyandadd"  
+					javascript_edit << ""  ### 中止　外部keyでチェックする。jQuery("##{tcolm[:field]}",formid).attr("disabled",true); 
+                else  
+					javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",false);%
+					require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
+					strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
+				end
+				hprice[:qty] = tcolm[:field] if tcolm[:field] =~ /_qty/
+				hprice[:duedate] = true if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_duedate"  ##2:納期ベース
+				hprice[:isudate] = true if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_isudate"	##1:発注日ベース　			
+				hprice[:puract_rcptdate] = true if tcolm[:field]  == "puract_rcptdate"  ####3:受入日ベース 予定の時は納期を使用する。	8:受入日までに決定する単価　				
+				hprice[:shpact_depdate] = true if tcolm[:field]  == "shpsch_depdate"    ### 4:出荷日ベース　							
+				hprice[:shpsch_depdate] = true if tcolm[:field]  =~ /_depdate/  ####			
+				hprice[:acpact_acpdate] = true if tcolm[:field]  == "acpact_acpdate"    ### 5:検収ベース　							
+				hprice[:acpsch_acpdate] = true if tcolm[:field]  =~ /_acpdate/  #### 5:検収ベース 予定の時
+	        end
+			hprice[:price] = true if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_price"
+			hprice[:amt] = true if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_amt"
+			###7:出荷日までに決定する単価　9:単価決定=検収 submit後チェック
+		end
+		strprice = ""
+		if  hprice[:itm] and hrpice[:tblname] and hprice.size >= 6
+			strprice << %Q% if((p_chgname=="#{hprice[:itm]}"||p_chgname=="#{hprice[:qty]}"||p_chgname=="#{hprice[:duedate]}"||
+								p_chgname=="#{hprice[:isudate]}"||p_chgname=="#{hprice[:puract_rcpdare]}"||
+								p_chgname=="#{hprice[:shpact_depdate]}||p_chgname=="#{hprice[:acpact_acpdate]}"||
+								p_chgname=="#{hprice[:acpsch_acpdate]}")
+								&&btn == "#{oper}"){jQuery.getJSON("/screen/set_price_and_amt",
+                                          {#{strsenddata.chop}},function(data){
+											#{get_return_price_amt_val(hprice)}
+																				})}%
+		end
+		javascript_edit << %Q% jQuery("#sData").show();% 
+		###既定値等セット  ### jQuery("##{tcolm[:field]}",formid).val()にセットすべきもの
         strsql = "select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  
 			and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph"
 		recs = ActiveRecord::Base.connection.select_all(strsql)
@@ -287,32 +327,32 @@ include  JqgridFilter
 			seartbls.each do |srtcolm|
 				tmp_code_to_name << %Q% if(p_chgname=="#{srtcolm["pobject_code_sfd"]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
                                           {#{strsenddata.chop}},function(data){
-      					  #{get_return_name_val(srtcolm["pobject_code_sfd"],srtcolm["screenfield_paragraph"])}})}%
+											#{get_return_name_val(srtcolm["pobject_code_sfd"],srtcolm["screenfield_paragraph"])}
+																				})}%
 			end
 		end
-     tmp_code_to_name << ";"
-     javascript_edit << %Q%
-                                                           jQuery("input",formid).change(function(){ 
-                                                                   var p_chgname = jQuery(this).attr("name");
-      		                                                   #{require_fields} 
-      					                           #{tmp_code_to_name}});
-	                                                           jQuery("input",formid).keydown(function(e){ 
-      		                                                   var keyname = jQuery(this).attr("name");
-     					                           var viewval  ;
-					                           var newwin;
-      					                           if(keyname.match(/_code/i)&&e.keyCode==34){jQuery.getJSON("/screen/get_url_from_code",
-                                                                      {#{strkeydata}},function(data){viewval=data.viewname;
-					                                if(!newwin||newwin.closed){
-                                                                            url = "/screen/index?id=" + viewval + "&grid_key="+keyname;
-					                                    newwin = window.open(url,"blkpopup","width=800,height=350,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
-						                       else{
-                                                                           newwin.focus();}
-					  }
-)}})%
-	##
-      javascript_edit << "}"
-      
-       ##javascript_edit <<   ";}})(jQuery);"
+		tmp_code_to_name << ";"
+		javascript_edit << %Q%
+                           jQuery("input",formid).change(function(){ 
+                                var p_chgname = jQuery(this).attr("name");
+      	                        #{require_fields} 
+      	                        #{tmp_code_to_name}});
+	                            jQuery("input",formid).keydown(function(e){ 
+									var keyname = jQuery(this).attr("name");
+									var viewval;
+									var newwin;
+      					            if(keyname.match(/_code/i)&&e.keyCode==34){jQuery.getJSON("/screen/get_url_from_code",
+										{#{strkeydata}},function(data){viewval=data.viewname;
+																		if(!newwin||newwin.closed){
+																		url = "/screen/index?id=" + viewval + "&grid_key="+keyname + "&grid_tbl=#{@screen_code.split("_",2)[1].chop}";
+																		newwin = window.open(url,"blkpopup","width=800,height=350,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+																		else{
+																		newwin.focus();}
+																		}
+								)}})%
+		##
+		javascript_edit << "}"
+        ##javascript_edit <<   ";}})(jQuery);"
 	end
 	def set_onInitializeForm addorcopy
 		require_fields =  "function(formid) {"
@@ -321,13 +361,13 @@ include  JqgridFilter
                require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
 			end
 			if addorcopy == "add"
-				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt")
+				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt_screen")
 					##debugger ### tcolm[:field]でnil[]のエラーが発生した　上のifはokなのに　原因がわかるまで残しておく　2014/12/20
-					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt")
+					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt_screen",nil)
 					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
 				 else 
 					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
-						   dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen")
+						   dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen",nil)
 			               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
 					end
 			   end
@@ -339,9 +379,10 @@ include  JqgridFilter
     end
     def del_fields_protect oper
         require_fields =  "function(formid) {"
-        @gridcolumns.each do |tcolm|
-            require_fields << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
-        end
+        ##@gridcolumns.each do |tcolm|
+            ##require_fields << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
+            require_fields << %Q% jQuery("input",formid).attr("disabled",true);%
+        ##end
         require_fields << %Q% jQuery("#sData").hide();% if oper == "view"
         require_fields << %Q% jQuery("#sData").show();% if oper != "view"
         require_fields << "}"
@@ -394,14 +435,16 @@ include  JqgridFilter
         end
         # Enable direct selection (when a row in the table is clicked)
         # The javascript function created by the user (options[:selection_handler]) will be called with the selected row id as a parameter
-        return_cod = ""
+        return_code = ""
         return_code = %Q%onCellSelect:function(rowid, iCol,value,e){ 
-               var pare_cellname  = getUrlVars()["grid_key"];
+               var pare_cellname  = getUrlVars()["grid_key"];			    
+               var pare_tblchop  = getUrlVars()["grid_tbl"];
 	        if(pare_cellname){
                 var cellname = cellNames[iCol];
                     if(cellname.match(/_code/i)){ 
                         if(window.opener){
                                 var nameofcode = pare_cellname.replace("_code","_name");
+                                var idofcode = pare_cellname.replace("_code","_id");
                                 var rowdata = jQuery("##{@jqgrid_id}").getRowData(rowid);
                                 var taskId = getUrlVars()["taskid"];
                                 if(taskId)
@@ -413,7 +456,12 @@ include  JqgridFilter
                                     jQuery("#"+ pare_cellname, window.opener.document).val(value); 
                                     var tnamefields = nameofcode.split("_");
                                     var namefield = tnamefields[0]+"_"+tnamefields[1];
+                                    var tidfields = idofcode.split("_");
+                                    var idfield = tidfields[0]+"_"+tidfields[1];
+									var scr_idofcode = pare_tblchop + "_" + idofcode;
 			                    jQuery("#"+ nameofcode ,window.opener.document).val(rowdata[namefield]);
+			                    jQuery("#"+ idofcode ,window.opener.document).val(rowdata[idfield]);
+			                    jQuery("#" + scr_idofcode ,window.opener.document).val(rowdata[idfield]);
                                     }
 			                window.close();}}}},%
         custom_func = %Q%

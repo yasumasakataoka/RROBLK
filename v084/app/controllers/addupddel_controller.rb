@@ -8,26 +8,27 @@ class  AddupddelController < ScreenController
 	respond_to :html ,:xml ##  将来　タイトルに変更
 	def index    ##  add update delete  
 		@pare_class = "online"
-		command_c = init_from_screen params
-		command_c[:sio_session_id] =   1	  
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
+		command_c = init_from_screen
+		command_c[:sio_session_id] =   1
+		tblname = command_c[:sio_viewname].split("_")[1].chop
+	    command_c[(tblname + "_person_id_upd").to_sym] = command_c[:sio_user_code]
+	    command_c[(tblname + "_update_ip").to_sym] = request.remote_ip
 		@errmsg = ""
       case  params[:copy]  
           when /add/
              updatechk_add command_c
 			 updatechk_foreignkey command_c if  @errmsg == ""
              if  @errmsg == "" then
-                 command_c[:sio_classname] = "plsql_blk_add_"
+                 command_c[:sio_classname] = "screen_blk_add_"
 				 ##debugger if command_c[:sio_viewname].split("_")[1] == "custords"
-                 command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
-                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
+                 @newtblid = command_c[:id] = plsql.__send__(tblname + "s_seq").nextval 
+                 command_c[(tblname + "_id").to_sym] =  command_c[:id]
              end 
           when /delete/
-	         command_c[:sio_classname] = "plsql_blk_delete_"
+	         command_c[:sio_classname] = "screen_blk_delete_"
 			 updatechk_del command_c
           when /edit/
-             command_c[:sio_classname] = "plsql_blk_edit_"
+             command_c[:sio_classname] = "screen_blk_edit_"
 			 updatechk_edit command_c
 			 updatechk_foreignkey command_c  if  @errmsg == ""
           else     
@@ -41,8 +42,12 @@ class  AddupddelController < ScreenController
           command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
 		  command_c[:sio_recordcount] = 1
 		  Rails.cache.clear(nil) if command_c[:sio_viewname] =~ /screen/  ###db_cudではクリされた結果がscreenのクラスでは反映されない模様
-          sub_insert_sio_c    command_c 
-          sub_userproc_chk_set command_c
+		  all_fields = get_show_data(command_c[:sio_code])[:allfields]
+		  all_fields.each do |f|
+			command_c[f] = nil if command_c.has_key?(f) == false and f.to_s =~ /^#{tblname}_/
+		  end
+          proc_insert_sio_c    command_c 
+          proc_userproc_chk_set command_c
           plsql.commit
           dbcud = DbCud.new
           dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")

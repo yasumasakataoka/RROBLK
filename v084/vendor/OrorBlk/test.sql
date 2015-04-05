@@ -22,7 +22,6 @@ truncate table prdords;
 truncate table purschs;
 truncate table purords;
 truncate table purinsts;
-truncate table purxxxrplys;
 truncate table inouts;
 truncate table lotstkhists;
 
@@ -48,4 +47,6 @@ truncate table mkinsts;
 truncate table sio_r_mkinsts;
 truncate table puracts;
 truncate table sio_r_puracts;
+truncate table stkhists;
+truncate table sio_r_stkhists;
 
