@@ -75,5 +75,5 @@ class ExcelexportController < ScreenController
         end
         send_data(pkg.to_stream.read,:type => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                  :filename => "#{@screen_code + Time.now.strftime("%y%m%d%H%M")}.xlsx")
-        end  
-    end
+    end  
+end

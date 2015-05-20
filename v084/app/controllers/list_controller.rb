@@ -3,7 +3,7 @@ before_filter :authenticate_user!
 ## 全ユーザ共通
 ## SCREENLEVELで表示画面を制限すること。
     def index
-     ###debugger  ##debugger  の位置を変更するとエラーになる。???
+		###debugger  ##debugger  の位置を変更するとエラーになる。???
 	   grpcode = sub_blkget_grpcode 
        if grpcode  then
 	        crtcachelist(grpcode)
@@ -13,7 +13,6 @@ before_filter :authenticate_user!
 	   testlinks if ENV["RACK_ENV"] == "development" ###開発環境のみで動く
        crt_def_all
        Rails.cache.clear	   
-    ##debugger
     end	
 	#### code index　チッェクを入れる。
     def crtcachelist grpcode

@@ -22,17 +22,17 @@
                  jQuery("#radio_button td").on('click', function(){ 
                    var p_id = jQuery("#radio_button :checked").val(); 
                    if(screen){if(screen.id!=p_id&&screen.id){if(ascreens[p_id]){ascreens[p_id].close();}
-                                                             if(p_id){screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);  
+                                                             if(p_id){screen = window.open("/screen/index?jqgrid_id="+p_id+"&ss_id=", p_id);  
                                                                       ascreens[p_id]=screen;  
                                                                        jQuery("#radio_list"+p_id).css('background-color', '#00ff00');
                                                                        return false;}
                                                              }
-                                        else{if(screen.id=p_id){screen.close();screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);
+                                        else{if(screen.id=p_id){screen.close();screen = window.open("/screen/index?jqgrid_id="+p_id+"&ss_id=", p_id);
                                                                                ascreens[p_id]=screen;  
                                                                                 jQuery("#radio_list"+p_id).css('background-color', '#00ff00');
                                                                                return false; }}
                                }
-                      else{if(p_id){screen = window.open("/screen/index?id="+p_id+"&ss_id=", p_id);
+                      else{if(p_id){screen = window.open("/screen/index?jqgrid_id="+p_id+"&ss_id=", p_id);
                                                 ascreens[p_id]=screen;  
                                                  jQuery("#radio_list"+p_id).css('background-color', '#00ff00'); 
                                                 return false; }} });

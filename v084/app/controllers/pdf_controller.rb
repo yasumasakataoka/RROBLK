@@ -4,12 +4,12 @@
 ##新規　変更
 before_filter :authenticate_user!  
 include ActionView::Helpers::NumberHelper
-class PdfReport < Prawn::Document
-    def to_pdf 
-        yield
-        render
-    end
-end
+	class PdfReport < Prawn::Document
+		def to_pdf 
+			yield
+			render
+		end
+	end
     def index
         pdfparam = {}
         pagekey = []   ###定義してないとevalで消える
@@ -17,7 +17,7 @@ end
             pdfscript = plsql.r_reports.first("where pobject_code_rep = '#{params[:pdflist]}' and  report_Expiredate > sysdate")
 	        if pdfscript
 	            f = File.open(".#{pdfscript[:report_filename]}", "r:UTF-8")	                        
-                command_c = init_from_screen params  ###gridの選択項目をセットするため	@sio_user_code set			
+                command_c = init_from_screen ###gridの選択項目をセットするため	@sio_user_code set			
 				@new_sio_session_counter  = user_seq_nextval
 				plsql.connection.autocommit = false
 				command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
@@ -124,7 +124,7 @@ end
     end	##index
     def  insert_hisofrprts pdfscript,record
 	    rec = {}
-	    rec[:id] = plsql.hisofrprts_seq.nextval
+	    rec[:id] = proc_get_nextval "hisofrprts_seq"
 	    rec[:tblname] = pdfscript[:pobject_code_view]  ##tblname = viewname
 	    rec[:recordid] = record[:id]
 	    rec[:reports_id] = pdfscript[:id]
@@ -143,7 +143,7 @@ end
 				command_c[confirm_sym] = "1"
 				command_c[:sio_classname] = "pdfscript_edit_confirm"
 			end
-			sub_insert_sio_c    command_c 
+			proc_insert_sio_c    command_c 
 			sub_userproc_chk_set command_c 
 		end
     end

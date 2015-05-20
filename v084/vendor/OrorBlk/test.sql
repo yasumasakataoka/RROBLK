@@ -29,7 +29,6 @@ truncate table sio_r_purschs;
 truncate table sio_r_purords;
 truncate table sio_r_purinsts;
 
-
 truncate table sio_r_shpschs;
 truncate table sio_r_shpords;
 truncate table sio_r_shpinsts;
@@ -49,4 +48,16 @@ truncate table puracts;
 truncate table sio_r_puracts;
 truncate table stkhists;
 truncate table sio_r_stkhists;
+delete from SIO_R_BLKTBSFIELDCODES where BLKTBSFIELDCODE_created_at < current_date - 90
+;
+delete from SIO_R_screenFIELDS where screenfield_created_at < current_date - 90
+;
+delete from SIO_R_TBLINKFLDS where TBLINKFLD_created_at < current_date - 90
+;
+delete from SIO_R_BLKTBS where BLKTB_created_at < current_date - 90
+;
+
+truncate table sio_r_purrplies;
+
+truncate table purrplies;
 

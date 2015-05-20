@@ -4,7 +4,7 @@ class ImportfieldsfromoracleController < ApplicationController
   before_filter :authenticate_user!  
   def index
       @tsqlstr = ""
-      tblid  = params[:q].to_i
+      tblid  = params[:sio_viewname].to_i
       if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
           if rec[:blktb_expiredate] > Time.now then
 		     plsql.logoff
@@ -30,7 +30,6 @@ class ImportfieldsfromoracleController < ApplicationController
              @errmsg = " id not found"
          end
       end
-     ##debugger
      tblconts = PLSQL::Table.find(plsql, pobject_code_tbl.to_sym)
      if tblconts
          columns = plsql.__send__(pobject_code_tbl).columns
@@ -50,7 +49,7 @@ class ImportfieldsfromoracleController < ApplicationController
          plsql.blktbsfieldcodes.delete("where blktbs_id = #{rec_id}  and  expiredate > current_date")
          prv_import_columns rec_id,columns
          if  @errmsg.size < 1 then 
-             chk_index(pobject_code_tbl,columns) 
+             chk_index(pobject_code_tbl,columns) if columns
              if  @errmsg.size > 1 then 
                      raise
              end
@@ -189,7 +188,6 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
        tmp[:remark] = " set by prv_add_fieldcode"
-       ###debugger
        plsql.fieldcodes.insert tmp
        return tmp
   end 
@@ -202,7 +200,6 @@ class ImportfieldsfromoracleController < ApplicationController
       tmp[:updated_at] = Time.now
       tmp[:expiredate] = Time.parse("2099/12/31")
       tmp[:code] = field
-      ##debugger
       plsql.pobjects.insert tmp
       return tmp
   end
@@ -225,7 +222,6 @@ class ImportfieldsfromoracleController < ApplicationController
                     end 
             end
          else
-         ##debugger
            if fieldcode[:fieldcode_ftype] =~ /timestamp/  and  attr[:data_type].downcase =~ /timestamp/  then
              else
               @errmsg << "...field =>#{field}  is  already exists and type unmatch...type => #{fieldcode[:fieldcode_ftype]}  but  oracle =>#{attr[:data_type].downcase}..."
@@ -245,8 +241,7 @@ class ImportfieldsfromoracleController < ApplicationController
 
  def  init_screenfields
       screenfields = 
-         {:selection   =>  1,
-          :expiredate   => Time.parse("2099/12/31"),
+         { :expiredate   => Time.parse("2099/12/31"),
           :remark   => "auto_crt",
           :persons_id_upd   => plsql.persons.first(:email =>current_user[:email])[:id]  ,
           :update_ip   => @myip,
@@ -290,14 +285,13 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
  ###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/18
     plsql.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
     fields = plsql.__send__(viewname).columns  ###select(:all,tmp_screen_dtl)   ###テーブルの項目をセット  R_xxxx
-    ###debugger
     screen_ids = plsql.screens.all(" where pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') ")
     @errmsg << "_______missing screen code #{viewname}"  if screen_ids.empty?
     screen_ids.each do |rec|
        screen_id = rec[:id]
        row_cnt ||= 1
        fields.each  do |ii,jj|
-           setscreenfields ii.to_s,jj,viewname,screen_id,fields,row_cnt   ## iiの中はscreens_id 「s」がつくよ
+           setscreenfields ii.to_s,jj,viewname,screen_id,row_cnt   ## iiの中はscreens_id 「s」がつくよ
           row_cnt += 1          
        end 
        code_rowpos_name = plsql.r_screenfields.all("where screenfield_screen_id = #{screen_id} and screenfield_expiredate > current_date ") 
@@ -320,20 +314,23 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
        crttype    viewname                 ##interface用　ｓｉｏ作成
     end
  end  ##create_screenfields 
-    def setscreenfields   ii,jj,viewname,screen_id,fields,row_cnt   ### ii->sym_key.to_s,jj==>iiのval 
+    def setscreenfields   ii,jj,viewname,screen_id,row_cnt   ### ii->sym_key.to_s,jj==>iiのval 
         screenfields = init_screenfields
+		screenfields[:selection] = 0
         code_pos = []
         indisp = 0 
-        indisp = sub_indisp(ii,viewname)  if (ii =~ /_code/ or ii =~ /_name/) and  ii !~ /_upd$/  and ii.split(/_/)[0] != viewname.split("_")[1].chop
+        indisp = sub_indisp(ii,viewname)  if ii =~ /_code|_name/ and  ii !~ /_upd$/  and ii.split(/_/)[0] != viewname.split("_")[1].chop
         screenfields[:editable] =  indisp  
         screenfields[:hideflg] = 0
         screenfields[:id]  = plsql.screenfields_seq.nextval
         screenfields[:screens_id] = screen_id
-	    if  ii =~ /_code/ or ii =~ /_name/ then
+	    if  ii =~ /_code|_name|itm_/ then
             screenfields[:hideflg] = 0
+            screenfields[:selection] = 1
         else
             if  viewname.split(/_/)[1].chop  == ii.split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
                 screenfields[:hideflg] = 0
+				screenfields[:selection] = 1
             else
                 screenfields[:hideflg] = 1
             end                          
@@ -376,7 +373,6 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
                   tmp =  prv_add_pobjects ii, "view_field"
                   screenfields[:pobjects_id_sfd] =  tmp[:id]      
          end
-         ##debugger
         if screenfields[:editable] ==  1  then
 	     screenfields[:rowpos] = row_cnt
              screenfields[:colpos] = 1

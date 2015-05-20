@@ -12,7 +12,7 @@
            p "add person to his or her email "  
 		   raise   ### 別画面に移動する　後で対応
             else
-          grp_code = tmp_person[:usergroup_code]
+          grp_code = tmp_person[:usrgrp_code]
         end 
         return grp_code
     end
@@ -121,16 +121,27 @@
 				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
 				proc_set_src_tbl  rec ### @src_tblの項目作成
 				command_r[:sio_recordcount] = r_cnt0
-			    case command_r[:sio_classname]
-			        when /_add_/ then
-	                    plsql.__send__(tblname).insert @src_tbl  
-	                when /_edit_/ then
-                         @src_tbl[:where] = {:id => @src_tbl[:id]}             ##変更分のみ更新
-                         plsql.__send__(tblname).update  @src_tbl
-                    when  /_delete_/ then 
-                         plsql.__send__(tblname).delete(:id => @src_tbl[:id])
-						 ### blkukyの時は　constrainも削除
-	            end   ## case iud 
+				if tblname =~ /^mk/   ###mkxxxxは追加のみ
+					plsql.__send__(tblname).insert @src_tbl
+				else
+					case command_r[:sio_classname]
+						when /_add_/ 
+							plsql.__send__(tblname).insert @src_tbl  
+						when /_edit_/ 
+							@src_tbl[:where] = {:id => @src_tbl[:id]}             ##変更分のみ更新
+							plsql.__send__(tblname).update  @src_tbl
+						when  /_delete_/ 
+							if tblname =~ /schs$|ords$|insts$|acts$/  ##alloctblにかかわるtrnは削除なし
+								@src_tbl[:qty] = 0 if @src_tbl[:qty] 
+								@src_tbl[:amt] = 0 if @src_tbl[:amt]
+								@src_tbl[:where] = {:id => @src_tbl[:id]}             ##変更分のみ更新
+								plsql.__send__(tblname).update  @src_tbl
+							else								
+								plsql.__send__(tblname).delete(:id => @src_tbl[:id])
+							end
+							### blkukyの時は　constrainも削除
+					end   ## case iud
+				end
 				proc_tblinks(command_r) do 
 					"after"
 				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
@@ -156,7 +167,7 @@
         raise if @sio_result_f ==   "9" 
     end
 	def vproc_optiontabl tblname
-		if tblname =~ /rubycodings|tblink|rplys$|mkschs|mkords|mkinsts|mkacts/ then true else false end
+		if tblname =~ /rubycodings|tblink|rplies$|mkschs|mkords|mkinsts|mkacts/ then true else false end
 	end
 	def vproc_delayjob_or_optiontbl tblname,id	
         case tblname
@@ -177,20 +188,21 @@
 					end
 				end
 				 ####when   /schs$|ords$|insts$|acts$/				 
-			when   /rplys$/
-				dbrply = DbReplys.new
-			    dbrply.perform_setreplys tblname,id,@sio_user_code  ###reply のuser_id はinteger
+			when   /rplies$/ 
+				dbrply = DbReplies.new
+			    dbrply.perform_setreplys tblname,id,@sio_user_code ###reply のuser_id はinteger 
         end				 					
 	end
 	def vproc_tbl_mk tblname,id
 		str_id = if id then " and id = #{id} " else "" end
 	    if tblname == "mkinsts"  then order_by_add = " autocreate_inst, "  else order_by_add = "" end
-	    recs = plsql.select(:all,"select * from #{tblname} where result_f = '0' #{str_id}  order by #{order_by_add} id")   ##0 未処理
+	    recs = ActiveRecord::Base.connection.select_all("select * from #{tblname} where result_f = '0' #{str_id}  order by #{order_by_add} id")   ##0 未処理
         dbmk = yield
+		tbl = {}
 		recs.each do |rec|
-			rec[:result_f] = "5"  ## Queueing
-			rec[:where] = {:id =>rec[:id]}
-			plsql.__send__(tblname).update rec
+			tbl[:result_f] = "5"  ## Queueing
+			tbl[:where] = {:id =>rec["id"]}
+			plsql.__send__(tblname).update tbl
 		end
 		dbmk.__send__("perform_#{tblname}", recs)
 	end	
@@ -198,8 +210,8 @@
 		sub_insert_sio_c   command_c
 	end
     def sub_insert_sio_c   command_c   ###要求  無限ループにならないこと
-        command_c = char_to_number_data(command_c) ###画面イメージからデータtypeへ
-        command_c[:sio_id] =  plsql.__send__("SIO_#{command_c[:sio_viewname]}_SEQ").nextval
+        ###command_c = char_to_number_data(command_c) ###画面イメージからデータtypeへ   入口に変更すること
+        command_c[:sio_id] =  proc_get_nextval("SIO_#{command_c[:sio_viewname]}_SEQ")
         command_c[:sio_term_id] =  request.remote_ip  if respond_to?("request.remote_ip")  ## batch処理ではrequestはnil　　？？ 
         command_c[:sio_command_response] = "C"
         command_c[:sio_add_time] = Time.now
@@ -239,27 +251,28 @@
 	#	return command_c
 	#end	
 	def vproc_command_c_dflt_set_fm_rubycoding command_c  ###rubycodingsは開発環境のみ　引き数はcommand_cで固定
+		command_r = command_c.dup
 		tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
 		command_c.each do |key,val|
 			if (val == "" or val.nil?) and  key.to_s =~ /^#{tblnamechop}_/
 				def_name = "proc_view_field_#{key.to_s}_dflt_for_tbl_set"
 				if respond_to?(def_name)
-					command_c[key] = __send__(def_name,command_c)
+					command_r[key] = __send__(def_name,command_r)
 				else
 					fld_tbl = key.to_s.split("_",2)[1]
 					def_name = "proc_field_#{fld_tbl}_dflt_for_tbl_set"
 					if respond_to?(def_name)
-						command_c[key] = __send__(def_name,command_c)
+						command_r[key] = __send__(def_name,command_r)
 					end
 				end
 			end
 		end
-		return command_c
+		return command_r
 	end
     def sub_userproc_insert command_c
         userproc = {}		
-        userproc[:id] = plsql.__send__("userproc#{@sio_user_code.to_s}s_seq").nextval
-	    userproc[:session_counter] = command_c[:sio_session_counter]
+        userproc[:id] = proc_get_nextval("userproc#{@sio_user_code.to_s}s_seq")
+		userproc[:session_counter] = command_c[:sio_session_counter]
         userproc[:tblname] = "sio_"+ command_c[:sio_viewname]
         userproc[:cnt] = command_c[:sio_recordcount]
         userproc[:cnt_out] = 0
@@ -298,7 +311,7 @@
         plsql.__send__("parescreen#{@sio_user_code.to_s}s").insert parescreen
     end
     def sub_insert_sio_r command_r   ####レスポンス
-        command_r[:sio_id] =  plsql.__send__("SIO_#{command_r[:sio_viewname]}_SEQ").nextval
+        command_r[:sio_id] =  proc_get_nextval("SIO_#{command_r[:sio_viewname]}_SEQ")
         command_r[:sio_command_response] = "R"
         command_r[:sio_add_time] = Time.now
         plsql.__send__("SIO_#{command_r[:sio_viewname]}").insert command_r
@@ -307,29 +320,33 @@
         sub_insert_sio_r command_r
     end   ## sub_insert_sio_r
     def char_to_number_data command_r   ###excel からのデータ取り込み　根本解決を   
-       ##rubyXl マッキントッシュ excel windows excel not perfect
-       @date1904 = nil
-	   viewtype = PLSQL::View.find(plsql,command_r[:sio_viewname]).columns
-       ##@show_data[:allfields].each do |i|
-	   viewtype.each do |i,j|
-	     if command_r[i] then
-             ###case @show_data[:alltypes][i]
-             case j[:data_type].downcase
-                  when /date|^timestamp/ then
+		##rubyXl マッキントッシュ excel windows excel not perfect
+		@date1904 = nil
+		##command_r[:sio_viewname]||=command_r[:id]
+		viewtype = proc_blk_columns("sio_#{command_r[:sio_viewname]}")
+		##@show_data[:allfields].each do |i|
+		command_c = {}
+		viewtype.each do |key,j|
+			i = key.to_sym
+			if command_r[i] then
+				command_c[i] = command_r[i]
+				###case @show_data[:alltypes][i]
+				case j[:data_type].downcase
+					when /date|^timestamp/ then
 			        begin
-                       command_r[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
-			           command_r[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
+						command_c[i] = Time.parse(command_r[i].gsub(/\W/,"")) if command_r[i].class == String
+						command_c[i] = num_to_date(command_r[i])  if command_r[i].class == Fixnum  or command_r[i].class == Float 
 			        rescue
-                       command_r[i] = Time.now
+                       command_c[i] = Time.now
 			        end
-                  when /number/ then
-                        command_r[i] = command_r[i].gsub(/,|\(|\)|\\/,"").to_f if command_r[i].class == String
-                  when /char/
-                       command_r[i] = command_r[i].to_i.to_s if command_r[i].class == Fixnum
-             end  #case show_data
-	      end  ## if command_r
-       end  ## sho_data.each
-     return command_r
+					when /number/ then
+						command_c[i] = command_r[i].gsub(/,|\(|\)|\\/,"").to_f if command_r[i].class == String
+					when /char/
+						command_c[i] = command_r[i].to_i.to_s if command_r[i].class == Fixnum
+				end  #case show_data
+			end  ## if command_r
+		end  ## sho_data.each
+		return command_c
     end ## defar_to....
 
     def num_to_date(num)
@@ -417,19 +434,21 @@
         end
         ##xparams gridの生 
 	    ###if (params[:commit]||="") == "Export" then search_key = params[:export].dup else search_key = params.dup end
-		strwhere = proc_search_key_strwhere command_c,strwhere,@show_data
+		search_key = params.dup
+		strwhere = proc_search_key_strwhere search_key,strwhere,@show_data
 		##strwhere = proc_search_key_strwhere strwhere,@show_data
 	end	
-	def proc_search_key_strwhere search_key,strwhere,show_data
+	def proc_search_key_strwhere search_key,strwhere,show_data   ###search key:"xxxx"   not sym
         search_key.each  do |i,j|  ##xparams gridの生
-            next if j.nil? or j == ""
-	        case show_data[:alltypes][i]
+            next if j == ""
+			tmpwhere = nil
+	        case show_data[:alltypes][i.to_sym]
 				when nil
 					next
 	            when /number/
-                    tmpwhere = " #{i} = #{j.to_i}     AND " 
-		            tmpwhere = " #{i}  #{j[0]}  #{j[1..-1].to_i}      AND "   if j =~ /^</   or  j =~ /^>/ 
-		            tmpwhere = " #{i} #{j[0..1]} #{j[2..-1].to_i}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
+                    tmpwhere = " #{i} = #{j}     AND " 
+		            tmpwhere = " #{i}  #{j[0]}  #{j[1..-1]}      AND "   if j =~ /^</   or  j =~ /^>/ 
+		            tmpwhere = " #{i} #{j[0..1]} #{j[2..-1]}      AND "    if j =~ /^<=/  or j =~ /^>=/ 
 	            when /^date|^timestamp/
 		            case  j.size  
 			            when 7
@@ -494,7 +513,7 @@
     def subpaging  command_c,screen_code
         tbldata = []
         command_c[:sio_viewname]  = @show_data[:screen_code_view] 
-        sub_insert_sio_c command_c    ###ページング要求
+        proc_insert_sio_c command_c    ###ページング要求
         rcd = proc_blk_paging command_c,screen_code
 		allf = @show_data[:allfields]
 		allt = @show_data[:alltypes]
@@ -661,22 +680,17 @@
         end
     end	
     def proc_get_opeitms_id_fm_itm_loca itms_id,locas_id,processseq = nil,priority = nil  ###
-		strsql = "select * from opeitms where itms_id = #{itms_id} and locas_id = #{locas_id} and processseq = #{processseq ||= 999} and priority = #{priority ||= 999} and expiredate > current_date "
+		strsql = "select * from opeitms where itms_id = #{itms_id} and locas_id = #{locas_id} 
+		           and processseq = #{processseq ||= 999} and priority = #{priority ||= 999} and expiredate > current_date "
 		rec = ActiveRecord::Base.connection.select_one(strsql)
         if rec
 	        rec
 		  else
-            fprnt "logic err proc_get_opeitms_id_fm_itm_loca itms_id = #{itms_id} ,locas_id = #{locas_id}, processseq = #{processseq ||= 999} , priority = = #{priority ||= 999} ,expiredate > #{Date.today}"	  
+            fprnt "logic err proc_get_opeitms_id_fm_itm_loca itms_id = #{itms_id} ,locas_id = #{locas_id}, processseq = #{processseq ||= 999} , 
+					priority = = #{priority ||= 999} ,expiredate > #{Date.today}"	  
             raise		  
         end
     end
-	def proc_get_amt qty ,price ,loca_id,itms_id
-	    (qty||=0)*(price||=0)
-	end
-
-	def sub_get_price loca_id,itm_id,isudatesym ,duedatesym
-	     1
-    end	
     def proc_get_chrgperson_fm_loca loca_id,prd_pur_shp
         case prd_pur_shp
 			when "pur"
@@ -688,7 +702,7 @@
 	    if chrgperson
 			chrgperson_id = chrgperson["chrgpersons_id_dflt"]
 		else
-			chrgperson = ActiveRecord::Base.connection.select_one("select * from r_chrgpersons where person_code =  'dummy'")
+			chrgperson = ActiveRecord::Base.connection.select_one("select * from r_chrgs where person_code =  'dummy'")
 			if chrgperson
 				chrgperson_id = chrgperson["id"]
 			else 
@@ -734,7 +748,7 @@
 	    end 
 	    return locas_id
 	end
-    def sub_get_dealers_id_fm_locas_id  locas_id
+    def proc_get_dealers_id_fm_locas_id  locas_id
 	    locas_id ||= 0
 	    dealer = plsql.dealers.first("where locas_id_dealer = #{locas_id} ")
 		if dealer.nil?
@@ -862,7 +876,12 @@
 		if do_all.size > 0
 			proc_command_instance_variable(command_c)
 			proc_set_src_tbl command_c
-			proc_opeitm_instance(command_c) if command_c[:opeitm_id]
+			if command_c[:opeitm_id]
+				proc_opeitm_instance(command_c) 
+			###else
+				## ###debugger 
+			##	@opeitm = nil
+			end
 			do_all.each do |dorec|
 				if respond_to?(dorec[:tblink_code])
 				    if dorec[:tblink_hikisu] then __send__(dorec[:tblink_code],eval(dorec[:tblink_hikisu])) else __send__(dorec[:tblink_code]) end
@@ -873,7 +892,7 @@
 			end
 		end
 	end 
-	def proc_set_src_tbl command_c  ##rec = command_c
+	def proc_set_src_tbl command_c  ##rec = command_c  
         @src_tbl = {}   ###テーブル更新
 		tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
         command_c.each do |j,k|
@@ -934,12 +953,12 @@
     end
     def get_screen_code 
         case
-            when params[:q]   then ##disp
-               @jqgrid_id   =  params[:q]
-	           @screen_code = params[:q]  if params[:q].split('_div_')[1].nil?    ##子画面無
-               @screen_code = params[:q].split('_div_')[1]  if params[:q].split('_div_')[1]    ##子画面
-            when params[:action]  == "index"  then 
-               @jqgrid_id  = @screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
+            when params[:jqgrid_id]   then ##disp
+               @jqgrid_id   =  params[:jqgrid_id]
+	           @screen_code = params[:jqgrid_id]  if params[:jqgrid_id].split('_div_')[1].nil?    ##子画面無
+               @screen_code = params[:jqgrid_id].split('_div_')[1]  if params[:jqgrid_id].split('_div_')[1]    ##子画面
+            ##when params[:action]  == "index"  then 
+            ##   @jqgrid_id  = @screen_code = params[:id]   ## listからの初期画面の時 とcodeを求める時
             when params[:nst_tbl_val] then
                @jqgrid_id   =  params[:nst_tbl_val]
                @screen_code =  params[:nst_tbl_val].split("_div_")[1]  ###chil_scree_code
@@ -1074,12 +1093,15 @@
 	#	end
 	#	return command_c
 	#end
-    def vproc_set_fields_from_allfields  ## value ###画面の内容をcommand_rへ
-        command_c = {}
-        @show_data[:allfields].each do |j|
+    def proc_set_fields_from_allfields  ## value ###画面の内容をcommand_rへ ###typeの変換を
+        command_c = params.dup
+		command_c[:sio_user_code] = @sio_user_code  ###########   LOGIN USER
+	    command_c[:sio_viewname]  = @show_data[:screen_code_view]
+	    command_c[:sio_code]  = @screen_code
+		command_c = char_to_number_data(command_c)
 	        ## nilは params[j] にセットされない。
-            command_c[j] = params[j]
-        end ##
+			### 下記の変換が未実施
+			###  1 (params == String ,command_c=float or integer
         return command_c
     end
     def proc_opeitm_instance opeitm_flds
@@ -1093,17 +1115,13 @@
 		@opeitm[:packqty]  = 1 if @opeitm[:packqty] == 0 or @opeitm[:packqty].nil?
 	end	
     def init_from_screen
-		get_screen_code
-        ###@screen_code,@jqgrid_id  = get_screen_code						
+		get_screen_code			
 		@sio_user_code = ActiveRecord::Base.connection.select_one("select * from persons where email = '#{current_user[:email]}'")["id"]
 	    @show_data = get_show_data @screen_code   #####popup画面もあるので@screen_codeをもパラメータにしている。
 	    if @show_data.nil?
 	       render :text=> "Create screen #{@screen_code} " and return
 	    end
-	    command_c = vproc_set_fields_from_allfields
-	    command_c[:sio_user_code] = @sio_user_code  ###########   LOGIN USER
-	    command_c[:sio_viewname]  = @show_data[:screen_code_view] 
-	    command_c[:sio_code]  = @screen_code
+	    command_c = proc_set_fields_from_allfields
         return command_c
     end	
 	def proc_get_inst_alloc destblname,inst_id,sno,qty
@@ -1208,20 +1226,42 @@
 		end
 	end
 	def proc_get_nextval tbl_seq
-		case Db_adapter 
-			when /post/
-				ActiveRecord::Base.connection.select_value("SELECT nextval('#{tbl_seq}')")  ##post
-			when /oracle/
-				ActiveRecord::Base.connection.select_value("select #{tbl_seq}.nextval from dual")  ##oracle
+		ActiveRecord::Base.uncached() do
+			case Db_adapter 
+				when /post/
+					ActiveRecord::Base.connection.select_value("SELECT nextval('#{tbl_seq}')")  ##post
+				when /oracle/
+					ActiveRecord::Base.connection.select_value("select #{tbl_seq}.nextval from dual")  ##oracle
+			end
 		end
 	end
 	def proc_chk_tble_exist tblname
-		case Db_adapter 
+		case ActiveRecord::Base.configurations[Rails.env]['adapter'] 
 			when /post/
 				ActiveRecord::Base.connection.select_value("select relname as TABLE_NAME from pg_stat_user_tables where table_name = '#{tblname.doencase}'")  ##post
 			when /oracle/
 				ActiveRecord::Base.connection.select_value("select table_name from user_tables where table_name = '#{tblname.upcase}'")  ##oracle
 		end
+	end
+	def proc_blk_columns tblname
+		columns = {}
+		case ActiveRecord::Base.configurations[Rails.env]['adapter'] 
+			when /post/
+				ActiveRecord::Base.connection.select_all("SELECT attname, typname FROM pg_class, pg_attribute, pg_type WHERE   relkind     ='r'
+												AND relname     ='テーブル名' AND attrelid    = (select relid from pg_stat_all_tables where relname = 'テーブル名')
+												AND attnum      > 0    AND pg_type.oid = atttypid;")  ##post
+				####SELECT pg_class.relname, pg_attribute.attname, pg_attribute.atttypmod, pg_attribute.attnum, pg_attribute.attalign, 
+				##		pg_attribute.attnotnull, pg_type.typname 
+				##FROM pg_class, pg_attribute, pg_type 
+				##WHERE pg_class.oid = pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid and pg_class.relname='テーブル名称' and pg_attribute.attnum > 0 
+				##ORDER BY pg_attribute.attnum;
+			when /oracle/
+				recs = ActiveRecord::Base.connection.select_all("select * from user_tab_columns where  table_name = '#{tblname.upcase}'")  ##oracle
+				recs.each do |rec|
+					columns[rec["column_name"].downcase] = {:data_type=>rec["data_type"],:data_precision=>rec["data_precision"],:data_scale=>rec["data_scale"],:char_length=>rec["char_length"]}
+				end
+		end
+		return columns
 	end
 	def proc_get_rec_fm_tblname_tblid tblname,srctblname,srctblid
 		rec = {}
@@ -1252,7 +1292,7 @@
 		return rec
 	end
 	
-	def proc_get_rec_fm_tblname_yield tblname
+	def proc_get_rec_fm_tblname_yield tblname  ##proc_fld_xxxxの中の項目を求める。
 		rec = {}
 		if @sio_classname =~ /_add_/
 			rec["id"] = proc_get_nextval "#{tblname}_seq"
@@ -1264,18 +1304,25 @@
 		end
 		return rec
 	end
+	def proc_get_viewrec_from_id tblname,id  ## 
+		rec = ActiveRecord::Base.connection.select_one("select * from r_#{tblname} where id = #{id}")
+		if rec.nil?
+			fprnt "error not found 'select * from r_#{tblname} where id = #{id} ' "
+			rec = {}
+		end
+		return rec
+	end
 	def proc_price_amt command_c
-		tblnamechop = ((command_c[:sio_viewname]||= command_c[:q]).split("_",2)[1].chop)
-		itm_cod = command_c[:itm_cod]
+		tblnamechop = (command_c[:sio_viewname].split("_",2)[1].chop)
 		qty = command_c[("#{tblnamechop}_qty").to_sym]
-		case tblnamechop
+		case tblnamechop  
 			when /^cust/
 				pricetbl = "custs"
 				loca_code = command_c[:loca_code_cust]
 			when /^pur/
 				pricetbl = "dealers"
 				loca_code = command_c[:loca_code_dealer]
-			when /mkacts/
+			when /mkact/
 				case command_c[:mkact_prdpurshp]
 					when "pur"
 						pricetbl = "dealers"
@@ -1296,43 +1343,51 @@
 			else
 				return {}
 		end
-		if command_c[("#{tblnamechop}_contract_price").to_sym]   ###変更の時
-			contract = {}
-			contract["pricemst_contract_price"] = command_c[("#{tblnamechop}_contract_price").to_sym]
+		strsql = "select *
+				from r_pricemsts 	/*同一品目内ではcontract_price<pricemst_amtroundは有効日内で同一であること*/
+				where pricemst_tblname =  '#{pricetbl}' and pricemst_expiredate >= current_date and
+				itm_code = '#{command_c[:itm_code]}' AND loca_code = '#{loca_code}' " 
+		rec_contract = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
+		command_c[("#{tblnamechop}_contract_price").to_sym]||=""
+		if command_c[("#{tblnamechop}_contract_price").to_sym]  != "" ###変更の時
+			contract = command_c[("#{tblnamechop}_contract_price").to_sym]
+			price = (command_c[("#{tblnamechop}_price").to_sym]||=0).to_f
+			amtround = rec_contract["pricemst_amtround"] if rec_contract
+			amtdecimal = rec_contract["pricemst_amtdecimal"] if rec_contract
 		else   ###新規登録の時の単価
-			strsql = "select pricemst_contract_price from r_pricemsts 	
-						where pricemst_tblname =  '#{pricetbl}' and
-						itm_code = '#{itm_code}' AND loca_code = '#{loca_code}' " 
-			contract = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
-			if contract.nil?
-				contract = {}
+			if rec_contract.nil?
+				contract = ""
 				case tblnamechop
 					when /^cust/
-						contract["pricemst_contract_price"] = "C"
+						contract= "C"
 					when /^pur/
-						contract["pricemst_contract_price"] = "D"
+						contract = "D"
 				end
+			else
+				contract = rec_contract["pricemst_contract_price"]
+				amtround = rec_contract["pricemst_amtround"]
+				amtdecimal = rec_contract["pricemst_amtdecimal"]
 			end
 		end
 		##7:出荷日までに決定する単価
 		##　8:受入日までに決定する単価　
 		##9:単価決定=検収
 		expiredate = nil
-		case contract["pricemst_contract_price"]
-			when "1" ###発注日ベース
+		case contract
+			when "1" ###発注日ベース　　発注日　== String 以下同様
 				if tblnamechop =~ /ord|sch/
-					expiredate = vproc_price_expiredate_set contract["pricemst_contract_price"] 	
+					expiredate = vproc_price_expiredate_set(contract,command_c) 	
 				else
 					return {:pricef=>pricef,:amtf=>amtf}
 				end
 			when "2"	###納期ベース	
 				if tblnamechop =~ /inst|ord|sch/
-					expiredate = vproc_price_expiredate_set contract["pricemst_contract_price"] 	
+					expiredate = vproc_price_expiredate_set(contract,command_c)	
 				else
 					return {:pricef=>pricef,:amtf=>amtf}
 				end
 			when "3","4"				
-				expiredate = vproc_price_expiredate_set contract["pricemst_contract_price"]
+				expiredate = vproc_price_expiredate_set(contract,command_c)
 			when "C","D" ##C : custs テーブルに従う D:dealersテーブルに従う
 				case  pricetbl
 					when  "custs"
@@ -1340,73 +1395,93 @@
 								where loca_code_cust =  '#{loca_code}' and cust_expiredate > current_date " 
 						pare_contract = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
 						expiredate = vproc_price_expiredate_set(pare_contract["cust_contract_price"],command_c)
+						if expiredate.nil?
+							fprnt "line #{__LINE__} strsql #{strsql}"
+							raise
+						end
 						pare_rule_price = pare_contract["cust_rule_price"]
+						amtround = pare_contract["pricemst_amtround"]
+						amtdecimal = pare_contract["pricemst_amtdecimal"]
 					when  "dealers"
 						strsql = "select  * from r_dealers 	
 									where loca_code_dealer =  '#{loca_code}' and dealer_expiredate > current_date " 
 						pare_contract = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
 						expiredate = vproc_price_expiredate_set(pare_contract["dealer_contract_price"],command_c)
+						if expiredate.nil?
+							fprnt "line #{__LINE__} strsql #{strsql}"
+							raise
+						end
 						pare_rule_price = pare_contract["dealer_rule_price"]
+						amtround = pare_contract["pricemst_amtround"]
+						amtdecimal = pare_contract["pricemst_amtdecimal"]
 				end
+			when "Z"
+				expiredate = ""
 		end 
 		if expiredate.nil?
-			fprnt "line #{__LINE__} logic_err"
+			fprnt "line #{__LINE__} proc_price_amt :master error ???"
 		end
 		strsql = %Q& select * from r_pricemsts 	
 					where pricemst_tblname =  '#{pricetbl}' and
-						itm_code = '#{itm_code}' AND loca_code = '#{loca_code}' and
+						itm_code = '#{command_c[:itm_code]}' AND loca_code = '#{loca_code}' and
 						pricemst_maxqty >= #{qty} and
-						pricemst_expiredate >= to_char(#{expiredate},'yyyy/mm/dd') and
-						pricemst_contract_price = '#{contract["pricemst_contract_price"]}'
-						order by pricemst_expiredate desc,pricemst_maxqty desc &
+						pricemst_expiredate >= to_date('#{expiredate}','yyyy/mm/dd') and
+						pricemst_contract_price = '#{contract}'
+						order by pricemst_expiredate ,pricemst_maxqty  &
 		price_rec = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
 		if price_rec
 			amtf = true
-			contract_price = price_rec["pricemst_contract_price"]
+			contract = price_rec["pricemst_contract_price"]
+			amtround = price_rec["pricemst_amtround"]
+			amtdecimal = price_rec["pricemst_amtdecimal"]
 			if price_rec["pricemst_rule_price"] == "0"
 				pricef = true 
 				price =  price_rec["pricemst_price"]
 			else
-				if command_c[("#{tblnamechop}_price").to_sym].nil? or command_c[("#{tblnamechop}_price").to_sym] == 0
-					price =  price_rec["pricemst_price"]
+				if contract == "Z"
+					price = command_c[("#{tblnamechop}_price").to_sym].to_f
+					contract = "Z" if price_rec["pricemst_price"] != price
 				else
-					price = command_c[("#{tblnamechop}_price").to_sym]
-					contract_price = "Z"
+					price =  price_rec["pricemst_price"]
 				end
-			end
-			amt = qty * price
-			case price["pricemst_amtround"]
-				when "-1"  ###切り捨て
-					amt = amt.floor2(price["pricemst_amtdecimal"])
-				when "0"
-					amt = amt.round(price["pricemst_amtdecimal"])
-				when "1"  ###切り上げ
-					amt = amt.ceil2(price["pricemst_amtdecimal"])
 			end
 		else
 			if pare_rule_price  == "0" 
-				@errmsg = proc_blkgetpobj("単価マスタなし","err_msg")
+				price = proc_blkgetpobj("単価マスタなし","err_msg")
+				return {:price=>price.to_s,:amt=>"",:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
 			end
-			return {}
+            ###画面から単価入力された時
 		end
-		return {:price=>price,:amt=>amt,:pricef=>pricef,:amtf=>amtf,:contract_pricec => ontract_price}
+		amt = qty.to_f * price
+		case amtround
+			when "-1"  ###切り捨て
+				amt = amt.floor2(amtdecimal)
+			when "0"
+				amt = amt.round(amtdecimal)
+			when "1"  ###切り上げ
+				amt = amt.ceil2(amtdecimal)
+			else
+				raise  ###該当レコードのremarkに
+		end
+		return {:price=>price.to_s,:amt=>amt.to_s,:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
 	end	
-	def vproc_price_expiredate_set contract,command_c
-		case contract
+	def vproc_price_expiredate_set(contract,command_c)
+		tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
+		case contract  ###
 			when "1"   ###発注日ベース
-				expiredate = command_c[(tblnamechop+"_isuday").to_sym]
+				expiredate = command_c[(tblnamechop+"_isudate").to_sym].strftime("%Y/%m/%d")
 			when "2" ###納期ベース
-				expiredate = command_c[(tblnamechop+"_dueday").to_sym]
+				expiredate = command_c[(tblnamechop+"_duedate").to_sym].strftime("%Y/%m/%d")
 			when "3" ###:受入日ベース   
 				if tblnamechop =~ /acts$/ 
-					expiredate = command_c[(tblnamechop+"_rcptdate").to_sym]
+					expiredate = command_c[(tblnamechop+"_rcptdate").to_sym].strftime("%Y/%m/%d")
 				else 
-					expiredate = command_c[(tblnamechop+"_dueday").to_sym]
+					expiredate = command_c[(tblnamechop+"_duedate").to_sym].strftime("%Y/%m/%d")
 				end
 			when "4" ###:出荷日ベース　
-				expiredate = command_c[(tblnamechop+"_depdate").to_sym]
+				expiredate = command_c[(tblnamechop+"_depdate").to_sym].strftime("%Y/%m/%d")
 			when "5" #####:検収ベース  
-				expiredate = command_c[(tblnamechop+"acpdate").to_sym]
+				expiredate = command_c[(tblnamechop+"acpdate").to_sym].strftime("%Y/%m/%d")
 		end
 	end
 class Float

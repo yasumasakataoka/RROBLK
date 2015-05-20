@@ -1,7 +1,7 @@
 class ImportfmxlsxController < ScreenController
   before_filter :authenticate_user!  
   ####  roo:char exlel数字だと 1.0になる。
-  ####  rubyXL: 漢字が混在すると項目の位置がずれる。 2014/1 解決されている模様
+  ####  rubyXL: 漢字が混在すると項目の位置がずれる。 2014/1 解決されている模様 2015/04 別の問題発覚
   ###   public/rubyxl/  のrubyxlディレクトリーを作成済のこと。
   ###   入力がシートがフォーマット間違いの時、エラーで落ちる。　4/12
    ##  excelのタイプチェック　がまだできてない。　例　excel 日付　db char
@@ -80,7 +80,7 @@ class ImportfmxlsxController < ScreenController
 			                break
 	                 end  ##case
 					 if @errmsg == "" and commit_flg
-                        sub_insert_sio_c(command_c)
+                        proc_insert_sio_c(char_to_number_data(command_c))
 					   else
 					     commit_flg = false
 						 @rendererrmsg << [(count + 1).to_s,@errmsg]  if @errmsg != ""
