@@ -83,7 +83,7 @@ class ImportfieldsfromoracleController < ApplicationController
 		end
 		hash_rkey = {}
 		columns.each do |key,value|
-            hash_rkey[key] = key.to_s if key.to_s =~ /s_id/
+            hash_rkey[key] = key if key =~ /s_id/
 		end
 		hash_rkey.each do|k,v|
              unless fkey.index("#{tblname.chop}_#{v.upcase}") then
@@ -203,44 +203,43 @@ class ImportfieldsfromoracleController < ApplicationController
       plsql.pobjects.insert tmp
       return tmp
   end
-  def prv_chk_attr field,fieldcode,attr
-      if fieldcode[:fieldcode_ftype] == attr[:data_type].downcase then
-          case fieldcode[:ftype]
-               when "number"
+	def prv_chk_attr field,fieldcode,attr
+		if fieldcode[:fieldcode_ftype] == attr[:data_type].downcase then
+			case fieldcode[:ftype]
+				when "number"
                     if fieldcode[:fieldcode_dataprecision] != attr[:data_precision] and
                        ieldcode[:fieldcode_dataprecision] != 0 and    attr[:data_precision] != 38 then
                          @errmsg << " lenhtg unmatch"
-                     end 
+                    end 
                     if fieldcode[:fieldcode_dataprecision] == attr[:data_precision] and
                        (fieldcode[:fieldcode_dataprecision] !=   attr[:data_precision]  or
                          fieldcode[:fieldcode_datascale] !=   attr[:data_scale])
                          @errmsg << " lenhtg unmatch"
-                     end                      
+                    end                      
                 when /char/
                     if fieldcode[:fieldcode_fieldlength] != attr[:data_length] then
                        @errmsg << " lenhtg unmatch"
                     end 
             end
-         else
+        else
            if fieldcode[:fieldcode_ftype] =~ /timestamp/  and  attr[:data_type].downcase =~ /timestamp/  then
              else
               @errmsg << "...field =>#{field}  is  already exists and type unmatch...type => #{fieldcode[:fieldcode_ftype]}  but  oracle =>#{attr[:data_type].downcase}..."
-           end
-      end
-  end
-  def prv_init
-      mandatory_field ={:id=>["000","id"," number(38),"],
-                        :contents=>["900","contents","  varchar2(4000),"],
-                        :remark=>["901","remark","  varchar2(100),"],
-                        :expiredate=>["902","expiredate","  date ,"],
-                        :persons_id_upd=>["903","persons_id_upd"," number(38),"],
+			end
+		end
+	end
+	def prv_init
+		mandatory_field ={:id=>["001","id"," number(38),"],
+                        :contents=>["801","contents","  varchar2(4000),"],
+                        :expiredate=>["802","expiredate","  date ,"],
+                        :remark=>["803","remark","  varchar2(100),"],
+                        :persons_id_upd=>["901","persons_id_upd"," number(38),"],
                         :update_ip=>["904","update_ip"," varchar2(40),"] ,
-                        :created_at=>["905","created_at"," timestamp(6),"] ,
-                        :updated_at=>["906","updated_at"," timestamp(6),"] } 
-  end 
-
- def  init_screenfields
-      screenfields = 
+                        :created_at=>["902","created_at"," timestamp(6),"] ,
+                        :updated_at=>["903","updated_at"," timestamp(6),"] } 
+	end 
+	def  init_screenfields
+		screenfields = 
          { :expiredate   => Time.parse("2099/12/31"),
           :remark   => "auto_crt",
           :persons_id_upd   => plsql.persons.first(:email =>current_user[:email])[:id]  ,
@@ -252,144 +251,116 @@ class ImportfieldsfromoracleController < ApplicationController
           :subindisp => nil,
           :editable => nil
           }
-end #
-def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxxS_ID
+	end #
+	def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxxS_ID
 
-    @tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
-    @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-    @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除
-    @tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	blktbsfieldcodes_id)"
-    @tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id_ch)"
-    @tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id)"
+		@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
+		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
+		@tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除
+		@tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id_ch)"
+		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id)"
 
-    plsql.execute @tsqlstr
+		plsql.execute @tsqlstr
 
-    @tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
-    @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-    @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-    @tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-    @tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
-    @tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
-    @tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
+		@tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
+		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
+		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
+		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
+		@tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
+		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
 
-    chktb =  plsql.select(:all, @tsqlstr)  ###子テーブルに該当データがあるとき
+		chktb =  plsql.select(:all, @tsqlstr)  ###子テーブルに該当データがあるとき
 
-    @errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
-    @tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
-    @tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-    @tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-    @tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-    @tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
-    @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
-    @tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
- ###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/18
-    plsql.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
-    fields = plsql.__send__(viewname).columns  ###select(:all,tmp_screen_dtl)   ###テーブルの項目をセット  R_xxxx
-    screen_ids = plsql.screens.all(" where pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') ")
-    @errmsg << "_______missing screen code #{viewname}"  if screen_ids.empty?
-    screen_ids.each do |rec|
-       screen_id = rec[:id]
-       row_cnt ||= 1
-       fields.each  do |ii,jj|
-           setscreenfields ii.to_s,jj,viewname,screen_id,row_cnt   ## iiの中はscreens_id 「s」がつくよ
-          row_cnt += 1          
-       end 
-       code_rowpos_name = plsql.r_screenfields.all("where screenfield_screen_id = #{screen_id} and screenfield_expiredate > current_date ") 
-       tmp_rowpos= {} 
-       code_rowpos_name.each do |rec|
-            if rec[:pobject_code_sfd] =~ /_code/ and rec[:screenfield_created_at] == rec[:screenfield_updated_at] then
-               tmp_rowpos[rec[:pobject_code_sfd].to_sym] = rec[:screenfield_rowpos]
-            end
-       end
-       tmp_rowpos.each do |key,rowpos|
-           namekey = key.to_s.gsub("_code","_name")
-           namerec = plsql.r_screenfields.first("where screenfield_screen_id = #{screen_id} and screenfield_expiredate > current_date and pobject_code_sfd = '#{namekey}'") 
-           if  namerec then
-               tmp_rec = {}
-               tmp_rec[:rowpos] = rowpos
-               tmp_rec[:where] = {:id => namerec[:id]}
-               plsql.screenfields.update tmp_rec
-           end
-       end
-       crttype    viewname                 ##interface用　ｓｉｏ作成
-    end
- end  ##create_screenfields 
-    def setscreenfields   ii,jj,viewname,screen_id,row_cnt   ### ii->sym_key.to_s,jj==>iiのval 
+		@errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
+		@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
+		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
+		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
+		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
+		@tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
+		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
+		###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/
+
+		
+		plsql.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
+		crttype    viewname                 ##interface用　ｓｉｏ作成
+	end  ##create_screenfields 
+    def setscreenfields   sr,ii,viewname,row_cnt   ### sr["column_name"]
         screenfields = init_screenfields
 		screenfields[:selection] = 0
         code_pos = []
         indisp = 0 
-        indisp = sub_indisp(ii,viewname)  if ii =~ /_code|_name/ and  ii !~ /_upd$/  and ii.split(/_/)[0] != viewname.split("_")[1].chop
+        if sr["column_name"] =~ /_code|_name|_gno|_cno|_sno/ and  sr["column_name"] !~ /_upd$/  and sr["column_name"].split("_")[0] != viewname.split("_")[1].chop
+			indisp = sub_indisp(sr["column_name"],viewname) 
+		end
         screenfields[:editable] =  indisp  
         screenfields[:hideflg] = 0
-        screenfields[:id]  = plsql.screenfields_seq.nextval
-        screenfields[:screens_id] = screen_id
-	    if  ii =~ /_code|_name|itm_/ then
-            screenfields[:hideflg] = 0
-            screenfields[:selection] = 1
-        else
-            if  viewname.split(/_/)[1].chop  == ii.split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
-                screenfields[:hideflg] = 0
+        screenfields[:id]  = proc_get_nextval("screenfields_seq")
+        screens_id = ActiveRecord::Base.connection.select_value("select id from r_screens where pobject_code_scr = '#{viewname}' and screen_expiredate > current_date")
+		if screens_id
+			screenfields[:screens_id]   = screens_id
+			if  sr["column_name"] =~ /_code|_name|_gno|_cno|_sno|itm_/ then
+				screenfields[:hideflg] = 0
 				screenfields[:selection] = 1
+			else
+				if  viewname.split(/_/)[1].chop  == sr["column_name"].split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
+					screenfields[:hideflg] = 0
+					screenfields[:selection] = 1
+				else
+					screenfields[:hideflg] = 1
+				end                          
+			end
+			screenfields[:hideflg]   = if sr["column_name"] =~ /_id/  or sr["column_name"] =="id" then 1 else 0 end 
+			tid = plsql.pobjects.first("where code = '#{sr["column_name"]}' and objecttype ='view_field' and expiredate > current_date ")
+			if tid then
+				screenfields[:pobjects_id_sfd]   = tid[:id]   
             else
-                screenfields[:hideflg] = 1
-            end                          
-         end
-        screenfields[:hideflg]   = if ii =~ /_id/  or ii =="id" then 1 else 0 end 
-        tid = plsql.pobjects.first("where code = '#{ii}' and objecttype ='view_field' and expiredate > current_date ")
-        if tid then
-               screenfields[:pobjects_id_sfd]   = tid[:id]   
-            else
-               tmp = prv_add_pobjects ii,"view_field"
-               screenfields[:pobjects_id_sfd] =  tmp[:id]      
-        end
-	    if jj[:data_length] > 400  then
-	        screenfields[:type]   =  "textarea" 
-	        screenfields[:edoptrow]  = if (jj[:data_length] / 80).ceil > 10 then 10 else (jj[:data_length] / 80).ceil end
-	        screenfields[:edoptcols] = 80
-	    else
-            screenfields[:type]   =   jj[:data_type].downcase
-	    end
-	    screenfields[:edoptmaxlength]   =  jj[:data_length]
-        screenfields[:dataprecision]   =  jj[:data_precision]
-        screenfields[:datascale]   =  jj[:data_scale]||=0
-        screenfields[:indisp]   =  indisp  
-	    screenfields[:width] =  if jj[:data_length] * 6 > 300 then 300  else jj[:data_length] * 6 end 
-        screenfields[:width] =  85 if  /_upd$/ =~ ii      or  /_ip$/ =~ ii 
-	    screenfields[:edoptsize]  =  if jj[:data_length] > 100 then 100 else jj[:data_length] end ## if jj[:data_type] == "date"  or  j[:data_type] =~ /timestamp/ 
-        screenfields[:width] =   85 if jj[:data_type] == "date" or  jj[:data_type] =~ /timestamp/ 
-        if  viewname.split(/_/)[1].chop  == ii.split(/_/)[0] then   ##同一テーブルの項目のみ変更可
-            screenfields[:editable] =  1                  
-            screenfields[:editable] =  0 if /_ip$/ =~ ii     ##  
-            screenfields[:editable] =  0 if /_id/ =~ ii   ## 更新者と更新時間          
-            screenfields[:editable] =  0 if  /_at$/ =~ ii     
-        end
+				tmp = prv_add_pobjects sr["column_name"],"view_field"
+				screenfields[:pobjects_id_sfd] =  tmp[:id]      
+			end
+			if ii["fieldcode_fieldlength"] > 400  then
+				screenfields[:type]   =  "textarea" 
+				screenfields[:edoptrow]  = if (ii["fieldcode_fieldlength"] / 80).ceil > 10 then 10 else (ii["fieldcode_fieldlength"] / 80).ceil end
+				screenfields[:edoptcols] = 80
+			else
+				screenfields[:type]   =   ii["fieldcode_ftype"].downcase
+			end
+			screenfields[:edoptmaxlength]   =  ii["fieldcode_fieldlength"]
+			screenfields[:dataprecision]   =  (ii["fieldcode_dataprecision"]||=0)
+			screenfields[:datascale]   =  (ii["fieldcode_datascale"]||=0)
+			screenfields[:indisp]   =  indisp  
+			screenfields[:width] =  if ii["fieldcode_fieldlength"] * 6 > 300 then 300  else ii["fieldcode_fieldlength"] * 6 end 
+			screenfields[:width] = if /_upd$/ =~ sr["column_name"]     or  /_ip$/ =~ sr["column_name"] then 85 else screenfields[:width] end
+			screenfields[:edoptsize]  =  if ii["fieldcode_fieldlength"] > 100 then 100 else ii["fieldcode_fieldlength"] end ## if ii["fieldcode_ftype"] == "date"  or  j[:data_type] =~ /timestamp/ 
+			screenfields[:width] =  if ii["fieldcode_ftype"] == "date" or  ii["fieldcode_ftype"] =~ /timestamp/ then 9 else screenfields[:width] end
+			if  viewname.split(/_/)[1].chop  == sr["column_name"].split(/_/)[0] ##同一テーブルの項目のみ変更可
+				screenfields[:editable] =  1                  
+				screenfields[:editable] = if /_ip$|_id|at$/ =~ sr["column_name"] then   0  else   screenfields[:editable]  end ##  ## 更新者と更新時間
+			end
           
-         ##   editform positon 
-         screenfields[:seqno] = 999 
-         screenfields[:seqno] = 888 if  screenfields[:editable] == 1 
-         ##screenfields[:rowpos] = 999   if screenfields[:editable] ==  1 
-         unless   screenfields[:pobjects_id_sfd] then
-                  tmp =  prv_add_pobjects ii, "view_field"
-                  screenfields[:pobjects_id_sfd] =  tmp[:id]      
-         end
-        if screenfields[:editable] ==  1  then
-	     screenfields[:rowpos] = row_cnt
-             screenfields[:colpos] = 1
-             screenfields[:colpos] = 2  if ii =~ /_name/
-	    end
-
-	 ###  項目別にソート済
-         plsql.screenfields.insert screenfields unless  plsql.r_screenfields.first("where screenfield_pobject_id_sfd = '#{screenfields[:pobjects_id_sfd]}' and screenfield_screen_id = #{screenfields[:screens_id]} ") 
-         if @strsql then @strsql << " ," else   @strsql = "," end
-         @strsql << ii + " " + jj[:data_type]
-         @strsql << "(" +  jj[:data_length].to_s + ")" if jj[:data_type] =~ /CHAR/
-         if jj[:data_type] == "NUMBER" then
-             spr = jj[:data_precision].to_s
-             ssc = jj[:data_scale].to_s
-             @strsql << "(" +  spr + "," + ssc + ")" if spr =~ /[0..9]/
-             ###  p "a120" +  spr + "," + ssc 
-         end    
+			##   editform positon 
+			screenfields[:seqno] = 999 
+			screenfields[:seqno] = 888 if  screenfields[:editable] == 1 
+			##screenfields[:rowpos] = 999   if screenfields[:editable] ==  1 
+			unless   screenfields[:pobjects_id_sfd] 
+				tmp =  prv_add_pobjects sr["column_name"], "view_field"
+				screenfields[:pobjects_id_sfd] =  tmp[:id]      
+			end
+			if screenfields[:editable] ==  1  then
+				screenfields[:rowpos] = row_cnt
+				screenfields[:colpos] = if sr["column_name"] =~ /_name/ then 2 else 1 end
+			end
+			strsql = "select id from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} " 
+			chkfield = ActiveRecord::Base.connection.select_value(strsql)
+			if chkfield.nil?
+				plsql.screenfields.insert screenfields
+			end
+		else
+			@errmsg = " screen_code not exists screen_code #{viewname}"
+			raise
+		end
     end ##setscreenfields  
     def sub_indisp  column_name,viewname   ##孫のテーブルのidは不要　edit addの時必須にしない
         xtblname = viewname.split(/_/)[1]
@@ -405,7 +376,6 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
         return  indisp
     end 
 	def crttype   viewname  
-		sio_fields viewname
 	  begin   
 		@tsqlstr  =  "DROP TABLE " + "SIO_" + viewname  
 		plsql.execute @tsqlstr
@@ -434,7 +404,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 		@tsqlstr <<  "          ,sio_sord varchar(256)\n"
 		@tsqlstr <<  "          ,sio_search varchar(10)\n"
 		@tsqlstr <<  "          ,sio_sidx varchar(256)\n"
-		@tsqlstr  <<  @strsql
+		@tsqlstr  <<  sio_fields(viewname)
 		@tsqlstr <<  "          ,sio_errline varchar(4000)\n"
 		@tsqlstr <<  "          ,sio_org_tblname varchar(30)\n"
 		@tsqlstr <<  "          ,sio_org_tblid number(38)\n"
@@ -445,7 +415,7 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 		@tsqlstr <<  "          ,sio_message_contents varchar(4000)\n"
 		@tsqlstr <<  "          ,sio_chk_done char(1)\n"
 		@tsqlstr <<  ")\n"
-		##fprnt @tsqlstr 
+		fprnt @tsqlstr 
 		plsql.execute @tsqlstr
 
 		@tsqlstr =  " CREATE INDEX SIO_#{viewname}_uk1 \n"
@@ -453,32 +423,63 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 		@tsqlstr << "  TABLESPACE USERS  STORAGE (INITIAL 20K  NEXT 20k  PCTINCREASE 75)"  
 		##fprnt @tsqlstr 
 		plsql.execute @tsqlstr
-		unless PLSQL::Sequence.find(plsql,"sio_#{viewname}_seq".to_sym) then                 
+		unless PLSQL::Sequence.find(plsql,"sio_#{viewname}_seq".to_sym)           
 			@tsqlstr =  "create sequence SIO_" + viewname + "_seq" 
 			plsql.execute @tsqlstr
 		end
     end #crttype 
+	def vproc_get_view_fieldname(viewname)
+		ActiveRecord::Base.uncached() do
+			case Db_adapter 
+				when /oracle/
+					ActiveRecord::Base.connection.select_all("select lower(column_name) column_name from USER_TAB_COLUMNS where  table_name = '#{viewname.upcase}'")
+				when /post/
+					ActiveRecord::Base.connection.select_all("SELECT column_name  FROM information_schema.columns WHERE   table_name = '#{viewname}'")
+			end
+		end
+	end
 	def sio_fields viewname
-		@strsql = ""
-		fields = plsql.__send__(viewname).columns    ### @tblname = R_xxxxx
-		fields.each do |key,ii|
-			@strsql << " ,"
-			jj = key.to_s
-			if jj == "#{viewname}_cno"
-				unless PLSQL::Sequence.find(plsql,"#{viewname.split("_")[1]}_cno_seq".to_sym) then                 
-					@tsqlstr =  "create sequence " + viewname.split("_")[1] + "_cno_seq" 
-					plsql.execute @tsqlstr
+		sio_field_strsql = ""
+		### blktbsfieldcode   xxxxxx  fieldcode_ftype  pobject_code_fld
+		srfields = vproc_get_view_fieldname(viewname)
+		row_cnt ||= 1
+		srfields.each do |sr|
+			row_cnt += 1          
+			field = if sr["column_name"] == "id" then "id" else sr["column_name"].split("_",2)[1] end
+			field.sub!("_id","s_id")
+			strsql = %Q& select * from  r_fieldcodes where pobject_code_fld = '#{field}' and fieldcode_expiredate > current_date &
+			ii = ActiveRecord::Base.connection.select_one(strsql)
+			if ii.nil?
+				delms =  sr["column_name"].split("_")
+				i = delms.size
+				while i >1 and ii.nil?
+					field.sub!("_"+delms[i-1],"")
+					strsql = %Q& select * from  r_fieldcodes where pobject_code_fld = '#{field}' and fieldcode_expiredate > current_date &
+					ii = ActiveRecord::Base.connection.select_one(strsql)
+					i -= 1
+				end
+				if ii.nil?
+				debugger
+					fprnt "line : #{__LINE__} -->sio_fields error field: #{sr["column_name"]} not find  viewname: #{viewname} "
+					raise
 				end
 			end
-			@strsql << jj + " " + ii[:data_type] + " "
-			@strsql << "(" +  ii[:data_length].to_s + ") " if ii[:data_type] =~ /CHAR/
-			if ii[:data_type] == "NUMBER" then
-				spr = ii[:data_precision].to_s
-				ssc = ii[:data_scale].to_s
-				@strsql << "(" +  spr + "," + ssc + ") " if spr =~ /[0..9]/
+			setscreenfields sr,ii,viewname,row_cnt   ## iiの中はscreens_id 「s」がつくよ
+			sio_field_strsql << " ,"
+			sio_field_strsql << sr["column_name"] + " " + ii["fieldcode_ftype"] 
+			case  ii["fieldcode_ftype"]
+				when /char/
+					sio_field_strsql << "(" +  ii["fieldcode_fieldlength"].to_s + ") \n" 
+			    when "number" 
+					spr = if (ii["fieldcode_dataprecision"]||=0) != 0 then ii["fieldcode_dataprecision"].to_s  else "22" end
+					ssc = if ii["fieldcode_datascale"] then ii["fieldcode_datascale"].to_s  else "0" end
+					sio_field_strsql << if spr != "0" or ssc != "0"  then "(" +  spr + "," + ssc + ") \n"  else " \n" end
+				else
+					sio_field_strsql << " \n"
 				###  p "a120" +  spr + "," + ssc 
 			end 
 		end   
+		return sio_field_strsql
 	end
 	def crt_chil_screen viewname
 ##    p "addmain1"
@@ -488,28 +489,25 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
 ## 全テーブルに対応は中止した。
 		tblarea = {}  
 		notextview = {}
-		strsql = " where pobject_code_view =  '#{viewname}' and screenfield_Expiredate > current_date "
-		fields = plsql.R_screenfields.all(strsql)
-       ## p "strsql : #{strsql}"
-		## p fields   
+		strsql = "select * from  r_screenfields where pobject_code_view =  '#{viewname}' and screenfield_Expiredate > current_date "
+		fields = ActiveRecord::Base.connection.select_all(strsql) 
 		fields.each  do |tbldata|
 			if tbldata[:object_code_sfd]  =~ /_id/ then
-				pare_tbl_sym = (tbldata[:object_code_sfd].split(/_id/)[0] + "S").to_sym
-				tblarea[pare_tbl_sym] = viewname
+				pare_tbl = (tbldata["object_code_sfd"].split(/_id/)[0] + "S")
+				tblarea[pare_tbl] = viewname
 			end
 		end
     
-		y = plsql.r_screens.first("WHERE pobject_code_view = '#{viewname}' ")
+		y = ActiveRecord::Base.connection.select_value("select id from r_screens WHERE pobject_code_view = '#{viewname}' ")
 		tblarea.each_key  do |i|
-        x = plsql.screens.first("WHERE pobject_code_view = 'r_#{i.to_s}' ")
-        next if x.nil?
-        tmp_area = tblarea[i] 
-              next if x.nil?
-                 chil_r = plsql.ChilScreens.first("where screens_id = :1 and screens_id_chil = :2",x[:id],y[:id])
-                 ##  p  "where screens_id_Pare = :1 and screens_id = :2"
-                 if chil_r.nil? then
-                    val_chil = {
-                    :id => plsql.chilscreens_seq.nextval,
+			x = ActiveRecord::Base.connection.select_value("select id from r_screens WHERE pobject_code_view = 'r_#{i}' ")
+			next if x.nil?
+			tmp_area = tblarea[i] 
+            next if x.nil?
+            chil_r = ActiveRecord::Base.connection.select_value("select * from ChilScreens where screens_id = #{x} and screens_id_chil = #{y}")
+            if chil_r.nil?
+                val_chil = {
+					:id => plsql.chilscreens_seq.nextval,
                     :screens_id => x[:id],
                     :screens_id_chil => y[:id],
                     :expiredate => Time.parse("2099/12/31"),
@@ -519,11 +517,10 @@ def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxx
                     :created_at => Time.now,
                     :updated_at => Time.now
                     }
-                  plsql.chilscreens.insert val_chil
+                  Chilscreen.create val_chil
                   ## p "insert"
-                  end ## if
+            end ## if
 		end    ## i
-		plsql.commit 
 	end  #end crt_chil_screen 
 	def prv_create_index_pk tblname
 		case Db_adapter 

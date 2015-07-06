@@ -116,10 +116,10 @@
             command_r = rec.dup ###sio_xxxxx の　レスポンス用
             tmp_key = {}
             if  command_r[:sio_message_contents].nil? 
+				proc_set_src_tbl  rec ### @src_tblの項目作成
 				proc_tblinks(command_r) do 
 					"before"
 				end if command_r[:sio_classname] =~ /_add_|_edit_|_delete_/ ## rec = command_c = sio_xxxxx
-				proc_set_src_tbl  rec ### @src_tblの項目作成
 				command_r[:sio_recordcount] = r_cnt0
 				if tblname =~ /^mk/   ###mkxxxxは追加のみ
 					plsql.__send__(tblname).insert @src_tbl
@@ -171,7 +171,7 @@
 	end
 	def vproc_delayjob_or_optiontbl tblname,id	
         case tblname
-             when 	/rubycodings|tblink/
+             when 	/rubycodings|tblinks/
 			##undef dummy_def if respond_to?("dummy_def")
 				crt_def_all
 			when   /mkests|mkschs|mkords|mkinsts/
@@ -564,37 +564,47 @@
        end
     end
 	
+    def proc_get_cons_chil(opeitms_id)  ###工程の始まり=前工程の終わり
+		if block_given?
+			strwhere = yield
+		else
+			strwhere = ""
+		end
+		strsql = "select * from r_nditms where nditm_opeitm_id = #{opeitms_id} #{strwhere}  and nditm_Expiredate > current_date "
+		rnditms = ActiveRecord::Base.connection.select_all(strsql)
+		return rnditms
+    end
+
     def vproc_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-		rnditms = plsql.nditms.all("where opeitms_id = #{r0[:id]} and Expiredate > current_date order by opeitms_id ")
+		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0[:id]} and Expiredate > current_date order by opeitms_id ")
 		if rnditms.size > 0 then
 			ngantts = []
 			mlevel = n0[:mlevel] + 1
 			rnditms.each.with_index(1)  do |i,cnt|
-				chilopeitm = plsql.opeitms.first("where itms_id = #{i[:itms_id_nditm]} and priority = #{r0[:priority]} and  Expiredate > current_date  order by processseq desc")
+				chilopeitm = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0[:priority]} and  Expiredate > current_date  order by processseq desc")
 				###if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
 				if chilopeitm 
-					chil_loca = chilopeitm[:locas_id]
-					prdpurshp = chilopeitm[:prdpurshp] 
-					processseq = chilopeitm[:processseq] 
-					priority = chilopeitm[:priority]
-					opeitm_id = chilopeitm[:id]
+					chil_loca = chilopeitm["locas_id"]
+					prdpurshp = chilopeitm["prdpurshp"] 
+					processseq = chilopeitm["processseq"] 
+					priority = chilopeitm["priority"]
+					opeitm_id = chilopeitm["id"]
 				else
 					chil_loca = 0
 					prdpurshp = "end"  ###endは使用しなくなった。　後で修正
 					processseq = 999
 				end
-				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i[:itms_id_nditm],:prd_pur_shp=>prdpurshp,:safestkqty=>i[:safestkqty],
+				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i["itms_id_nditm"],:prd_pur_shp=>prdpurshp,:safestkqty=>i["safestkqty"],
 		               :loca_id=>chil_loca,:loca_id_to=>r0[:locas_id],:opeitm_id =>opeitm_id,
 					   :priority=>priority,:processseq=>processseq,
-					   :endtime=>endtime,:duration=>chilopeitm[:duration],
-					   :nditm_parenum=>i[:parenum],:nditm_chilnum=>i[:chilnum],:id=>"nditms_"+i[:id].to_s}
+					   :endtime=>endtime,:duration=>chilopeitm["duration"],
+					   :nditm_parenum=>i["parenum"],:nditm_chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}
 			end 
 		else
 			ngantts  = [{}]	   
 		end
 		return ngantts
     end
-
     def sub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
       rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > current_date and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
       if rec
@@ -874,17 +884,17 @@
 		strsql << " and tblink_beforeafter = '#{yield}' order by tblink_seqno "
         do_all = plsql.select(:all,strsql)
 		if do_all.size > 0
-			proc_command_instance_variable(command_c)
-			proc_set_src_tbl command_c
-			if command_c[:opeitm_id]
-				proc_opeitm_instance(command_c) 
+			##proc_command_instance_variable(command_c)  ###該当テーブルの処理前に、実施することがあるのでここでは無効。
+			##proc_set_src_tbl command_c
+			###if command_c[:opeitm_id]
+			##proc_opeitm_instance(command_c) 
 			###else
 				## ###debugger 
 			##	@opeitm = nil
-			end
+			###end
 			do_all.each do |dorec|
 				if respond_to?(dorec[:tblink_code])
-				    if dorec[:tblink_hikisu] then __send__(dorec[:tblink_code],eval(dorec[:tblink_hikisu])) else __send__(dorec[:tblink_code]) end
+				    __send__(dorec[:tblink_code],eval(dorec[:tblink_hikisu])) 
 				else
 					fprnt "line #{__LINE__} method missing #{dorec[:tblink_code]}"
 					raise
@@ -1014,15 +1024,16 @@
 	end
 	def str_sio_set
 		%Q%
-		yield(command_c) if block_given?
+			yield(command_c) if block_given?
+		end  ###if @sio_classname =~ /_delete_/
 		proc_simple_sio_insert command_c
-		end
+	end
 		%
 	end
     def proc_create_tblinkfld_def 	
 		strsql = " select * from r_tblinkflds where tblinkfld_expiredate > current_date " 
 		strsql << " order by pobject_code_scr_src,pobject_code_tbl_dest,tblink_beforeafter,tblink_seqno,tblinkfld_seqno "
-	    recs = plsql.select(:all,strsql)
+	    recs = ActiveRecord::Base.connection.select_all(strsql)
 		streval = ""
 		tblchop = ""
 		src_screen = ""
@@ -1030,33 +1041,56 @@
 		seqno = ""
 	    recs.each do |rec| 	
 			if src_screen == ""
-				src_screen = rec[:pobject_code_scr_src]
-				tblchop = rec[:pobject_code_tbl_dest].chop
-				beforeafter = rec[:tblink_beforeafter]
-				seqno = rec[:tblink_seqno]
+				src_screen = rec["pobject_code_scr_src"]
+				tblchop = rec["pobject_code_tbl_dest"].chop
+				beforeafter = rec["tblink_beforeafter"]
+				seqno = rec["tblink_seqno"]
 				streval = "def proc_fld_#{src_screen}_#{tblchop}s_#{beforeafter+seqno.to_s}\n"
-				streval << str_init_command_c("r_#{rec[:pobject_code_tbl_dest]}")
+				streval << str_init_command_c("r_#{rec["pobject_code_tbl_dest"]}")
 			else
-				if src_screen != rec[:pobject_code_scr_src] or 	tblchop != rec[:pobject_code_tbl_dest].chop or
-				   beforeafter != rec[:tblink_beforeafter] or seqno != rec[:tblink_seqno]
+				if src_screen != rec["pobject_code_scr_src"] or 	tblchop != rec["pobject_code_tbl_dest"].chop or
+				   beforeafter != rec["tblink_beforeafter"] or seqno != rec["tblink_seqno"]
 					streval << str_sio_set
 					fprnt streval
 				    eval(streval)
-					src_screen = rec[:pobject_code_scr_src]
-					tblchop = rec[:pobject_code_tbl_dest].chop
-					beforeafter = rec[:tblink_beforeafter]
-					seqno = rec[:tblink_seqno]
+					src_screen = rec["pobject_code_scr_src"]
+					tblchop = rec["pobject_code_tbl_dest"].chop
+					beforeafter = rec["tblink_beforeafter"]
+					seqno = rec["tblink_seqno"]
 					streval = "def proc_fld_#{src_screen}_#{tblchop}s_#{beforeafter+seqno.to_s}\n"
-					streval << str_init_command_c("r_#{rec[:pobject_code_tbl_dest]}")
+					streval << str_init_command_c("r_#{rec["pobject_code_tbl_dest"]}")
 				end
 			end
-			fld = tblchop+"_"+rec[:pobject_code_fld].sub("s_id","_id")
-			if  rec[:tblinkfld_rubycode]
-				streval << %Q&	command_c[:#{fld}] = #{rec[:tblinkfld_rubycode]} \n&
+			if tblchop  ==  rec["pobject_code_fld"].split("_")[-1] and rec["pobject_code_fld"] !~ /_id/   ###tblchop==delm ###ヘッダーと同じものは除く crttblviewscreen
+				fld = rec["pobject_code_fld"].sub("s_id","_id")
+			else
+				fld = tblchop+"_"+rec["pobject_code_fld"].sub("s_id","_id")
+			end
+			if  rec["tblinkfld_rubycode"] or  rec["pobject_code_fld"] == "id" or  rec["pobject_code_fld"] =~ /_id/
+				if rec["pobject_code_fld"] == "id"
+					streval << %Q&
+		if @sio_classname =~ /_delete_/ 
+			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} 
+			command_c = vproc_delete_rec_contens(command_c)
+		else 
+			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} \n&
+				else
+					if rec["tblinkfld_rubycode"]
+					streval << %Q&
+			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} \n&
+					else
+					streval << %Q&
+			command_c[:#{fld}] = "missing id " \n&		
+					end
+				end
 			else
 				str = vproc_tblinkfld_dflt_set_fm_rubycoding(fld)
 				if str
-					streval << %Q&	command_c[:#{fld}] = #{str} \n&
+					streval << %Q&
+			command_c[:#{fld}] = #{str} &
+				else
+					streval << %Q&
+			command_c[:#{fld}] = "missing id " \n&	if rec["pobject_code_fld"] =~ /_id/		###_id項目は必須
 				end
 			end
 	    end ##
@@ -1067,6 +1101,14 @@
 			fprnt streval
 		end
     end
+	def vproc_delete_rec_contens(command_c)
+		ret_rec = command_c.dup
+		rec = ActiveRecord::Base.connection.select_one("select * from #{command_c[:sio_viewname]} where id = #{command_c[:id]}")
+		rec.each do |key,val|
+			ret_rec[key.to_sym] = val if val
+		end
+		return ret_rec
+	end
 	def vproc_tblinkfld_dflt_set_fm_rubycoding fld
 		dflt_rubycode = nil
 		strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'view_field' 	and  pobject_code = '#{fld}'
@@ -1116,7 +1158,7 @@
 	end	
     def init_from_screen
 		get_screen_code			
-		@sio_user_code = ActiveRecord::Base.connection.select_one("select * from persons where email = '#{current_user[:email]}'")["id"]
+		@sio_user_code = ActiveRecord::Base.connection.select_value("select id from persons where email = '#{current_user[:email]}'")
 	    @show_data = get_show_data @screen_code   #####popup画面もあるので@screen_codeをもパラメータにしている。
 	    if @show_data.nil?
 	       render :text=> "Create screen #{@screen_code} " and return
@@ -1171,6 +1213,7 @@
 					alloc[:desttblname] = "lotstkhists"
 					alloc[:destblid] = @lotstkhist_id
 					alloc[:qty] = new_qty
+					alloc[:allocfree] = "alloc"
 					alloc[:id] = proc_get_nextval "alloctbls_seq" 
 					alloc[:created_at] = Time.now
 					alloc[:updated_at] = Time.now
@@ -1178,7 +1221,7 @@
 					Alloctbl.create alloc
 					alloc[:srctblname] = "lotstkhists"
 					alloc[:srctblid] = @lotstkhist_id
-					alloc[:desttblname] = alloctbl["srctblid"]
+					alloc[:desttblname] = alloctbl["srctblid"]  ####おかしいよ
 					alloc[:destblid] = trn[:id]
 					alloc[:id] = proc_get_nextval "alloctbls_seq" 
 					Alloctbl.create alloc
@@ -1222,6 +1265,7 @@
 				alloc[:destblid] = @lotstkhist_id
 				alloc[:id] = proc_get_nextval "alloctbls_seq"
 				alloc[:qty] = free_qty[:qty]  
+				alloc[:allocfree] = "alloc"
 				Alloctbl.create alloc
 		end
 	end
@@ -1264,20 +1308,19 @@
 		return columns
 	end
 	def proc_get_rec_fm_tblname_tblid tblname,srctblname,srctblid
-		rec = {}
 		if @sio_classname =~ /_add_/
-			rec["id"] = proc_get_nextval "#{tblname}_seq"
+			id = proc_get_nextval "#{tblname}_seq"
 		else
 			if block_given?
-				rec = ActiveRecord::Base.connection.select_one("select * from #{tblname} where tblname = '#{srctblname}' and tblid = #{srctblid} #{yield}")
+				id = ActiveRecord::Base.connection.select_value("select id from #{tblname} where tblname = '#{srctblname}' and tblid = #{srctblid} #{yield}")
 			else
-				rec = ActiveRecord::Base.connection.select_one("select * from #{tblname} where tblname = '#{srctblname}' and tblid = #{srctblid}")
+				id = ActiveRecord::Base.connection.select_value("select id from #{tblname} where tblname = '#{srctblname}' and tblid = #{srctblid}")
 			end
 			if rec.nil?
 				debugger
 			end
 		end
-		return rec
+		return id
 	end
 	def proc_get_rec_fm_tblname_sno tblname,sno
 		rec = {}
@@ -1322,6 +1365,9 @@
 			when /^pur/
 				pricetbl = "dealers"
 				loca_code = command_c[:loca_code_dealer]
+			when /^prd|^shp/
+				pricetbl = "asstwhs"
+				loca_code = command_c[:loca_code_to]
 			when /mkact/
 				case command_c[:mkact_prdpurshp]
 					when "pur"
@@ -1362,6 +1408,10 @@
 						contract= "C"
 					when /^pur/
 						contract = "D"
+					when /^prd|^shp/
+						contract = "X"  ###単価未定
+						expiredate = ""
+						return {:price=>"0",:amt=>"0",:tax=>"0",:amtf=>"0",:contract_price => contract}   ##
 				end
 			else
 				contract = rec_contract["pricemst_contract_price"]
@@ -1448,7 +1498,7 @@
 		else
 			if pare_rule_price  == "0" 
 				price = proc_blkgetpobj("単価マスタなし","err_msg")
-				return {:price=>price.to_s,:amt=>"",:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
+				return {:price=>price.to_s,:amt=>"",:tax=>"",:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
 			end
             ###画面から単価入力された時
 		end
@@ -1463,8 +1513,12 @@
 			else
 				raise  ###該当レコードのremarkに
 		end
-		return {:price=>price.to_s,:amt=>amt.to_s,:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
+		tax = vproc_get_tax(amt,loca_code)    ###作成中
+		return {:price=>price.to_s,:amt=>amt.to_s,:tax=>tax.to_s,:pricef=>pricef,:amtf=>amtf,:contract_price => contract}
 	end	
+	def vproc_get_tax(amt,loca_code)  ###作成中
+		0
+	end
 	def vproc_price_expiredate_set(contract,command_c)
 		tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
 		case contract  ###

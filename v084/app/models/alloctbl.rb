@@ -1,3 +1,3 @@
 class Alloctbl < ActiveRecord::Base
-	attr_accessible attr_accessible *column_names
+	attr_accessible *column_names
 end

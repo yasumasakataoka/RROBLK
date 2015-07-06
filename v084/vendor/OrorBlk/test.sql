@@ -5,7 +5,6 @@ delete from mkords where id <
        (select max(id) from mkords)
 ;
 truncate table sio_r_mkords;
-truncate table trngantts;
 truncate table alloctbls;
 truncate table sio_r_custords
 ;
@@ -61,3 +60,6 @@ truncate table sio_r_purrplies;
 
 truncate table purrplies;
 
+truncate table inouts;
+truncate table sio_r_inouts;
+delete trngantts;

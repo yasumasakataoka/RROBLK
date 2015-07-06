@@ -127,27 +127,46 @@ module JqgridFilter
             tmp_editrules = {}
 			tmp_columns = {}
             if i[:screenfield_indisp] == 1 then tmp_editrules[:required] = true   else tmp_editrules[:required] = false end
-            if i[:screenfield_type] == "number"
-                tmp_columns[:align] = "right"
-				tmp_editrules[:number] = true 
-			end
-            if  i[:screenfield_type]  =~ /^timestamp|^date/ then
-				tmp_editrules[:date] = true 
-				tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
-				tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
-				tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  tmp_columns[:editable] = false  
-            end
 			tmp_columns[:field] = plsql.pobjects.first("where id =  #{i[:screenfield_pobject_id_sfd]} ")[:code]   ##**
 			tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
 			### tmp_columns[:label] ||=  i[:screenfield_code]
-			tmp_columns[:hidden] = if i[:screenfield_hideflg] == 1 then true else false end 
+			if i[:screenfield_hideflg] == 1 
+				tmp_columns[:hidden] = true 
+			else 
+				tmp_columns[:hidden] = false
+				tmp_columns[:width] = i[:screenfield_width]
+				if i[:screenfield_type] == "number"
+					tmp_columns[:align] = "right"
+					tmp_editrules[:number] = true 
+				end
+				if  i[:screenfield_type]  =~ /^timestamp|^date/ then
+					tmp_editrules[:date] = true 
+					tmp_columns[:datefmt] = "Y/m/d"  if  i[:screenfield_type] == "date" 
+					tmp_columns[:datefmt] = "Y/m/d H:i:s"  if  i[:screenfield_type]  =~ /^timestamp/ 
+				end
+			end 
 			tmp_columns[:editrules] = tmp_editrules 
-			tmp_columns[:width] = i[:screenfield_width]
-			if i[:screenfield_editable] == 1 or tmp_columns[:field] =~ /_id/ then
+			if i[:screenfield_editable] > 0 
 				tmp_columns[:editable] = true
-				tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }  
+				tmp_columns[:formop] = i[:screenfield_editable]
+				tmp_columns[:editoptions] = {:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize] }
+				if  i[:screenfield_rowpos]    
+					if  i[:screenfield_rowpos]  < 999
+						tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] ,:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize]}
+						icnt = i[:screenfield_rowpos] if icnt <  i[:screenfield_rowpos] 
+					else
+						tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
+					end
+				else
+					tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
+				end 	      
 		    else
-				tmp_columns[:editable] = false
+				if tmp_columns[:field] =~ /_id/
+					tmp_columns[:editable] = true   ## テーブルのid として画面からの送信は必須
+					tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
+				else
+					tmp_columns[:editable] = false
+				end
 			end
 			tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox","text"].index(i[:screenfield_type]) 
 			if i[:screenfield_type] == "select" or  i[:screenfield_type] == "checkbox" then
@@ -162,18 +181,8 @@ module JqgridFilter
 			if i[:screenfield_formatter]  then
 				tmp_columns[:formatter] = i[:screenfield_formatter] 
 			end
-			if  tmp_columns[:editoptions].nil? then  tmp_columns.delete(:editoptions)  end 
+			tmp_columns.delete(:editoptions)  if  tmp_columns[:editoptions].nil?  
                    ## tmp_columns[:edittype]  =  i[:screenfield_type]  if  ["textarea","select","checkbox"].index(i[:screenfield_type]) 
-			if  i[:screenfield_rowpos]     then
-			    if  i[:screenfield_rowpos]  < 999
-				tmp_columns[:formoptions] =  {:rowpos=>i[:screenfield_rowpos] ,:colpos=>i[:screenfield_colpos] ,:size => i[:screenfield_edoptsize],:maxlength => i[:screenfield_maxlength] ||= i[:screenfield_edoptsize]}
-			        icnt = i[:screenfield_rowpos] if icnt <  i[:screenfield_rowpos] 
-		        else
-			        tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
-			    end
-		    else
-              tmp_columns[:formoptions] =  {:rowpos=> icnt += 1,:colpos=>1 }
-			end 	      
 			gridcolumns << tmp_columns 
             allfields << i[:pobject_code_sfd].to_sym  #**
 

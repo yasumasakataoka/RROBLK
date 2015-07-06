@@ -132,7 +132,7 @@ include  JqgridFilter
     # Generate a list of attributes for related column (align:'right', sortable:true, resizable:false, ...)
     def get_attributes(column)
       options = ","
-      column.except(:field, :label).each do |couple|
+      column.except(:field, :label,:formop).each do |couple|
         if couple[0] == :editoptions
           options << "editoptions:#{get_sub_options(couple[1])},"
         elsif couple[0] == :formoptions
@@ -279,7 +279,7 @@ include  JqgridFilter
 		strkeydata = %Q% "screen_code":"#{@r_screens["pobject_code_scr"]}","fieldname":keyname%
 		hprice = {}
 		@gridcolumns.each do |tcolm|
-            if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop  and tcolm[:editable] == true and tcolm[:editrules][:required] != true )   
+            if ( tcolm[:editable] == true and tcolm[:formop] == 2 )   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
 	        end
             if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or

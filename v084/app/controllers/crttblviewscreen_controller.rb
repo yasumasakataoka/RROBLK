@@ -52,7 +52,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			Rails.cache.clear(nil)
 			create_screenfields "r_"+pobject_code_tbl
 			proc_set_search_code_of_screen        "r_"+pobject_code_tbl
-			chk_index  pobject_code_tbl,columns
+			chk_index  pobject_code_tbl,columns if columns
 		rescue
 			plsql.rollback
 			@errmsg << $!.to_s
@@ -115,9 +115,9 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			next if frec.nil?		  
 			tmpstrsql[frec["pobject_code_fld"].to_sym]= frec["pobject_code_fld"] + " " + frec["fieldcode_ftype"] + 
                 case frec["fieldcode_ftype"]
-                    when "char","varchar","varchar2" then
+                    when /char/ then
                         "(#{frec["fieldcode_fieldlength"]}) ,"
-                    when "number","numeric" then
+                    when "number" then
                         %Q%(#{if frec["fieldcode_dataprecision"] == 0  or frec["fieldcode_dataprecision"].nil? then "38),\n" 
 								else frec["fieldcode_dataprecision"].to_s + "," + (frec["fieldcode_datascale"]||0).to_s + " ) ,\n" end }%
 					else
@@ -136,6 +136,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                                                    and objecttype = 'tbl_field' and expiredate  > current_date)")
 			if id
 				rec0[:fieldcodes_id]  = id["id"] 
+				##rec0[:seqno] = value[0]
 				###plsql.blktbsfieldcodes.insert rec0 
 				Blktbsfieldcode.create(rec0)
 			end
@@ -228,72 +229,53 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]};\n"
        end
   end
- def sio_fields viewname
-      @strsql = ""
-      #sql = "SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME = '#{viewname}' "
-      #fields = plsql.select(:all,sql)
-      fields = plsql.__send__(viewname).columns    ### @tblname = R_xxxxx
-      fields.each do |key,ii|
-         @strsql << " ,"
-         jj = key.to_s
-         ## jj <<  "_tbl" if jj == "id"
-         @strsql << jj + " " + ii[:data_type] + " "
-         @strsql << "(" +  ii[:data_length].to_s + ") " if ii[:data_type] =~ /CHAR/
-         if ii[:data_type] == "NUMBER" then
-             spr = ii[:data_precision].to_s
-             ssc = ii[:data_scale].to_s
-             @strsql << "(" +  spr + "," + ssc + ") " if spr =~ /[0..9]/
-             ###  p "a120" +  spr + "," + ssc 
-         end 
-      end   
- end
- def crt_chil_screen viewname
+## def crt_chil_screen viewname
 ##    p "addmain1"
 ##  対象となるテーブルは　idをフィールドに持つこと　　
 ### id create
 ## tablenameS_ID_xxx_xxxのレイアウトであること。
 ## viewの名前は R_xxxx になる
 ## 全テーブルに対応は中止した。
-    tblarea = {}  
-    notextview = {}
-    strsql = " where pobject_code_view =  '#{viewname}' and screenfield_Expiredate > sysdate "
-       fields = plsql.R_screenfields.all(strsql)
-       ## p "strsql : #{strsql}"
+##    tblarea = {}  
+##    notextview = {}
+##    strsql = " where pobject_code_view =  '#{viewname}' and screenfield_Expiredate > sysdate "
+##       fields = plsql.R_screenfields.all(strsql)
+##       ## p "strsql : #{strsql}"
     ## p fields   
 ##    p "addmain2"
-    fields.each  do |tbldata|
-       if tbldata[:object_code_sfd]  =~ /_id/ then
-          pare_tbl_sym = (tbldata[:object_code_sfd].split(/_id/)[0] + "S").to_sym
-          tblarea[pare_tbl_sym] = viewname
-       end
-    end
+##    fields.each  do |tbldata|
+##       if tbldata[:object_code_sfd]  =~ /_id/ then
+##          pare_tbl_sym = (tbldata[:object_code_sfd].split(/_id/)[0] + "S").to_sym
+##          tblarea[pare_tbl_sym] = viewname
+##      end
+##    end
     
-    y = plsql.r_screens.first("WHERE pobject_code_view = '#{viewname}' ")
-    tblarea.each_key  do |i|
-        x = plsql.screens.first("WHERE pobject_code_view = 'r_#{i.to_s}' ")
-        next if x.nil?
-        tmp_area = tblarea[i] 
-              next if x.nil?
-                 chil_r = plsql.ChilScreens.first("where screens_id = :1 and screens_id_chil = :2",x[:id],y[:id])
-                 ##  p  "where screens_id_Pare = :1 and screens_id = :2"
-                 if chil_r.nil? then
-                    val_chil = {
-                    :id => plsql.chilscreens_seq.nextval,
-                    :screens_id => x[:id],
-                    :screens_id_chil => y[:id],
-                    :expiredate => Time.parse("2099/12/31"),
-                    :remark => "auto_create", 
-                    :persons_id_upd => 0, 
-                    :update_ip =>  "1",
-                    :created_at => Time.now,
-                    :updated_at => Time.now
-                    }
-                  plsql.chilscreens.insert val_chil
-                  ## p "insert"
-                  end ## if
-    end    ## i
-    plsql.commit 
- end  #end crt_chil_screen 
+##    y = plsql.r_screens.first("WHERE pobject_code_view = '#{viewname}' ")
+##    tblarea.each_key  do |i|
+##        x = plsql.screens.first("WHERE pobject_code_view = 'r_#{i.to_s}' ")
+##        next if x.nil?
+##        tmp_area = tblarea[i] 
+##              next if x.nil?
+##                 chil_r = plsql.ChilScreens.first("where screens_id = :1 and screens_id_chil = :2",x[:id],y[:id])
+##                 ##  p  "where screens_id_Pare = :1 and screens_id = :2"
+##                 if chil_r.nil? then
+##                    val_chil = {
+##                    :id => plsql.chilscreens_seq.nextval,
+##                    :screens_id => x[:id],
+##                    :screens_id_chil => y[:id],
+##                    :expiredate => Time.parse("2099/12/31"),
+##                    :remark => "auto_create", 
+##                    :persons_id_upd => 0, 
+##                    :update_ip =>  "1",
+##                    :created_at => Time.now,
+##                    :updated_at => Time.now
+##                    }
+##                  plsql.chilscreens.insert val_chil
+##                  ## p "insert"
+ ##                 end ## if
+##    end    ## i
+##    plsql.commit 
+## end  #end crt_chil_screen 
  def create_or_replace_view  tblid,tblname   ### 
     subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
 	tmp_union_tbl = plsql.blktbs.first("where id  = #{tblid} ")
@@ -326,7 +308,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
               wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
 	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
 			  delm = js.split("_")[-1]   ###idにdelm識別子を付けたとき
-			  if delm == tblname.chop
+			  if delm == tblname.chop and js !~ /_id/
 				new_js = js.sub("_#{tblname.chop}","")    ###ヘッダーと同じものは除く
 				selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  new_js.sub("s_id","_id") + " ,"
 			  else

@@ -151,7 +151,7 @@ class ScreenController < ListController
 						end
 					end
 					case tblnamechop
-						when @screen_code.chop  ###同一テーブル新規のときのチェック		        
+						when @screen_code.split("_",2)[1].chop  ###同一テーブル新規のときのチェック		        
 							sw = same_tbl_code_to_name tblnamechop,field
 						when "vf"+@screen_code.split("_")[1].chop
 							sw = get_view_code_frm_screen_tblname  ###tblname対応
@@ -294,16 +294,16 @@ class ScreenController < ListController
 		sno_view = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
 		@getname ={}
 		if sno_view
-			sno_tblnamechop = sno_view["screenfield_paragraph"].split("_",2)[1].chop
-			strsql = "select * from #{sno_view["screenfield_paragraph"]} where #{sno_tblnamechop}_sno = '#{params[params[:chgname].to_sym]}'  and #{sno_tblnamechop}_expiredate > current_date "
+			sno_tblnamechop = sno_view["screenfield_paragraph"].split(":_")[0].split("_")[1].chop
+			strsql = "select * from r_#{sno_tblnamechop}s where #{sno_tblnamechop}_sno = '#{params[params[:chgname].to_sym]}'  and #{sno_tblnamechop}_expiredate > current_date "
 			sno_rec = ActiveRecord::Base.connection.select_one(strsql)    ### snoのrec
-			bal_sno_qty = vproc_get_sno_bal_qty(sno_tblnamechop+"s",sno_rec["id"])
-			proc_opeitm_instance(sno_rec)
 			@getname ={}
-			if sno_rec then
+			if sno_rec
+				bal_sno_qty = vproc_get_sno_bal_qty(sno_tblnamechop+"s",sno_rec["id"])
+				proc_opeitm_instance(sno_rec)
 				screen_show_data = get_show_data(@screen_code)[:allfields]
-				flds_sno_show_data = get_show_data(sno_view["screenfield_paragraph"])[:allfields]
-				type_sno_show_data = get_show_data(sno_view["screenfield_paragraph"])[:alltypes]
+				flds_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:allfields]
+				type_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:alltypes]
 				screen_show_data.each do |scrf|
 					if flds_sno_show_data.index(scrf) and sno_rec[scrf.to_s]
 						case type_sno_show_data[scrf]
@@ -461,22 +461,24 @@ class ScreenController < ListController
 			@errmsg << "err:duplicate #{strwhere[6..-5]} " if rec
 		end
 	end
-   def updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか
-      ## updateのとき
-      ## 外部keyとして参照されているとき　codeの変更は不可
-	  updtbl = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first("where id = #{command_c[:id]}")
-	  if updtbl[:code]
-	     if updtbl[:code] != command_c[(command_c[:sio_viewname].split("_")[1].chop + "_code").to_sym]
-	        constr = plsql.blk_constraints.all("where column_name like '#{command_c[:sio_viewname].split("_")[1].upcase}_ID%'  and  constraint_type = 'R' ")
-	        constr.each do |rec|
-	            ex = plsql.__send__(rec[:table_name]).first ("where  #{rec[:column_name]} = #{command_c[:id]}")
-		        @errmsg << " #{rec[:table_name]}," if ex
-	        end
-	     end
-	  end	 
-	  if @errmsg.size> 1
-         @errmsg = ("err:code:#{updtbl[:code]} already use  table " + @errmsg).chop	  
-	  end
+	def updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか
+		## updateのとき
+		## 外部keyとして参照されているとき　codeの変更は不可
+		updtbl = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first("where id = #{command_c[:id]}")
+		if updtbl
+			if updtbl[:code]
+				if updtbl[:code] != command_c[(command_c[:sio_viewname].split("_")[1].chop + "_code").to_sym]
+					constr = plsql.blk_constraints.all("where column_name like '#{command_c[:sio_viewname].split("_")[1].upcase}_ID%'  and  constraint_type = 'R' ")
+					constr.each do |rec|
+						ex = plsql.__send__(rec[:table_name]).first ("where  #{rec[:column_name]} = #{command_c[:id]}")
+						@errmsg << " #{rec[:table_name]}," if ex
+					end
+				end
+			end	 
+			if @errmsg.size> 1
+				@errmsg = ("err:code:#{updtbl[:code]} already use  table " + @errmsg).chop	  
+			end
+		end
     end
 	def proc_command_c_chk command_c
 		command_c.each do |key,val|
@@ -495,14 +497,13 @@ class ScreenController < ListController
 		constr = ActiveRecord::Base.connection.select_all(strsql)
 		constr.each do |rec|
 			ex = ActiveRecord::Base.connection.select_one(%Q& select * from #{rec["table_name"]}  where  #{rec["column_name"]} = #{command_c[:id]} &)
-			debugger if ex
 		    @errmsg << " #{rec["table_name"]}," if ex
 		end 
 		if @errmsg.size> 1
 			@errmsg = ("err:code already use  table " + @errmsg).chop	  
 		end
     end
-    def updatechk_foreignkey command_c   ###画面の必須keyになっていれば、不要
+    def updatechk_foreignkey command_c   ## xxx_idの確認
         constr = plsql.blk_constraints.all("where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'R' ")
 		fsym = :id
 	    constr.each do |rec|    ### blk_constraints   user_constraints と user_cons_columns　から作成 
