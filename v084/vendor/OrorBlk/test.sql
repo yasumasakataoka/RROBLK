@@ -1,5 +1,4 @@
-delete from custords where id < 
-       (select max(id) from custords)
+delete from custords where id <   (select max(id) from custords)
 ;
 delete from mkords where id < 
        (select max(id) from mkords)
@@ -63,3 +62,29 @@ truncate table purrplies;
 truncate table inouts;
 truncate table sio_r_inouts;
 delete trngantts;
+
+
+truncate table replyinputs;
+
+truncate table sio_r_replyinputs;
+
+truncate table rplies;
+
+truncate table sio_r_rplies;
+
+truncate table purinsts;
+
+truncate table sio_r_purinsts;
+
+truncate table results;
+
+truncate table sio_r_results
+;
+truncate table purrsltinputs
+;
+truncate table purreplyinputs
+;
+truncate table sio_r_purrsltinputs
+;
+truncate table sio_r_purreplyinputs
+;

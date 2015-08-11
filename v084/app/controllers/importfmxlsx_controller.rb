@@ -55,7 +55,7 @@ class ImportfmxlsxController < ScreenController
 					command_c[:sio_recordcount] = command_c[:sio_session_id] = count
                     case ws[iws].sheet_name.upcase
 	                    when /^ADD/ then
-							updatechk_add command_c  ###同一レコード内での重複チェックができてない。
+							proc_updatechk_add command_c ,"add" ###同一レコード内での重複チェックができてない。
 			                updatechk_foreignkey command_c  if  @errmsg == ""
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
                             if  @errmsg == "" then
@@ -66,9 +66,10 @@ class ImportfmxlsxController < ScreenController
                         when  /^EDIT/ then
                             command_c[:sio_classname] = "sheet_blk_edit_"
                             command_c[:id] = command_c[tblidsym]
-					        updatechk_edit command_c
+					        proc_updatechk_edit command_c
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
 			                updatechk_foreignkey command_c if  @errmsg == ""
+							proc_updatechk_add command_c ,"edit" if  @errmsg == ""
 	                    when /^DELETE/ then
                            command_c[:sio_classname] = "sheet_blk_delete_"
                            command_c[:id] = command_c[tblidsym]
@@ -80,6 +81,9 @@ class ImportfmxlsxController < ScreenController
 			                break
 	                 end  ##case
 					 if @errmsg == "" and commit_flg
+						###debugger
+						###数字は数字タイプで、それ以外はキャラクターモードであること。
+						##上記チェックができてない。
                         proc_insert_sio_c(char_to_number_data(command_c))
 					   else
 					     commit_flg = false
@@ -87,6 +91,7 @@ class ImportfmxlsxController < ScreenController
 						 @errmsg = ""
                      end
 	             end  ## if count
+				 fprnt "command_c #{command_c}" if count == 5
            end ## row
            if  commit_flg
               sub_userproc_insert command_c

@@ -190,15 +190,15 @@ class ScreenController < ListController
 		sw = "ON"
 		params.each do |key,val|
 			if  akeyfs.index(key.to_s) then
-				if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
+				if  params[key] and params[key] != "" and key.to_s !~ /_cno/ then keyfields[key] = val else sw = "OFF" end
 			end
 		end
 		rec = get_tblfieldval_from_code keyfields,viewname,delm  if sw == "ON"   ###data get
 		@getname ={}
 		if  rec then
 			rec.each do |key,val|
-				if  delm.nil? then nkey = key else nkey = (key.to_s+"_"+delm).to_sym  end
-				if  nkey.to_s != "id" then  @getname[nkey] = rec[key].to_s end  ### 
+				if  delm.nil? then nkey = key else nkey = (key+"_"+delm)  end
+				if  nkey != "id" then  @getname[nkey] = rec[key] end  ### 
 			end
           else
 			@getname[params[:chgname].to_sym] = "???"  if sw == "ON" ### ""だとスペースにならない。
@@ -231,7 +231,7 @@ class ScreenController < ListController
        @getname ={}
        if rec then
              rec.each do |key,val|
-                  if  key.to_s != "id" then  @getname[key] = rec[key].to_s end  ### 
+                  if  key != "id" then  @getname[key] = rec[key] end  ### 
              end
              @getname[:errmsg] = " #{keyfields.values.join(',')}.....already exists"
           else
@@ -247,7 +247,7 @@ class ScreenController < ListController
            strwhere << nkey + " = '" + val  + "'    and "
       end
       strwhere << "#{tblname}_expiredate > current_date order by #{tblname}_expiredate "
-      rec = plsql.__send__(viewname).first(strwhere)
+      rec = ActiveRecord::Base.connection.select_one("select * from #{viewname} #{strwhere}")
    end
    def   get_view_code_frm_screen_tblname 
       akeyfs,viewname,delm =  get_ary_find_field params[:chgname]
@@ -262,13 +262,14 @@ class ScreenController < ListController
          mytbl = @screen_code.split("_")[1].chop
 	     tblnamekey = (mytbl+"_tblname").to_sym
 	     viewname = params[tblnamekey].to_s
-		 prgfs = plsql.r_blktbsfieldcodes.all("where pobject_code_tbl = '#{@screen_code.split("_")[1]}' and blktbsfieldcode_viewflmk like 'tblnamefields%' and blktbsfieldcode_expiredate > current_date ")
+		 prgfs = ActiveRecord::Base.connection.select_all(" select * from r_blktbsfieldcodes where pobject_code_tbl = '#{@screen_code.split("_")[1]}' 
+											and blktbsfieldcode_viewflmk like 'tblnamefields%' and blktbsfieldcode_expiredate > current_date ")
 		 newkeyfields = {}
 		 tblarray = {}
 		 prgfs.each do |prgf|  ###tblnameの架空項目を実項目へ変換
-		    key = "vf" + mytbl + "_" + prgf[:pobject_code_fld]
+		    key = "vf" + mytbl + "_" + prgf["pobject_code_fld"]
 		    if akeyfs.index(key)
-               tblarray = eval(prgf[:blktbsfieldcode_viewflmk])
+               tblarray = eval(prgf["blktbsfieldcode_viewflmk"])
                newkeyfields[tblarray[params[tblnamekey].to_sym].to_sym] = params[key.to_sym]			   
 			end
 		 end
@@ -276,11 +277,11 @@ class ScreenController < ListController
          rec = get_tblfieldval_from_code newkeyfields,viewname,delm  
          @getname ={}
          if   rec then
-			 @getname[(mytbl+"_tblid").to_sym] = rec[:id]
+			 @getname[(mytbl+"_tblid")] = rec["id"]
              prgfs.each do |keys|
-				     tblarray = eval(keys[:blktbsfieldcode_viewflmk])
+				     tblarray = eval(keys["blktbsfieldcode_viewflmk"])
                      orgkey = tblarray[params[tblnamekey].to_sym]	
-			         @getname[("vf"+mytbl+"_"+keys[:pobject_code_fld]).to_sym] = rec[orgkey.to_sym]
+			         @getname[("vf"+mytbl+"_"+keys["pobject_code_fld"]).to_sym] = rec[orgkey]
              end
            else
 		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
@@ -344,35 +345,30 @@ class ScreenController < ListController
 		bal = ActiveRecord::Base.connection.select_one(strsql)
 		if bal then bal["bal_qty"] else 0 end
 	end
-	def   vproc_get_contents_frm_cno   ###cnoの時は　itms_idとcusts_idは必須
+	def   vproc_get_contents_frm_cno   ###
 		sw = "ON"
-		strsql = %Q& select * from r_screens where pobject_code_scr  = (
-		                      select screenfield_paragraph from r_screenfields where pobject_code_sfd = '#{params[:chgname]}' 
-							  and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date)& 
-		cno_screen = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
+		strsql = %Q& select screenfield_paragraph from r_screenfields where pobject_code_sfd = '#{params[:chgname]}' 
+							  and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date& 
+		cno_screen = ActiveRecord::Base.connection.select_value(strsql).split(":_")[0]   ###画面のfield
+		strsql = %Q& select pobject_code_sfd,screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'
+								and screenfield_paragraph like '#{cno_screen}%' AND screenfield_expiredate > current_date& 
+		cno_keys = ActiveRecord::Base.connection.select_all(strsql)
 		@getname ={}
-		if params[:itm_code] == "" 
-			sw = "MISSing"
-			@getname[params[:chgname].to_sym] = "missing item_cod" 
-			@getname[:itm_code] = "???"
-			return sw
-		end		
-		if params[:loca_code_cust] == "" 
-			sw = "MISSING"
-			@getname[params[:chgname].to_sym] = "missing cust_cod" 
-			@getname[:loca_code_cust] = "???"
-			return sw
+		strwhere = "where "
+		cno_keys.each do |cno_key|
+			if cno_key["pobject_code_sfd"] =~ /_cno/
+				strwhere << %Q& #{cno_screen.split("_",2)[1].chop}_cno  = '#{params[cno_key["pobject_code_sfd"].to_sym]}' and  &
+			else
+				strwhere << %Q& #{cno_key["pobject_code_sfd"].sub((cno_key["screenfield_paragraph"].split(":_")[1]||=""),"")} = '#{params[cno_key["pobject_code_sfd"].to_sym]}' and   &
+			end
 		end
 		if cno_screen
-			strsql = "select * from #{cno_screen["pobject_code_view"]} 
-								where #{cno_screen["pobject_code_view"].split("_",2)[1].chop}_cno = '#{params[params[:chgname].to_sym]}'  
-			                    and itm_code = '#{params[:itm_code]}' and loca_code_cust = '#{params[:loca_code_cust]}'
-								and #{cno_screen["pobject_code_view"].split("_",2)[1].chop}_expiredate > current_date "
+			strsql = "select * from #{cno_screen} #{strwhere} #{cno_screen.split("_",2)[1].chop}_expiredate > current_date "
 			cno_rec = ActiveRecord::Base.connection.select_one(strsql)    ### cnoのrec
 			if   cno_rec 
 				screen_show_data = get_show_data(@screen_code)[:allfields]
-				flds_cno_show_data = get_show_data(cno_screen["pobject_code_scr"])[:allfields]
-				type_cno_show_data = get_show_data(cno_screen["pobject_code_scr"])[:alltypes]
+				flds_cno_show_data = get_show_data(cno_screen)[:allfields]
+				type_cno_show_data = get_show_data(cno_screen)[:alltypes]
 				screen_show_data.each do |scrf|
 					if flds_cno_show_data.index(scrf) and cno_rec[scrf.to_s]
 						case type_cno_show_data[scrf]
@@ -384,8 +380,8 @@ class ScreenController < ListController
 								@getname[scrf] = cno_rec[scrf.to_s] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
 						end
 					else
-						fld = if scrf.to_s.split("_",2)[1]  then (cno_screen["pobject_code_view"].split("_",2)[1].chop + "_" + scrf.to_s.split("_",2)[1]) else "" end
-						if cno_rec[fld] and  fld =~/_qty|_duedate/  ###cnoの引き継ぎ項目 get_return_name_valの修正も必要 ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
+						fld = if scrf.to_s.split("_",2)[1]  then (cno_screen.split("_",2)[1].chop + "_" + scrf.to_s.split("_",2)[1]) else "" end
+						if cno_rec[fld] and  fld =~/_qty|_duedate|_sno_|_id/  ###cnoの引き継ぎ項目 ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
 							case type_cno_show_data[fld.to_sym]
 								when /date/
 									@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d")
@@ -438,7 +434,7 @@ class ScreenController < ListController
     end  
     def befor_chk_update
     end
-    def updatechk_add command_c   ### view blk_constraintsは初期セットしていること
+    def proc_updatechk_add command_c,add_edit   ### view blk_constraintsは初期セットしていること
 		## addのとき
 		## ukeyの重複はエラー
 		strsql = %Q% where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'U' order by constraint_name %
@@ -457,14 +453,16 @@ class ScreenController < ListController
 			val.each do |key|
 				strwhere << " #{wherefieldset(key.downcase,command_c)}     and " 
 			end
-			rec = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first(strwhere[0..-5])
-			@errmsg << "err:duplicate #{strwhere[6..-5]} " if rec
+			rec_id = ActiveRecord::Base.connection.select_value(%Q& select id from #{command_c[:sio_viewname].split("_")[1]} #{strwhere[0..-5]} &)
+			@errmsg << "err:duplicate #{strwhere[6..-5]} " if rec_id and add_edit == "add"
+			@errmsg << "err:already exists #{strwhere[6..-5]} " if rec_id and rec_id != command_c[:id] and add_edit == "edit"
 		end
 	end
-	def updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか
+	def proc_updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか
 		## updateのとき
 		## 外部keyとして参照されているとき　codeの変更は不可
-		updtbl = plsql.__send__(command_c[:sio_viewname].split("_")[1]).first("where id = #{command_c[:id]}")
+		fprnt "command_c = #{command_c}"  if command_c[:id].nil?
+		updtbl =  ActiveRecord::Base.connection.select_one(%Q& SELECT * FROM #{command_c[:sio_viewname].split("_")[1]} where id = #{command_c[:id]||=-1} &)
 		if updtbl
 			if updtbl[:code]
 				if updtbl[:code] != command_c[(command_c[:sio_viewname].split("_")[1].chop + "_code").to_sym]
@@ -505,12 +503,12 @@ class ScreenController < ListController
     end
     def updatechk_foreignkey command_c   ## xxx_idの確認
         constr = plsql.blk_constraints.all("where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'R' ")
-		fsym = :id
 	    constr.each do |rec|    ### blk_constraints   user_constraints と user_cons_columns　から作成 
-	        fsym = (command_c[:sio_viewname].split("_")[1].chop+"_"+rec[:column_name].split("_")[0].chop.downcase + "_" + rec[:column_name].split("_",2)[1].downcase).to_sym
-	        if  command_c[fsym] 
-	            ex = plsql.__send__(rec[:column_name].split("_")[0]).first ("where id =  #{command_c[fsym]}")
-		        @errmsg << " #{rec[:column_name].split("_")[0]}," if ex.nil?
+	        key = command_c[:sio_viewname].split("_")[1].chop+"_"+rec[:column_name].split("_")[0].chop.downcase + "_" + rec[:column_name].split("_",2)[1].downcase
+	        if  command_c[key.to_sym] 
+					ex = plsql.__send__(rec[:column_name].split("_")[0]).first ("where id =  #{command_c[key.to_sym]}")
+					@errmsg << " #{rec[:column_name].split("_")[0]}," if ex.nil?
+					fprnt " line = #{__LINE__}  #{@errmsg}  key = #{key} \n command_c #{command_c}" if  ex.nil?
 			else
 				@errmsg << " #{rec[:column_name].split("_")[0]},"
 		    end

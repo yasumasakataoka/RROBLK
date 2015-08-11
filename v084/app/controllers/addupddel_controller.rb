@@ -16,7 +16,7 @@ class  AddupddelController < ScreenController
 		@errmsg = ""
       case  params[:copy]  
           when /add/
-             updatechk_add command_c
+             proc_updatechk_add command_c,"add"
 			 updatechk_foreignkey command_c if  @errmsg == ""
              if  @errmsg == "" then
                  command_c[:sio_classname] = "screen_blk_add_"
@@ -29,8 +29,9 @@ class  AddupddelController < ScreenController
 			 updatechk_del command_c
           when /edit/
              command_c[:sio_classname] = "screen_blk_edit_"
-			 updatechk_edit command_c
+			 proc_updatechk_edit command_c
 			 updatechk_foreignkey command_c  if  @errmsg == ""
+			proc_updatechk_add command_c ,"edit" if  @errmsg == ""
           else     
            ## textは表示できないのでメッセージの変更要
           render :text => "return to menu because session loss params:#{params[:oper]} "

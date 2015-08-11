@@ -23,19 +23,20 @@ before_filter :authenticate_user!
 	       else ##
 	         @cate_list = []
              @max_cnt = chk_cnt =  1
-	         plsql.r_screens.all("where screen_expiredate >current_date order by screen_grpcodename").each do |i|
+			 strsql = "select * from r_screens where screen_grpcodename != '#' and screen_expiredate >current_date order by screen_grpcodename"
+	         ActiveRecord::Base.connection.select_all(strsql).each do |i|
                 if   @cate_list[-1] then
-                     if   @cate_list[-1][0] == i[:screen_grpcodename][0,1] then 
+                     if   @cate_list[-1][0] == i["screen_grpcodename"][0,1] then 
                           chk_cnt += 1
                           @max_cnt = chk_cnt if chk_cnt > @max_cnt 
                         else
-                          @cate_list << [i[:screen_grpcodename][0,1],i[:screen_grpcodename][2..-1],{}]
+                          @cate_list << [i["screen_grpcodename"][0,1],i["screen_grpcodename"][2..-1],{}]
                           chk_cnt = 1
                       end
                     else
-                       @cate_list << [i[:screen_grpcodename][0,1],i[:screen_grpcodename][2..-1],{}]
+                       @cate_list << [i["screen_grpcodename"][0,1],i["screen_grpcodename"][2..-1],{}]
                  end
-                   @cate_list[-1][2][i[:pobject_code_scr].downcase.to_sym] = sub_blkgetpobj(i[:pobject_code_scr],"screen") ## 
+                   @cate_list[-1][2][i["pobject_code_scr"].downcase.to_sym] = sub_blkgetpobj(i["pobject_code_scr"],"screen") ## 
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
              end 

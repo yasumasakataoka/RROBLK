@@ -10,9 +10,8 @@
   , pobject.remark pobject_remark
   , pobject.created_at pobject_created_at
   , pobject.update_ip pobject_update_ip
-  , pobject.id id
+  , pobject.id id  , pobject.id pobject_id
   , pobject.PERSONS_ID_UPD pobject_person_id_upd
-  , pobject.id pobject_id
   , person_upd.id updperson_id_upd
   , person_upd.code updperson_code_upd
   , person_upd.name updperson_name_upd

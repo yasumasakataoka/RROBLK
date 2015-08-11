@@ -93,7 +93,7 @@ include  JqgridFilter
         id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
 	    id_data_html = Rails.cache.read(id_cache_key)
 	   else	
-        id_data_javascript,id_data_html = create_screen_field(  options )
+        id_data_javascript,id_data_html = create_screen_field(options)
      end		
      screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{@jqgrid_id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
        screen <<   nst_div
@@ -421,6 +421,7 @@ include  JqgridFilter
 		##if screen_options.nil?
 		if @r_screens.nil?
 		   ###使用期限切れ  listで抽出されないはず
+		   fprnt "使用期限切れ  listで抽出されないはず"
 		   return 
 		end
         ##p " line #{__LINE__} logic err screen_code = #{@screen_code} " and return if screen_options.nil?
