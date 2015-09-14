@@ -56,20 +56,21 @@ class   GanttController  <  ScreenController
     end  
 	def sql_proc_trn_gantt trn_code,id
 	    ### a.trngantt 引当て先　　b.trngantt オリジナル
-        %Q& select a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_prdpurshp prdpurshp,
+        %Q& select a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.opeitm_prdpurshp prdpurshp,
                             alloctbl_destblname,alloctbl_destblid,
 							min(a.TRNGANTT_STRDATE) org_strdate,max(a.TRNGANTT_MLEVEL) mlevel,
 							max(a.TRNGANTT_dueDATE) org_duedate,max(a.trngantt_qty) qty,
 							sum(case  when b.alloctbl_destblname like '%schs' then  b.alloctbl_qty else 0 end) qty_alloc_sch,
 							sum(case  when b.alloctbl_destblname like '%ords' then  b.alloctbl_qty else 0 end) qty_alloc_ord,
 							sum(case  when b.alloctbl_destblname like '%insts' then  b.alloctbl_qty else 0 end) qty_alloc_inst,
-							sum(case  when b.alloctbl_destblname like '%act%' then  b.alloctbl_qty else 0 end) qty_alloc_stk,
+							sum(case  when b.alloctbl_destblname like '%act%' then  b.alloctbl_qty 
+							          when b.alloctbl_destblname like '%lotstk%' then  b.alloctbl_qty   else 0 end) qty_alloc_stk,
 							a.trngantt_orgtblname,a.trngantt_orgtblid
                       from r_trngantts a 
-					  inner join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
+					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
 					  where   a.trngantt_orgtblname = '#{trn_code}' and a.trngantt_orgtblid = #{id}  
 					  group by a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_orgtblname,a.trngantt_orgtblid,
-								alloctbl_destblname,alloctbl_destblid,a.trngantt_prdpurshp
+								alloctbl_destblname,alloctbl_destblid,a.opeitm_prdpurshp
 					  order by a.trngantt_key&
 	end
     def  proc_trn_gantt  trn_code,id
@@ -79,7 +80,7 @@ class   GanttController  <  ScreenController
             break if idx >= 1000	
 			alloc = {}
 		    case idx
-			    when 0
+			    when 0,1
 			        trn_sno = ActiveRecord::Base.connection.select_one(%Q& select * from #{value["trngantt_orgtblname"]} where id = #{value["trngantt_orgtblid"]} &)
 					value["itm_name"] = trn_sno["sno"]
 					value["itm_code"] = "" 
@@ -91,7 +92,7 @@ class   GanttController  <  ScreenController
 					   alloc["duedate"] = custtrn["custord_duedate"]  ###c
 					end
 			    else
-					debugger if value["alloctbl_destblname"].nil?
+					fprnt "line #{__LINE__} value #{value}"  if value["alloctbl_destblname"].nil?
 					alloc =  ActiveRecord::Base.connection.select_one(%Q& select * from #{value["alloctbl_destblname"]} where id = #{value["alloctbl_destblid"]}&)
                   ###  trn_sno = plsql.select(:first,"select * from #{value[:trngantt_tblname]} where id = #{value[:trngantt_tblid]} ")				
 		    end
@@ -104,7 +105,7 @@ class   GanttController  <  ScreenController
 														:start=> if value["alloctbl_destblname"] =~ /^shp/ then(alloc["depdate"].to_i * 1000) else (alloc["strdate"].to_i * 1000) end,
 														:org_start=>(value["org_strdate"].to_i * 1000),
 														:opeitm_duration=>value["opeitm_duration"],
-                                                        :end=>(alloc["duedate"].to_i * 1000),:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
+                                                        :end=>if value["alloctbl_destblname"] =~ /^lotstk/ then (alloc["strdate"].to_i * 1000) else (alloc["duedate"].to_i * 1000 )end,:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
 														:level=>if value["trngantt_key"] == '000' then 0 else 1 end,
 														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>""}
             if value["trngantt_key"].size > 3
@@ -121,7 +122,7 @@ class   GanttController  <  ScreenController
 			"qty":#{gantt[:qty]},"qty_sch":#{gantt[:qty_sch]},"qty_ord":#{gantt[:qty_ord]},"qty_inst":#{gantt[:qty_inst]},"qty_stk":#{gantt[:qty_stk]},
 			"assigs":[],"level":#{gantt[:level]},"mlevel":#{gantt[:mlevel]},"subtblid":"#{gantt[:subtblid]}","paretblcode":"","depends":"#{gantt[:depends].chop}"},&
         end
-		fprnt strgantt
+		###fprnt strgantt
         @ganttdata = strgantt.chop + %Q&],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }&
     end
 

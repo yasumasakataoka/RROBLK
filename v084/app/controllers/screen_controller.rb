@@ -301,7 +301,7 @@ class ScreenController < ListController
 			@getname ={}
 			if sno_rec
 				bal_sno_qty = vproc_get_sno_bal_qty(sno_tblnamechop+"s",sno_rec["id"])
-				proc_opeitm_instance(sno_rec)
+				##proc_opeitm_instance(sno_rec)
 				screen_show_data = get_show_data(@screen_code)[:allfields]
 				flds_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:allfields]
 				type_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:alltypes]
@@ -326,7 +326,7 @@ class ScreenController < ListController
 								else
 									@getname[scrf] = sno_rec[fld] ## if k_to_s != "id" 
 									if fld =~ /_qty$/ then @getname[scrf] = bal_sno_qty end 
-									if fld =~ /_qty_case$/ then   @getname[scrf] = bal_sno_qty / @opeitm[:packqty]	end 									   
+									if fld =~ /_qty_case$/ then   @getname[scrf] = bal_sno_qty / sno_rec["opeitm_packqty"]	end 									   
 							end
 						end
 					end

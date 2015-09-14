@@ -1,23 +1,23 @@
 class ImportfieldsfromoracleController < ApplicationController
   ###  created_at updated_at remark は必須
   ###  _idは自動的に外部keyを作成する。
-  before_filter :authenticate_user!  
-  def index
-      @tsqlstr = ""
-      tblid  = params[:sio_viewname].to_i
-      if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
-          if rec[:blktb_expiredate] > Time.now then
-		     plsql.logoff
-			 plsql.connect! "rails", "rails",  :database => "xe"
-             sub_import_fields_from_oracle rec[:pobject_code_tbl],rec[:id]
-			 ##Rails.cache.clear(nil)
+	before_filter :authenticate_user!  
+	def index
+		@tsqlstr = ""
+		tblid  = params[:sio_viewname].to_i
+		if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
+			if rec[:blktb_expiredate] > Time.now then
+				plsql.logoff
+				plsql.connect! "rails", "rails",  :database => "xe"
+				sub_import_fields_from_oracle rec[:pobject_code_tbl],rec[:id]
+				##Rails.cache.clear(nil)
             else
-             @errmsg = "out of expiredate"
-          end
-         else
-             @errmsg = " id not correct"
-     end
- end
+				@errmsg = "out of expiredate"
+			end
+        else
+            @errmsg = " id not correct"
+		end
+	end
  def sub_import_fields_from_oracle   pobject_code_tbl,rec_id
      ##開発環境のみ buttonにセット
      begin
@@ -242,7 +242,7 @@ class ImportfieldsfromoracleController < ApplicationController
 		screenfields = 
          { :expiredate   => Time.parse("2099/12/31"),
           :remark   => "auto_crt",
-          :persons_id_upd   => plsql.persons.first(:email =>current_user[:email])[:id]  ,
+          :persons_id_upd   =>  plsql.persons.first(:email =>current_user[:email])[:id]  ,
           :update_ip   => @myip,
           :created_at   => Time.now,
           :updated_at   => Time.now,

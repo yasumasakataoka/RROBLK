@@ -110,7 +110,7 @@
 												and destblid in (select id from alloctbls where srctblname = 'trngantts' and srctblid = #{c_alloc["srctblid"]}
 																							and destblname ='#{pre_destblname}')&
 		rtn_alloc = ActiveRecord::Base.connection.select_one(strsql)
-		if rtn_alloc["qty"].nil?
+		if rtn_alloc.nil?
 		   fprnt " logic error"
            fprnt " strsql = #{strsql}"		   
 		end
@@ -183,7 +183,7 @@ class DbSchs  < DbCud    ###
 		%Q&
 			select 		alloc.id alloctbl_id,alloc.srctblname alloctbl_srctblname,alloc.srctblid alloctbl_srctblid,
 						alloc.destblname alloctbl_destblname,alloc.destblid alloctbl_destblid,
-						alloc.qty free_qty,#{@opeitm[:loca_id]} trngantt_loca_id,
+						alloc.qty free_qty,#{str_gantt["opeitm_loca_id"]} trngantt_loca_id,
 						gantt.orgtblname,gantt.orgtblid,gantt.key
 						from trngantts gantt,alloctbls alloc
 						where alloc.srctblname = 'trngantts' and  gantt.id = alloc.srctblid and gantt.key = '001'   
@@ -326,94 +326,89 @@ class DbSchs  < DbCud    ###
 	def sql_alloc_search rec,sch_ord_inst_act
 		org_strwhere = ""
 		trn_strwhere = ""
+		pare_strwhere = ""
 		### orgtblnameの存在チェックを画面でする。 trnganttsのorgtblnameにあること。
-		gantt_show_data = get_show_data "r_trngantts"   if rec["orgtblname"]
+		org_show_data = get_show_data rec["orgtblname"]   if rec["orgtblname"]
+		pare_show_data = get_show_data rec["tblname_pare"]   if rec["tblname_pare"]
 		trn_show_data = get_show_data "r_#{rec["prdpurshp"]+sch_ord_inst_act}" 
 		org_search_key = {}
+		pare_search_key = {}
 		trn_search_key = {}
-		org_id_key = ""
-		trn_id_key = ""
+		fullord_pare = "0"
 		rec.each do |key,val|
    		    next if val.nil?
-   		    next if key !~ /_org$/ and key !~ /_trn$/
+   		    next if key !~ /_org$/ and key !~ /_trn$/ and key !~ /_pare$/
 			next if rec["orgtblname"].nil? and key =~ /org$/
+			next if rec["tblname_pare"].nil? and key =~ /pare$/
 			### next if rec["prdpurshp"].nil? and key =~ /trn$/   #rec["prdpurshp"]は必須			
-			tblname,idfield,delm = key.sub(/_org$|_trn$/,"").split("_",3)
-			if delm.nil? then delm = ""  else delm = "_"+delm end
-			if  idfield == "id"	
-				code_val = proc_get_viewrec_from_id(tblname,val)[tblname.chop+"_code"+delm]
-				next if code_val == "dummy" or code_val.nil?
-				nkey = key.sub("s_id","_id").sub(/_org$|_trn$/,"")
-			else
-				nkey = key.sub(/_org$|_trn$/,"")
-			end
-			viewname = (if rec["orgtblname"] then "r_#{rec["orgtblname"]}" 
-						else
-							if  rec["prdpurshp"] then "r_#{rec["prdpurshp"]+sch_ord_inst_act}"
+			tblname,idfield,delm = key.sub(/_org$|_trn$|_pare$/,"").split("_",3)
+			nkey = key.sub(/_org$|_trn$|pare$/,"")
+			viewname = case key
+			                when /_org$/ 
+								"r_#{rec["orgtblname"]}"
+							when /_trn$/
+								"r_#{rec["tblname_pare"]}"
 							else
-								fprnt "LINE #{__LINE__} viewname is nil  prdpurshpは必須 " 
-							end
-						end)
+								"r_#{rec["prdpurshp"]+sch_ord_inst_act}"
+						end
 			field = ActiveRecord::Base.connection.select_one(%Q&select * from r_screenfields where pobject_code_view = '#{viewname}' 
 																and pobject_code_sfd = '#{nkey}'&)
-			if field.nil?  and key =~ /s_id/
-				tmpkey = nkey.sub("_id","_code")
-				field = ActiveRecord::Base.connection.select_one(%Q&select * from r_screenfields where pobject_code_view = '#{viewname}' 
-																	and pobject_code_sfd = '#{tmpkey}'&)
-				nkey = tmpkey if field
-			end
-			if field.nil? 
-				nkey = viewname.split("_",2)[1].chop+ "_" + nkey
-				field = ActiveRecord::Base.connection.select_one(%Q&select * from r_screenfields where pobject_code_view = '#{viewname}' 
-																	and pobject_code_sfd = '#{nkey}'&)
-				if  field.nil? and nkey =~ /_id/
-					nkey = nkey.sub("_id","_code")
-					field = ActiveRecord::Base.connection.select_one(%Q&select * from r_screenfields where pobject_code_view = '#{viewname}' 
-																	and pobject_code_sfd = '#{nkey}'&)
-				end
-			end
-			if field
-				if nkey =~ /_id/
-					if key  =~ /org$/
-						org_id_key << " #{nkey} = #{val}    and"
+			case key
+			    when /_org$/ 
+					org_search_key[nkey] = val
+				when /_trn$/
+					trn_search_key[nkey] = val
+				when /_pare$/
+					if key == "fullord_pare"  ###全階層子部品手配
+						fullord_pare = "1" if val == "1"
 					else
-						trn_id_key << " #{nkey} = #{val}    and"
+						pare_search_key[nkey] = val
 					end
-				else
-					if key  =~ /org$/
-						org_search_key[nkey.to_sym] = val
-					else
-						if key =~ /_id/ and nkey =~ /_code/
-							trn_search_key[nkey.to_sym] = code_val
-						else
-							trn_search_key[nkey.to_sym] = val
-						end
-					end
-				end
 			end
 		end
-		if org_search_key.size >=1 or org_id_key.size > 1
+		if org_search_key.size >=1 
     		org_strwhere = %Q& and alloctbl_srctblid in (select id from r_trngantts 
 							where trngantt_orgtblname = '#{rec["orgtblname"]}'    
-							and  orgtblid in (select id from   #{rec["orgtblname"]} where 
-							#{org_id_key[0..-4]}
-							#{proc_search_key_strwhere(org_search_key,org_strwhere,gantt_show_data )}
+							and  trngantt_orgtblid in (select id from   #{rec["orgtblname"]} where 
+							#{proc_search_key_strwhere(org_search_key,org_strwhere,org_show_data )}
 							) &
 		end
-		if trn_search_key.size >=1 or trn_id_key.size > 1
+		if pare_search_key.size >=1
+			cmp_keys = ActiveRecord::Base.connection.select_all(%Q& select trngantt_key,trngantt_opeitm_id from r_trngantts 
+							where trngantt_tblname = '#{rec["tblname_pare"]}'    
+							and  trngantt_tblid in (select id from   #{rec["tblname_pare"]} where 
+							#{proc_search_key_strwhere(pare_search_key,pare_strwhere,pare_show_data )}&)
+			pare_strwhere = " and ("
+			cmp_keys.each do |key|
+				pare_strwhere << %Q& (trngantt_key like '#{key["trngantt_key"]}%'    &
+				if fullord_pare == "1"  ###下位の階層すべての部品すべて対象
+					pare_strwhere　 <<  "   or "
+				else ###直下の子部品のみ
+					nditms_id = proc_get_cons_chil(key["trngantt_opeitm_id"])
+					str_itms_id = ""
+					nditms_id.each do |itm_id|
+						str_itms_id << itrm_id + "," 
+					end
+					pare_strwhere << %Q&  and opeitm_itm_id in(#{str_itms_id.chop}) )  or &
+				end
+			end
+			pare_strwhere = pare_strwhere[0..-5] + ")"
+		end
+		if trn_search_key.size >=1 
     		trn_strwhere = 	%Q&  and alloctbl_destblid in (select id from r_#{rec["prdpurshp"]+sch_ord_inst_act} where
-								#{trn_id_key[0..-4]}
 								#{proc_search_key_strwhere(trn_search_key,trn_strwhere,trn_show_data)}
 								 ) &
 		end
 		%Q&
-			select trngantt_id,trngantt_strdate,trngantt.opeitm_loca_id trngantt_loca_id,trngantt.opeitm_itm_id trngantt_itm_id,
-			trngantt.opeitm_prdpurshp opeitm_prdpurshp,trngantt.opeitm_processseq,
+			select trngantt_id,trngantt_strdate,
+			trngantt.opeitm_id trngantt_opeitm_id,trngantt.opeitm_loca_id trngantt_loca_id,trngantt.opeitm_itm_id trngantt_itm_id,
+			trngantt.opeitm_prdpurshp opeitm_prdpurshp,trngantt.opeitm_processseq,trngantt_prjno_id,
 			alloctbl_id,alloctbl_srctblname,alloctbl_srctblid,alloctbl_destblname,alloctbl_destblid,alloctbl_qty,alloctbl_id,trn.* 
 		    from r_trngantts trngantt ,r_#{rec["prdpurshp"]+sch_ord_inst_act} trn ,r_alloctbls
 		    where  alloctbl_srctblname = 'trngantts' and trngantt_id = alloctbl_srctblid
 			and alloctbl_qty > 0 and alloctbl_destblname = '#{rec["prdpurshp"]+sch_ord_inst_act}' and alloctbl_destblid = trn.id
 		    #{org_strwhere}
+		    #{pare_strwhere}
 		    #{trn_strwhere}
 			#{if sch_ord_inst_act == "acts"
 				"order by trn.id"
@@ -474,7 +469,6 @@ class DbOrds  < DbSchs
 	def vproc_mkord rec     ###画面項目prdpurshpは必須
 	    opeitm_id = 0
 		@ord_show_data = get_show_data "r_#{rec["prdpurshp"]}ords"
-		fprnt  "sql =  \n #{sql_alloc_search(rec,"schs")}"
 		bal_schs = ActiveRecord::Base.connection.select_all(sql_alloc_search(rec,"schs"))
 		@incnt = bal_schs.size
 		@skipcnt = @outcnt = 0
@@ -493,27 +487,29 @@ class DbOrds  < DbSchs
 				@skipamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))	
 				next
 			end
-		    if opeitm_id != sch["opeitm_id"]
+		    if opeitm_id != sch["trngantt_opeitm_id"]
 			    vproc_mkord_create_ord(save_sch,ary_alloc) if opeitm_id != 0 
 			    save_sch = sch.dup
-				proc_opeitm_instance (save_sch) ###set @opeitm
-				opeitm_id = @opeitm[:id]
+				##proc_opeitm_instance (save_sch) ###set 
+				opeitm_id = save_sch["trngantt_opeitm_id"]
 				@free_qty = 0
 				ary_alloc =[]
 				ary_alloc << sch
 			else
-                if @opeitm[:maxqty] <= (save_sch["alloctbl_qty"] + sch["alloctbl_qty"]) or 
-				    sch["trngantt_strdate"].to_date >= (save_sch["trngantt_strdate"].to_date + @opeitm[:opt_fixoterm]) or
-				    sch["trngantt_loca_id"] != save_sch["trngantt_loca_id"] or sch["loca_id_to"] != save_sch["loca_id_to"]
+				save_sch["opeitm_maxqty"] = 9999999999 if (save_sch["opeitm_maxqty"]||=0) <= 0
+                if  save_sch["opeitm_maxqty"] <= (save_sch["alloctbl_qty"] + sch["alloctbl_qty"]) or 
+				    sch["trngantt_strdate"].to_date >= (save_sch["trngantt_strdate"].to_date + (save_sch["opeitm_opt_fixoterm"]||=999)) or
+				    sch["trngantt_loca_id"] != save_sch["trngantt_loca_id"] or sch["loca_id_to"] != save_sch["loca_id_to"]  or
+					sch["trngantt_prjno_id"] != save_sch["trngantt_prjno_id"] 
 				    if  sch["trngantt_loca_id"] == save_sch["trngantt_loca_id"] and sch["loca_id_to"] == save_sch["loca_id_to"]
-					    if save_sch["alloctbl_qty"] >= @free_qty 
+					    if save_sch["alloctbl_qty"] >= @free_qty ###@free_qty 余分に発注した数量
     						save_sch["alloctbl_qty"] -= @free_qty 
                             @free_qty = 0
                          else
     						save_sch["alloctbl_qty"] = 0
                             @free_qty -= save_sch["alloctbl_qty"]				
                         end	
-                       else
+                    else
                         @free_qty = 0   					   
 					end
 				    if save_sch["alloctbl_qty"] > 0 
@@ -531,29 +527,30 @@ class DbOrds  < DbSchs
 			vproc_mkord_create_ord(save_sch,ary_alloc)  if save_sch["alloctbl_qty"] > 0
 		end
 	end
-    def vproc_mkord_create_ord save_sch,ary_alloc ###日付(@opeitm[:opt_fixoterm])による数量まとめは済んでいる。
+    def vproc_mkord_create_ord save_sch,ary_alloc ###日付(opeitm_opt_fixoterm)による数量まとめは済んでいる。
 		 ## 包装単位での発注
 		@ord = {}
-	    org_qty = (save_sch["alloctbl_qty"].to_f/@opeitm[:packqty].to_f).ceil *  @opeitm[:packqty]
+	    org_qty = (save_sch["alloctbl_qty"].to_f/save_sch["opeitm_packqty"].to_f).ceil *  save_sch["opeitm_packqty"]
 		@free_qty = org_qty - save_sch["alloctbl_qty"]
-		schtblnamechop = @opeitm[:prdpurshp] + "sch"
-		ordtblnamechop = @opeitm[:prdpurshp] + "ord"
+		schtblnamechop = save_sch["opeitm_prdpurshp"] + "sch"
+		ordtblnamechop = save_sch["opeitm_prdpurshp"] + "ord"
 		proc_command_c_to_instance save_sch   ###@xxxsch_yyyy 作成
 		@ord[(ordtblnamechop+"_strdate").to_sym]  = save_sch[(schtblnamechop+"_strdate")]
 		@ord[(ordtblnamechop+"_duedate").to_sym]  = save_sch[(schtblnamechop+"_duedate")]
+		save_sch["opeitm_maxqty"] = 99999999999 if save_sch["opeitm_maxqty"] <= 0
         until org_qty <= 0
 		    ## maxqtyはpackqtyの整数倍であること。
-	        qty = @ord[(ordtblnamechop+"_qty").to_sym] = if @opeitm[:maxqty] < org_qty then @opeitm[:maxqty] else org_qty end
-	        amt = @ord[(ordtblnamechop+"_amt").to_sym] = qty * (save_sch[(ordtblnamechop+"_price")]||=0)
-	        @ord[(ordtblnamechop+"_qty_case").to_sym] = qty /  @opeitm[:packqty]
+	        qty = @ord[(ordtblnamechop+"_qty").to_sym] = if save_sch["opeitm_maxqty"] < org_qty then save_sch["opeitm_maxqty"] else org_qty end
+	        amt = @ord[(ordtblnamechop+"_amt").to_sym] = qty * (save_sch[(ordtblnamechop+"_price")]||=0)  ###単価概算
+	        @ord[(ordtblnamechop+"_qty_case").to_sym] = qty /  save_sch["opeitm_packqty"]
 			@outcnt += 1
 			@outqty += qty
 			@outamt += amt 
 			##vproc_create_free_trngantts save_sch if @free_qty > 0   ### free qty
-			org_qty -= @opeitm[:maxqty]	
-			__send__("proc_tblink_mkord_trngantts_#{ordtblnamechop}s_self10",ary_alloc)
-			@ord[(ordtblnamechop+"_strdate").to_sym]  -= if @opeitm[:opt_fixoterm] >=365 then 1 else @opeitm[:opt_fixoterm] end 
-			@ord[(ordtblnamechop+"_duedate").to_sym]  -= if @opeitm[:opt_fixoterm] >=365 then 1 else @opeitm[:opt_fixoterm] end
+			org_qty -= save_sch["opeitm_maxqty"]	
+			__send__("proc_tblink_mkord_trngantts_#{ordtblnamechop}s_self10",ary_alloc)   ###単価はここで求める。
+			@ord[(ordtblnamechop+"_strdate").to_sym]  -= if (save_sch[:opeitm_opt_fixoterm]||=999) >=999 then 1 else save_sch[:opeitm_opt_fixoterm] end 
+			@ord[(ordtblnamechop+"_duedate").to_sym]  -= if (save_sch[:opeitm_opt_fixoterm]||=999) >=999 then 1 else save_sch[:opeitm_opt_fixoterm] end
 	    end		
 	end
 	##def vproc_create_free_trngantts save_sch,mk_ord
@@ -614,7 +611,7 @@ class DbInsts  < DbOrds
     handle_asynchronously :perform_mkinsts
 	def vproc_mkinst rec		
 		@inst_show_data = get_show_data "r_#{rec["prdpurshp"]}insts"
-		fprnt  "sql =  \n #{sql_alloc_search(rec,"ords")}"
+		###fprnt  "sql =  \n #{sql_alloc_search(rec,"ords")}"
 		bal_ords = ActiveRecord::Base.connection.select_all(sql_alloc_search(rec,"ords"))   ### 
 		@incnt = bal_ords.size
 		@skipcnt = @outcnt = 0
@@ -638,11 +635,11 @@ class DbInsts  < DbOrds
 				@skipamt += (ord["alloctbl_qty"] * (ord[@ordpricesym]||=0))	
 				next
 			end
-		    if opeitm_id != ord["opeitm_id"]
+		    if opeitm_id != ord["trngantt_opeitm_id"]
 			    vproc_mkinst_create_inst(save_ord,ary_alloc,rec["qty"]) if opeitm_id != 0 					   
 			    save_ord = ord.dup
-				proc_opeitm_instance (ord) ###set @opeitm
-				opeitm_id = @opeitm[:id]
+				##proc_opeitm_instance (ord) ###set 
+				opeitm_id = ord["trngantt_opeitm_id"]
 				ary_alloc =[]
 			else
 				save_ord["alloctbl_qty"] += ord["alloctbl_qty"]
@@ -655,15 +652,15 @@ class DbInsts  < DbOrds
 	end
     def vproc_mkinst_create_inst save_ord,ary_alloc,qty ###
 		@inst = {}  ### proc_fld_mkinst_trngantts_xxxinsts_self10   proc_fld_xxxx  は引数なしで自動生成のため@にした。
-		ordtblnamechop = @opeitm[:prdpurshp] + "ord"
-		insttblnamechop = @opeitm[:prdpurshp] + "inst"
+		ordtblnamechop = save_ord["opeitm_prdpurshp"] + "ord"
+		insttblnamechop = save_ord["opeitm_prdpurshp"] + "inst"
 		proc_command_c_to_instance save_ord  ###@xxxord_yyyy 作成
 		@inst[:strdate]  = save_ord[(ordtblnamechop+"_strdate")]
 		@inst[:duedate]  = save_ord[(ordtblnamechop+"_duedate")]
 		org_qty = if qty <= save_ord[(ordtblnamechop+"_qty")] then qty else save_ord[(ordtblnamechop+"_qty")] end 
 	    @inst[:qty] = org_qty 
 	    amt = @inst[:amt] = org_qty * (save_ord[(ordtblnamechop+"_price").to_sym]||=0)
-	    @inst[:qty_case] = org_qty /  @opeitm[:packqty]
+	    @inst[:qty_case] = org_qty /  save_ord["opeitm_packqty"]
 		@outcnt += 1
 		@outqty += qty
 		@outamt += amt 
@@ -737,7 +734,7 @@ class DbActs  < DbInsts
 		    if trn_id != inst[trnidsym]   ### xxxxxinsts_id毎に受け入れをする。
 			    vproc_mkact_create_act(save_inst,ary_alloc,rec) if trn_id != 0 					   
 			    save_inst = inst.dup
-				proc_opeitm_instance (inst) ###set @opeitm
+				##proc_opeitm_instance (inst) ###set @opeitm
 				trn_id = inst[trnidsym]
 				ary_alloc =[]
 			else
@@ -751,8 +748,8 @@ class DbActs  < DbInsts
 	end
     def vproc_mkact_create_act save_inst,ary_alloc,rec ###   開始日は受入日
 		@act = {}
-		acttblnamechop = @opeitm[:prdpurshp] + "act"
-		insttblnamechop = @opeitm[:prdpurshp] + "inst"
+		acttblnamechop = save_inst["opeitm_prdpurshp"] + "act"
+		insttblnamechop = save_inst["opeitm_prdpurshp"] + "inst"
 		proc_command_c_to_instance save_inst  ###@xxxinst_yyyy 作成
 		@act[(acttblnamechop+"_strdate").to_sym]  = rec["rcptdate"]
 		@act[(acttblnamechop+"_duedate").to_sym]  = save_inst[(insttblnamechop+"_duedate")]
@@ -760,7 +757,7 @@ class DbActs  < DbInsts
 	    @inst[(insttblnamechop+"_qty").to_sym] = qty 
 		### 指示数以上の受入、出庫実績を許すかどうかはopeitm でし画面でもチェックするしここでもチェックする。  コーディングがまだ
 	    amt = save_inst[(rec["prdpurshp"] + "inst_price")]
-	    @act[(acttblnamechop+"_qty_case").to_sym] = qty /  @opeitm[:packqty]
+	    @act[(acttblnamechop+"_qty_case").to_sym] = qty /  save_inst["opeitm_packqty"]
 		@outcnt += 1
 		@outqty += qty
 		@outamt += amt ###受入時単価決定の時はここの金額と異なる。
@@ -858,7 +855,7 @@ class DbReplies  < DbOrds
 						@sio_classname = "reply_delete_"
 						##end	
 						proc_command_c_to_instance inst
-						proc_opeitm_instance (inst)
+						##proc_opeitm_instance (inst)
 						strsql = %Q& select * from alloctbls where  srctblname = 'trngantts' and destblname = '#{prdpurshp}insts' and destblid = #{inst["id"]} and qty > 0 &
 						alloctbls = ActiveRecord::Base.connection.select_all(strsql)
 						__send__("proc_tblink_r_rplies_#{prdpurshp}insts_self10",alloctbls)   ######alloctbls:xxxinstsの引当て情報
@@ -872,7 +869,7 @@ class DbReplies  < DbOrds
 				             and alloctbl_destblname = '#{prdpurshp}ords' and alloctbl_destblid = #{ord["id"]} and alloctbl_qty > 0 &
 				alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
 				proc_command_c_to_instance ord
-				proc_opeitm_instance(ord)
+				##proc_opeitm_instance(ord)
 				@reply_qty = input["qty"]   ###回答から引き継げる項目は、数量、納期、cno,gnoコメントのみ
 				@reply_qty_case = input["qty_case"]   
 				@reply_duedate = input["duedate"] ###shpもduedateを出庫の回答日とする。
@@ -992,7 +989,7 @@ class DbResults  < DbOrds
 							 and alloctbl_qty > 0 and alloctbl_allocfree = 'alloc' &
 					alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
 					proc_command_c_to_instance inst
-					proc_opeitm_instance(inst)
+					##proc_opeitm_instance(inst)
 					@result_qty = input["qty"]   ###
 					@result_qty_case = input["qty_case"]   
 					case prdpurshp

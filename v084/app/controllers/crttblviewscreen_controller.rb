@@ -296,10 +296,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
               case  js
                   when /persons_id_upd/ then  ##person は特殊
                         join_rtbl = "upd_persons" 
-                  ##when /persons_id_chrg/ then
-                  ##     join_rtbl = "chrg_persons" 
-                  ##when "perons_id"
-                  ##      next
                    else
                        join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
               end 
@@ -362,7 +358,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			##	end
 			##end
             if   xfield  != "" then 
-                xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] then  "_" + rtblname.split(/_/,2)[1] else "" end 
+                xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split(/_/,2)[1] else "" end 
                 k <<  " " +  xfield   + "," 
                 lngerrfield = xfield.split(" ")[1]
                 ##p " 127 #{xfield}"
