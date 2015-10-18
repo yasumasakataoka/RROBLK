@@ -48,28 +48,28 @@ before_filter :authenticate_user!
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
 	def testlinks	###開発環境のみで動く
-	        recs = plsql.r_tblinks.all("where tblink_expiredate > current_date")  
+	        recs = ActiveRecord::Base.connection.select_all("select * from r_tblinks where tblink_expiredate > current_date")  
 			recs.each do |rec|
 			        str_select = "select distinct a.id ,a.blktbsfieldcode_seqno from r_blktbsfieldcodes a "
 					str_select << "where blktbsfieldcode_expiredate > current_date"
-					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec[:id]}) b "
+					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec["id"]}) b "
 					str_select << " where a.id = b.tblinkfld_blktbsfieldcode_id )"
-					str_select << " and a.blktbsfieldcode_blktb_id = #{rec[:tblink_blktb_id_dest]} "
-				    fldrecs = plsql.select(:all,str_select)
+					str_select << " and a.blktbsfieldcode_blktb_id = #{rec["tblink_blktb_id_dest"]} "
+				    fldrecs = ActiveRecord::Base.connection.select_all(str_select)
 					##debugger
 			        fldrecs.each do |fldrec|
 			           fld = {}
-		    	       fld[:tblinks_id] = rec[:tblink_id]
+		    	       fld[:tblinks_id] = rec["tblink_id"]
 			           fld[:persons_id_upd] = 0
 			           fld[:expiredate] = DateTime.parse("2099/12/31")
 			           fld[:created_at] = Time.now
 			           fld[:updated_at] = Time.now
 		               fld[:remark] = "auto created "		   
 			           fld[:id] = plsql.tblinkflds_seq.nextval
-			           fld[:blktbsfieldcodes_id] = fldrec[:id]
-			           fld[:seqno] = fldrec[:blktbsfieldcode_seqno]
-					   unless plsql.tblinkflds.first("where tblinks_id = #{rec[:tblink_id]} and blktbsfieldcodes_id = #{fldrec[:id]} ")
-					      plsql.tblinkflds.insert fld
+			           fld[:blktbsfieldcodes_id] = fldrec["id"]
+			           fld[:seqno] = fldrec["blktbsfieldcode_seqno"]
+					   unless plsql.tblinkflds.first("where tblinks_id = #{rec["tblink_id"]} and blktbsfieldcodes_id = #{fldrec["id"]} ")
+					      proc_tbl_insert_arel("tblinkflds", fld)
 					   end
 			        end
 			end

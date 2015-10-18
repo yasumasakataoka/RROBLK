@@ -79,8 +79,8 @@ class   GanttController  <  ScreenController
 		trn_gantts.each_with_index do |value,idx|
             break if idx >= 1000	
 			alloc = {}
-		    case idx
-			    when 0,1
+		    case value["alloctbl_destblname"]
+			    when nil
 			        trn_sno = ActiveRecord::Base.connection.select_one(%Q& select * from #{value["trngantt_orgtblname"]} where id = #{value["trngantt_orgtblid"]} &)
 					value["itm_name"] = trn_sno["sno"]
 					value["itm_code"] = "" 
@@ -92,11 +92,11 @@ class   GanttController  <  ScreenController
 					   alloc["duedate"] = custtrn["custord_duedate"]  ###c
 					end
 			    else
-					fprnt "line #{__LINE__} value #{value}"  if value["alloctbl_destblname"].nil?
+					###fprnt "line #{__LINE__} value #{value}"  if value["alloctbl_destblname"].nil?
 					alloc =  ActiveRecord::Base.connection.select_one(%Q& select * from #{value["alloctbl_destblname"]} where id = #{value["alloctbl_destblid"]}&)
                   ###  trn_sno = plsql.select(:first,"select * from #{value[:trngantt_tblname]} where id = #{value[:trngantt_tblid]} ")				
 		    end
-            tmpgantt[value["trngantt_key"].to_sym] = {:id=>(idx += 1).to_s,:itm_code=>value["itm_code"],:itm_name=>value["itm_name"],
+            tmpgantt[value["trngantt_key"].to_sym] = {:id=>(idx).to_s,:itm_code=>value["itm_code"],:itm_name=>value["itm_name"],
 			                                            :loca_code=>"#{value["loca_code"]}",:loca_name=>value["loca_name"],
 														:prdpurshp=>"#{value["prdpurshp"]}",:sno=>alloc["sno"],
                                                         :qty=>"#{value["qty"]||=0}",
@@ -108,10 +108,11 @@ class   GanttController  <  ScreenController
                                                         :end=>if value["alloctbl_destblname"] =~ /^lotstk/ then (alloc["strdate"].to_i * 1000) else (alloc["duedate"].to_i * 1000 )end,:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
 														:level=>if value["trngantt_key"] == '000' then 0 else 1 end,
 														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>""}
+							
             if value["trngantt_key"].size > 3
 			    tmpgantt[value["trngantt_key"][0..-4].to_sym][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]},"  if tmpgantt[value["trngantt_key"].to_sym]
 			  else
-			    tmpgantt[:"001"][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]}," if value["trngantt_key"].to_s > "001"
+			    tmpgantt[:"001"][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]}," if value["trngantt_key"] > "001"
 			end
 		end		
         strgantt = '{"tasks":['

@@ -88,3 +88,7 @@ truncate table sio_r_purrsltinputs
 ;
 truncate table sio_r_purreplyinputs
 ;
+truncate table shpreplyinputs
+;
+truncate table sio_r_shpreplyinputs
+;

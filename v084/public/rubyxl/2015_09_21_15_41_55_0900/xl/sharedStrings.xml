@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="50" uniqueCount="32"><si><t>usebutton_id</t></si><si><t>pobject_code_scr_ub</t></si><si><t>button_code</t></si><si><t>button_title</t></si><si><t>usebutton_expiredate</t></si><si><t>button_onclickbutton</t></si><si><t>button_editgridrow</t></si><si><t>pobject_rubycode_view_ub</t></si><si><t>usebutton_updated_at</t></si><si><t>pobject_rubycode_scr_ub</t></si><si><t>r_dealers</t></si><si><t>search</t></si><si><t>Search</t></si><si><t>2099/12/31</t></si><si><t>"mygrid[0].toggleToolbar()"</t></si><si><t>add</t></si><si><t>Add</t></si><si><t>edit</t></si><si><t>Edit</t></si><si><t>copy_and_add</t></si><si><t>Copy and Add</t></si><si><t>copyandadd</t></si><si><t>delete</t></si><si><t>Delete</t></si><si><t>export</t></si><si><t>export to xlsx</t></si><si><t xml:space="preserve">xlsexport = %Q|function nWinxlsexport#{@jqgrid_id}() {var pdata = jQuery("##{@jqgrid_id}").getPostData(); 
+                        var strparam;jQuery.each(pdata, function(key, value) {strparam = strparam + key + "=" + value + "&amp;" }); strparam = strparam.replace(/%/g, "%25"); strparam = strparam + "jqgrid_id=#{@jqgrid_id}";
+                        var url = "/excelexport/export?"+strparam;window.open(url);};
+                        jQuery(function() {jQuery(".#{@jqgrid_id}_filterbuttonclass").click(nWinxlsexport#{@jqgrid_id});});|
+                %Q% jQuery(".#{@jqgrid_id}_filterformclass").remove();jQuery("##{@jqgrid_id}_cust_buttonA_id").filterGrid("##{@jqgrid_id}",
+                        {formclass:"#{@jqgrid_id}_filterformclass",buttonclass:"#{@jqgrid_id}_filterbuttonclass",enableSearch:true,searchButton:"Excel Export",autosearch:true,url:"/screen/disp?jqgrid_id=#{@jqgrid_id}",
+                        filterModel:[{label:" #{sub_blkgetpobj("max_output_cnt","fix_char")}", name: "maxcount", stype: "select", sopt:{value:"1000:1000 ;10000:10000;100000:100000 "}}]}); #{xlsexport}%
+						</t></si><si><t>import</t></si><si><t>import from xlsx</t></si><si><t>%Q%document.location = "/importfmxlsx/index?jqgrid_id=" + id%
+###export とは違い別画面になる。</t></si><si><t>pdf</t></si><si><t xml:space="preserve">        pdflists = plsql.select(:all,"select * from r_reports where pobject_code_scr = '#{@screen_code}' and REPORT_EXPIREDATE &gt;sysdate")                
+        if pdflists.size &gt; 0	
+            pdfvalue = ""		
+            pdflists.each do |i|
+	          pdfvalue &lt;&lt; i[:pobject_code_rep] + ":" + sub_blkgetpobj(i[:pobject_code_rep],"report") + ";"             
+            end
+            if pdfvalue.size &gt; 0
+		        pdfvalue.chop      
+                pdfdata = %Q%function nWinPdf#{@jqgrid_id}() {var pdata = jQuery("##{@jqgrid_id}").getPostData(); 
+                        var strparam;jQuery.each(pdata, function(key, value) {strparam = strparam + key + "=" + value + "&amp;" }); strparam = strparam + "jqgrid_id=#{@jqgrid_id}";
+                        var url = "/pdf/index?"+strparam;window.open(url);};
+                        jQuery(function() {jQuery(".#{@jqgrid_id}_filterbuttonclass").click(nWinPdf#{@jqgrid_id});});%
+                %Q% jQuery(".#{@jqgrid_id}_filterformclass").remove();jQuery("##{@jqgrid_id}_cust_buttonA_id").filterGrid("##{@jqgrid_id}",
+                        {formclass:"#{@jqgrid_id}_filterformclass",buttonclass:"#{@jqgrid_id}_filterbuttonclass",enableSearch:true,searchButton:"pdf",autosearch:true,url:"/screen/preview_prnt?jqgrid_id=#{@jqgrid_id}",
+                        filterModel:[{label:".  pdf list", name: "pdflist", stype: "select", sopt:{value:"#{pdfvalue}"}},
+                        {label:" #{sub_blkgetpobj("first_printing ?","fix_char")}", name: "initprnt", stype: "select", sopt:{value:"1:yes ;9:all "}},
+                        {label:" #{sub_blkgetpobj("editing_after_printing ?","fix_char")}", name: "afterprnt", stype: "select", sopt:{value:"1:yes ;9:all "}},
+                        {label:" #{sub_blkgetpobj("You_update_records?","fix_char")}", name: "whoupdate", stype: "select",sopt:{value:"1:yes ;9:all "}}]}); #{pdfdata}%
+			else
+		        %Q|jQuery("##{@jqgrid_id}_cust_buttonA_id b").remove();jQuery("##{@jqgrid_id}_cust_buttonA_id").append("&lt;b&gt;screen has no pdf_list&lt;\/b&gt;").toggle();| 
+            end	
+        else
+		    %Q|jQuery("##{@jqgrid_id}_cust_buttonA_id b").remove();jQuery("##{@jqgrid_id}_cust_buttonA_id").append("&lt;b&gt;screen has no pdf_list&lt;\/b&gt;").toggle();|
+			end</t></si></sst>

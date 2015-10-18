@@ -5,11 +5,12 @@ class ImportfieldsfromoracleController < ApplicationController
 	def index
 		@tsqlstr = ""
 		tblid  = params[:sio_viewname].to_i
-		if  rec = plsql.r_blktbs.first("where id = #{tblid}  ") then 
-			if rec[:blktb_expiredate] > Time.now then
+		###tblid  = params[:jqgrid].to_i
+		if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{tblid}  ") 
+			if rec["blktb_expiredate"] > Time.now then
 				plsql.logoff
 				plsql.connect! "rails", "rails",  :database => "xe"
-				sub_import_fields_from_oracle rec[:pobject_code_tbl],rec[:id]
+				sub_import_fields_from_oracle rec["pobject_code_tbl"],rec["id"]
 				##Rails.cache.clear(nil)
             else
 				@errmsg = "out of expiredate"
@@ -22,11 +23,10 @@ class ImportfieldsfromoracleController < ApplicationController
      ##開発環境のみ buttonにセット
      begin
      @errmsg = ""
-     if rec_id.nil? then 
-         tmp_rec_id = plsql.r_blktbs.first("where pobject_code_tbl = '#{pobject_code_tbl}' and pobject_objecttype_tbl = 'tbl' and blktb_expiredate > current_date ")
-         if  tmp_rec_id then
-             rec_id = tmp_rec_id[:id]
-            else
+     if rec_id.nil?  ##
+         rec_id = ActiveRecord::Base.connection.select_value("select id from r_blktbs where pobject_code_tbl = '#{pobject_code_tbl}' 
+						and pobject_objecttype_tbl = 'tbl' and blktb_expiredate > current_date ")
+         if  rec_id.nil?
              @errmsg = " id not found"
          end
       end
@@ -34,15 +34,15 @@ class ImportfieldsfromoracleController < ApplicationController
      if tblconts
          columns = plsql.__send__(pobject_code_tbl).columns
          ###子コードのチェック
-         chk_chil_tbl = plsql.select(:all,%Q%select c.table_name,c.COLUMN_NAME from user_constraints a, user_constraints b, user_cons_columns c
+         chk_chil_tbls = ActiveRecord::Base.connection.select_all(%Q%select c.table_name,c.COLUMN_NAME from user_constraints a, user_constraints b, user_cons_columns c
                                              where a.constraint_name = b.r_constraint_name and  b.constraint_name = c.constraint_name 
                                              and b.constraint_type = 'R' and a.constraint_type = 'P' and a.table_name = UPPER('blktbsfieldcodes')%)
-         chk_chil_tbl.each do |rec|
-              blktfc_id = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}  and  expiredate > current_date") 
-              blktfc_id.each do |id_rec|
-                 chk_done = plsql.__send__(rec[:table_name]).first("where #{rec[:column_name]} = #{id_rec[:id]} ")
+         chk_chil_tbls.each do |rec|
+              blktfc_ids = ActiveRecord::Base.connection.select_values("select  id from blktbsfieldcodes where blktbs_id = #{rec_id}  and  expiredate > current_date") 
+              blktfc_ids.each do |id_rec|
+                 chk_done = ActiveRecord::Base.connection.select_value("select 1 from #{rec["table_name"]} where #{rec["column_name"]} = #{id_rec} ")
                  if  chk_done then
-                      @errmsg << "Can not delete blktbsfieldcodes because table #{rec[:table_name]} has   blktbsfieldcodes = #{id_rec[:id]} "
+                      @errmsg << "Can not delete blktbsfieldcodes because table #{rec["table_name"]} has   blktbsfieldcodes = #{id_rec} "
                  end
               end
          end
@@ -147,60 +147,60 @@ class ImportfieldsfromoracleController < ApplicationController
   end
   def  prv_add_blktbsfieldcodes rec_id,fieldcode
        tmp = {}
-       tmp[:id] = plsql.blktbsfieldcodes_seq.nextval
+       tmp[:id] = proc_get_nextval("blktbsfieldcodes_seq")
        tmp[:blktbs_id] = rec_id
        ##tmp[:ctblname] = "fieldcodes"
        tmp[:fieldcodes_id] = fieldcode[:id]
-       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id] 
+       tmp[:persons_id_upd] = ActiveRecord::Base.connection.select_value("select id persons   where email = '#{current_user[:email]}'") 
        tmp[:expiredate]=Time.parse("2099-12-31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
        tmp[:remark] = " set by prv_add_blktbsfieldcodes"
-       plsql.blktbsfieldcodes.insert tmp
+       proc_tbl_insert_arel("blktbsfieldcodes",tmp)
   end
   def prv_chk_pobjects field,objecttype
-      rec = plsql.pobjects.first("where code = '#{field}' and objecttype = '#{objecttype}' and expiredate > current_date")
-      unless rec
+      rec_id = ActiveRecord::Base.connection.select_value("select id from pobjects where code = '#{field}' and objecttype = '#{objecttype}' and expiredate > current_date")
+      unless rec_id
          rec = prv_add_pobjects field,objecttype
       end
-      return rec
+      return rec_id
   end 
   def  prv_chk_fieldcodes field,attr
-       rec =  prv_chk_pobjects field,"tbl_field"
+       rec_id =  prv_chk_pobjects field,"tbl_field"
        fieldcode = plsql.r_fieldcodes.first("where pobject_code_fld = '#{field}' and pobject_objecttype_fld = 'tbl_field' and fieldcode_expiredate > current_date")
        if fieldcode then
           prv_chk_attr field,fieldcode,attr
          else
-          fieldcode = prv_add_fieldcode rec[:id],attr
+          fieldcode = prv_add_fieldcode rec_id,attr
        end
        return fieldcode 
   end
   def  prv_add_fieldcode rec_id,attr
        tmp = {}
-       tmp[:id] = plsql.fieldcodes_seq.nextval
+       tmp[:id] = proc_get_nextval("fieldcodes_seq")
        tmp[:pobjects_id_fld] = rec_id
        tmp[:ftype] = attr[:data_type].downcase
        tmp[:fieldlength] = attr[:data_length]
        tmp[:dataprecision] = attr[:data_precision]
        tmp[:datascale] =   attr[:data_scale]||=0
-       tmp[:persons_id_upd] = plsql.persons.first(:email =>current_user[:email])[:id]
+       tmp[:persons_id_upd] = ActiveRecord::Base.connection.select_value("select id from persons   where email = '#{current_user[:email]}'")
        tmp[:expiredate] = Time.parse("2099/12/31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
        tmp[:remark] = " set by prv_add_fieldcode"
-       plsql.fieldcodes.insert tmp
+       proc_tbl_insert_arel("fieldcodes", tmp)
        return tmp
   end 
   def prv_add_pobjects field,objecttype
       tmp ={}
-      tmp[:id] = plsql.pobjects_seq.nextval
+      tmp[:id] = proc_get_nextval("pobjects_seq")
       tmp[:objecttype] = objecttype
-      tmp[:persons_id_upd] =plsql.persons.first(:email =>current_user[:email])[:id] 
+      tmp[:persons_id_upd] = ActiveRecord::Base.connection.select_value("select id from persons   where email = '#{current_user[:email]}'") 
       tmp[:created_at] = Time.now
       tmp[:updated_at] = Time.now
       tmp[:expiredate] = Time.parse("2099/12/31")
       tmp[:code] = field
-      plsql.pobjects.insert tmp
+      proc_tbl_insert_arel("pobjects",tmp)
       return tmp
   end
 	def prv_chk_attr field,fieldcode,attr
@@ -242,7 +242,7 @@ class ImportfieldsfromoracleController < ApplicationController
 		screenfields = 
          { :expiredate   => Time.parse("2099/12/31"),
           :remark   => "auto_crt",
-          :persons_id_upd   =>  plsql.persons.first(:email =>current_user[:email])[:id]  ,
+          :persons_id_upd   =>  ActiveRecord::Base.connection.select_value("select id from persons   where email = '#{current_user[:email]}'")  ,
           :update_ip   => @myip,
           :created_at   => Time.now,
           :updated_at   => Time.now,
@@ -313,9 +313,9 @@ class ImportfieldsfromoracleController < ApplicationController
 				end                          
 			end
 			screenfields[:hideflg]   = if sr["column_name"] =~ /_id/  or sr["column_name"] =="id" then 1 else 0 end 
-			tid = plsql.pobjects.first("where code = '#{sr["column_name"]}' and objecttype ='view_field' and expiredate > current_date ")
+			tid = ActiveRecord::Base.connection.select_value("select id from pobjects where code = '#{sr["column_name"]}' and objecttype ='view_field' and expiredate > current_date ")
 			if tid then
-				screenfields[:pobjects_id_sfd]   = tid[:id]   
+				screenfields[:pobjects_id_sfd]   = tid
             else
 				tmp = prv_add_pobjects sr["column_name"],"view_field"
 				screenfields[:pobjects_id_sfd] =  tmp[:id]      
@@ -343,19 +343,16 @@ class ImportfieldsfromoracleController < ApplicationController
 			##   editform positon 
 			screenfields[:seqno] = 999 
 			screenfields[:seqno] = 888 if  screenfields[:editable] == 1 
-			##screenfields[:rowpos] = 999   if screenfields[:editable] ==  1 
-			unless   screenfields[:pobjects_id_sfd] 
-				tmp =  prv_add_pobjects sr["column_name"], "view_field"
-				screenfields[:pobjects_id_sfd] =  tmp[:id]      
-			end
 			if screenfields[:editable] ==  1  then
 				screenfields[:rowpos] = row_cnt
 				screenfields[:colpos] = if sr["column_name"] =~ /_name/ then 2 else 1 end
 			end
-			strsql = "select id from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} " 
+			strsql = "select pobject_code_sfd from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} " 
 			chkfield = ActiveRecord::Base.connection.select_value(strsql)
 			if chkfield.nil?
-				plsql.screenfields.insert screenfields
+				screenfields[:blktbsfieldcodes_id] = @sfd_code_id[sr["column_name"]]
+				debugger if screenfields[:blktbsfieldcodes_id].nil?
+				proc_tbl_insert_arel("screenfields",screenfields)
 			end
 		else
 			@errmsg = " screen_code not exists screen_code #{viewname}"
@@ -507,12 +504,12 @@ class ImportfieldsfromoracleController < ApplicationController
             chil_r = ActiveRecord::Base.connection.select_value("select * from ChilScreens where screens_id = #{x} and screens_id_chil = #{y}")
             if chil_r.nil?
                 val_chil = {
-					:id => plsql.chilscreens_seq.nextval,
+					:id => proc_get_nextval("chilscreens_seq"),
                     :screens_id => x[:id],
                     :screens_id_chil => y[:id],
                     :expiredate => Time.parse("2099/12/31"),
                     :remark => "auto_create", 
-                    :persons_id_upd => plsql.persons.first(:email =>current_user[:email])[:id]  , 
+                    :persons_id_upd => ActiveRecord::Base.connection.select_value("select id from persons   where email = '#{current_user[:email]}'")  , 
                     :update_ip =>  "1",
                     :created_at => Time.now,
                     :updated_at => Time.now

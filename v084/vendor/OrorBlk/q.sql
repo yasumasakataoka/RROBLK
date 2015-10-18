@@ -1,243 +1,69 @@
-create 
-or replace view r_mkords as 
-select
-  mkord.isudate mkord_isudate
-  , mkord.expiredate mkord_expiredate
-  , mkord.updated_at mkord_updated_at
-  , mkord.remark mkord_remark
-  , mkord.created_at mkord_created_at
-  , mkord.update_ip mkord_update_ip
-  , mkord.prdpurshp mkord_prdpurshp
-  , mkord.id id
-  , mkord.id mkord_id
-  , mkord.persons_id_upd mkord_person_id_upd
-  , person_upd.updperson_id updperson_id_upd
-  , person_upd.updperson_code updperson_code_upd
-  , person_upd.updperson_name updperson_name_upd
-  , mkord.tblname_pare mkord_tblname_pare
-  , mkord.opeitms_id_pare mkord_opeitm_id_pare
-  , opeitm_pare.opeitm_minqty opeitm_minqty_pare
-  , opeitm_pare.opeitm_priority opeitm_priority_pare
-  , opeitm_pare.opeitm_processseq opeitm_processseq_pare
-  , opeitm_pare.opeitm_safestkqty opeitm_safestkqty_pare
-  , opeitm_pare.opeitm_duration opeitm_duration_pare
-  , opeitm_pare.opeitm_unit_id_lttime opeitm_unit_id_lttime_pare
-  , opeitm_pare.unit_id_lttime unit_id_lttime_pare
-  , opeitm_pare.unit_remark_lttime unit_remark_lttime_pare
-  , opeitm_pare.unit_code_lttime unit_code_lttime_pare
-  , opeitm_pare.unit_name_lttime unit_name_lttime_pare
-  , opeitm_pare.opeitm_packqty opeitm_packqty_pare
-  , opeitm_pare.opeitm_itm_id opeitm_itm_id_pare
-  , opeitm_pare.itm_code itm_code_pare
-  , opeitm_pare.itm_minqty itm_minqty_pare
-  , opeitm_pare.itm_std itm_std_pare
-  , opeitm_pare.itm_model itm_model_pare
-  , opeitm_pare.itm_wide itm_wide_pare
-  , opeitm_pare.itm_packqty itm_packqty_pare
-  , opeitm_pare.itm_name itm_name_pare
-  , opeitm_pare.itm_remark itm_remark_pare
-  , opeitm_pare.itm_deth itm_deth_pare
-  , opeitm_pare.itm_length itm_length_pare
-  , opeitm_pare.itm_weight itm_weight_pare
-  , opeitm_pare.itm_design itm_design_pare
-  , opeitm_pare.itm_material itm_material_pare
-  , opeitm_pare.itm_id itm_id_pare
-  , opeitm_pare.itm_unit_id itm_unit_id_pare
-  , opeitm_pare.unit_id unit_id_pare
-  , opeitm_pare.unit_remark unit_remark_pare
-  , opeitm_pare.unit_code unit_code_pare
-  , opeitm_pare.unit_name unit_name_pare
-  , opeitm_pare.opeitm_remark opeitm_remark_pare
-  , opeitm_pare.opeitm_prdpurshp opeitm_prdpurshp_pare
-  , opeitm_pare.opeitm_id opeitm_id_pare
-  , opeitm_pare.opeitm_contents opeitm_contents_pare
-  , opeitm_pare.opeitm_loca_id opeitm_loca_id_pare
-  , opeitm_pare.loca_id loca_id_pare
-  , opeitm_pare.loca_code loca_code_pare
-  , opeitm_pare.loca_name loca_name_pare
-  , opeitm_pare.loca_abbr loca_abbr_pare
-  , opeitm_pare.loca_zip loca_zip_pare
-  , opeitm_pare.loca_country loca_country_pare
-  , opeitm_pare.loca_prfct loca_prfct_pare
-  , opeitm_pare.loca_addr1 loca_addr1_pare
-  , opeitm_pare.loca_addr2 loca_addr2_pare
-  , opeitm_pare.loca_tel loca_tel_pare
-  , opeitm_pare.loca_fax loca_fax_pare
-  , opeitm_pare.loca_mail loca_mail_pare
-  , opeitm_pare.loca_remark loca_remark_pare
-  , opeitm_pare.opeitm_autocreate_ord opeitm_autocreate_ord_pare
-  , opeitm_pare.opeitm_autocreate_inst opeitm_autocreate_inst_pare
-  , opeitm_pare.opeitm_opt_fixoterm opeitm_opt_fixoterm_pare
-  , opeitm_pare.opeitm_maxqty opeitm_maxqty_pare
-  , opeitm_pare.opeitm_operation opeitm_operation_pare
-  , opeitm_pare.opeitm_unit_id_case opeitm_unit_id_case_pare
-  , opeitm_pare.unit_id_case unit_id_case_pare
-  , opeitm_pare.unit_remark_case unit_remark_case_pare
-  , opeitm_pare.unit_code_case unit_code_case_pare
-  , opeitm_pare.unit_name_case unit_name_case_pare
-  , opeitm_pare.opeitm_autocreate_act opeitm_autocreate_act_pare
-  , opeitm_pare.opeitm_shuffle_flg opeitm_shuffle_flg_pare
-  , opeitm_pare.opeitm_shuffle_loca opeitm_shuffle_loca_pare
-  , opeitm_pare.opeitm_chkord opeitm_chkord_pare
-  , opeitm_pare.opeitm_chkord_prc opeitm_chkord_prc_pare
-  , opeitm_pare.opeitm_rule_price opeitm_rule_price_pare
-  , opeitm_pare.opeitm_stktaking_f opeitm_stktaking_f_pare
-  , opeitm_pare.opeitm_esttosch opeitm_esttosch_pare
-  , opeitm_pare.opeitm_chkinst opeitm_chkinst_pare
-  , opeitm_pare.opeitm_mold opeitm_mold_pare
-  , mkord.cmpldate mkord_cmpldate
-  , mkord.runtime mkord_runtime
-  , mkord.result_f mkord_result_f
-  , mkord.message_code mkord_message_code
-  , mkord.message_contents mkord_message_contents
-  , mkord.orgtblname mkord_orgtblname
-  , mkord.sno_org mkord_sno_org
-  , mkord.locas_id_trn mkord_loca_id_trn
-  , loca_trn.loca_id loca_id_trn
-  , loca_trn.loca_code loca_code_trn
-  , loca_trn.loca_name loca_name_trn
-  , loca_trn.loca_abbr loca_abbr_trn
-  , loca_trn.loca_zip loca_zip_trn
-  , loca_trn.loca_country loca_country_trn
-  , loca_trn.loca_prfct loca_prfct_trn
-  , loca_trn.loca_addr1 loca_addr1_trn
-  , loca_trn.loca_addr2 loca_addr2_trn
-  , loca_trn.loca_tel loca_tel_trn
-  , loca_trn.loca_fax loca_fax_trn
-  , loca_trn.loca_mail loca_mail_trn
-  , loca_trn.loca_remark loca_remark_trn
-  , mkord.itms_id_org mkord_itm_id_org
-  , itm_org.itm_code itm_code_org
-  , itm_org.itm_minqty itm_minqty_org
-  , itm_org.itm_std itm_std_org
-  , itm_org.itm_model itm_model_org
-  , itm_org.itm_wide itm_wide_org
-  , itm_org.itm_packqty itm_packqty_org
-  , itm_org.itm_name itm_name_org
-  , itm_org.itm_remark itm_remark_org
-  , itm_org.itm_deth itm_deth_org
-  , itm_org.itm_length itm_length_org
-  , itm_org.itm_weight itm_weight_org
-  , itm_org.itm_design itm_design_org
-  , itm_org.itm_material itm_material_org
-  , itm_org.itm_id itm_id_org
-  , itm_org.itm_unit_id itm_unit_id_org
-  , itm_org.unit_id unit_id_org
-  , itm_org.unit_remark unit_remark_org
-  , itm_org.unit_code unit_code_org
-  , itm_org.unit_name unit_name_org
-  , mkord.itms_id_trn mkord_itm_id_trn
-  , itm_trn.itm_code itm_code_trn
-  , itm_trn.itm_minqty itm_minqty_trn
-  , itm_trn.itm_std itm_std_trn
-  , itm_trn.itm_model itm_model_trn
-  , itm_trn.itm_wide itm_wide_trn
-  , itm_trn.itm_packqty itm_packqty_trn
-  , itm_trn.itm_name itm_name_trn
-  , itm_trn.itm_remark itm_remark_trn
-  , itm_trn.itm_deth itm_deth_trn
-  , itm_trn.itm_length itm_length_trn
-  , itm_trn.itm_weight itm_weight_trn
-  , itm_trn.itm_design itm_design_trn
-  , itm_trn.itm_material itm_material_trn
-  , itm_trn.itm_id itm_id_trn
-  , itm_trn.itm_unit_id itm_unit_id_trn
-  , itm_trn.unit_id unit_id_trn
-  , itm_trn.unit_remark unit_remark_trn
-  , itm_trn.unit_code unit_code_trn
-  , itm_trn.unit_name unit_name_trn
-  , mkord.strdate_trn mkord_strdate_trn
-  , mkord.duedate_trn mkord_duedate_trn
-  , mkord.confirm mkord_confirm
-  , mkord.incnt mkord_incnt
-  , mkord.outcnt mkord_outcnt
-  , mkord.inqty mkord_inqty
-  , mkord.outqty mkord_outqty
-  , mkord.inamt mkord_inamt
-  , mkord.outamt mkord_outamt
-  , mkord.skipcnt mkord_skipcnt
-  , mkord.skipqty mkord_skipqty
-  , mkord.skipamt mkord_skipamt
-  , mkord.cno_org mkord_cno_org
-  , mkord.chrgs_id_cpo_org mkord_chrg_id_cpo_org
-  , chrg_cpo_org.chrg_id chrg_id_cpo_org
-  , chrg_cpo_org.chrg_remark chrg_remark_cpo_org
-  , chrg_cpo_org.chrg_person_id chrg_person_id_cpo_org
-  , chrg_cpo_org.person_code_chrg person_code_chrg_cpo_org
-  , chrg_cpo_org.person_name_chrg person_name_chrg_cpo_org
-  , chrg_cpo_org.person_remark_chrg person_remark_chrg_cpo_org
-  , chrg_cpo_org.usrgrp_name_chrg usrgrp_name_chrg_cpo_org
-  , chrg_cpo_org.usrgrp_code_chrg usrgrp_code_chrg_cpo_org
-  , chrg_cpo_org.person_email_chrg person_email_chrg_cpo_org
-  , chrg_cpo_org.person_id_chrg person_id_chrg_cpo_org
-  , chrg_cpo_org.person_sect_id person_sect_id_cpo_org
-  , chrg_cpo_org.sect_id sect_id_cpo_org
-  , chrg_cpo_org.loca_id_sect loca_id_sect_cpo_org
-  , chrg_cpo_org.loca_code_sect loca_code_sect_cpo_org
-  , chrg_cpo_org.loca_name_sect loca_name_sect_cpo_org
-  , chrg_cpo_org.loca_abbr_sect loca_abbr_sect_cpo_org
-  , chrg_cpo_org.loca_zip_sect loca_zip_sect_cpo_org
-  , chrg_cpo_org.loca_country_sect loca_country_sect_cpo_org
-  , chrg_cpo_org.loca_prfct_sect loca_prfct_sect_cpo_org
-  , chrg_cpo_org.loca_addr1_sect loca_addr1_sect_cpo_org
-  , chrg_cpo_org.loca_addr2_sect loca_addr2_sect_cpo_org
-  , mkord.chrgs_id_dlr_trn mkord_chrg_id_dlr_trn
-  , chrg_dlr_trn.chrg_id chrg_id_dlr_trn
-  , chrg_dlr_trn.chrg_remark chrg_remark_dlr_trn
-  , chrg_dlr_trn.chrg_person_id chrg_person_id_dlr_trn
-  , chrg_dlr_trn.person_code_chrg person_code_chrg_dlr_trn
-  , chrg_dlr_trn.person_name_chrg person_name_chrg_dlr_trn
-  , chrg_dlr_trn.person_remark_chrg person_remark_chrg_dlr_trn
-  , chrg_dlr_trn.usrgrp_name_chrg usrgrp_name_chrg_dlr_trn
-  , chrg_dlr_trn.usrgrp_code_chrg usrgrp_code_chrg_dlr_trn
-  , chrg_dlr_trn.person_email_chrg person_email_chrg_dlr_trn
-  , chrg_dlr_trn.person_id_chrg person_id_chrg_dlr_trn
-  , chrg_dlr_trn.person_sect_id person_sect_id_dlr_trn
-  , chrg_dlr_trn.sect_id sect_id_dlr_trn
-  , chrg_dlr_trn.loca_id_sect loca_id_sect_dlr_trn
-  , chrg_dlr_trn.loca_code_sect loca_code_sect_dlr_trn
-  , chrg_dlr_trn.loca_name_sect loca_name_sect_dlr_trn
-  , chrg_dlr_trn.loca_abbr_sect loca_abbr_sect_dlr_trn
-  , chrg_dlr_trn.loca_zip_sect loca_zip_sect_dlr_trn
-  , chrg_dlr_trn.loca_country_sect loca_country_sect_dlr_trn
-  , chrg_dlr_trn.loca_prfct_sect loca_prfct_sect_dlr_trn
-  , chrg_dlr_trn.loca_addr1_sect loca_addr1_sect_dlr_trn
-  , chrg_dlr_trn.loca_addr2_sect loca_addr2_sect_dlr_trn
-  , mkord.sno_pare mkord_sno_pare
-  , mkord.cno_pare mkord_cno_pare
-  , mkord.duedate_pare mkord_duedate_pare
-  , mkord.locas_id_pare mkord_loca_id_pare
-  , loca_pare.loca_id loca_id_pare
-  , loca_pare.loca_code loca_code_pare
-  , loca_pare.loca_name loca_name_pare
-  , loca_pare.loca_abbr loca_abbr_pare
-  , loca_pare.loca_zip loca_zip_pare
-  , loca_pare.loca_country loca_country_pare
-  , loca_pare.loca_prfct loca_prfct_pare
-  , loca_pare.loca_addr1 loca_addr1_pare
-  , loca_pare.loca_addr2 loca_addr2_pare
-  , loca_pare.loca_tel loca_tel_pare
-  , loca_pare.loca_fax loca_fax_pare
-  , loca_pare.loca_mail loca_mail_pare
-  , loca_pare.loca_remark loca_remark_pare 
-from
-  mkords mkord
-  , upd_persons person_upd
-  , r_opeitms opeitm_pare
-  , r_locas loca_trn
-  , r_itms itm_org
-  , r_itms itm_trn
-  , r_chrgs chrg_cpo_org
-  , r_chrgs chrg_dlr_trn
-  , r_locas loca_pare 
-where
-  person_upd.id = mkord.persons_id_upd 
-  and opeitm_pare.id = mkord.opeitms_id_pare 
-  and loca_trn.id = mkord.locas_id_trn 
-  and itm_org.id = mkord.itms_id_org 
-  and itm_trn.id = mkord.itms_id_trn 
-  and chrg_cpo_org.id = mkord.chrgs_id_cpo_org 
-  and chrg_dlr_trn.id = mkord.chrgs_id_dlr_trn 
-  and loca_pare.id = mkord.locas_id_pare
-  ;
+select * from r_screenfields where pobject_code_scr = 'r_rubycodings'
+;
+select * from screenfields where blktbsfieldcodes_id is null
+;
+
+select * from pobjects
+where id in(
+select pobjects_id_sfd from screenfields where blktbsfieldcodes_id is null)
+;
+
+
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)||'_'||STRTOKEN(b.pobject_code,'_',3)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)||'_'||STRTOKEN(b.pobject_code,'_',3)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)||'s_'||STRTOKEN(b.pobject_code,'_',3)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)||'s_'||STRTOKEN(b.pobject_code,'_',3)||'_'||STRTOKEN(b.pobject_code,'_',4)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+
+
+
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m ,sfd_pobjects b
+                          where pobject_code_tbl = STRTOKEN(b.pobject_code,'_',1)||'s'
+						  and pobject_code_fld = STRTOKEN(b.pobject_code,'_',2)||'s_'||STRTOKEN(b.pobject_code,'_',3)||'_'||STRTOKEN(b.pobject_code,'_',4)||'_'||STRTOKEN(b.pobject_code,'_', 5)
+						  and a.pobjects_id_sfd = b.id)
+where blktbsfieldcodes_id is null
+;
+update screenfields a
+set  blktbsfieldcodes_id = (select m.id from r_blktbsfieldcodes m 
+                          where pobject_code_tbl = 'screenfields'
+						  and pobject_code_fld = 'id' )
+where blktbsfieldcodes_id is null
+and (select code from pobjects where id = a.pobjects_id_sfd) = 'id'
+;
 

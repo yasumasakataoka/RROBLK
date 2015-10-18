@@ -106,13 +106,6 @@ include  JqgridFilter
 	   	fprnt " @screen_code  end #{@scren_code} #{Time.now}"
      return screen 
     end  ## 
-    ##def sub_get_select_list_value edoptvalue   ##固定文字を個別文字に
-    ## edoptvalue.scan(/'\w*'/).each do |i|
-    ##	 j = i.gsub("'","")
-    ##	 edoptvalue =  edoptvalue.sub(j,sub_blkgetpobj(j,"fix_char"))
-    ## end
-    ## return edoptvalue
-    ##end 
    private
    def gen_columns
       # Generate columns data
@@ -235,15 +228,16 @@ include  JqgridFilter
 		tmp_val = ""
 		pscreen_code,delm = paragraph.split(":")
 		delm  ||= ""
+		mktblname = if scrfield.split("_")[0] =~ /^mk/ then (scrfield.split("_")[0] + "_") else "" end
 		begin
 	        secgridc = get_show_data(pscreen_code)[:allfields]
-		rescue  ###検索項目に指定しているviewがない。
+		rescue  ###検索項目に指定しているviewがない。  ###画面でチェックすること　未実施
 		   	raise  "shoud be seach_screen_code invalid ;screen_code is:#{pscreen_code} "   
 		end
 		@gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ 
 			case scrfield
 				when /_code/
-					if  secgridc.index(tcolm[:field].sub(delm,"").to_sym)  and  tcolm[:editable] == true
+					if  secgridc.index(tcolm[:field].sub(delm,"").sub(mktblname,"").to_sym)  and  tcolm[:editable] == true
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
@@ -251,7 +245,8 @@ include  JqgridFilter
 				when /_sno_|_cno_/
 					tblchop = scrfield.split("_")[0]
 					notblchop = pscreen_code.split("_")[1].chop
-					if secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) and tcolm[:editable] == true 
+					### snoのテーブルの内容と　残数　qty_bal
+					if (secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) or tcolm[:field] =~ /_bal/) and tcolm[:editable] == true 
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
@@ -281,9 +276,12 @@ include  JqgridFilter
 		@gridcolumns.each do |tcolm|
             if ( tcolm[:editable] == true and tcolm[:formop] == 2 )   
                javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
+                require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
+                strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
 	        end
             if (tcolm[:field].split("_")[0] != @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true) or
-				  (tcolm[:field] =~ /_id|_sno|_cno|_ano|_prjno|_gno/ and  tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop)
+				  (tcolm[:field] =~ /_id|_sno|_cno|_ano|_prjno|_gno/ and  tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop) or
+				  ( tcolm[:editable] == true and tcolm[:formop] == 1 )
 				  ###################################
 				  ### _id は自身のテーブル以外のidは必須以外セットしない。
 				  ################改良項目
@@ -551,8 +549,7 @@ include  JqgridFilter
             <p id="#{@jqgrid_id}_pager" class="scroll" style="text-indent: #{options[:text_indent]}em;"></p>
             <p id="#{@jqgrid_id}_select_button">  #{extbutton} </p>
             #{extdiv_id}%
-        ##screen_javascript.gsub!(/\s+/," ")
-        ##fprnt " jqgrid #{a} "
+        ###screen_javascript.gsub!(/\s+/," ")
         id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
         Rails.cache.write(id_cache_key,screen_javascript)
         id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
@@ -679,9 +676,10 @@ include  JqgridFilter
                                  ,onClickButton: function(){if(inLineFlg){jQuery("##{@jqgrid_id}").jqGrid("restoreRow",rowid);}else{inLineFlg=null;alert("Now not inline "); }} 
 														})%
 					else  ##button[:button_code]
-						if button[:button_onclickbutton] then
-							str_navbuttonadd << %Q%
-							,onClickButton: function() {#{eval(button[:button_onclickbutton])}}, position:"right" })% 
+						if button[:button_onclickbutton] 
+							str_navbuttonadd << ",onClickButton: function() {"
+							str_navbuttonadd << eval(button[:button_onclickbutton])
+							str_navbuttonadd << %Q&}, position:"right" })&
 						else
                              str_navbuttonadd << "})"
 						end

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="476" uniqueCount="108"><si><t>tblinkfld_id</t></si><si><t>pobject_code_scr_src</t></si><si><t>pobject_code_tbl_dest</t></si><si><t>処理順序</t></si><si><t>pobject_code_fld</t></si><si><t>tblinkfld_rubycode</t></si><si><t>tblinkfld_contents</t></si><si><t>pobject_code_tbl</t></si><si><t>tblinkfld_remark</t></si><si><t>tblinkfld_expiredate</t></si><si><t>blktbsfieldcode_contents</t></si><si><t>tblink_seqno</t></si><si><t>tblink_beforeafter</t></si><si><t>tblink_codel</t></si><si><t>fieldcode_ftype</t></si><si><t>tblinkfld_created_at</t></si><si><t>tblinkfld_updated_at</t></si><si><t>person_code_upd</t></si><si><t>person_name_upd</t></si><si><t>fieldcode_contents</t></si><si><t>tblinkfld_update_ip</t></si><si><t>mkord_trngantts</t></si><si><t>shpords</t></si><si><t>contents</t></si><si><t xml:space="preserve">auto created </t></si><si><t>2099/12/31</t></si><si><t>undefined</t></si><si><t>self</t></si><si><t>proc_tblink_mkord_trngantts_shpords_self10</t></si><si><t>varchar2</t></si><si><t>2015/09/19 12:22</t></si><si><t>2015/09/19 16:25</t></si><si><t>system</t></si><si><t>id</t></si><si><t>command_c[:id] = proc_get_nextval("shpords_seq")   ### if @sio_classname =~ /_add_/</t></si><si><t>number</t></si><si><t>2015/09/19 11:16</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>remark</t></si><si><t>システムがセットする備考</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>update_ip</t></si><si><t>created_at</t></si><si><t>timestamp(6)</t></si><si><t>updated_at</t></si><si><t>persons_id_upd</t></si><si><t>"0".to_i</t></si><si><t>qty</t></si><si><t>(@ord[:shpord_qty])</t></si><si><t>price</t></si><si><t>(
+itm_rec = proc_get_viewrec_from_id("opeitms",command_c[:shpord_opeitm_id])
+dealer_rec = proc_get_viewrec_from_id("dealers",command_c[:shpord_dealer_id])
+command_c[:itm_code] = itm_rec["itm_code"]
+command_c[:loca_code_dealer] = dealer_rec["loca_code_dealer"]
+getprice = proc_price_amt(command_c)
+getprice[:price].to_f
+)</t></si><si><t>amt</t></si><si><t xml:space="preserve">getprice[:amt].to_f
+</t></si><si><t>sno</t></si><si><t xml:space="preserve">if @sio_classname =~ /_add_/ 
+ "add by proc_tblink_mkord_trngantts_shpords_self10"
+else
+  "edit by proc_tblink_mkord_trngantts_shpords_self10"
+end
+</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>duedate</t></si><si><t>(@ord[:shpord_duedate])</t></si><si><t>納期</t></si><si><t>toduedate</t></si><si><t>isudate</t></si><si><t xml:space="preserve">  Time.now </t></si><si><t>発行日</t></si><si><t>weight</t></si><si><t>opt_fixoterm</t></si><si><t>if @sio_classname =~ /_add_/ 
+  @opeitm_opt_fixoterm
+else
+  command_c[:shpord_opt_fixoterm]
+end</t></si><si><t xml:space="preserve">LT毎のまとめ発注期間　 opt_term=1 :LTと同じ
+
+</t></si><si><t>depdate</t></si><si><t>(@ord[:shpord_depdate])</t></si><si><t>locas_id_to</t></si><si><t>(@shpsch_loca_id_to)</t></si><si><t>carton</t></si><si><t>carton数</t></si><si><t>volume</t></si><si><t>cartonno</t></si><si><t>箱毎のカートンno
+,区切りでの入力を想定</t></si><si><t>carton　no</t></si><si><t>tax</t></si><si><t>getprice[:tax].to_f</t></si><si><t>confirm</t></si><si><t xml:space="preserve"> if @opeitm_autocreate_ord == "2" then "0" else "1" end 
+</t></si><si><t>char</t></si><si><t>1:confirm  0:仮　5:確認済　印刷後又はデータ送信後　1となる。
+T:test</t></si><si><t>manual</t></si><si><t>"a"</t></si><si><t>m:手動又はa:自動</t></si><si><t>contract_price</t></si><si><t>getprice[:contract_price]</t></si><si><t>単価契約フラグ
+1:発注日ベース　2:納期ベース　3:受入日ベース   4:出荷日ベース　5:検収ベース  
+7:出荷日までに決定する単価　8:受入日までに決定する単価　
+9:単価決定=検収日
+X:社内単価未定</t></si><si><t>gno</t></si><si><t>注文単位別key  ユニーク性は保証されない。 
+一枚の注文書に複数の品目がある時、その注文書の識別key</t></si><si><t>prjnos_id</t></si><si><t>(@shpsch_prjno_id)</t></si><si><t>発注等まとめる単位</t></si><si><t>opeitms_id</t></si><si><t>(@shpsch_opeitm_id)</t></si><si><t>itms_id_pare</t></si><si><t>(@shpsch_itm_id_pare)</t></si><si><t>processseq_pare</t></si><si><t>(@shpsch_processseq_pare)</t></si><si><t>同一item_coseに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>autocreate_inst</t></si><si><t>if @sio_classname =~ /_add_/ 
+ @opeitm_autocreate_inst 
+else
+ command_c[:shpord_autocreate_inst]
+end</t></si><si><t>　ORDS --&gt;INSTS への分割まとめ
+0:手動又は外部からのデータ取り込みでinsts作成
+　　まとめと分解あり。
+1:無条件でordからinstsを作成　回答待ち
+a:子部品がすべてそろったら指示
+b:子部品と設備がすべてそろったら
+instsは外からので他の取り込みを基本とする。
+回答納期、現場での作業予定を取り込むことを基本とする。</t></si><si><t>chrgs_id</t></si><si><t>(@chrg_id_dealer)</t></si></sst>

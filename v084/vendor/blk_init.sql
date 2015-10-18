@@ -141,6 +141,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_SECTS" (
   , "SECT_REMARK"
   , "SECT_EXPIREDATE"
   , "SECT_PERSON_ID_UPD"
+  , "PERSON_ID_UPD"
   , "PERSON_CODE_UPD"
   , "PERSON_NAME_UPD"
   , "PERSON_EMAIL_UPD"
@@ -167,6 +168,7 @@ select
   , sect.remark sect_remark
   , sect.expiredate sect_expiredate
   , sect.persons_id_upd sect_person_id_upd
+  , person_upd.id person_id_upd
   , person_upd.code person_code_upd
   , person_upd.name person_name_upd
   , person_upd.email person_email_upd
@@ -627,6 +629,156 @@ where
   pobject_tbl.id = blktb.pobjects_id_tbl 
   and person_upd.id = blktb.persons_id_upd
 ;
+
+CREATE TABLE "RAILS"."SCREENS" 
+   (	"ID" NUMBER(38,0), 
+	"STRSELECT" VARCHAR2(4000), 
+	"STRWHERE" VARCHAR2(4000), 
+	"STRGROUPORDER" VARCHAR2(4000), 
+	"YMLCODE" VARCHAR2(4000), 
+	"CDRFLAYOUT" VARCHAR2(10), 
+	"EXPIREDATE" DATE, 
+	"REMARK" VARCHAR2(100 CHAR), 
+	"PERSONS_ID_UPD" NUMBER(38,0), 
+	"UPDATE_IP" VARCHAR2(40), 
+	"CREATED_AT" TIMESTAMP (6), 
+	"UPDATED_AT" TIMESTAMP (6), 
+	"POBJECTS_ID_SCR" NUMBER(38,0), 
+	"POBJECTS_ID_VIEW" NUMBER(38,0), 
+	"ROWS_PER_PAGE" NUMBER(38,0), 
+	"ROWLIST" VARCHAR2(30), 
+	"HEIGHT" NUMBER(38,0), 
+	"FORM_PS" VARCHAR2(4000), 
+	"GRPCODENAME" VARCHAR2(50 CHAR), 
+	"SCRLVS_ID" NUMBER(38,0), 
+	"CONTENTS" VARCHAR2(4000), 
+	 CONSTRAINT "SCREENS_ID_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE, 
+	 CONSTRAINT "SCREENS_UKYS1" UNIQUE ("POBJECTS_ID_SCR")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE, 
+	 CONSTRAINT "SCREEN_POBJECTS_ID_SCR" FOREIGN KEY ("POBJECTS_ID_SCR")
+	  REFERENCES "RAILS"."POBJECTS" ("ID") ENABLE, 
+	 CONSTRAINT "SCREEN_POBJECTS_ID_VIEW" FOREIGN KEY ("POBJECTS_ID_VIEW")
+	  REFERENCES "RAILS"."POBJECTS" ("ID") ENABLE, 
+	 CONSTRAINT "SCREEN_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
+	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
+	 CONSTRAINT "SCREEN_SCRLVS_ID" FOREIGN KEY ("SCRLVS_ID")
+	  REFERENCES "RAILS"."SCRLVS" ("ID") ENABLE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"
+  
+  ;
+  CREATE 
+OR REPLACE FORCE VIEW "RAILS"."R_SCREENS" ( 
+  "SCREEN_EXPIREDATE"
+  , "SCREEN_UPDATED_AT"
+  , "SCREEN_STRWHERE"
+  , "SCREEN_ROWS_PER_PAGE"
+  , "SCREEN_ROWLIST"
+  , "SCREEN_HEIGHT"
+  , "SCREEN_POBJECT_ID_VIEW"
+  , "POBJECT_CODE_VIEW"
+  , "POBJECT_OBJECTTYPE_VIEW"
+  , "POBJECT_REMARK_VIEW"
+  , "POBJECT_RUBYCODE_VIEW"
+  , "POBJECT_ID_VIEW"
+  , "POBJECT_CONTENTS_VIEW"
+  , "SCREEN_FORM_PS"
+  , "SCREEN_STRGROUPORDER"
+  , "SCREEN_STRSELECT"
+  , "SCREEN_REMARK"
+  , "SCREEN_CREATED_AT"
+  , "SCREEN_UPDATE_IP"
+  , "SCREEN_CDRFLAYOUT"
+  , "SCREEN_YMLCODE"
+  , "ID"
+  , "SCREEN_ID"
+  , "SCREEN_GRPCODENAME"
+  , "SCREEN_PERSON_ID_UPD"
+  , "PERSON_ID_UPD"
+  , "PERSON_CODE_UPD"
+  , "PERSON_NAME_UPD"
+  , "SCREEN_POBJECT_ID_SCR"
+  , "POBJECT_CODE_SCR"
+  , "POBJECT_OBJECTTYPE_SCR"
+  , "POBJECT_REMARK_SCR"
+  , "POBJECT_RUBYCODE_SCR"
+  , "POBJECT_ID_SCR"
+  , "POBJECT_CONTENTS_SCR"
+  , "SCREEN_CONTENTS"
+  , "SCREEN_SCRLV_ID"
+  , "SCRLV_LEVEL1"
+  , "SCRLV_ID"
+  , "SCRLV_REMARK"
+  , "SCRLV_CODE"
+) AS 
+select
+  screen.expiredate screen_expiredate
+  , screen.updated_at screen_updated_at
+  , screen.strwhere screen_strwhere
+  , screen.rows_per_page screen_rows_per_page
+  , screen.rowlist screen_rowlist
+  , screen.height screen_height
+  , screen.pobjects_id_view screen_pobject_id_view
+  , pobject_view.pobject_code pobject_code_view
+  , pobject_view.pobject_objecttype pobject_objecttype_view
+  , pobject_view.pobject_remark pobject_remark_view
+  , pobject_view.pobject_rubycode pobject_rubycode_view
+  , pobject_view.pobject_id pobject_id_view
+  , pobject_view.pobject_contents pobject_contents_view
+  , screen.form_ps screen_form_ps
+  , screen.strgrouporder screen_strgrouporder
+  , screen.strselect screen_strselect
+  , screen.remark screen_remark
+  , screen.created_at screen_created_at
+  , screen.update_ip screen_update_ip
+  , screen.cdrflayout screen_cdrflayout
+  , screen.ymlcode screen_ymlcode
+  , screen.id id
+  , screen.id screen_id
+  , screen.grpcodename screen_grpcodename
+  , screen.persons_id_upd screen_person_id_upd
+  , person_upd.person_id_upd person_id_upd
+  , person_upd.person_code_upd person_code_upd
+  , person_upd.person_name_upd person_name_upd
+  , screen.pobjects_id_scr screen_pobject_id_scr
+  , pobject_scr.pobject_code pobject_code_scr
+  , pobject_scr.pobject_objecttype pobject_objecttype_scr
+  , pobject_scr.pobject_remark pobject_remark_scr
+  , pobject_scr.pobject_rubycode pobject_rubycode_scr
+  , pobject_scr.pobject_id pobject_id_scr
+  , pobject_scr.pobject_contents pobject_contents_scr
+  , screen.contents screen_contents
+  , screen.scrlvs_id screen_scrlv_id
+  , scrlv.scrlv_level1 scrlv_level1
+  , scrlv.scrlv_id scrlv_id
+  , scrlv.scrlv_remark scrlv_remark
+  , scrlv.scrlv_code scrlv_code 
+from
+  screens screen
+  , r_pobjects pobject_view
+  , upd_persons person_upd
+  , r_pobjects pobject_scr
+  , r_scrlvs scrlv 
+where
+  pobject_view.id = screen.pobjects_id_view 
+  and person_upd.id = screen.persons_id_upd 
+  and pobject_scr.id = screen.pobjects_id_scr 
+  and scrlv.id = screen.scrlvs_id
+;
+  
+  
+
+
 CREATE TABLE "RAILS"."TBLINKS" 
    (	"ID" NUMBER(38,0), 
 	"REMARK" VARCHAR2(200), 
@@ -893,7 +1045,6 @@ where
   person_upd.id = fieldcode.persons_id_upd 
   and pobject_fld.id = fieldcode.pobjects_id_fld
 ;
-
 CREATE TABLE "RAILS"."BLKTBSFIELDCODES" 
    (	"ID" NUMBER(38,0), 
 	"BLKTBS_ID" NUMBER(38,0), 
@@ -928,15 +1079,21 @@ CREATE TABLE "RAILS"."BLKTBSFIELDCODES"
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"
-  ;
-  CREATE 
+  ;CREATE 
 OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" ( 
-  "BLKTBSFIELDCODE_EXPIREDATE"
-  , "BLKTBSFIELDCODE_UPDATED_AT"
-  , "BLKTBSFIELDCODE_SEQNO"
-  , "BLKTBSFIELDCODE_REMARK"
-  , "BLKTBSFIELDCODE_CREATED_AT"
-  , "BLKTBSFIELDCODE_UPDATE_IP"
+  "BLKTBSFIELDCODE_CONTENTS"
+  , "BLKTBSFIELDCODE_BLKTB_ID"
+  , "BLKTB_CONTENTS"
+  , "BLKTB_ID"
+  , "BLKTB_POBJECT_ID_TBL"
+  , "POBJECT_CODE_TBL"
+  , "POBJECT_OBJECTTYPE_TBL"
+  , "POBJECT_REMARK_TBL"
+  , "POBJECT_RUBYCODE_TBL"
+  , "POBJECT_ID_TBL"
+  , "POBJECT_CONTENTS_TBL"
+  , "BLKTB_REMARK"
+  , "BLKTB_SELTBLS"
   , "BLKTBSFIELDCODE_FIELDCODE_ID"
   , "FIELDCODE_SEQNO"
   , "FIELDCODE_FTYPE"
@@ -950,33 +1107,37 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" (
   , "POBJECT_CODE_FLD"
   , "POBJECT_OBJECTTYPE_FLD"
   , "POBJECT_REMARK_FLD"
+  , "POBJECT_RUBYCODE_FLD"
   , "POBJECT_ID_FLD"
-  , "BLKTBSFIELDCODE_BLKTB_ID"
-  , "BLKTB_ID"
-  , "BLKTB_POBJECT_ID_TBL"
-  , "POBJECT_CODE_TBL"
-  , "POBJECT_OBJECTTYPE_TBL"
-  , "POBJECT_REMARK_TBL"
-  , "POBJECT_ID_TBL"
-  , "BLKTB_REMARK"
-  , "BLKTB_SELTBLS"
+  , "POBJECT_CONTENTS_FLD"
   , "ID"
   , "BLKTBSFIELDCODE_ID"
+  , "BLKTBSFIELDCODE_REMARK"
+  , "BLKTBSFIELDCODE_EXPIREDATE"
+  , "BLKTBSFIELDCODE_UPDATE_IP"
+  , "BLKTBSFIELDCODE_CREATED_AT"
+  , "BLKTBSFIELDCODE_UPDATED_AT"
   , "BLKTBSFIELDCODE_PERSON_ID_UPD"
   , "PERSON_ID_UPD"
   , "PERSON_CODE_UPD"
   , "PERSON_NAME_UPD"
-  , "BLKTBSFIELDCODE_CONTENTS"
+  , "BLKTBSFIELDCODE_SEQNO"
   , "BLKTBSFIELDCODE_VIEWFLMK"
 ) AS 
-
 select
-  blktbsfieldcode.expiredate blktbsfieldcode_expiredate
-  , blktbsfieldcode.updated_at blktbsfieldcode_updated_at
-  , blktbsfieldcode.seqno blktbsfieldcode_seqno
-  , blktbsfieldcode.remark blktbsfieldcode_remark
-  , blktbsfieldcode.created_at blktbsfieldcode_created_at
-  , blktbsfieldcode.update_ip blktbsfieldcode_update_ip
+  blktbsfieldcode.contents blktbsfieldcode_contents
+  , blktbsfieldcode.blktbs_id blktbsfieldcode_blktb_id
+  , blktb.blktb_contents blktb_contents
+  , blktb.blktb_id blktb_id
+  , blktb.blktb_pobject_id_tbl blktb_pobject_id_tbl
+  , blktb.pobject_code_tbl pobject_code_tbl
+  , blktb.pobject_objecttype_tbl pobject_objecttype_tbl
+  , blktb.pobject_remark_tbl pobject_remark_tbl
+  , blktb.pobject_rubycode_tbl pobject_rubycode_tbl
+  , blktb.pobject_id_tbl pobject_id_tbl
+  , blktb.pobject_contents_tbl pobject_contents_tbl
+  , blktb.blktb_remark blktb_remark
+  , blktb.blktb_seltbls blktb_seltbls
   , blktbsfieldcode.fieldcodes_id blktbsfieldcode_fieldcode_id
   , fieldcode.fieldcode_seqno fieldcode_seqno
   , fieldcode.fieldcode_ftype fieldcode_ftype
@@ -990,36 +1151,175 @@ select
   , fieldcode.pobject_code_fld pobject_code_fld
   , fieldcode.pobject_objecttype_fld pobject_objecttype_fld
   , fieldcode.pobject_remark_fld pobject_remark_fld
+  , fieldcode.pobject_rubycode_fld pobject_rubycode_fld
   , fieldcode.pobject_id_fld pobject_id_fld
-  , blktbsfieldcode.blktbs_id blktbsfieldcode_blktb_id
-  , blktb.blktb_id blktb_id
-  , blktb.blktb_pobject_id_tbl blktb_pobject_id_tbl
-  , blktb.pobject_code_tbl pobject_code_tbl
-  , blktb.pobject_objecttype_tbl pobject_objecttype_tbl
-  , blktb.pobject_remark_tbl pobject_remark_tbl
-  , blktb.pobject_id_tbl pobject_id_tbl
-  , blktb.blktb_remark blktb_remark
-  , blktb.blktb_seltbls blktb_seltbls
+  , fieldcode.pobject_contents_fld pobject_contents_fld
   , blktbsfieldcode.id id
   , blktbsfieldcode.id blktbsfieldcode_id
+  , blktbsfieldcode.remark blktbsfieldcode_remark
+  , blktbsfieldcode.expiredate blktbsfieldcode_expiredate
+  , blktbsfieldcode.update_ip blktbsfieldcode_update_ip
+  , blktbsfieldcode.created_at blktbsfieldcode_created_at
+  , blktbsfieldcode.updated_at blktbsfieldcode_updated_at
   , blktbsfieldcode.persons_id_upd blktbsfieldcode_person_id_upd
   , person_upd.person_id_upd person_id_upd
   , person_upd.person_code_upd person_code_upd
   , person_upd.person_name_upd person_name_upd
-  , blktbsfieldcode.contents blktbsfieldcode_contents
+  , blktbsfieldcode.seqno blktbsfieldcode_seqno
   , blktbsfieldcode.viewflmk blktbsfieldcode_viewflmk 
 from
   blktbsfieldcodes blktbsfieldcode
-  , r_fieldcodes fieldcode
   , r_blktbs blktb
+  , r_fieldcodes fieldcode
   , upd_persons person_upd 
 where
-  fieldcode.id = blktbsfieldcode.fieldcodes_id 
-  and blktb.id = blktbsfieldcode.blktbs_id 
+  blktb.id = blktbsfieldcode.blktbs_id 
+  and fieldcode.id = blktbsfieldcode.fieldcodes_id 
   and person_upd.id = blktbsfieldcode.persons_id_upd
+
 ;
+CREATE TABLE "RAILS"."BLKUKYS" 
+   (	"ID" NUMBER(38,0), 
+	"REMARK" VARCHAR2(200), 
+	"EXPIREDATE" DATE, 
+	"PERSONS_ID_UPD" NUMBER(38,0), 
+	"UPDATE_IP" VARCHAR2(40), 
+	"CREATED_AT" TIMESTAMP (6), 
+	"UPDATED_AT" TIMESTAMP (6), 
+	"SEQNO" NUMBER(38,0), 
+	"BLKTBSFIELDCODES_ID" NUMBER(38,0), 
+	"GRP" VARCHAR2(10), 
+	 CONSTRAINT "BLKUKYS_ID_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE, 
+	 CONSTRAINT "BLKUKYS_UKYS1" UNIQUE ("GRP", "BLKTBSFIELDCODES_ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE, 
+	 CONSTRAINT "BLKUKY_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
+	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
+	 CONSTRAINT "BLKUKY_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
+	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"
+
+;
+CREATE 
+OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" ( 
+  "BLKUKY_GRP"
+  , "ID"
+  , "BLKUKY_ID"
+  , "BLKUKY_REMARK"
+  , "BLKUKY_EXPIREDATE"
+  , "BLKUKY_UPDATE_IP"
+  , "BLKUKY_CREATED_AT"
+  , "BLKUKY_UPDATED_AT"
+  , "BLKUKY_PERSON_ID_UPD"
+  , "PERSON_ID_UPD"
+  , "PERSON_CODE_UPD"
+  , "PERSON_NAME_UPD"
+  , "BLKUKY_SEQNO"
+  , "BLKUKY_BLKTBSFIELDCODE_ID"
+  , "BLKTBSFIELDCODE_CONTENTS"
+  , "BLKTBSFIELDCODE_BLKTB_ID"
+  , "BLKTB_CONTENTS"
+  , "BLKTB_ID"
+  , "BLKTB_POBJECT_ID_TBL"
+  , "POBJECT_CODE_TBL"
+  , "POBJECT_OBJECTTYPE_TBL"
+  , "POBJECT_REMARK_TBL"
+  , "POBJECT_RUBYCODE_TBL"
+  , "POBJECT_ID_TBL"
+  , "POBJECT_CONTENTS_TBL"
+  , "BLKTB_REMARK"
+  , "BLKTB_SELTBLS"
+  , "BLKTBSFIELDCODE_FIELDCODE_ID"
+  , "FIELDCODE_SEQNO"
+  , "FIELDCODE_FTYPE"
+  , "FIELDCODE_REMARK"
+  , "FIELDCODE_DATASCALE"
+  , "FIELDCODE_DATAPRECISION"
+  , "FIELDCODE_FIELDLENGTH"
+  , "FIELDCODE_ID"
+  , "FIELDCODE_CONTENTS"
+  , "FIELDCODE_POBJECT_ID_FLD"
+  , "POBJECT_CODE_FLD"
+  , "POBJECT_OBJECTTYPE_FLD"
+  , "POBJECT_REMARK_FLD"
+  , "POBJECT_RUBYCODE_FLD"
+  , "POBJECT_ID_FLD"
+  , "POBJECT_CONTENTS_FLD"
+  , "BLKTBSFIELDCODE_ID"
+  , "BLKTBSFIELDCODE_REMARK"
+  , "BLKTBSFIELDCODE_SEQNO"
+  , "BLKTBSFIELDCODE_VIEWFLMK"
+) AS 
+select
+  blkuky.grp blkuky_grp
+  , blkuky.id id
+  , blkuky.id blkuky_id
+  , blkuky.remark blkuky_remark
+  , blkuky.expiredate blkuky_expiredate
+  , blkuky.update_ip blkuky_update_ip
+  , blkuky.created_at blkuky_created_at
+  , blkuky.updated_at blkuky_updated_at
+  , blkuky.persons_id_upd blkuky_person_id_upd
+  , person_upd.person_id_upd person_id_upd
+  , person_upd.person_code_upd person_code_upd
+  , person_upd.person_name_upd person_name_upd
+  , blkuky.seqno blkuky_seqno
+  , blkuky.blktbsfieldcodes_id blkuky_blktbsfieldcode_id
+  , blktbsfieldcode.blktbsfieldcode_contents blktbsfieldcode_contents
+  , blktbsfieldcode.blktbsfieldcode_blktb_id blktbsfieldcode_blktb_id
+  , blktbsfieldcode.blktb_contents blktb_contents
+  , blktbsfieldcode.blktb_id blktb_id
+  , blktbsfieldcode.blktb_pobject_id_tbl blktb_pobject_id_tbl
+  , blktbsfieldcode.pobject_code_tbl pobject_code_tbl
+  , blktbsfieldcode.pobject_objecttype_tbl pobject_objecttype_tbl
+  , blktbsfieldcode.pobject_remark_tbl pobject_remark_tbl
+  , blktbsfieldcode.pobject_rubycode_tbl pobject_rubycode_tbl
+  , blktbsfieldcode.pobject_id_tbl pobject_id_tbl
+  , blktbsfieldcode.pobject_contents_tbl pobject_contents_tbl
+  , blktbsfieldcode.blktb_remark blktb_remark
+  , blktbsfieldcode.blktb_seltbls blktb_seltbls
+  , blktbsfieldcode.blktbsfieldcode_fieldcode_id blktbsfieldcode_fieldcode_id
+  , blktbsfieldcode.fieldcode_seqno fieldcode_seqno
+  , blktbsfieldcode.fieldcode_ftype fieldcode_ftype
+  , blktbsfieldcode.fieldcode_remark fieldcode_remark
+  , blktbsfieldcode.fieldcode_datascale fieldcode_datascale
+  , blktbsfieldcode.fieldcode_dataprecision fieldcode_dataprecision
+  , blktbsfieldcode.fieldcode_fieldlength fieldcode_fieldlength
+  , blktbsfieldcode.fieldcode_id fieldcode_id
+  , blktbsfieldcode.fieldcode_contents fieldcode_contents
+  , blktbsfieldcode.fieldcode_pobject_id_fld fieldcode_pobject_id_fld
+  , blktbsfieldcode.pobject_code_fld pobject_code_fld
+  , blktbsfieldcode.pobject_objecttype_fld pobject_objecttype_fld
+  , blktbsfieldcode.pobject_remark_fld pobject_remark_fld
+  , blktbsfieldcode.pobject_rubycode_fld pobject_rubycode_fld
+  , blktbsfieldcode.pobject_id_fld pobject_id_fld
+  , blktbsfieldcode.pobject_contents_fld pobject_contents_fld
+  , blktbsfieldcode.blktbsfieldcode_id blktbsfieldcode_id
+  , blktbsfieldcode.blktbsfieldcode_remark blktbsfieldcode_remark
+  , blktbsfieldcode.blktbsfieldcode_seqno blktbsfieldcode_seqno
+  , blktbsfieldcode.blktbsfieldcode_viewflmk blktbsfieldcode_viewflmk 
+from
+  blkukys blkuky
+  , upd_persons person_upd
+  , r_blktbsfieldcodes blktbsfieldcode 
+where
+  person_upd.id = blkuky.persons_id_upd 
+  and blktbsfieldcode.id = blkuky.blktbsfieldcodes_id; 
 
 
+
+
+;
 CREATE TABLE "RAILS"."SCREENFIELDS" 
    (	"ID" NUMBER(38,0), 
 	"SCREENS_ID" NUMBER(38,0), 
@@ -1051,6 +1351,7 @@ CREATE TABLE "RAILS"."SCREENFIELDS"
 	"CREATED_AT" TIMESTAMP (6), 
 	"UPDATED_AT" TIMESTAMP (6), 
 	"POBJECTS_ID_SFD" NUMBER(38,0), 
+	"BLKTBSFIELDCODES_ID" NUMBER(38,0),
 	"PARAGRAPH" VARCHAR2(30), 
 	"FORMATTER" VARCHAR2(4000), 
 	"CONTENTS" VARCHAR2(4000), 
@@ -1064,7 +1365,9 @@ CREATE TABLE "RAILS"."SCREENFIELDS"
 	 CONSTRAINT "SCREENFIELD_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
 	 CONSTRAINT "SCREENFIELD_POBJECTS_ID_SFD" FOREIGN KEY ("POBJECTS_ID_SFD")
-	  REFERENCES "RAILS"."POBJECTS" ("ID") ENABLE
+	  REFERENCES "RAILS"."POBJECTS" ("ID") ENABLE, 
+	 CONSTRAINT "SCREENFIELD_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
+	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
@@ -1148,6 +1451,9 @@ OR REPLACE FORCE VIEW "RAILS"."R_SCREENFIELDS" (
   , "SCRLV_ID"
   , "SCRLV_REMARK"
   , "SCRLV_CODE"
+  , "SCREENFIELD_BLKTBSFIELDCODE_ID" 
+  , "BLKTBSFIELDCODE_CONTENTS" 
+  , "FIELDCODE_CONTENTS"
 ) AS 
 select
   screenfield.pobjects_id_sfd screenfield_pobject_id_sfd
@@ -1225,20 +1531,25 @@ select
   , screen.scrlv_id scrlv_id
   , screen.scrlv_remark scrlv_remark
   , screen.scrlv_code scrlv_code 
+  , screenfield.blktbsfieldcodes_id 
+  , blktbsfieldcode.blktbsfieldcode_contents
+  , blktbsfieldcode.fieldcode_contents
 from
   screenfields screenfield
   , r_pobjects pobject_sfd
   , upd_persons person_upd
   , r_screens screen 
+  , R_BLKTBSFIELDCODES blktbsfieldcode
 where
   pobject_sfd.id = screenfield.pobjects_id_sfd 
   and person_upd.id = screenfield.persons_id_upd 
   and screen.id = screenfield.screens_id
+  AND BLKTBSFIELDCODE.ID = SCREENFIELD.BLKTBSFIELDCODES_ID
 ;
-
 CREATE TABLE "RAILS"."CHILSCREENS" 
    (	"ID" NUMBER(38,0), 
 	"EXPIREDATE" DATE, 
+	"CONTENTS" VARCHAR2(4000), 
 	"REMARK" VARCHAR2(200), 
 	"PERSONS_ID_UPD" NUMBER(38,0), 
 	"UPDATE_IP" VARCHAR2(40), 
@@ -1263,8 +1574,8 @@ CREATE TABLE "RAILS"."CHILSCREENS"
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"
-  ;
   
+  ;
 CREATE 
 OR REPLACE FORCE VIEW "RAILS"."R_CHILSCREENS" ( 
   "CHILSCREEN_GRP"
@@ -1335,6 +1646,8 @@ OR REPLACE FORCE VIEW "RAILS"."R_CHILSCREENS" (
   , "SCRLV_ID"
   , "SCRLV_REMARK"
   , "SCRLV_CODE"
+  , "BLKTBSFIELDCODE_CONTENTS"
+  , "FIELDCODE_CONTENTS"
   , "CHILSCREEN_SCREENFIELD_ID_CH"
   , "SCREENFIELD_POBJECT_ID_SFD_CH"
   , "POBJECT_CODE_SFD_CH"
@@ -1402,18 +1715,21 @@ OR REPLACE FORCE VIEW "RAILS"."R_CHILSCREENS" (
   , "SCRLV_ID_CH"
   , "SCRLV_REMARK_CH"
   , "SCRLV_CODE_CH"
+  , "BLKTBSFIELDCODE_CONTENTS_CH"
+  , "FIELDCODE_CONTENTS_CH"
   , "ID"
   , "CHILSCREEN_ID"
+  , "CHILSCREEN_CONTENTS"
   , "CHILSCREEN_REMARK"
   , "CHILSCREEN_EXPIREDATE"
   , "CHILSCREEN_UPDATE_IP"
   , "CHILSCREEN_CREATED_AT"
   , "CHILSCREEN_UPDATED_AT"
   , "CHILSCREEN_PERSON_ID_UPD"
-  , "UPDPERSON_ID_UPD"
-  , "UPDPERSON_CODE_UPD"
-  , "UPDPERSON_NAME_UPD"
-) AS 
+  , "PERSON_ID_UPD"
+  , "PERSON_CODE_UPD"
+  , "PERSON_NAME_UPD"
+) AS
 select
   chilscreen.grp chilscreen_grp
   , chilscreen.screenfields_id chilscreen_screenfield_id
@@ -1483,6 +1799,8 @@ select
   , screenfield.scrlv_id scrlv_id
   , screenfield.scrlv_remark scrlv_remark
   , screenfield.scrlv_code scrlv_code
+  , screenfield.blktbsfieldcode_contents blktbsfieldcode_contents
+  , screenfield.fieldcode_contents fieldcode_contents
   , chilscreen.screenfields_id_ch chilscreen_screenfield_id_ch
   , screenfield_ch.screenfield_pobject_id_sfd screenfield_pobject_id_sfd_ch
   , screenfield_ch.pobject_code_sfd pobject_code_sfd_ch
@@ -1550,17 +1868,20 @@ select
   , screenfield_ch.scrlv_id scrlv_id_ch
   , screenfield_ch.scrlv_remark scrlv_remark_ch
   , screenfield_ch.scrlv_code scrlv_code_ch
+  , screenfield_ch.blktbsfieldcode_contents blktbsfieldcode_contents_ch
+  , screenfield_ch.fieldcode_contents fieldcode_contents_ch
   , chilscreen.id id
   , chilscreen.id chilscreen_id
+  , chilscreen.contents chilscreen_contents
   , chilscreen.remark chilscreen_remark
   , chilscreen.expiredate chilscreen_expiredate
   , chilscreen.update_ip chilscreen_update_ip
   , chilscreen.created_at chilscreen_created_at
   , chilscreen.updated_at chilscreen_updated_at
   , chilscreen.persons_id_upd chilscreen_person_id_upd
-  , person_upd.person_id_upd updperson_id_upd
-  , person_upd.person_code_upd updperson_code_upd
-  , person_upd.person_name_upd updperson_name_upd 
+  , person_upd.person_id_upd person_id_upd
+  , person_upd.person_code_upd person_code_upd
+  , person_upd.person_name_upd person_name_upd 
 from
   chilscreens chilscreen
   , r_screenfields screenfield
@@ -1575,6 +1896,7 @@ where
 CREATE TABLE "RAILS"."BUTTONS" 
    (	"ID" NUMBER(38,0), 
 	"EXPIREDATE" DATE, 
+	"CONTENTS" VARCHAR2(4000), 
 	"REMARK" VARCHAR2(200), 
 	"PERSONS_ID_UPD" NUMBER(38,0), 
 	"UPDATE_IP" VARCHAR2(40), 
@@ -1607,6 +1929,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_BUTTONS" (
   "BUTTON_CODE"
   , "BUTTON_EXPIREDATE"
   , "BUTTON_UPDATED_AT"
+  , "BUTTON_CONTENTS"
   , "BUTTON_SEQNO"
   , "BUTTON_REMARK"
   , "BUTTON_CREATED_AT"
@@ -1629,6 +1952,7 @@ select
   button.code button_code
   , button.expiredate button_expiredate
   , button.updated_at button_updated_at
+  , button.contents button_contents
   , button.seqno button_seqno
   , button.remark button_remark
   , button.created_at button_created_at
@@ -1656,7 +1980,8 @@ where
 CREATE TABLE "RAILS"."USEBUTTONS" 
    (	"BUTTONS_ID" NUMBER(38,0), 
 	"ID" NUMBER(38,0), 
-	"EXPIREDATE" DATE, 
+	"EXPIREDATE" DATE,
+	"CONTENTS" VARCHAR2(4000),  
 	"REMARK" VARCHAR2(200), 
 	"PERSONS_ID_UPD" NUMBER(38,0), 
 	"UPDATE_IP" VARCHAR2(40), 
@@ -1685,6 +2010,7 @@ CREATE TABLE "RAILS"."USEBUTTONS"
 OR REPLACE FORCE VIEW "RAILS"."R_USEBUTTONS" ( 
   "ID"
   , "USEBUTTON_ID"
+  , "USEBUTTON_CONTENTS"
   , "USEBUTTON_REMARK"
   , "USEBUTTON_EXPIREDATE"
   , "USEBUTTON_UPDATE_IP"
@@ -1743,6 +2069,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_USEBUTTONS" (
 select
   usebutton.id id
   , usebutton.id usebutton_id
+  , usebutton.contents usebutton_contents
   , usebutton.remark usebutton_remark
   , usebutton.expiredate usebutton_expiredate
   , usebutton.update_ip usebutton_update_ip

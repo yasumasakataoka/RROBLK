@@ -7,11 +7,11 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 
 	before_filter :authenticate_user!  
 	def index
-		if  rec = plsql.r_blktbs.first("where id = #{params[:jqgrid_id]}  ") then 
-			if rec[:blktb_expiredate] > Time.now then
+		if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{params[:jqgrid_id]}  ")  
+			if rec["blktb_expiredate"] > Time.now 
 				plsql.logoff
 				plsql.connect! "rails", "rails", :host => "localhost", :port => 1521, :database => "xe"
-				sub_crt_tbl_view_screen rec[:pobject_code_tbl],rec[:id]
+				sub_crt_tbl_view_screen rec["pobject_code_tbl"],rec["id"]
 				##Rails.cache.clear(nil)
             else
              @errmsg = "out of expiredate"
@@ -32,7 +32,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				end
 			end
 			##allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate order by connectseq")
-			allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate ")
+			allrecs = ActiveRecord::Base.connection.select_all("select * from  blktbsfieldcodes where blktbs_id = #{rec_id}   and  expiredate > sysdate ")
 			if allrecs.size>0 then
 				if proc_chk_tble_exist(pobject_code_tbl) 
 					add_modify = "modify"
@@ -47,7 +47,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				@errmsg << "table #{pobject_code_tbl} missing or  blktbsfieldcodes not exists "
 				raise
 			end   ##if allrecs
-			allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate")
+			###allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate")
 			create_or_replace_view   rec_id,pobject_code_tbl
 			Rails.cache.clear(nil)
 			create_screenfields "r_"+pobject_code_tbl
@@ -111,7 +111,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		@strsql0 = "create table #{tblname} ("
 		tmpstrsql ={}
 		allrecs.each do |rec|
-			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec[:fieldcodes_id]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
+			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec["fieldcodes_id"]} and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
 			next if frec.nil?		  
 			tmpstrsql[frec["pobject_code_fld"].to_sym]= frec["pobject_code_fld"] + " " + frec["fieldcode_ftype"] + 
                 case frec["fieldcode_ftype"]
@@ -126,19 +126,19 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			mandatory_field.delete( frec["pobject_code_fld"].to_sym) 
          end
 		rec0 = allrecs[0]
-		rec0[:expiredate]=Time.parse("2099/12/31")
-		rec0[:created_at] = Time.now
-		rec0[:updated_at] = Time.now
+		rec0["expiredate"]=Time.parse("2099/12/31")
+		rec0["created_at"] = Time.now
+		rec0["updated_at"] = Time.now
 		mandatory_field.each do |key,value|
 			tmpstrsql[value[0].to_sym] = value[1] +  value[2]
-			rec0[:id] = proc_get_nextval("blktbsfieldcodes_seq")
-			id = ActiveRecord::Base.connection.select_one("select * from fieldcodes where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
+			rec0["id"] = proc_get_nextval("blktbsfieldcodes_seq")
+			rec_id = ActiveRecord::Base.connection.select_value("select id from fieldcodes where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
                                                    and objecttype = 'tbl_field' and expiredate  > current_date)")
-			if id
-				rec0[:fieldcodes_id]  = id["id"] 
+			if rec_id
+				rec0["fieldcodes_id"]  = rec_id 
 				##rec0[:seqno] = value[0]
 				###plsql.blktbsfieldcodes.insert rec0 
-				Blktbsfieldcode.create(rec0)
+				proc_tbl_insert_arel("blktbsfieldcodes",rec0)
 			end
 		end
 		tmpstrsql.sort.each do |key,value|
@@ -154,7 +154,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		keys = []
 		mandatory_field =  prv_init
 		allrecs.each do |rec|
-			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec[:fieldcodes_id]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
+			frec = ActiveRecord::Base.connection.select_one("select * from r_fieldcodes where id = #{rec["fieldcodes_id"]}  and fieldcode_ftype not like 'vf%' ")  ### vfield は登録しない
 			next if frec.nil?		  
 			key = frec["pobject_code_fld"]
 			keys << key
@@ -229,61 +229,16 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
                @strsql0 << "alter table #{tblname} add #{frec["pobject_code_fld"]} #{frec["fieldcode_ftype"]};\n"
        end
   end
-## def crt_chil_screen viewname
-##    p "addmain1"
-##  対象となるテーブルは　idをフィールドに持つこと　　
-### id create
-## tablenameS_ID_xxx_xxxのレイアウトであること。
-## viewの名前は R_xxxx になる
-## 全テーブルに対応は中止した。
-##    tblarea = {}  
-##    notextview = {}
-##    strsql = " where pobject_code_view =  '#{viewname}' and screenfield_Expiredate > sysdate "
-##       fields = plsql.R_screenfields.all(strsql)
-##       ## p "strsql : #{strsql}"
-    ## p fields   
-##    p "addmain2"
-##    fields.each  do |tbldata|
-##       if tbldata[:object_code_sfd]  =~ /_id/ then
-##          pare_tbl_sym = (tbldata[:object_code_sfd].split(/_id/)[0] + "S").to_sym
-##          tblarea[pare_tbl_sym] = viewname
-##      end
-##    end
-    
-##    y = plsql.r_screens.first("WHERE pobject_code_view = '#{viewname}' ")
-##    tblarea.each_key  do |i|
-##        x = plsql.screens.first("WHERE pobject_code_view = 'r_#{i.to_s}' ")
-##        next if x.nil?
-##        tmp_area = tblarea[i] 
-##              next if x.nil?
-##                 chil_r = plsql.ChilScreens.first("where screens_id = :1 and screens_id_chil = :2",x[:id],y[:id])
-##                 ##  p  "where screens_id_Pare = :1 and screens_id = :2"
-##                 if chil_r.nil? then
-##                    val_chil = {
-##                    :id => plsql.chilscreens_seq.nextval,
-##                    :screens_id => x[:id],
-##                    :screens_id_chil => y[:id],
-##                    :expiredate => Time.parse("2099/12/31"),
-##                    :remark => "auto_create", 
-##                    :persons_id_upd => 0, 
-##                    :update_ip =>  "1",
-##                    :created_at => Time.now,
-##                    :updated_at => Time.now
-##                    }
-##                  plsql.chilscreens.insert val_chil
-##                  ## p "insert"
- ##                 end ## if
-##    end    ## i
-##    plsql.commit 
-## end  #end crt_chil_screen 
+
  def create_or_replace_view  tblid,tblname   ### 
-    subfields = plsql.r_blktbsfieldcodes.all("where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
-	tmp_union_tbl = plsql.blktbs.first("where id  = #{tblid} ")
-	union_tbls =  if tmp_union_tbl[:seltbls] and tmp_union_tbl[:seltbls] != "undefined" then eval(tmp_union_tbl[:seltbls])  else [""] end ##tblname対応
+    subfields = ActiveRecord::Base.connection.select_all("select * from r_blktbsfieldcodes where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
+	tmp_union_tbl = ActiveRecord::Base.connection.select_one("select * from blktbs  where id  = #{tblid} ")
+	union_tbls =  if tmp_union_tbl["seltbls"] and tmp_union_tbl["seltbls"] != "undefined" then eval(tmp_union_tbl["seltbls"])  else [""] end ##tblname対応
 	### tmp_union_tbl[:seltbls]はarrayであること。　　checkが必要
 	selectstr = ""
 	fromstr = ""
 	wherestr = ""
+	@sfd_code_id = {}
 	union_tbls.each_with_index do |utbl,idx|
         selectstr <<  if idx == 0 then  " select " else "\n union \n select " end
         wherestr << if utbl == "" then "\n where "  else  "\n where #{tblname.chop}.tblid = #{utbl.to_s.split("_")[1].chop}.id  and 
@@ -291,37 +246,44 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
         fromstr << "\n from " + tblname + " " + tblname.chop + " ,"   ## 最後のSはとる。
 		fromstr << if utbl == "" then "" else  utbl.to_s + " " + utbl.to_s.split("_")[1].chop + " ," end
         subfields.each do |rec|
-           js = rec[:pobject_code_fld]
-           if  js =~ /_id/  then
-              case  js
-                  when /persons_id_upd/ then  ##person は特殊
+            js = rec["pobject_code_fld"]
+            if  js =~ /_id/  
+                case  js
+                    when /persons_id_upd/   ##person は特殊
                         join_rtbl = "upd_persons" 
-                   else
+                    else
                        join_rtbl = "r_" + js.split(/_id/)[0]  ##JOINするテーブル名
-              end 
-              rtblname =  js.sub(/s_id/,"")
-              fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
-              wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
-	          wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
-			  delm = js.split("_")[-1]   ###idにdelm識別子を付けたとき
-			  if delm == tblname.chop and js !~ /_id/
-				new_js = js.sub("_#{tblname.chop}","")    ###ヘッダーと同じものは除く
-				selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  new_js.sub("s_id","_id") + " ,"
-			  else
-				selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
-			  end
-              subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
-                      selectstr << k
-              end
-             else ##not _id
+                end 
+                rtblname =  js.sub(/s_id/,"")
+                fromstr << join_rtbl + "  " + rtblname + ','    ### from r_xxxxs xxxxx 
+                wherestr << " #{rtblname}.id = "  ##相手側のテーブルのid
+	            wherestr << tblname.chop + "." + js  + " and "   ## 自分のテーブル内の相手がわを示すid
+			    delm = js.split("_")[-1]   ###idにdelm識別子を付けたとき
+			    if delm == tblname.chop and js !~ /_id/
+				    new_js = js.sub("_#{tblname.chop}","")    ###ヘッダーと同じものは除く
+				    selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  new_js.sub("s_id","_id") + " ,"
+					@sfd_code_id[tblname.chop + "_" +  new_js.sub("s_id","_id")] = rec["id"]
+			    else
+				    selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
+					@sfd_code_id[tblname.chop + "_" +  js.sub("s_id","_id")] = rec["id"]
+			    end
+                subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
+                    selectstr << k
+                end
+            else ##not _id
                @errmsg << "length over table:" + tblname + " field:" +  js + " length:" + (tblname.chop.length + js.length).to_s if  (tblname.chop.length + js.length) > 30
-               selectstr << tblname.chop + "." +  js  + " id,"   if js == 'id' 
-			   case rec[:blktbsfieldcode_viewflmk]
+				if js == 'id'
+					selectstr << tblname.chop + "." +  js  + " id,"   
+					@sfd_code_id["id"] = rec["id"]
+				end
+			   case rec["blktbsfieldcode_viewflmk"]
 				    when nil			
-			             selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ," 
+			            selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ,"
+						@sfd_code_id[tblname.chop + "_" +  js] = rec["id"]	
 				    when /^tblnamefields/  ##vfield対応　union
-					     tblnamefields = eval(rec[:blktbsfieldcode_viewflmk])
-						 selectstr << utbl.to_s.split("_")[1].chop + "." +  tblnamefields[utbl] + "  vf" + tblname.chop + "_" +  js + " ," 
+					     tblnamefields = eval(rec["blktbsfieldcode_viewflmk"])
+						 selectstr << utbl.to_s.split("_")[1].chop + "." +  tblnamefields[utbl] + "  vf" + tblname.chop + "_" +  js + " ,"
+						 ####@sfd_code_to   未対応
                end 								   
 			end      ##if  js =~ /_id/   
         end   ##subfields
@@ -337,35 +299,52 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
  end  #end create_or_replace_view  
 
 
-	def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:省略形
+	def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:join_rtbl + safix
         k = ""
-	      if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
+	    if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
            @errmsg << "create view #{ join_rtbl }"
            raise 
            ### create_or_replace_view  tblid,tblname
-	      end
-		join_tblchop = join_rtbl.split("_")[1].chop
+	    end
 	    subfields = plsql.__send__(join_rtbl).column_names
         subfields.each do |j|
-        js = xfield =  j.to_s  
-			xfield = "" if js.upcase == "ID" 
-			xfield = "" if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|EXPIREDATE/ and  join_rtbl  !=  "upd_persons"
-			##xfield = "" if join_rtbl != sub_rtbl  and  join_rtbl  =~ /upd_person/
-			##if js.upcase =~ /_ID/
-			##	tblchop = js.upcase.split("_")[1]
-			##	if tblchop != join_tblchop
-			##		xfield = ""
-			##	end
-			##end
-            if   xfield  != "" then 
-                xfield = rtblname + "." + xfield + " " + xfield + if rtblname.split(/_/,2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split(/_/,2)[1] else "" end 
-                k <<  " " +  xfield   + "," 
-                lngerrfield = xfield.split(" ")[1]
-                ##p " 127 #{xfield}"
-                if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
-            end  
+        js = xfield = sfd_code =  j.to_s  
+			next if js.upcase == "ID"
+			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|EXPIREDATE|REMARK/ and  join_rtbl  !=  "upd_persons"
+			tmpfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end
+			sfd_code = xfield + tmpfld
+            new_xfield = rtblname + "." + xfield + " " + sfd_code  
+            k <<  " " +  new_xfield   + "," 
+            lngerrfield = new_xfield.split(" ")[1]
+            ##p " 127 #{xfield}"
+            if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end 
+			@sfd_code_id[sfd_code] = set_blktbsfieldcode_id(join_rtbl ,sfd_code,tmpfld)
         end  ## subfields.each           
         yield k           
 	end 
+	def set_blktbsfieldcode_id join_rtbl ,sfd_code,tmpfld
+		if join_rtbl == "upd_persons"
+			njoin_rtbl = "r_persons" 
+			nsfd_code = sfd_code.sub("_upd","")
+		else
+			njoin_rtbl = join_rtbl
+			nsfd_code = sfd_code 
+			
+		end
+		tblchop,fld_delm = sfd_code.split("_",2)
+		if join_rtbl.split("_",2)[1].chop == tblchop
+			if fld_delm =~ /_id/ 
+				nsfd_code = sfd_code.sub("_id","s_id")
+			end
+			strsql = "select id from r_blktbsfieldcodes where pobject_code_tbl = '#{njoin_rtbl.split("_",2)[1]}' 
+					and pobject_code_fld = '#{nsfd_code.split("_",2)[1].sub(tmpfld,"")}' and blktbsfieldcode_expiredate > sysdate"
+			sfd_id = ActiveRecord::Base.connection.select_value(strsql)
+		else  
+			strsql = "select screenfield_blktbsfieldcode_id from r_screenfields where pobject_code_scr = '#{njoin_rtbl}' 
+					and pobject_code_sfd = '#{nsfd_code.sub(tmpfld,"")}' and screenfield_expiredate > sysdate"
+			sfd_id = ActiveRecord::Base.connection.select_value(strsql)
+		end
+		return sfd_id
+	end
 end
 

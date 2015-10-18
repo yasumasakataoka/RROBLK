@@ -22,7 +22,10 @@
     def sub_blkgetpobj code,ptype    ###
         fstrsqly = ""
         grp_code =  sub_blkget_grpcode 
-        if code =~ /_id/ or   code == "id" then
+		if grp_code == "batch"
+            oragname = code
+		end
+        if code =~ /_id/ or   code == "id" 
             oragname = code
         else
             orgname = ""      
@@ -55,8 +58,8 @@
             orgcode = ""      
             basesql = "select POBJECT_CODE  from R_POBJGRPS where POBJGRP_EXPIREDATE > current_date AND USERGROUP_CODE = '#{grp_code}' and   "
             basesql  <<  " pobjgrp_name = '#{name}' and POBJECT_OBJECTTYPE = '#{ptype}' "
-            rec = plsql.select(:first,basesql)
-            orgcode =  if rec then rec[:pobject_code] else name end			
+            pobject_code = ActiveRecord::Base.connection.select_value(basesql)
+            orgcode =  if pobject_code then pobject_code else name end			
          end  ## if ocde
       ##fprnt " Line:#{__LINE__} Time:#{Time.now.to_s}  fstrsqly:#{fstrsqly}"
       return orgcode ||= name
@@ -181,7 +184,6 @@
             ##crt_def_tb if  tblname == "blktbs"   
           ensure
             sub_insert_sio_r   command_r    ## 結果のsio書き込み
-            ###raise   ### plsql.connection.autocommit = false   ##test 1/19 ok
         end ##begin
         raise if @sio_result_f ==   "9" 
     end
@@ -221,10 +223,9 @@
 	    recs = ActiveRecord::Base.connection.select_all("select * from #{tblname} where result_f = '0' #{str_id}  order by #{order_by_add} id")   ##0 未処理
         dbmk = yield
 		tbl = {}
+		tbl[:result_f] = "5"
 		recs.each do |rec|
-			tbl[:result_f] = "5"  ## Queueing
-			tbl[:where] = {:id =>rec["id"]}
-			plsql.__send__(tblname).update tbl
+			proc_tbl_update_arel tblname,tbl," id = ( #{rec["id"]} )"
 		end
 		dbmk.__send__("perform_#{tblname}", recs)
 	end	
@@ -248,31 +249,8 @@
 			raise
 		end
     end   ## sub_insert_sio_c	
-	#def vproc_command_c_dflt_set_fm_rubycoding command_c  ###rubycodingsは開発環境のみ　引き数はcommand_cで固定
-	#	tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
-	#	command_c.each do |key,val|
-	#		if val.nil? and  key.to_s =~ /^#{tblnamechop}_/
-	#			strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'view_field' 	and  pobject_code = '#{key.to_s}'
-	#						and rubycoding_code like '%dflt_for_tbl_set' &
-	#			rubycode_view = ActiveRecord::Base.connection.select_one(strsql)
-	#			if rubycode_view
-	#				dflt_rubycode = rubycode_view["rubycoding_code"] + if rubycode_view["rubycoding_hikisu"] then "," + rubycode_view["rubycoding_hikisu"] else "" end
-	#				command_c[key] = __send__(dflt_rubycode)
-	#			else
-	#				fld_tbl = key.to_s.split("_",2)[1] 
-	#				strsql = %Q& select * from r_rubycodings where pobject_objecttype = 'tbl_field' 	and  pobject_code = '#{fld_tbl}'
-	#						and rubycoding_code like '%dflt_for_tbl_set' &
-	#				rubycode_tbl = ActiveRecord::Base.connection.select_one(strsql)
-	#				if rubycode_tbl
-	#					dflt_rubycode = rubycode_tbl["rubycoding_code"] + if rubycode_tbl["rubycoding_hikisu"] then "," + rubycode_tbl["rubycoding_hikisu"] else "" end
-	#					command_c[key] = __send__(dflt_rubycode)
-	#				end
-	#			end
-	#		end
-	#	end
-	#	return command_c
-	#end	
-	def vproc_command_c_dflt_set_fm_rubycoding command_c  ###rubycodingsは開発環境のみ　引き数はcommand_cで固定
+
+	def vproc_command_c_dflt_set_fm_rubycoding command_c  ###　引き数はcommand_cで固定
 		command_r = command_c.dup
 		tblnamechop = command_c[:sio_viewname].split("_",2)[1].chop
 		command_c.each do |key,val|
@@ -309,12 +287,12 @@
 		sub_userproc_chk_set command_c
 	end
     def sub_userproc_chk_set command_c		
-		strwhere = " where tblname = 'sio_#{command_c[:sio_viewname]}' and "
+		strwhere = "select * from userproc#{@sio_user_code.to_s}s where tblname = 'sio_#{command_c[:sio_viewname]}' and "
 		strwhere << " session_counter = #{command_c[:sio_session_counter]} "
-        chkuserproc = plsql.__send__("userproc#{@sio_user_code.to_s}s").first(strwhere)
+        chkuserproc = ActiveRecord::Base.connection.select_one(strwhere)
 		if chkuserproc
-		    chkuserproc[:cnt] += 1
-            chkuserproc[:where] = {:id=>chkuserproc[:id]}			
+		    chkuserproc["cnt"] += 1
+            chkuserproc["where"] = {:id=>chkuserproc["id"]}			
             plsql.__send__("userproc#{@sio_user_code.to_s}s").update 	chkuserproc		  
 		else
 		    sub_userproc_insert command_c 
@@ -457,7 +435,6 @@
 	    ###if (params[:commit]||="") == "Export" then search_key = params[:export].dup else search_key = params.dup end
 		search_key = params.dup
 		strwhere = proc_search_key_strwhere search_key,strwhere,@show_data
-		##strwhere = proc_search_key_strwhere strwhere,@show_data
 	end	
 	def proc_search_key_strwhere search_key,strwhere,show_data   ###search key:"xxxx"   not sym   ## search_key 画面と db_cud(データ選択)で使用
         search_key.each  do |i,j|  ##xparams gridの生
@@ -490,6 +467,33 @@
 			                tmpwhere = " to_char( #{i},'yyyy/mm/dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
                         when 12 
 			                tmpwhere = " to_char( #{i},'yyyy/mm/dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
+			            when 16
+			                if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)
+								hh = j.split(" ")[1][0..1]
+								mi = j.split(" ")[1][3..4]
+								delm = j.split(" ")[1][2.2]
+								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"  
+									tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') = '#{j}'       AND "
+								end
+							end
+			            when 17
+							if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)  and ( j =~ /^</   or  j =~ /^>/ or  j =~ /^=/ )
+								hh = j.split(" ")[1][0..1]
+								mi = j.split(" ")[1][3..4]
+								delm = j.split(" ")[1][2.2]
+								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"  								
+									tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') #{j[0]} '#{j[1..-1]}'      AND "
+								end
+							end
+                        when 18 
+			                if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
+								hh = j.split(" ")[1][0..1]
+								mi = j.split(" ")[1][3..4]
+								delm = j.split(" ")[1][2.2]
+								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"  								
+										tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi')  #{j[0..1]} '#{j[2..-1]}'      AND "
+								end
+							end
                     end ## j.size  
 	            when /char|text/
                     tmpwhere = " #{i} = '#{j}'         AND "
@@ -569,11 +573,11 @@
     end   ##  sub_getfield
 
     def sub_set_chil_tbl_info next_screen_data
-      strwhere = "where ptblid = #{next_screen_data[:sio_org_tblid]} and "
+      strwhere = "select ctlb_id from CTL#{next_screen_data[:sio_org_tblname]} where ptblid = #{next_screen_data[:sio_org_tblid]} and "
       strwhere << "ctblname = '#{next_screen_data[:sio_viewname].split("_")[1]}'  "
-      ctbl_id = plsql.__send__("CTL#{next_screen_data[:sio_org_tblname]}").first(strwhere)
+      ctbl_id = ActiveRecord::Base.connection.select_value(strwhere)
       if ctbl_id
-	  return ctbl_id[:ctblid]
+	  return ctbl_id
        else
 	  ##fprnt " LINE #{__LINE__}  ptblname CTL#{next_screen_data[:sio_org_tblname]} ; strwhere = #{strwhere} "
 	  raise "error"
@@ -582,14 +586,14 @@
 
  
     def sub_get_ship_locas_frm_itm_id itms_id
-      rs = plsql.OpeItms.first("where itms_id = #{itms_id} and ProcessSeq = (select max(ProcessSeq) from OpeItms where  itms_id = #{itms_id} and Expiredate > current_date ) 
+      rs = ActiveRecord::Base.connection.select_value(
+								"select locas_id　from opeitms where itms_id = #{itms_id} and ProcessSeq = 999 
                                and Priority = (select max(Priority) from OpeItms where  itms_id = #{itms_id} and Expiredate > current_date )  order by expiredate")
-       if rs then
-	         return rs[:locas_id]
+       if locas_id then
+	         return locas_id
          else
             3.times{ fprnt " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
-	        3.times{ p " ERROR Line #{__LINE__} not found locas_id from  OpeItms   where itms_id = #{itms_id}"}
-          exit ###画面にメッセージをだす方法 バッチ処理だよ
+			raise
        end
     end
 	
@@ -603,28 +607,37 @@
 		rnditms = ActiveRecord::Base.connection.select_all(strsql)
 		return rnditms
     end
+	
+	def proc_get_pare_opeitms_by_nditms(itms_id,locas_id) ##未作成
+		strsql = "select * from r_nditms where nditm_opeitm_id = #{opeitms_id} #{strwhere}  and nditm_Expiredate > current_date "
+		rnditms = ActiveRecord::Base.connection.select_all(strsql)		
+	end
+	
+	def proc_get_pare_opeitms_by_trngantts(itms_id,locas_id) ## 未作成
+
+	end
 
     def vproc_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0[:id]} and Expiredate > current_date order by opeitms_id ")
+		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0["id"]} and Expiredate > current_date order by opeitms_id ")
 		if rnditms.size > 0 then
 			ngantts = []
 			mlevel = n0[:mlevel] + 1
 			rnditms.each.with_index(1)  do |i,cnt|
-				chilopeitm = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0[:priority]} and  Expiredate > current_date  order by processseq desc")
+				chilopeitm = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0["priority"]} and  Expiredate > current_date  order by processseq desc")
 				###if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
 				if chilopeitm 
 					chil_loca = chilopeitm["locas_id"]
 					prdpurshp = chilopeitm["prdpurshp"] 
 					processseq = chilopeitm["processseq"] 
 					priority = chilopeitm["priority"]
-					opeitm_id = chilopeitm["id"]
+					opeitms_id = chilopeitm["id"]
 				else
 					chil_loca = 0
 					prdpurshp = "end"  ###endは使用しなくなった。　後で修正
 					processseq = 999
 				end
-				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i["itms_id_nditm"],:prd_pur_shp=>prdpurshp,:safestkqty=>i["safestkqty"],
-		               :loca_id=>chil_loca,:loca_id_to=>r0[:locas_id],:opeitm_id =>opeitm_id,
+				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itms_id=>i["itms_id_nditm"],:prd_pur_shp=>prdpurshp,:safestkqty=>i["safestkqty"],
+		               :locas_id=>chil_loca,:locas_id_to=>r0[:locas_id],:opeitms_id =>opeitms_id,
 					   :priority=>priority,:processseq=>processseq,
 					   :endtime=>endtime,:duration=>chilopeitm["duration"],
 					   :nditm_parenum=>i["parenum"],:nditm_chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}
@@ -635,54 +648,54 @@
 		return ngantts
     end
     def sub_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-      rec = plsql.opeitms.first("where itms_id = #{r0[:itms_id]} and Expiredate > current_date and Priority = #{r0[:priority]} and processseq < #{r0[:processseq]}  order by   processseq desc")
+      rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{r0["itms_id"]} and Expiredate > current_date and Priority = #{r0["priority"]} and processseq < #{r0["processseq"]}  order by   processseq desc")
       if rec
 	       ngantts = []
-           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:opeitm_id=>rec[:id],
-		   :loca_id_to=>r0[:locas_id],
-		   :endtime=>endtime,:prd_pur_shp=>rec[:prdpurshp],:duration=>rec[:duration],:nditm_parenum=>1,:nditm_chilnum=>1,
-		   :safestkqty=>rec[:safestkqty],:id=>"opeitms_"+rec[:id].to_s,:priority=>rec[:priority],:processseq=>rec[:processseq]}
-           endtime = endtime - rec[:duration]*24*60*60  ###dayのみ修正要
+           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itms_id=>rec["itms_id"],:locas_id=>rec["locas_id"],:opeitms_id=>rec["id"],
+		   :locas_id_to=>r0["locas_id"],
+		   :endtime=>endtime,:prd_pur_shp=>rec["prdpurshp"],:duration=>rec["duration"],:nditm_parenum=>1,:nditm_chilnum=>1,
+		   :safestkqty=>rec["safestkqty"],:id=>"opeitms_"+rec["id"].to_s,:priority=>rec["priority"],:processseq=>rec["processseq"],
+            :strdate => proc_get_strdate(endtime ,rec["duration"],"day",nil)}  ###基準日　期間　タイプ　休日考慮
 		else
           ngantts = [{}]		
       end
       return ngantts
     end	
-    def sub_get_itm_locas_procssseq_frm_opeitm opeitm_id  ###
-       rec = plsql.opeitms.first("where id  = #{opeitm_id} and Expiredate > current_date ")
+    def sub_get_itm_locas_procssseq_frm_opeitm opeitms_id  ###
+       rec = ActiveRecord::Base.connection.select_one("select * from opeitms where id  = #{opeitms_id} and Expiredate > current_date ")
         if rec
 	        rec
 		 else
-            p "logic err 	sub_get_itm_locas_procssseq_frm_opeitm opeitm_id:#{opeitm_id} "
+            p "logic err 	sub_get_itm_locas_procssseq_frm_opeitm opeitms_id:#{opeitms_id} "
            raise		  
         end
     end
 	
     def sub_get_next_opeitm_processseq_and_loca_id p_opeitm  ###
 	    if p_opeitm[:itms_id].nil? or p_opeitm[:priority].nil? or p_opeitm[:processseq].nil? or p_opeitm[:prdpursch].nil? 
-	        tmp = plsql.opeitms.first("where id = #{p_opeitm[:opeitms_id]} ")
-		    p_opeitm[:itms_id] = tmp[:itms_id]
-		    p_opeitm[:locas_id] = tmp[:locas_id]
-		    p_opeitm[:priority] = tmp[:priority]
-		    p_opeitm[:processseq] = tmp[:processseq]
-		    p_opeitm[:prdpursch] = tmp[:prdpursch]
+	        tmp = ActiveRecord::Base.connection.select_one("select * from opeitms where id = #{p_opeitm[:opeitms_id]} ")
+		    p_opeitm[:itms_id] = tmp["itms_id"]
+		    p_opeitm[:locas_id] = tmp["locas_id"]
+		    p_opeitm[:priority] = tmp["priority"]
+		    p_opeitm[:processseq] = tmp["processseq"]
+		    p_opeitm[:prdpursch] = tmp["prdpursch"]
 	    end
 	    if p_opeitm[:processseq] < 999
-	        strwhere = "where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]} and processseq > #{p_opeitm[:processseq]}  order by   processseq "
-            rec = plsql.opeitms.first(strwhere)
+	        strwhere = "select * from opeitms where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]} and processseq > #{p_opeitm[:processseq]}  order by   processseq "
+            rec = ActiveRecord::Base.connection.select_one(strwhere)
 		  else
 		    p_opeitm[:prdpursch] = "shp"
 			rec = p_opeitm.dup
         end		
         if rec
-	        {:processseq=>rec[:processseq],:locas_id=>rec[:locas_id],:itms_id=>rec[:itms_id],:prev_prdpurshp=>p_opeitm[:prdpursch],:nxt_opeitms_id=>rec[:id]}
+	        {:processseq=>rec["processseq"],:locas_id=>rec["locas_id"],:itms_id=>rec["itms_id"],:prev_prdpurshp=>p_opeitm[:prdpursch],:nxt_opeitms_id=>rec["id"]}
 		 else
             p "logic err 	sub_get_next_opeitm_processseq_and_loca_id   p_opeitm:#{p_opeitm} "	  
             raise		  
         end
     end	
     def sub_get_opeitms_id_fm_itm_processseq_priority p_opeitm  ###
-        rec = plsql.opeitms.first("where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]||=999} and processseq = #{p_opeitm[:processseq]||=999}  ")
+        rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{p_opeitm[:itms_id]} and Expiredate > current_date and Priority = #{p_opeitm[:priority]||=999} and processseq = #{p_opeitm[:processseq]||=999}  ")
         if rec
 	        rec
 		  else
@@ -702,12 +715,12 @@
             raise		  
         end
     end
-    def proc_get_chrgperson_fm_loca loca_id,prd_pur_shp
+    def proc_get_chrgperson_fm_loca locas_id,prd_pur_shp
         case prd_pur_shp
 			when "pur"
-	           strsql = "select * from dealers where locas_id_dealer = #{loca_id} and expiredate > current_date"
+	           strsql = "select * from dealers where locas_id_dealer = #{locas_id} and expiredate > current_date"
 			else	
-			   strsql = "select * from asstwhs where locas_id_asstwh = #{loca_id} and expiredate > current_date"   
+			   strsql = "select * from asstwhs where locas_id_asstwh = #{locas_id} and expiredate > current_date"   
 	    end	
         chrgperson = ActiveRecord::Base.connection.select_one(strsql)
 	    if chrgperson
@@ -724,38 +737,34 @@
 	    return chrgperson_id
     end
 
-    def sub_cal_date(loca_id,ops_loca_id,dueday) 
+    def sub_cal_date(locas_id,ops_loca_id,dueday) 
         dueday
     end
     
-    def  sub_get_bilcode(loca_id_custs)
-         loca_id_custs
+    def  sub_get_bilcode(locas_id_custs)
+         locas_id_custs
     end
         
-    def  sub_get_pay_incomming_day(loca_id,dueday)
+    def  sub_get_pay_incomming_day(locas_id,dueday)
          dueday
     end
-    def sub_get_to_locaid(custord_loca_id,itm_id)
+    def sub_get_to_locaid(custord_loca_id,itms_id)
         custord_loca_id
     end  	
     def sub_get_sects_id_fm_locas_id  locas_id
-	    sect = plsql.sects.first("where locas_id_sect = #{locas_id||0} ")
-		if sect.nil?
-	       sect = plsql.r_sects.first("where loca_code_sect =  'dummy'")
-	       if sect.nil? then sect_id = 0  else sect_id = sect[:id] end
-		  else
-		   sect_id = sect[:id]
+	    sect_id = ActiveRecord::Base.connection.select_value("select id from sects where locas_id_sect = #{locas_id||=0} ")
+		if sect_id.nil?
+	       sect_id = ActiveRecord::Base.connection.select_value("select id from r_sects where loca_code_sect =  'dummy'")
+		   sect_id ||= 0
 	    end 
 	    return sect_id
 	end
 	  	
     def sub_get_locas_id_fm_sects_id  sects_id
-	    sect = plsql.sects.first("where id = #{sects_id} ")
-		if sect.nil?
+	    locas_id = ActiveRecord::Base.connection.select_value("select locas_id_sect from sects where id = #{sects_id} ")
+		if locas_id.nil?
 	       p "err logic err?"
-		   raise on
-		  else
-		   locas_id = sect[locas_id_sect]
+		   raise 
 	    end 
 	    return locas_id
 	end
@@ -776,12 +785,12 @@
 	    end 
 	    return locas_id
 	end   
-    def proc_get_tree_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック  itm_idは必須
+    def proc_get_tree_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック  itms_idは必須
         ##ngantts[:seq,:mlevel,:loca_id,:itm_id]
         ##@bgantts{seq=>{:itm_code,:itm_name,:loca_code,:loca_name,:mlevel,:nditm_parenum,:nditm_chilnum,:opeitm_duration,:assigs,}}
         n0 = ngantts.shift
 	    if n0.size > 0  ###子部品がいなかったとき{}になる。
-            r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where itms_id = #{n0[:itm_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > current_date")
+            r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where itms_id = #{n0[:itms_id]}  and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > current_date")
             if r0 then
                 strtime = proc_get_contents(n0,r0)
                 tmp = vproc_get_chil_itms(n0,r0,strtime)
@@ -795,11 +804,11 @@
 	    end	
         return ngantts
     end  ##    
-    def proc_get_tree_under_opeitm opeitm_id
+    def proc_get_tree_under_opeitm opeitms_id
 		ngantts = []
 		n0 = {}
-		r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{opeitm_id} ")
-		n0[:itm_id] = r0["itms_id"]
+		r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{opeitms_id} ")
+		n0[:itms_id] = r0["itms_id"]
 		n0[:processseq] = r0["processseq"]
 		n0[:priority] = r0["priority"]
 		n0[:seq] = "000"
@@ -820,22 +829,22 @@
         ##fprnt "n0:#{n0}"
 	    ##fprnt "r0:#{r0}"
         bgantt = {}
-        itm = plsql.itms.first("where id = #{n0[:itm_id]} ")
-	    if n0[:loca_id]
-            loca = plsql.locas.first("where id = #{n0[:loca_id]} ")
+        itm = ActiveRecord::Base.connection.select_one("select * from  itms where id = #{n0[:itms_id]} ")
+	    if n0[:locas_id]
+            loca = ActiveRecord::Base.connection.select_one("select * from locas where id = #{n0[:locas_id]} ")
 	       else
-	        rec = plsql.opeitms.first("where itms_id = #{r0["itms_id"]} and Expiredate > current_date and Priority = #{r0["priority"]}   order by   processseq desc")
-	        loca = plsql.locas.first("where id = #{rec[:locas_id]} ")
+	        rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{r0["itms_id"]} and Expiredate > current_date and Priority = #{r0["priority"]}   order by   processseq desc")
+	        loca = ActiveRecord::Base.connection.select_one("select * from locas  where id = #{rec["locas_id"]} ")
         end
 	    qty = if n0[:seq].size > 4 then (@bgantts[n0[:seq][0..-4].to_sym][:qty] ||= 1) else  (@bgantts["000".to_sym][:qty] ||= 1) end
 	    new_qty = qty / (n0[:nditm_parenum]||=1) * (n0[:nditm_chilnum]||=1)
-        bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm[:code],:itm_name=>itm[:name],:loca_code=>loca[:code],:loca_name=>loca[:name],:opeitm_duration=>(r0["duration"]||=1),
+        bgantt[n0[:seq].to_sym] = {:mlevel=>n0[:mlevel],:itm_code=>itm["code"],:itm_name=>itm["name"],:loca_code=>loca["code"],:loca_name=>loca["name"],:opeitm_duration=>(r0["duration"]||=1),
                                  :assigs=>"",:endtime=>n0[:endtime],:endtime_est=>n0[:endtime],
-								 :starttime=>n0[:endtime]-(r0["duration"]||=1)*24*60*60,
-								 :starttime_est=>n0[:endtime]-(r0["duration"]||=1)*24*60*60,
+								 :starttime=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),
+								 :starttime_est=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),
 								 :depends=>"",
 								 :nditm_parenum=>n0[:nditm_parenum]||=1,:nditm_chilnum=>n0[:nditm_chilnum]||=1,:prdpurshp=>r0["prdpurshp"],
-                                 :subtblid=>"opeitms_"+r0["id"].to_s,:id=>n0[:id],:opeitm_id=>r0["id"],:itm_id=>r0["itms_id"],:processseq=>r0["processseq"],:qty=>new_qty}
+                                 :subtblid=>"opeitms_"+r0["id"].to_s,:id=>n0[:id],:opeitms_id=>r0["id"],:itms_id=>r0["itms_id"],:processseq=>r0["processseq"],:qty=>new_qty,:qty_src=>new_qty}
         @bgantts.merge! bgantt
 	    @min_time = bgantt[n0[:seq].to_sym][:starttime] if (@min_tim||="2099/12/31".to_time) > bgantt[n0[:seq].to_sym][:starttime]
         return bgantt[n0[:seq].to_sym][:starttime]
@@ -855,12 +864,12 @@
                 if  value[:depends] == ""
 		    	    if @bgantts[key][:starttime_est]  <  today
                        @bgantts[key][:starttime_est]  =  today		   
-                       @bgantts[key][:endtimeest]  =   @bgantts[key][:starttime_est] + value[:opeitm_duration]*24*60*60    ###稼働日考慮今なし
+                       @bgantts[key][:endtimeest]  =   proc_get_strdate(@bgantts[key][:starttime_est], value[:opeitm_duration]*-1,"day",nil)    ###稼働日考慮今なし
                     end					  
 			    end
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est] ) < @bgantts[key][:endtime_est]
                     @bgantts[key.to_s[0..-4].to_sym][:starttime_est]  =   @bgantts[key][:endtime_est]   ###稼働日考慮今なし
-                    @bgantts[key.to_s[0..-4].to_sym][:endtime_est] =  @bgantts[key.to_s[0..-4].to_sym][:starttime_est]  + @bgantts[key.to_s[0..-4].to_sym][:opeitm_duration] *24*60*60
+                    @bgantts[key.to_s[0..-4].to_sym][:endtime_est] =  proc_get_strdate(@bgantts[key.to_s[0..-4].to_sym][:starttime_est],@bgantts[key.to_s[0..-4].to_sym][:opeitm_duration]*-1,"day",nil)
 				    ##p key
 				    ##p @bgantts[key]
 			    end
@@ -870,7 +879,7 @@
 		    if key.to_s.size > 3
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est]  ) > @bgantts[key][:endtime_est]  			   
                       @bgantts[key][:endtime_est]  =   @bgantts[key.to_s[0..-4].to_sym][:starttime_est]    ###稼働日考慮今なし
-                      @bgantts[key][:starttime_est] =  @bgantts[key][:endtime_est]  - value[:opeitm_duration] *24*60*60
+                      @bgantts[key][:starttime_est] =  proc_get_strdate(@bgantts[key][:endtime_est],value[:opeitm_duration] ,"day",nil)
                 end					  
             end
         end
@@ -909,6 +918,9 @@
         @src_tbl[:updated_at] = Time.now
         @src_tbl[:created_at] = Time.now  if rec["sio_classname"] =~ /_add_/
 	end
+    def proc_rec_instance_variable rec
+		proc_command_instance_variable rec
+	end
     def proc_command_instance_variable rec
 	    tmp = {}
 	    if @pare_class == "batch"  ###delayjobからだと必要データが来ない。
@@ -916,6 +928,10 @@
             rec.each do |key,val|
 	            if  key.split("_")[0] == tblnamechop and key.split("_")[2] == "id" and val
 				    trec = ActiveRecord::Base.connection.select_one("select * from #{"r_" + key.split('_')[1]+'s'} where id = #{val}")
+					if trec.nil?  ###logic error
+						fprnt "rec = '#{rec}' "
+						fprnt " key = '#{key}' val = '#{val}' "
+					end
 				    trec.each do |reckey,recval|
 				        tmp[reckey] = recval if recval and reckey != "id"
 				    end
@@ -932,13 +948,15 @@
 	    str = ""
         rec.each do |key,val|
 	        case 
-		        when key == "rubycoding_rubycode" then
+		        when key == "rubycoding_rubycode" 
 	                @rubycoding_rubycode = val
-		        when val.class == String then
+		        when key == "button_onclickbutton"
+	                @button_onclickbutton = val					
+		        when val.class == String 
 	                str << "@#{key} = %Q%#{val}%\n"
-		        when val.class == Date then
+		        when val.class == Date 
 	                str << "@#{key} = %Q%#{val}%.to_date\n"	  
-		        when val.class == Time then
+		        when val.class == Time 
 	                str << "@#{key} = %Q%#{val}%.to_time\n"
 		        when val.class == NilClass 
 	                str << "@#{key} = nil\n"
@@ -954,7 +972,7 @@
     def get_screen_code 
         case
             when params[:jqgrid_id]   then ##disp
-               @jqgrid_id   =  params[:jqgrid_id]
+               @jqgrid_id   =  params[:jqgrid_id]  ###@jqgrid_id  2dc_jqgridで使用
 	           @screen_code = params[:jqgrid_id]  if params[:jqgrid_id].split('_div_')[1].nil?    ##子画面無
                @screen_code = params[:jqgrid_id].split('_div_')[1]  if params[:jqgrid_id].split('_div_')[1]    ##子画面
             ##when params[:action]  == "index"  then 
@@ -983,8 +1001,8 @@
 			strdef = "def #{src_tbl["codel"]}  #{src_tbl["hikisu"]} \n" 
 		    strdef << src_tbl["rubycode"]
 		    strdef <<"\n end"
-		    eval(strdef)
 			fprnt strdef
+		    eval(strdef)
 		end
     end
 	def str_init_command_c tbl_dest
@@ -1062,37 +1080,37 @@
 			end
 			if  rec["tblinkfld_rubycode"] or  rec["pobject_code_fld"] == "id" or  rec["pobject_code_fld"] =~ /_id/
 				if rec["pobject_code_fld"] == "id"
-					streval << %Q&
-		if @sio_classname =~ /_delete_/ 
-			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} 
-			command_c = vproc_delete_rec_contens(command_c)
-		else 
-			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} \n&
+					streval << %Q&	if @sio_classname =~ /_delete_/ 
+										command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} 
+										command_c = vproc_delete_rec_contens(command_c)
+									else 
+										command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} 
+								&
 				else
 					if rec["tblinkfld_rubycode"]
-					streval << %Q&
-			command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} \n&
+						streval << %Q&	command_c[:#{fld}] = #{rec["tblinkfld_rubycode"]} 
+									&
 					else
-					streval << %Q&
-			command_c[:#{fld}] = "missing id " \n&		
+						streval << %Q& 	command_c[:#{fld}] = "missing id " 
+						&		
 					end
 				end
 			else
 				str = vproc_tblinkfld_dflt_set_fm_rubycoding(fld)
 				if str
-					streval << %Q&
-			command_c[:#{fld}] = #{str} &
+					streval << %Q& command_c[:#{fld}] = #{str} 
+								&
 				else
-					streval << %Q&
-			command_c[:#{fld}] = "missing id " \n&	if rec["pobject_code_fld"] =~ /_id/		###_id項目は必須
+					streval << %Q& command_c[:#{fld}] = "missing id " 
+								&	if rec["pobject_code_fld"] =~ /_id/		###_id項目は必須
 				end
 			end
 	    end ##
 		if recs.size > 0
 		    streval << %Q& command_c[(command_c[:sio_viewname].split("_")[1].chop+"_id").to_sym] = command_c[:id] &
 			streval << str_sio_set
-			eval(streval)
 			fprnt streval
+			eval(streval)
 		end
     end
 	def vproc_delete_rec_contens(command_c)
@@ -1187,19 +1205,19 @@
 						and destblname = '#{trn[:tblname]}' and destblid = #{trn[:id]}
 						and qty > 0 & 
 		alloctbls  = ActiveRecord::Base.connection.select_all(strsql)
-		lot_qty = @pack_qty
+		lot_qty = trn[:pack_qty]
 		alloc = {}
 		alloctbls.each do |alloctbl|
-			case @sio_classname
+			case trn[:sio_classname]
 				when /_add_/
 					if alloctbl["qty"] >= lot_qty 
-						new_qty = @pack_qty
+						new_qty = trn[:pack_qty]
 						alloctbl["qty"] -= lot_qty
 					else 
 						new_qty = alloctbl["qty"]
 						alloctbl["qty"] = 0
 					end
-					Alloctbl.update(alloctbl["id"],alloctbl)
+					proc_tbl_update_arel("alloctbls", alloctbl," id = #{alloctbl["id"]} ")
 					alloc[:srctblname] = alloctbl["srctblname"]
 					alloc[:srctblid] = alloctbl["srctblid"]
 					alloc[:destblname] = "lotstkhists"
@@ -1210,33 +1228,34 @@
 					alloc[:created_at] = Time.now
 					alloc[:updated_at] = Time.now
 					alloc[:persons_id_upd] = System_person_id
-					Alloctbl.create alloc
+					proc_tbl_insert_arel("alloctbls", alloc)
 					alloc[:srctblname] = "lotstkhists"
 					alloc[:srctblid] = @lotstkhist_id
 					alloc[:destblname] = alloctbl["srctblid"]  ####おかしいよ
 					alloc[:destblid] = trn[:id]
 					alloc[:id] = proc_get_nextval "alloctbls_seq" 
-					Alloctbl.create alloc
+					proc_tbl_insert_arel("alloctbls", alloc)
 				when /_edit_|_delete_/ ###画面でのチェックも必要か
 			end
 			lot_qty -= new_qty
 			break if lot_qty <= 0
 		end
-		if lot_qty != 0 and  @sio_classname =~ /_add_/
+		if lot_qty != 0 and  trn[:sio_claaname] =~ /_add_/
 			fprnt "line #{__LINE__} logic error" 
 			fprnt " strsql #{strsql}"
 			fprnt "@lotstkhist_id #{@lotstkhist_id}"
 			raise
 		end
-		case @sio_classname
+		case trn[:sio_claaname]
 			when /_add_/
 				pre_gantt ={"id"=>proc_get_nextval("trngantts_seq"),
 					"key"=>"000","orgtblname"=>"lotstkhists","orgtblid"=>@lotstkhist_id,
 					"mlevel"=>0,"prjnos_id" => @lotstkhist_prjno_id,
 					"strdate"=>Date.today,"duedate"=>Date.today,
 					"parenum"=>1,"chilnum"=>1,
-					"qty"=>@pack_qty,  ###stkは使用しなくなった。
-					"opeitms_id"=>@opeitm_id,
+					"qty"=>trn[:pack_qty],  ###stkは使用しなくなった。
+					"qty_src"=>0,
+					"opeitms_id"=>trn[:opeitms_id],
 					"expiredate"=>"2099/12/31".to_date,
 					"created_at"=>Time.now,"updated_at"=>Time.now,"remark"=>" create from act",
 					"persons_id_upd"=>alloc[:persons_id_upd]} 
@@ -1302,7 +1321,7 @@
 		end
 		return columns
 	end
-	def proc_get_rec_fm_tblname_tblid tblname,srctblname,srctblid
+	def proc_get_trg_rec_id_fm_tblname_tblid tblname,srctblname,srctblid
 		if @sio_classname =~ /_add_/
 			id = proc_get_nextval "#{tblname}_seq"
 		else
@@ -1311,8 +1330,8 @@
 			else
 				id = ActiveRecord::Base.connection.select_value("select id from #{tblname} where tblname = '#{srctblname}' and tblid = #{srctblid}")
 			end
-			if rec.nil?
-				fprnt " line #{__LINE}__ proc_get_rec_fm_tblname_tblid tblname: #{tblname},srctblname:#{srctblname},srctblid:#{srctblid}"
+			if id.nil?
+				fprnt " line #{__LINE}__ proc_get_trg_rec_id_fm_tblname_tblid tblname: #{tblname},srctblname:#{srctblname},srctblid:#{srctblid}"
 				raise
 			end
 		end
@@ -1334,14 +1353,10 @@
 	
 	def proc_get_rec_fm_tblname_yield tblname  ##proc_fld_xxxxの中の項目を求める。
 		rec = {}
-		if @sio_classname =~ /_add_/
-			rec["id"] = proc_get_nextval "#{tblname}_seq"
-		else  ###snoはテーブル毎に必ずユニーク
-			rec = ActiveRecord::Base.connection.select_one("select * from #{tblname} where #{yield}")
-			if rec.nil?
-				fprnt "line #{__LINE__} proc_get_rec_fm_tblname_sno tblname:#{tblname},yield:#{yield}"
-				raise
-			end
+		rec = ActiveRecord::Base.connection.select_one("select * from #{tblname} where #{yield}")
+		if rec.nil?
+			fprnt "line #{__LINE__} proc_get_rec_fm_tblname_yield tblname:#{tblname},yield:#{yield}"
+			raise
 		end
 		return rec
 	end
@@ -1349,7 +1364,7 @@
 		rec = ActiveRecord::Base.connection.select_one("select * from r_#{tblname} where id = #{id}")
 		if rec.nil?
 			fprnt "error not found 'select * from r_#{tblname} where id = #{id} ' "
-			rec = {}
+			raise
 		end
 		return rec
 	end
@@ -1361,13 +1376,40 @@
 		   values << case val.class.to_s
 				when "String"
 					%Q&'#{val.gsub("'","''")}',&
-				when "Fixnum"
+				when "Fixnum","Bignum","BigDecimal","Float"
 					"#{val},"
-				when "Bignum"
-					"#{val},"
-				when "BigDecimal"
-					"#{val},"
-				when "Float"
+				when "Date"
+					%Q& to_date('#{val.strftime("%Y/%m/%d")}','yyyy/mm/dd'),&
+				when "Time"
+					case key.to_s
+						when "created_at","updated_at"
+							%Q& to_date('#{val.strftime("%Y/%m/%d %H:%M:%S")}','yyyy/mm/dd hh24:mi:ss'),&
+						else
+							%Q& to_date('#{val.strftime("%Y/%m/%d %H:%M")}','yyyy/mm/dd hh24:mi'),&
+					end
+				when "DateTime"
+					case key.to_s
+						when "expiredate"
+							%Q& to_date('#{val.strftime("%Y/%m/%d")}','yyyy/mm/dd'),&
+						else
+							%Q& to_date('#{val.strftime("%Y/%m/%d %H:%M")}','yyyy/mm/dd hh24:mi'),&
+					end
+				when "NilClass"
+					"null,"
+				else
+					fprnt " line #{__LINE__} : error val.class #{val.class}  key #{key.to_s} "
+		   end
+		end
+		ActiveRecord::Base.connection.insert("insert into #{tblname}(#{fields.chop}) values(#{values.chop})")
+	end	
+	def proc_tbl_update_arel  tblname,hash,strwhere ##
+		strset = ""
+		hash.each do |key,val|
+			strset << key.to_s  + " = "
+			strset << case val.class.to_s
+				when "String"
+					%Q&'#{val.gsub("'","''")}',&
+				when "Fixnum","Bignum","BigDecimal","Float"
 					"#{val},"
 				when "Date"
 					%Q& to_date('#{val.strftime("%Y/%m/%d")}','yyyy/mm/dd'),&
@@ -1381,11 +1423,13 @@
 				when "NilClass"
 					"null,"
 				else
-					p "error val.class #{val.class}  key #{key.to_s} "
+					fprnt " line #{__LINE__} : error val.class #{val.class}  key #{key.to_s} "
+					raise
 		   end
 		end
-		ActiveRecord::Base.connection.insert("insert into #{tblname}(#{fields.chop}) values(#{values.chop})")
+		ActiveRecord::Base.connection.update("update #{tblname}  set #{strset.chop} where #{strwhere} ")
 	end
+	
 	def proc_price_amt command_c
 		tblnamechop = (command_c[:sio_viewname].split("_",2)[1].chop)
 		qty = command_c[("#{tblnamechop}_qty").to_sym]
@@ -1396,8 +1440,20 @@
 			when /^pur/
 				pricetbl = "dealers"
 				loca_code = command_c[:loca_code_dealer]
-			when /^prd|^shp/
+			when /^prd/
 				pricetbl = "asstwhs"
+				loca_code = command_c[:loca_code_to]
+			when /^shp/			
+				case command_c[:opeitm_oparation]
+					when "shp:delivered_goods"
+							pricetbl = "custs"
+					when "shp:feepayment"
+							pricetbl = "feepayms"
+					when "shp:shipment"
+							pricetbl = "asstwhs"
+					else
+							pricetbl = "asstwhs"
+				end
 				loca_code = command_c[:loca_code_to]
 			when /mkact/
 				case command_c[:mkact_prdpurshp]
@@ -1410,7 +1466,7 @@
 							if command_c[:mkact_sno_act]
 								strsql = "select * from r_puracts where purinst_sno = '#{command_c[:mkact_sno_act]}'"
 								loca_code = ActiveRecord::Base.connection.select_one(strsql)["loca_code_dealer"]
-							else
+							else							
 								return {}
 							end
 						end
@@ -1439,10 +1495,25 @@
 						contract= "C"
 					when /^pur/
 						contract = "D"
-					when /^prd|^shp/
+					when /^prd/
 						contract = "X"  ###単価未定
 						expiredate = ""
 						return {:price=>"0",:amt=>"0",:tax=>"0",:amtf=>"0",:contract_price => contract}   ##
+					when /^shp/			
+						case command_c[:opeitm_oparation]
+							when "shp:delivered_goods"
+								contract= "C"
+							when "shp:feepayment"
+								contract = "F"
+							when "shp:shipment"
+								contract = "X"  ###単価未定
+								expiredate = ""
+								return {:price=>"0",:amt=>"0",:tax=>"0",:amtf=>"0",:contract_price => contract}   ##
+							else
+								contract = "X"  ###単価未定
+								expiredate = ""
+								return {:price=>"0",:amt=>"0",:tax=>"0",:amtf=>"0",:contract_price => contract}   ##
+					end
 				end
 			else
 				contract = rec_contract["pricemst_contract_price"]
@@ -1469,7 +1540,7 @@
 				end
 			when "3","4"				
 				expiredate = vproc_price_expiredate_set(contract,command_c)
-			when "C","D" ##C : custs テーブルに従う D:dealersテーブルに従う
+			when "C","D","F" ##C : custs テーブルに従う D:dealersテーブルに従う
 				case  pricetbl
 					when  "custs"
 						strsql = "select  * from r_custs 	
@@ -1493,6 +1564,18 @@
 							raise
 						end
 						pare_rule_price = pare_contract["dealer_rule_price"]
+						amtround = pare_contract["pricemst_amtround"]
+						amtdecimal = pare_contract["pricemst_amtdecimal"]
+					when  "feepayms"
+						strsql = "select  * from r_feepayms 	
+									where loca_code_dealer_fee =  '#{loca_code}' and feepaym_expiredate > current_date " 
+						pare_contract = ActiveRecord::Base.connection.select_one(strsql)   ###画面のfield
+						expiredate = vproc_price_expiredate_set(pare_contract["feepaym_contract_price"],command_c)
+						if expiredate.nil?
+							fprnt "line #{__LINE__} strsql #{strsql}"
+							raise
+						end
+						pare_rule_price = pare_contract["feepaym_rule_price"]
 						amtround = pare_contract["pricemst_amtround"]
 						amtdecimal = pare_contract["pricemst_amtdecimal"]
 				end
@@ -1569,52 +1652,38 @@
 				expiredate = command_c[(tblnamechop+"acpdate").to_sym].strftime("%Y/%m/%d")
 		end
 	end
-	def proc_acts_to_lotstkhists prdpurshp,ary_alloc
-		yield
-		trn = {}
-		trn[:id] = eval("@#{prdpurshp}act_id")
-		trn[:qty] = eval("@#{prdpurshp}act_qty")
-		trn[:duedate] = case prdpurshp
-							when "prd"
-								@prdact_cmpldate
-							when "pur"
-								@puract_rcptdate
-							when "shp"
-								@shpact_depdate
-						end
-		proc_update_gantt_alloc_fm_trn trn,ary_alloc,nil do
-			"acts"
-		end
-		trn[:tblname] = "#{prdpurshp}acts"
-		if @opeitm_stktaking_f == "1"
-			qty  =  eval("@#{prdpurshp}act_qty")
-			until qty <= 0
-				if @opeitm_packqty > 1 and qty  > @opeitm_packqty
-					@pack_qty =   @opeitm_packqty
-				else
-					@pack_qty  = qty
-				end
-				__send__("proc_fld_r_#{prdpurshp}acts_lotstkhists_after30")  ## porc_fldは引数を取らないので　@pack_xxxとした。
-				proc_alloc_chng_act_to_lotstk trn
-				qty -= @pack_qty
-			end
-		else
-			if @opeitm_stktaking_f.nil?
-				fprnt "line #{__LINE__} ary_alloc:#{ary_alloc}"
-				raise
-			end
-		end
-	end
-	def proc_update_gantt_alloc_fm_trn trn,allocs,trngantt_id  ### allocs:ord等の作成元　ordなら　sch; trngantt_id mkschsで xxxschsの作成時のみセットされる。
+	#def proc_acts_to_lotstkhists trn,ary_alloc
+	#	qty  =  trn[:qty]
+	#	proc_update_gantt_alloc_fm_trn trn,ary_alloc,nil 
+	#	if @opeitm_stktaking_f == "1"
+	#		until qty <= 0
+	#			if trn[:opeitm_packqty] > 1 and qty  > trn[:opeitm_packqty]
+	#				trn[:pack_qty] =   trn[:opeitm_packqty]
+	#			else
+	#				trn[:pack_qty]  = qty
+	#			end
+	#			__send__("proc_fld_r_#{trn[:prdpurshp]}acts_lotstkhists_after30")  ## porc_fldは引数を取らないので　@pack_xxxとした。
+	#			proc_alloc_chng_act_to_lotstk trn
+	#			qty -= trn[:pack_qty]
+	#		end
+	#	else
+	#		if trn[:opeitm_stktaking_f].nil?
+	#			fprnt "line #{__LINE__} ary_alloc:#{ary_alloc}"
+	#			raise
+	#		end
+	#	end
+	#end
+	def proc_update_gantt_alloc_fm_trn trn,allocs,trngantt_id  ### allocs:ord等の作成元　ordなら　sch;  instならord
 		self_gantt_id =	if trngantt_id
 							trngantt_id
 						else
-							proc_create_self_gantt(yield) ###schやord自身のtrngantts作成・変更 ###tranganttを展開して作成
+							proc_create_self_gantt(trn,allocs) ###schやord自身のtrngantts作成・変更 ###tranganttを展開して作成
 						end
+		return if trn[:sio_classname] =~ /_edit_|delete_/
 		str_alloctbl = {}		
 		new_alloc = {}	
 		new_alloc[:srctblname] = "trngantts"
-		new_alloc[:destblname] = "#{@opeitm_prdpurshp + yield}"
+		new_alloc[:destblname] = "#{trn[:prdpurshp] + trn[:schordinstact] }"
 		new_alloc[:srctblid] = self_gantt_id	
 		new_alloc[:destblid] = trn[:id]
 		new_alloc[:allocfree] = "free"
@@ -1625,27 +1694,25 @@
 			free_alloc_id = ActiveRecord::Base.connection.select_value(strsql)    ###基本形作成 最初未引当(free)てとして作成
 			if  new_alloc[:destblname] != allocs[0]["alloctbl_destblname"]   ###次状態に引当てが変更された時　　schs-->ords ord-->insts  insts-->acts
 				allocs.each do |alloc|
-					trn[:qty]  = vproc_update_base_alloc trn,alloc,free_alloc_id do
-									yield
-								end
+					trn[:qty]  = proc_update_base_alloc trn,alloc,free_alloc_id 
 				end
 			end
 		else   ###trn = str_gantt ##xxxschsの時
 			if trngantt_id   ###tranganttを展開して作成
 				new_alloc[:qty] = trn[:qty] ### allocs.nilで　trn[:qty] != trngantt_qtyはあり得ない  
 				new_alloc[:srctblid] = trngantt_id
-				proc_create_new_or_replace_alloc(new_alloc)
+				proc_create_or_replace_alloc_by_same_tbl(trn,new_alloc)
 			else   ### xxxschsを直接入力
 				new_alloc[:qty] = trn[:qty]
-				proc_create_new_or_replace_alloc(new_alloc)    ###基本形作成
+				proc_create_or_replace_alloc_by_same_tbl(trn,new_alloc)    ###基本形作成
 				trngantt_id = self_gantt_id
 			end
 		end
-		proc_update_inputs(new_alloc[:destblname],new_alloc[:destblid],allocs,trngantt_id)
+		proc_update_inouts(new_alloc[:destblname],new_alloc[:destblid],allocs,trngantt_id)
     end	
-	def vproc_update_base_alloc trn,alloc,free_alloc_id
+	def proc_update_base_alloc trn,alloc,free_alloc_id   ###trn:freeのtrn alloc:引当て要求元　freeを引き当てたいalloc
 		based_alloc  = {}
-		based_alloc[:remark] = "vproc_update_base_alloc trn,alloc,free_alloc_id"
+		based_alloc[:remark] = "proc_update_base_alloc trn,alloc,free_alloc_id"
 		alloc.each do |key,val|
 			if key.to_s =~ /alloctbl/
 				nk = key.split("_",2)[1].sub("_id","s_id").to_sym
@@ -1653,10 +1720,9 @@
 			end
 		end
 		based_alloc[:qty] = if  alloc["alloctbl_qty"] <= trn[:qty] then 0 else alloc["alloctbl_qty"] - trn[:qty] end 
-		###based_alloc[:where] = {:id=>alloc["alloctbl_id"]}
 	    ## 上位ステータスに変更
-		Alloctbl.update(alloc["alloctbl_id"],based_alloc)
-		based_alloc[:srctblname] = "#{@opeitm_prdpurshp + yield}"
+		proc_tbl_update_arel("alloctbls", based_alloc," id =  #{alloc["alloctbl_id"]} ")
+		based_alloc[:srctblname] = "#{trn[:tblname] }"
 		based_alloc[:srctblid] = trn[:id]	
 		based_alloc[:destblname] = "alloctbls"
 		based_alloc[:destblid] = alloc["alloctbl_id"]
@@ -1665,85 +1731,63 @@
 		based_alloc[:id] = proc_get_nextval "alloctbls_seq"
 		based_alloc[:persons_id_upd] = System_person_id
 		based_alloc[:expiredate] = "2099/12/31".to_date
-		Alloctbl.create based_alloc  ###引当て履歴を作成 変更
+		###引当て履歴を作成 変更
+		proc_tbl_insert_arel("alloctbls",based_alloc) 
 		based_alloc[:srctblname] = alloc["alloctbl_srctblname"]  ###=trngantts
 		based_alloc[:srctblid] = alloc["alloctbl_srctblid"]
-		based_alloc[:destblname] = "#{@opeitm_prdpurshp + yield}"
+		based_alloc[:destblname] = "#{trn[:tblname] }"
 		based_alloc[:destblid] = trn[:id]
 		based_alloc[:allocfree] = "alloc"
 		based_alloc[:qty] = if  alloc["alloctbl_qty"] <= trn[:qty] then alloc["alloctbl_qty"] else trn[:qty] end
 		based_alloc[:id] = proc_get_nextval "alloctbls_seq"
-		Alloctbl.create based_alloc  ###新規引当て作成
-		###proc_create_new_or_replace_alloc based_alloc    ## 引当てを　schからord  又はordからinstへ　
-		##org_new_alloc = {}
-		###org_new_alloc[:where] = {:id=>new_alloc_id}
-		##org_new_alloc[:qty] = trn[:qty] - based_alloc[:qty] 
-		###未引当て分を減	
-		Alloctbl.update(free_alloc_id,:qty => (trn[:qty] - based_alloc[:qty]))
+		###新規引当て作成
+		proc_tbl_insert_arel("alloctbls",based_alloc) 
+		###   ## 引当てを　schからord  又はordからinstへ　
+		proc_tbl_update_arel("alloctbls", {:qty => (trn[:qty] - based_alloc[:qty])}," id = #{free_alloc_id} ")
 		return (trn[:qty] - based_alloc[:qty])
 	end
-	def proc_create_self_gantt sch_ord_inst_act
-		tblnamechop = @opeitm_prdpurshp + sch_ord_inst_act.chop 
-		strsql = %Q& select sum(qty) from alloctbls where srctblname = 'trngantts' 
-							and destblname = '#{@opeitm_prdpurshp+sch_ord_inst_act}' 
-							and destblid = #{eval("@"+tblnamechop+"_id")}
-							group by destblname,destblid&
-		sum_qty = ActiveRecord::Base.connection.select_value(strsql)
-		case @sio_classname
+	def proc_create_self_gantt trn,allocs
+		sum_qty = 0
+		if allocs
+			allocs.each do |alloc|
+				sum_qty += alloc["alloctbl_qty"]
+			end
+		end
+		case trn[:sio_classname]
 			when /_add_/
-				pre_gantt ={"tblname"=>"#{@opeitm_prdpurshp+sch_ord_inst_act}",
-					"tblid"=>eval("@#{tblnamechop}_id"),
-					"prjnos_id" => eval("@#{tblnamechop}_prjno_id"),
-					"strdate"=>if @opeitm_prdpurshp == "shp" then  eval("@#{tblnamechop}_depdate")
-					              else eval("@#{tblnamechop}_strdate") end,
-					"duedate"=>case sch_ord_inst_act
-									when "acts"
-										case @opeitm_prdpurshp
-											when "prd"
-												@prdact_cmpldate
-											when "pur"
-												@puract_rcptdate
-											when "shp"
-												@shpact_depdate
-										end
-									else
-										eval("@#{tblnamechop}_duedate")
-								end,
-					"itms_id"=>@opeitm_itm_id,"processseq"=>@opeitm_processseq,"locas_id"=>@opeitm_locas_id,
-					"opeitms_id"=>@opeitm_id}
-				pre_gantt["qty"] = 	@src_tbl[:qty] - (sum_qty||=0)
+				pre_gantt ={"tblname"=>trn[:tblname],
+					"tblid"=>trn[:id],
+					"prjnos_id" => trn[:prjnos_id],
+					"strdate"=>if trn[:prdpurshp] == "shp" then  trn[:depdate]
+					              else trn[:strdate] end,
+					"duedate"=>	trn[:duedate],
+					"itms_id"=>trn[:itms_id],"processseq"=>trn[:processseq],"locas_id"=>trn[:locas_id],
+					"opeitms_id"=>trn[:opeitms_id]}
+				pre_gantt["qty"] = 	trn[:qty] - (sum_qty)
+				pre_gantt["qty_src"] = 	trn[:qty]
 				proc_add_trngantts(pre_gantt) 				
 				strsql = %Q& select id from trngantts where 
-							orgtblname = '#{@opeitm_prdpurshp+sch_ord_inst_act}' 
-							and orgtblid = #{eval("@"+tblnamechop+"_id")}
+							orgtblname = '#{trn[:tblname]}' 
+							and orgtblid = #{trn[:id]}
 							and key = '001' &
 				pre_gantt_id = ActiveRecord::Base.connection.select_value(strsql)
 			when /_edit_|_delete_/
-				qty = if @sio_classname =~ /_edit_/ then @src_tbl[:qty] else 0 end
-				qty = 	qty - (sum_qty||=0)						
-				strsql = %Q& select id from trngantts where 
-							orgtblname = '#{@opeitm_prdpurshp+sch_ord_inst_act}' 
-							and orgtblid = #{eval("@"+tblnamechop+"_id")}
-							and key = '000' &			
-				Trngantt.update(ActiveRecord::Base.connection.select_value(strsql),{:qty=>qty})
-				strsql = %Q& select id from trngantts where 
-							orgtblname = '#{@opeitm_prdpurshp+sch_ord_inst_act}' 
-							and orgtblid = #{eval("@"+tblnamechop+"_id")}
-							and key = '001' &
-				pre_gantt_id = ActiveRecord::Base.connection.select_value(strsql)
-				Trngantt.update(pre_gantt_id,{:qty=>qty})
-				rec = {"tblname"=>@opeitm_prdpurshp+sch_ord_inst_act,"tblid"=>eval("@"+tblnamechop+"_id"),
-						"qty"=>qty,"duedate"=>eval("@#{tblnamechop}_duedate")}
-				proc_edit_from_trngantts rec
+				pre_gantt = {}
+				pre_gantt["duedate"] = trn[:duedate]
+				pre_gantt["tblname"] = trn[:tblname] 
+				pre_gantt["tblid"] = trn[:id]
+				pre_gantt["qty"] = if trn[:sio_classname] =~ /_edit_/ then trn[:qty] else 0 end
+				proc_edit_gantt_alloc_by_trn(pre_gantt)
 			else
 				fprnt "LINE #{__LINE__} @sio_classname err #{@sio_classname} "
 		end
 		return pre_gantt_id
 	end
 	##trn = ords or insts ・・・・
-	def proc_update_inputs(tblname,tblid,ary_alloc,trngantt_id)   ###ords,insts,actsは alloctblから作成
+	def proc_update_inouts(tblname,tblid,ary_alloc,trngantt_id)   ###ords,insts,actsは alloctblから作成
 		strsql = %Q& select * from r_#{tblname}  where  id = #{tblid} &
 		org_rec = ActiveRecord::Base.connection.select_one(strsql)
+		debugger if org_rec.nil?
 		if  ary_alloc
 			ary_alloc.each do |alloc|   ###
 				###__send__(%Q&proc_tblink_alloctbls_#{tblname}_inouts_self10&,org_rec,alloc["alloctbl_qty"],alloc["alloctbl_srctblid"])
@@ -1765,15 +1809,20 @@
         @bgantts = {}
 		cnt = 0
         @bgantts[:"000"] = {:mlevel=>0,
-							:opeitm_id=>ActiveRecord::Base.connection.select_value("select id from opeitms where itms_id = #{rec["itms_id"]} and priority = 999 and processseq = 999"),
+							:opeitms_id=>if rec["opeitms_id"]
+							                 rec["opeitms_id"]
+										else
+											ActiveRecord::Base.connection.select_value("select id from opeitms where itms_id = #{rec["itms_id"]} and priority = 999 and processseq = 999")
+										end,
 							:opeitm_duration=>"",:assigs=>"",
 							:endtime=>rec["duedate"],
 							:qty=>rec["qty"],
+							:qty_src=>rec["qty_src"],
 							:depends=>""}
 	    ngantts = []
         ngantts << {:seq=>"001",:mlevel=>1,
-					:itm_id=>rec["itms_id"],
-					:loca_id=>rec["locas_id"],
+					:itms_id=>rec["itms_id"],
+					:locas_id=>rec["locas_id"],
 					:processseq=>rec["processseq"],:priority=>rec["priority"],
 					:endtime=>rec["duedate"],:id=>"000"}
         until ngantts.size == 0
@@ -1793,164 +1842,386 @@
 			:orgtblname=>rec["tblname"],:orgtblid=>rec["tblid"],
 			:mlevel=>value[:mlevel],
 			:prjnos_id=>rec["prjnos_id"],
-			:opeitms_id=>value[:opeitm_id],
+			:opeitms_id=>value[:opeitms_id],
 			:strdate=>value[:starttime],
 			:duedate=>value[:endtime],
             :parenum=>value[:nditm_parenum],:chilnum=>value[:nditm_chilnum],
 			:qty=>value[:qty],
+			:qty_src=>value[:qty_src],
 			:expiredate=>"2099/12/31".to_date,
 			:created_at=>Time.now,:updated_at=>Time.now,:remark=>"auto_created_by perform_mkschs ",
 			:persons_id_upd=>System_person_id}
 		    #Trngantt.create tmp_gantt
 			proc_tbl_insert_arel("trngantts",tmp_gantt)
-			trn_ids << idx
+			trn_ids << idx 
 		end
+		sio_classname = "trngantts_add_"
 		trn_ids.each do |trn_id|
-			vproc_create_sch_from_gantt(trn_id)
+			proc_create_update_prdpurshp_alloc(trn_id,sio_classname)
 		end
 	end	
-	def vproc_create_sch_from_gantt(trn_id)  ##
+	def proc_create_update_prdpurshp_alloc(trn_id,sio_classname)  ##
 		str_gantt_sch = ActiveRecord::Base.connection.select_one(" select * from r_trngantts where id = #{trn_id} ")
 		qty = str_gantt_sch["trngantt_qty"]
 		@pare_opeitm = {}
-		if str_gantt_sch["trngantt_key"].size > 4 
+		if str_gantt_sch["trngantt_key"]  == "000"
+			if str_gantt_sch["trngantt_orgtblname"] =~ /^cust/
+				@pare_opeitm[:opeitm_itm_id] = str_gantt_sch["opeitm_itm_id"]
+				@pare_opeitm[:opeitm_loca_id] = str_gantt_sch["opeitm_loca_id"]
+				@pare_opeitm[:opeitm_processseq] = str_gantt_sch["opeitm_processseq"]
+				@pare_opeitm[:opeitm_priority] = str_gantt_sch["opeitm_priority"]
+			###	__send__("proc_tblink_mksch_trngantts_#{str_gantt_sch["opeitm_prdpurshp"]}schs_self10",str_gantt_sch)
+			end
+		else
+			### prdxxx,purxxx,shpxxxが直接画面、excelstr_gantt_schから入力された時 alloctblsとの紐つけを作成する。
 			strsql = %Q& select * from r_trngantts where trngantt_orgtblname = '#{str_gantt_sch["trngantt_orgtblname"]}' 
 												and trngantt_orgtblid = #{str_gantt_sch["trngantt_orgtblid"]}
-												and trngantt_key = '#{str_gantt_sch["trngantt_key"][0..-4]}'&
+												and trngantt_key = '#{if str_gantt_sch["trngantt_key"] == "001" then "000" else str_gantt_sch["trngantt_key"][0..-4] end}'&
 			pare_gantt = ActiveRecord::Base.connection.select_one(strsql)
 			pare_gantt.each do |key,val|  ###xxxschs作成時使用
-				tmptbl,newkey = key.split("_",2)
-				@pare_opeitm[newkey.to_sym] = val if tmptbl == "opeitm"
+				@pare_opeitm[key.to_sym] = val if key =~ /^opeitm/
 			end
 			str_gantt_sch["sio_viewname"] = "r_trngantts"
-			str_gantt_sch["sio_classname"] = "trngantts_add_"
-			proc_command_c_to_instance(str_gantt_sch) ### trnganttsはproc_update_tableを使用してない。
-			##proc_opeitm_instance(str_gantt_sch)
+			str_gantt_sch["sio_classname"] = sio_classname
+			##proc_command_c_to_instance() ### trnganttsはproc_update_tableを使用してない。
 			__send__("proc_tblink_mksch_trngantts_#{str_gantt_sch["opeitm_prdpurshp"]}schs_self10",str_gantt_sch)
-		else
-			@pare_opeitm[:opeitm_itm_id] = @opeitm_itm_id
-			@pare_opeitm[:opeitm_loca_id] = @opeitm_loca_id
-			@pare_opeitm[:opeitm_processseq] = @opeitm_processseq
-			@pare_opeitm[:opeitm_priority] = @opeitm_priority
-			### prdxxx,purxxx,shpxxxが直接画面、excelから入力された時 alloctblsとの紐つけを作成する。
-			if str_gantt_sch["trngantt_orgtblname"] !~ /^cust/ and str_gantt_sch["trngantt_key"] == "001" 
-				strsql = %Q& select * from alloctbls where srctblname = 'trngantts' 
-										and destblname = '#{str_gantt_sch["trngantt_orgtblname"]}' and destblid = #{str_gantt_sch["trngantt_orgtblid"]} 
-										and (allocfree = 'alloc' or allocfree = 'free')
-										order by allocfree,(case substr(destblname,length(destblname) - 4, length(destblname))
-															when 'acts' then '1'
-															when 'nsts' then '2'
-															when 'ords' then '3'
-															when 'schs' then '4'
-															else '9' end),srctblid
+			@pare_opeitm[:opeitm_itm_id] = str_gantt_sch["opeitm_itm_id"]
+			@pare_opeitm[:opeitm_loca_id] = str_gantt_sch["opeitm_loca_id"]
+			@pare_opeitm[:opeitm_processseq] = str_gantt_sch["opeitm_processseq"]
+			@pare_opeitm[:opeitm_priority] = str_gantt_sch["opeitm_priority"]
+			### prdxxx,purxxx,shpxxxが直接画面、excelstr_gantt_schから入力された時 alloctblsとの紐つけを作成する。
+			strsql = %Q& select * from alloctbls where srctblname = 'trngantts' 
+							and destblname = '#{str_gantt_sch["trngantt_orgtblname"]}' and destblid = #{str_gantt_sch["trngantt_orgtblid"]} 
+							and (allocfree = 'alloc' or allocfree = 'free')
+							order by allocfree,(case substr(destblname,length(destblname) - 4, length(destblname))
+													when 'acts' then '1'
+													when 'nsts' then '2'
+													when 'ords' then '3'
+													when 'schs' then '4'
+													else '9' end),srctblid
 										&
-				free_trns = ActiveRecord::Base.connection.select_all(strsql)
-				if free_trns.empty?
-					alloc= {}
-					alloc[:qty] = str_gantt_sch["trngantt_qty"]
-					alloc[:srctblname] = "trngantts"	
-					alloc[:destblname] = str_gantt_sch["trngantt_orgtblname"]
-					alloc[:srctblid] = str_gantt_sch["trngantt_id"]	
-					alloc[:destblid] = str_gantt_sch["trngantt_orgtblid"]
-					alloc[:allocfree] = "free"
-					alloc[:id] = proc_get_nextval "alloctbls_seq" 
-					alloc[:created_at] = Time.now
-					alloc[:updated_at] = Time.now
-					alloc[:persons_id_upd] = System_person_id
-					alloc[:expiredate] = "2099/12/31".to_date
-					alloc[:remark] = "vproc_create_sch_from_gantt(trn_id = #{trn_id})"
-					##Alloctbl.create alloc   ###xxxschsのfree作成
-					proc_tbl_insert_arel("alloctbls",alloc)
-				else
-					free_trns.each do |free_trn|   #  すでに引きあたっている、数を引く
-						if qty >= free_trn["qty"]
-							qty -= free_trn["qty"]
-						else
-							Alloctbl.update(free_trn["id"],:qty=>qty)
-							qty = 0
-						end
+			free_trns = ActiveRecord::Base.connection.select_all(strsql)
+			if free_trns.empty?
+				alloc= {}
+				alloc[:qty] = str_gantt_sch["trngantt_qty"]
+				alloc[:srctblname] = "trngantts"	
+				alloc[:destblname] = str_gantt_sch["trngantt_orgtblname"]
+				alloc[:srctblid] = str_gantt_sch["trngantt_id"]	
+				alloc[:destblid] = str_gantt_sch["trngantt_orgtblid"]
+				alloc[:allocfree] = "free"
+				alloc[:id] = proc_get_nextval "alloctbls_seq" 
+				alloc[:created_at] = Time.now
+				alloc[:updated_at] = Time.now
+				alloc[:persons_id_upd] = System_person_id
+				alloc[:expiredate] = "2099/12/31".to_date
+				alloc[:remark] = "vproc_create_sch_from_gantt(trn_id = #{trn_id})"
+				##Alloctbl.create alloc   ###xxxschsのfree作成
+				proc_tbl_insert_arel("alloctbls",alloc)
+			else
+				free_trns.each do |free_trn|   #  すでに引きあたっている、数を引く
+					if qty >= free_trn["qty"]
+						qty -= free_trn["qty"]
+					else
+						####Alloctbl.update(free_trn["id"],:qty=>qty)
+						proc_tbl_update_arel("alloctbls", {:qty=>qty}," id = #{free_trn["id"]} ")
+						qty = 0
 					end
 				end
 			end
 		end
 	end
-	def proc_edit_from_trngantts rec   ###deleteも含む		
-		strsql = %Q& select gantt.id gantt_id,gantt.parenum parenum,gantt.chilnum chilnum,gantt.key key,gantt.qty gantt_qty,
-					gantt.opeitms_id opeitms_id,gantt.price price,gantt.orgtblname orgtblname,gantt.orgtblid orgtblid,
-					alloc.id alloc_id,alloc.qty alloc_qty
-					from trngantts gantt inner join  alloctbls alloc
+	def proc_edit_from_trngantts rec   ###deleteも含む	prdpurshpxxxsが変更された時	
+		strsql = %Q& select gantt.*,
+					alloc.id alloc_id,alloc.qty alloc_qty,alloc.destblname alloc_desttblname,alloc.destblid alloc_destblid,
+					case when alloc.destblname like '%schs' then 1
+					     when alloc.destblname like '%ords' then 2
+						 when alloc.destblname like '%insts' then 3
+						 when alloc.destblname like '%acts' then 4
+						 when alloc.destblname like 'lotstk%' then 5 end tblsortkey
+					from r_trngantts gantt inner join  alloctbls alloc
 					on alloc.srctblname = 'trngantts' and gantt.id = alloc.srctblid
-					where gantt.orgtblname = '#{rec["tblname"]}'  and   gantt.orgtblid = #{rec["tblid"]} 
-					order by    gantt.orgtblname, gantt.orgtblid,gantt.key
+					where destblname = '#{rec["tblname"]}'  and   destblid = #{rec["tblid"]} 
+					and alloc.qty > 0 
+					order by    trngantt_orgtblname, trngantt_orgtblid,trngantt_key,tblsortkey,alloc.destblid
 				&
 		### trngantt : alloctbl  = 1:n		
 		gantt_allocs = ActiveRecord::Base.connection.select_all(strsql)
+		pre_gantt_id = gantt_allocs[0]["trngantt_id"]
 		save_gantt_id = 0
-		bal_qty =  0
 		save_alloc = {}
+		save_alloc[:destblname] = ""
+		newgantt = {}
 		gantt_allocs.each do |gantt_alloc|
-			if save_gantt_id != gantt_alloc["gantt_id"]			
-				gantt = {}		
-				if  bal_qty > 0 
-					alloc = {}
-					alloc[:remark] = "proc_edit_from_trngantts"
-					alloc[:id] = proc_get_nextval "alloctbls_seq" 
-					alloc[:qty] = bal_qty
-					alloc[:srctblname] = "trngantts" 
-					alloc[:srctblid] = save_gantt_id	
-					alloc[:destblname] = gantt_alloc["orgtblname"]	
-					alloc[:destblid] = gantt_alloc["orgtblid"]
-					alloc[:allocfree] = "free"
-					alloc[:created_at] = Time.now
-					alloc[:updated_at] = Time.now
-					alloc[:persons_id_upd] = System_person_id
-					alloc[:expiredate] = "2099/12/31".to_date
-					Alloctbl.create alloc
-				end	
-				if  gantt_alloc["key"].size > 4 ###2階層以降　
-					strsql = %Q& select * from 	trngantts where orgtblname = '#{gantt_alloc["orgtblname"]}' 
-												and orgtblid = #{gantt_alloc["orgtblid"]} and key = '#{gantt_alloc["key"][0..-4]}'&
-					pare_gantt = ActiveRecord::Base.connection.select_one(strsql)
-					gantt[:qty] = pare_gantt["qty"] * gantt_alloc["chilnum"] / gantt_alloc["parenum"]
-					gantt[:duedate] = pare_gantt["strdate"] - 1 ### 構成を作成するときと合わすこと
-				else  ###topレコード
-					gantt[:qty] = rec["qty"]
-					gantt[:duedate] = rec["duedate"]
+			if save_gantt_id != gantt_alloc["trngantt_id"]
+				save_gantt_id = gantt_alloc["trngantt_id"]
+				strsql = %Q&select sum(qty) from alloctbls where srctblname ='trngantts' and srctblid = #{gantt_alloc["trngantt_id"]} 
+							and destblname not like '%schs' group by srctblname,srctblid&
+				oth_alloc_qty = ActiveRecord::Base.connection.select_value(strsql)     ###ords,insts等に引きあたってといる数
+				oth_alloc_qty ||= 0	
+				if gantt_alloc["trngantt_key"] == "001" 
+					key = "000" 
+				else
+					key = gantt_alloc["trngantt_key"][0..-4]
 				end
-				gantt[:amt] = gantt[:qty] * (gantt_alloc["price"]||=0)
-				proc_update_trangantts_schs(gantt_alloc["gantt_id"],gantt,gantt_alloc["opeitms_id"])
-				save_gantt_id = gantt_alloc["gantt_id"]
-				###freee alloc
-				bal_qty = gantt[:qty]
-			end
-			if bal_qty >= gantt_alloc["alloc_qty"]
-				bal_qty -= gantt_alloc["alloc_qty"]	
-				save_alloc[:destblname] = gantt_alloc["orgtblname"]	
-				save_alloc[:destblid] = gantt_alloc["orgtblid"]
+				if  gantt_alloc["trngantt_key"] != "000" ###2階層以降　
+					strsql = %Q& select * from 	trngantts where orgtblname = '#{gantt_alloc["trngantt_orgtblname"]}' 
+									and orgtblid = #{gantt_alloc["trngantt_orgtblid"]} 
+									and key = '#{key}'&
+					pare_gantt = ActiveRecord::Base.connection.select_one(strsql)
+					newgantt[:qty] = pare_gantt["qty"] * gantt_alloc["trngantt_chilnum"] / gantt_alloc["trngantt_parenum"]
+					newgantt[:duedate] = proc_get_strdate(pare_gantt["strdate"],-1,"day",nil)  ### 構成を作成するときと合わすこと
+				else  ###topレコード topとちりりらそかこりはリンクしないのでこのレコードは、実際にはない。
+					newgantt[:qty] = rec["qty"]
+					newgantt[:duedate] = rec["duedate"]
+				end	
+				sch_tblname,sch_id = proc_update_trangantts(gantt_alloc["trngantt_id"],newgantt,gantt_alloc)
+				alloc ={}
+				alloc[:id] = gantt_alloc["alloc_id"]
+				alloc[:qty] =  	newgantt[:qty]   - oth_alloc_qty
+				if gantt_alloc["alloc_destblname"] =~ /schs$/ ### trngants:xxxschs = 1:1   trngantts:xxxords等=1:n n=0,1,2,3・・・・ 
+					if alloc[:qty] > 0
+						proc_tbl_update_arel("alloctbls",{:qty=>alloc[:qty]}," id = #{alloc[:id]} ")
+					else
+						proc_tbl_update_arel("alloctbls",{:qty=>0}," id = #{alloc[:id]} ")
+					end
+				else 
+					if alloc[:qty] >= 0     ###schsが残っているケース　実際には生しない。
+						proc_tbl_update_arel("alloctbls", {:qty=>alloc[:qty]},
+											" srctblname = 'trngantts' and srctblid = #{gantt_alloc["trngantt_id"]} and destblname ='#{sch_tblname}' and destblid = #{sch_id} ")
+					else
+						alloc[:qty] = proc_alloc_to_free(alloc,gantt_alloc) 
+					end
+				end
 			else
-				alloc = ActiveRecord::Base.connection.select_one("select * from alloctbls where id = #{gantt_alloc["alloc_id"]}")
-				alloc["qty"] = bal_qty
-				Alloctbl.update(gantt_alloc["alloc_id"],:qty=>bal_qty)
-				proc_return_alloc   alloc
-				bal_qty = 0
+				alloc[:qty] = proc_alloc_to_free(alloc,gantt_alloc) if alloc[:qty] <0
+			end   ### prdpurshpの数量が減って前の状態のテーブルの引当て数を戻す。
+		end
+		return pre_gantt_id
+	end	
+	
+	def proc_edit_gantt_alloc_by_trn rec   ###deleteも含む	prdpurshpxxxsが変更された時	
+		strsql = %Q& select *  from r_trngantts gantt 
+					where trngantt_orgtblname = '#{rec["tblname"]}'  and   trngantt_orgtblid = #{rec["tblid"]}
+					order by    trngantt_orgtblname, trngantt_orgtblid,trngantt_key
+					&
+		### trngantt : alloctbl  = 1:n		
+		gantts = ActiveRecord::Base.connection.select_all(strsql)
+		newgantt = {}
+		old_qty = 0
+		gantts.each do |gantt|
+			if  gantt["trngantt_key"] == "000" 	  ###topレコード
+				old_qty = gantt["trngantt_qty_src"]
+				newgantt[:qty] =  gantt["trngantt_qty"] +  rec["qty"] -  gantt["trngantt_qty_src"]   ## trngantt_qty 下位に展開に必要な数
+				newgantt[:qty] = 0 if newgantt[:qty] < 0  	
+				newgantt[:qty_src] = rec["qty"]
+				newgantt[:duedate] = rec["duedate"]	
+				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["opeitm_duration"],"day",nil)
+				proc_tbl_update_arel("trngantts",newgantt,"id = #{gantt["trngantt_id"]}") ##trnganttsのみ変更
+			else  ###2階層以降　
+				key = 	if gantt["trngantt_key"] == "001" then  "000" else gantt["trngantt_key"][0..-4]	end
+				strsql = %Q& select * from 	trngantts where orgtblname = '#{gantt["trngantt_orgtblname"]}' 
+							and orgtblid = #{gantt["trngantt_orgtblid"]} 
+							and key = '#{key}'&
+				pare_gantt = ActiveRecord::Base.connection.select_one(strsql)
+				newgantt[:qty] = pare_gantt["qty"] * gantt["trngantt_chilnum"] / gantt["trngantt_parenum"]
+				newgantt[:duedate] = proc_get_strdate(pare_gantt["strdate"],-1,"day",nil)  ### 構成を作成するときと合わすこと	
+				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["opeitm_duration"],"day",nil)
+				if key == "000" ### key 親のkey
+					case 
+					    when  old_qty > newgantt[:qty] ### 減数された時
+							strsql = %Q& select * from 	alloctbls  where srctblname = '#{rec["tblname"]}' and srctblid = #{rec["tblid"]}  
+									and destblname = 'alloctbls' order by id &  ###最初に引き当ては物はなるべく残す
+							allocs = ActiveRecord::Base.connection.select_all(strsql)
+							new_qty = newgantt[:qty]
+							allocs.each do |alloc|
+								if newgantt[:qty] >= alloc["qty"]
+									newgantt[:qty] -= alloc["qty"]
+								else
+									prev_qty = alloc["qty"] - newgantt[:qty]
+									proc_tbl_update_arel("alloctbls",{:qty=>newgantt[:qty]},"id = #{alloc["id"]}")
+									proc_tbl_update_arel("alloctbls",{:qty=>prev_qty},"id = #{alloc["destblid"]}")
+									newgantt[:qty] = 0
+								end
+							end
+							strsql = %Q& select * from 	alloctbls  where srctblname = 'trngantts'   
+													and destblname = '#{rec["tblname"]}' and  destblid = #{rec["tblid"]} order by id  &  ###最初に引き当ては物はなるべく残す
+							orgs = ActiveRecord::Base.connection.select_all(strsql)
+							orgs.each do |org|
+								qty = if new_qty >= org["qty"] then org["qty"] else new_qty end  
+								new_qty = if new_qty >= org["qty"] then new_qty - org["qty"]  else 0 end 
+								proc_tbl_update_arel("alloctbls",{:qty=>qty},"id = #{org["id"]}")
+							end
+						when old_qty < newgantt[:qty]   ###   001 
+							strsql = %Q& select alloctbls.id id,alloctbls.qty qty from trngantts,alloctbls where trngantts.orgtblname = '#{rec["tblname"]}' 
+									and trngantts.orgtblid = #{rec["destblid"]} and trngantts.key = '001'
+									and alloctbls.srctblname = 'trngantts' and trngantts.id = alloctbls.srctblid 
+									and alloctbls.destblname = '#{rec["tblname"]}' and alloctbls.destblid = #{rec["tblid"]}  &
+							alloc = ActiveRecord::Base.connection.select_one(strsql)		
+							proc_tbl_update_arel("alloctbls",{:qty=>alloc["qty"] += (newgantt[:qty] - old_qty)},"id = #{alloc["id"]}")
+					end
+				else
+					proc_update_gantt_schs(gantt,newgantt)				
+				end
 			end
-        end		
-		if  bal_qty > 0 
-			alloc = {}
-			alloc[:id] = proc_get_nextval "alloctbls_seq" 
-			alloc[:qty] = bal_qty
-			alloc[:srctblname] = "trngantts" 
-			alloc[:srctblid] = save_gantt_id	
-			alloc[:destblname] = save_alloc["orgtblname"]	
-			alloc[:destblid] = save_alloc["orgtblid"]
-			alloc[:allocfree] = "free"
-			alloc[:created_at] = Time.now
-			alloc[:updated_at] = Time.now
-			alloc[:persons_id_upd] = System_person_id
-			alloc[:expiredate] = "2099/12/31".to_date
-			alloc[:remark] = "proc_edit_from_trngantts"
-			Alloctbl.create alloc
-		end	
+		end
+	end	
+	def proc_update_gantt_schs(gantt,newgantt)
+		proc_tbl_update_arel("trngantts",newgantt,"id = #{gantt["trngantt_id"]}")
+		trn = {:qty=>newgantt[:qty],:duedate=>newgantt[:duedate]}
+		if gantt["opeitm_prdpurshp"] == "shp" then trn[:depdate] = newgantt[:strdate] else  trn[:strdate] = newgantt[:strdate] end
+		proc_tbl_update_arel("#{gantt["opeitm_prdpurshp"]}schs",trn,"tblid = #{gantt["trngantt_id"]}")
+		if newgantt[:qty] < gantt["trngantt_qty"]
+			strsql = %Q& select *,case when alloc.destblname like '%schs' then 5
+									when alloc.destblname like '%ords' then 4
+									when alloc.destblname like '%insts' then 3
+									when alloc.destblname like '%acts' then 4
+									when alloc.destblname like 'lotstk%' then 1
+								end tblsortkey
+								from 	alloctbls alloc where srctblname = 'trngantts' and srctblid = #{gantt["trngantt_id"]} and qty > 0
+								order by 	tblsortkey &		
+			allocs = ActiveRecord::Base.connection.select_all(strsql)
+			allocs.each do |allloc|
+				if newgantt[:qty] >= alloc["qty"]
+					newgantt[:qty]  -= alloc["qty"]
+				else
+					alloc["qty"] = newgantt[:qty]
+					proc_tbl_update_arel("alloctbls",{:qty=>newgantt[:qty]},"id = #{alloc["id"]}")
+					if alloc["destblname"] !~ /shps$/  ### add free
+						strsql = %Q& select alloc.id alloc_id,alloc.qty alloc_qty from trngantts gantt,alloctbls alloc 
+							where orgtblname = '#{alloc["destblname"]}' and orgtblid = #{alloc["_destblid"]} and key = '001'
+							and srctblname = 'trngantts' and trngantts.id = srctblid 
+							and destblname = '#{alloc["destblname"]}' and destblid = #{alloc["destblid"]}  &		
+						gantt_alloc = ActiveRecord::Base.connection.select_one(strsql)
+						proc_tbl_update_arel("alloctbls",{:qty=>gantt_alloc["alloc_qty"] += (alloc["qty"] - newgantt[:qty]) },"id = #{gantt_alloc["id"]}")
+					end
+					newgantt[:qty] = 0
+				end
+			end
+		else
+			strsql = %Q& select * from 	alloctbls 
+							where srctblname = 'trngantts' and srctblid = #{gantt["trngantt_id"]} 
+							and destblname = '#{gantt["opeitm_prdpurshp"]}schs' &
+			rec = ActiveRecord::Base.connection.select_one(strsql)  ###trngantts:alloc[destblname = xxxschs] = 1:1
+			proc_tbl_update_arel("alloctbls",{:qty=>rec["qty"] += (newgantt[:qty] - gantt["trngantt_qty"])},"id = #{rec["id"]}")
+		end
+	end
+	def proc_update_trangantts(id,newgantt,gantt_alloc)  ### id = trngantt_id
+		opeitm = ActiveRecord::Base.connection.select_one(%Q& select * from opeitms where id = #{gantt_alloc["trngantt_opeitm_id"]} &)
+		newgantt[:strdate] =  proc_get_strdate(newgantt[:duedate], (opeitm["duration"]||=0),"day",nil)  ###稼働日考慮に  ###starttimeと合わすこと。
+		newgantt[:amt] = newgantt[:qty] * (gantt_alloc["trngantt_price"]||=0)
+		proc_tbl_update_arel("trngantts",newgantt," id = #{id} ")
+		schtblname = gantt_alloc["opeitm_prdpurshp"] + "schs"
+		strsql = "select id from #{schtblname} where tblname = 'trngantts' and tblid = #{gantt_alloc["trngantt_id"]} "
+		sch_id = ActiveRecord::Base.connection.select_value(strsql)
+		rec = {}
+		if schtblname =~ /^shp/ then rec[:depdate] = newgantt[:strdate] else rec[:strdate] = newgantt[:strdate] end 
+		rec[:duedate] = newgantt[:duedate]
+		rec[:qty] = newgantt[:qty]
+		rec[:amt] = newgantt[:amt]
+		proc_tbl_update_arel(schtblname, rec, " id = #{sch_id} ")
+		return schtblname,sch_id
+	end
+	def proc_alloc_to_free(alloc,gantt_alloc)
+		alloc[:qty] += gantt_alloc["alloc_qty"]
+		new_qty = if alloc[:qty] >  0  then alloc[:qty] else 0 end 
+		proc_tbl_update_arel("alloctbls", {:qty=>new_qty}," id = #{alloc[id]} ")  ###まだ残っている引当て
+		strsql = %Q& select alloctbls.id id,alloctbls.qty qty from trngantts,alloctbls where trngantts.orgtblname = '#{gantt_alloc["alloc_destblname"]}' 
+					and trngantts.orgtblid = #{gantt_alloc["alloc_destblid"]} and trngantts.key = '001'
+					and alloctbls.srctblname = 'trngantts' and trngantts.id = alloctbls.srctblid 
+					and alloctbls.destblname = '#{gantt_alloc["alloc_destblname"]}' and alloctbls.destblid = #{gantt_alloc["alloc_destblid"]}  &
+		free_alloc = ActiveRecord::Base.connection.select_one(strsql)  ###親が数量減されfreeができた
+		proc_tbl_update_arel("alloctbl" ,{:qty=> free_alloc["qty"] + gantt_alloc["alloc_qty"] - new_qty  }," id = #{free_alloc["id"]}")
+　　　　　　　return alloc[:qty]
+	end
+	def proc_create_or_replace_alloc_by_same_tbl trn,alloc   ###xxxords,xxxinsts,lotstkhistsそのものが数量変更された時 alloc 新しい引当て  
+		case trn[:sio_classname]
+			when /_add_/
+				alloc[:id] = proc_get_nextval "alloctbls_seq" 
+				alloc[:created_at] = Time.now
+				alloc[:updated_at] = Time.now
+				alloc[:persons_id_upd] = System_person_id
+				alloc[:expiredate] = "2099/12/31".to_date				
+				proc_tbl_insert_arel  "alloctbls", alloc
+			when /_edit_|_delete_/
+				strsql = %Q& select * from alloctbls where srctblname = 'trngantts' and destblname = '#{alloc[:destblname]}' 
+							and destblid = #{alloc[:destblid]} order by id desc &
+				c_allocs = ActiveRecord::Base.connection.select_all(strsql)
+				if c_allocs.size == 0 ##logic error
+				   fprnt "strsql = #{strsql}"
+				end
+				qty = 0
+				alloc[:qty] = 0 if @sio_classname =~ /_delete_/
+				c_allocs.each do |c_alloc|
+					if alloc[:qty] < qty + c_alloc["qty"]
+						c_alloc["qty"] = if (alloc[:qty] - qty) > 0 then alloc[:qty] - qty  else 0 end
+						proc_tbl_update_arel("alloctbl" ,{:qty=>c_alloc["qty"]}," id = #{c_alloc["id"]}")
+						proc_return_alloc c_alloc
+					end
+					qty += c_alloc["qty"]
+				end 
+				if alloc[:qty] > qty  ###数量増された時
+					strsql = %Q& select alloctbls.id id,alloctbls.qty qty from trngantts,alloctbls where trngantts.orgtblname = '#{alloc[:destblname]}' 
+									and trngantts.orgtblid = #{alloc[:destblid]} and trngantts.key = '001'
+									and alloctbls.srctblname = 'trngantts' and trngantts.id = alloctbls.srctblid 
+									and alloctbls.destblname = '#{alloc[:destblname]}' and alloctbls.destblid = #{alloc[:destblid]}  &
+					free_alloc = ActiveRecord::Base.connection.select_one(strsql)
+					proc_tbl_update_arel("alloctbl" ,{:qty=>alloc[:qty] - qty + free_alloc["qty"]}," id = #{free_alloc["id"]}")
+				end
+		end
+		return alloc[:id]
+	end	 
+	def proc_return_alloc c_alloc   ### prdpurshpの数量が減って前の状態のテーブルの引当て数を戻す。
+		pre_destblname = case c_alloc["destblname"]
+							when /ords/
+								c_alloc["destblname"].sub("ords","schs")
+							when /insts/
+								c_alloc["destblname"].sub("insts","ords")
+							when /acts/
+								c_alloc["destblname"].sub("acts","insts")
+							when /lotstkhists/
+								c_alloc["destblname"].sub("acts","insts")
+							else
+								return
+						end
+		strsql = %Q&  select * from alloctbls where srctblname = '#{c_alloc["destblname"]}' and srctblid = #{c_alloc["destblid"]} and qty > 0
+												and destblname = 'alloctbls'　
+												and destblid in (select id from alloctbls where srctblname = 'trngantts' and srctblid = #{c_alloc["srctblid"]}
+																							and destblname ='#{pre_destblname}')&
+		rtn_alloc = ActiveRecord::Base.connection.select_one(strsql)
+		if rtn_alloc.nil?
+		   fprnt " logic error"
+           fprnt " strsql = #{strsql}"		   
+		end
+		proc_tbl_update_arel("alloctbl" ,{:qty=>rtn_alloc["qty"] - c_alloc["qty"]}," id = #{rtn_alloc["destblid"]} " )
+		proc_tbl_update_arel("alloctbl" ,{:qty=>c_alloc["qty"]}," id = #{rtn_alloc["id"]}" )
+	end
+	def proc_get_strdate duedate,duration,period,type
+		case type
+			when nil
+				case period
+					when "day"
+						duedate - duration * 24 * 60* 60
+				end
+		end
+	end
+	def proc_save_trn_of_opeitm trn  ##複数の品目の時、内容が変わってしまうのでsaveした。
+		yield
+		trn[:prdpurshp] = @opeitm_prdpurshp
+		trn[:opeitms_id] = @opeitm_id
+		trn[:stktaking_f] =@opeitm_stktaking_f
+		trn[:packqty] = @opeitm_packqty
+		trn[:itms_id] = @opeitm_itm_id
+		trn[:processseq] = @opeitm_processseq
+		trn[:locas_id] = @opeitm_loca_id
+		trn[:priority] = @opeitm_priority
+		trn[:sio_classname] = @sio_classname
+		trn[:id] = eval("@#{trn[:tblname].chop}_id")
+		trn[:qty] = eval("@#{trn[:tblname].chop}_qty")
+		trn[:duedate] = eval("@#{trn[:tblname].chop}_duedate")
+		trn[:prjnos_id] = eval("@#{trn[:tblname].chop}_prjno_id")
+		trn[:strdate] = eval("@#{trn[:tblname].chop}_strdate")
+		trn[:depdate] = eval("@#{trn[:tblname].chop}_depdate")
+		return trn
 	end
 	class Float
 		def floor2(exp = 0)

@@ -28,7 +28,6 @@ class ImportfmxlsxController < ScreenController
       if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
       file = File.join("public/rubyxl",params[:dump][:excel_file].original_filename)
       FileUtils.cp temp.path, file
-      ##debugger
       ws = RubyXL::Parser.parse file
       FileUtils.rm file 
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
@@ -81,7 +80,6 @@ class ImportfmxlsxController < ScreenController
 			                break
 	                 end  ##case
 					 if @errmsg == "" and commit_flg
-						###debugger
 						###数字は数字タイプで、それ以外はキャラクターモードであること。
 						##上記チェックができてない。
                         proc_insert_sio_c(char_to_number_data(command_c))
@@ -112,7 +110,6 @@ class ImportfmxlsxController < ScreenController
       @nfields = []   ## 更新項目
       @indispfs = []   ## 項須項目
       @keyfs = []   ## key項須項目
-      ##debugger
       show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
       show_data = get_show_data @screen_code
       tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
@@ -136,7 +133,6 @@ class ImportfmxlsxController < ScreenController
       @inxrow0 = {}
       for cellcnt in 0..(@fields.size-1)   ##一行目は項目
 	   ##p cell
-	   ##debugger
            if  spt[cellcnt] and @fields[spt[cellcnt].value.encode("utf-8").to_sym] then
               row0sym =  @fields[spt[cellcnt].value.encode("utf-8").to_sym].to_sym
               @row0 << row0sym
@@ -153,17 +149,17 @@ class ImportfmxlsxController < ScreenController
 	def set_keys_get_id_from_code command_c
 	      strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > current_date and "
 		  strsql << "screenfield_paragraph is not null group by screenfield_paragraph,pobject_code_sfd"
-	      tmpkeys = plsql.select(:all,strsql)
+	      tmpkeys = ActiveRecord::Base.connection.select_all(strsql)
 		  keys = {}
 		  tmpkeys.each do |rec|
-		    keys[rec[:screenfield_paragraph]] = [] if keys[rec[:screenfield_paragraph]].nil?
-			keys[rec[:screenfield_paragraph]] << rec[:pobject_code_sfd] 
+		    keys[rec["screenfield_paragraph"]] = [] if keys[rec["screenfield_paragraph"]].nil?
+			keys[rec["screenfield_paragraph"]] << rec["pobject_code_sfd"] 
 		  end
 		  return keys
 	end
 	def get_id_from_code keys,command_c
 	    keys.each do |key,vals|
-		    strwhere = " where "
+		    strwhere = " select id from  #{key.split(":_")[0]} where "
 			tblnamechop,delm = key.split(":")
 			tblnamechop = tblnamechop.split("_")[1].chop
 			delm ||= ""
@@ -171,10 +167,11 @@ class ImportfmxlsxController < ScreenController
 			    strwhere << " #{val.sub(delm,"")} = '#{command_c[val.to_sym]}' and "
 			end
 			strwhere << %Q% #{tblnamechop + "_expiredate" } > current_date %
-			get_id = plsql.__send__(key.to_s.split(":_")[0]).first(strwhere)
-			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.to_s.split(":_")[1] else "" end).to_sym
-			if get_id then command_c[sym_key] = get_id[:id] else command_c[sym_key] = -1 end
+			get_id = ActiveRecord::Base.connection.select_value(strwhere)
+			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.split(":_")[1] else "" end).to_sym
+			if get_id then command_c[sym_key] = get_id else command_c[sym_key] = -1 end
 		end
+		##debugger if command_c[:tblinkfld_seqno] == 3
 		return command_c
 	end	
 	def vproc_price_chk_set(command_c)  ###excelからの取り込み
