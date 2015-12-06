@@ -39,7 +39,7 @@ include  JqgridFilter
       js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
    end
    def jqgrid( options = {},authenticity_token,ss_id)
-		fprnt " @screen_code  strart #{@scren_code} #{Time.now}" 
+		logger.debug " @screen_code  strart #{@scren_code} #{Time.now}" 
 		strsql = "select * from r_screens where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >current_date order by  screen_expiredate "  
         @r_screens = ActiveRecord::Base.connection.select_one(strsql)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
@@ -85,7 +85,7 @@ include  JqgridFilter
      show_cache_key =  "show" + @screen_code +  sub_blkget_grpcode
      @show_data = Rails.cache.read(show_cache_key)
 	 @show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
-     fprnt "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
+     logger.debug "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
      @gridcolumns = @show_data[:gridcolumns]
      id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
      id_data_javascript = Rails.cache.read(id_cache_key)
@@ -103,7 +103,7 @@ include  JqgridFilter
        screen << id_data_html
        screen <<  replace_end
        screen.gsub!(/\s+/," ")    if init_jq  =~ /replaceWith/  ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
-	   	fprnt " @screen_code  end #{@scren_code} #{Time.now}"
+	   	logger.debug " @screen_code  end #{@scren_code} #{Time.now}"
      return screen 
     end  ## 
    private
@@ -419,7 +419,7 @@ include  JqgridFilter
 		##if screen_options.nil?
 		if @r_screens.nil?
 		   ###使用期限切れ  listで抽出されないはず
-		   fprnt "使用期限切れ  listで抽出されないはず"
+		   logger.debug "使用期限切れ  listで抽出されないはず"
 		   return 
 		end
         ##p " line #{__LINE__} logic err screen_code = #{@screen_code} " and return if screen_options.nil?

@@ -119,7 +119,7 @@ select pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_id userg
  
  
  
-  CREATE OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" ("BLKTBSFIELDCODE_CONNECTSEQ", "BLKTBSFIELDCODE_EXPIREDATE", "BLKTBSFIELDCODE_UPDATED_AT", 
+  CREATE OR REPLACE FORCE VIEW "RAILS"."R_tblfields" ("BLKTBSFIELDCODE_CONNECTSEQ", "BLKTBSFIELDCODE_EXPIREDATE", "BLKTBSFIELDCODE_UPDATED_AT", 
   "BLKTBSFIELDCODE_REMARK", "BLKTBSFIELDCODE_CREATED_AT", "BLKTBSFIELDCODE_UPDATE_IP", "BLKTBSFIELDCODE_RUBYCODE", "BLKTBSFIELDCODE_FIELDCODE_ID", 
   "FIELDCODE_FTYPE", "FIELDCODE_REMARK", "FIELDCODE_DATASCALE", "FIELDCODE_DATAPRECISION", "FIELDCODE_RUBYCODE", "FIELDCODE_FIELDLENGTH", "FIELDCODE_ID",
   "FIELDCODE_FSEQ", "FIELDCODE_POBJECT_ID_FLD", "POBJECT_CODE_FLD", "POBJECT_OBJECTTYPE_FLD", "POBJECT_CONTENS_FLD", "POBJECT_REMARK_FLD", "POBJECT_RUBYCODE_FLD", 
@@ -141,7 +141,7 @@ select pobjgrp.usergroups_id pobjgrp_usergroup_id , usergroup.usergroup_id userg
   blktb.blktb_seltbls blktb_seltbls,blktbsfieldcode.id id,blktbsfieldcode.id blktbsfieldcode_id ,blktbsfieldcode.persons_id_upd blktbsfieldcode_person_id_upd , 
   person_upd.updperson_id updperson_id_upd, person_upd.updperson_code updperson_code_upd, person_upd.updperson_name updperson_name_upd, 
   blktbsfieldcode.contents blktbsfieldcode_contents ,blktbsfieldcode.viewflmk blktbsfieldcode_viewflmk 
- from blktbsfieldcodes blktbsfieldcode ,r_fieldcodes  fieldcode,r_blktbs  blktb,upd_persons  person_upd
+ from tblfields blktbsfieldcode ,r_fieldcodes  fieldcode,r_blktbs  blktb,upd_persons  person_upd
  where  fieldcode.id = blktbsfieldcode.fieldcodes_id and  blktb.id = blktbsfieldcode.blktbs_id and  person_upd.id = blktbsfieldcode.persons_id_upd;
  
  

@@ -44,7 +44,7 @@
 			report = plsql.select(:first,"select * from r_reports where pobject_code_rep = '#{@report_code}' and report_expiredate > sysdate") 
 			if report.nil?
                 @books.Close
-                fprnt	 "line #{__LINE__} error : missing report_code #{@report_code}"
+                logger.debug	 "line #{__LINE__} error : missing report_code #{@report_code}"
 				@text_data << "<p>line #{__LINE__} error : missing report_code #{@report_code}</p>"
                 render :text =>  @text_data and return
 			end
@@ -57,7 +57,7 @@
 			@screencode = report[:pobject_code_scr]
 			if sheet.cells(1,1).value.nil?
                 @books.Close
-                fprnt	 "line #{__LINE__} error : cell(1,1) : must set some value   sheet_name:#{sheet.name}"
+                logger.debug	 "line #{__LINE__} error : cell(1,1) : must set some value   sheet_name:#{sheet.name}"
                 @text_data << "<p>line #{__LINE__} error : cell(1,1) : must set some value   sheet_name:#{sheet.name}</p>" and return
                 render :text =>  @text_data and return
 			end
@@ -250,8 +250,8 @@
         @books.Close		
 		render :text =>  @text_data
 		rescue
-            fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-            ##fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} "
+            logger.debug"class #{self} : LINE #{__LINE__} $@: #{$@} " 
+            ##logger.debug"class #{self} : LINE #{__LINE__} $!: #{$!} "
 		    if @books
 			   @books.Close  if respond_to?("@books.Close")
 			end

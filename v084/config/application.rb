@@ -61,6 +61,11 @@ module V084
     ##config.autoload_paths += Dir["#{config.root}/lib/2dc_jqgrid/2dc_jqgrid.rb"]
 	##config.cache_store = :memory_store
 	config.cache_store = :dalli_store
+	
+	# configure log rotation
+    # split log by 10MB, limit log file count up to 10
+    config.logger = Logger.new(
+    "#{Rails.root}/log/#{Rails.env}.log", 10, 104857600)
   end
 end
 

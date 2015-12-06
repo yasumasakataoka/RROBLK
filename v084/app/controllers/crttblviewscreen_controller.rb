@@ -1,7 +1,7 @@
 class CrttblviewscreenController < ImportfieldsfromoracleController
 #### 残作業
 ### 開発環境でしか動かないようにすること。
-### テーブルに項目を追加すると　railsの再起動が必要　　plsqlのlogoff connnectで解決　2014/6/25
+### テーブルに項目を追加すると　railsの再起動が必要　　plsqlのlogoff connnectで解決　2014/6/25 　　　2015/11　logoff　中止
 ### id等の必須key check
 ###  xxx_idの重複チェック
 
@@ -9,8 +9,8 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 	def index
 		if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{params[:jqgrid_id]}  ")  
 			if rec["blktb_expiredate"] > Time.now 
-				plsql.logoff
-				plsql.connect! "rails", "rails", :host => "localhost", :port => 1521, :database => "xe"
+				##plsql.logoff
+				##plsql.connect! "rails", "rails", :host => "localhost", :port => 1521, :database => "xe"
 				sub_crt_tbl_view_screen rec["pobject_code_tbl"],rec["id"]
 				##Rails.cache.clear(nil)
             else
@@ -24,15 +24,13 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		begin
 			@errmsg = ""
 			if rec_id.nil? then 
-				tmp_rec_id = plsql.r_blktbs.first("where pobject_code_tbl = '#{pobject_code_tbl}' and pobject_objecttype_tbl = 'tbl' and blktb_expiredate > sysdate ")
-				if  tmp_rec_id then
-					rec_id = tmp_rec_id[:id]
-				else
-					@errmsg = " id not found"
+				rec_id = ActiveRecord::Base.connection.select_value("select id from r_blktbs where pobject_code_tbl = '#{pobject_code_tbl}' 
+																		and pobject_objecttype_tbl = 'tbl' and blktb_expiredate >  current_date ")
+				if  rec_id.nil?
+					@errmsg = " #{pobject_code_tbl} or  id not found"
 				end
 			end
-			##allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate order by connectseq")
-			allrecs = ActiveRecord::Base.connection.select_all("select * from  blktbsfieldcodes where blktbs_id = #{rec_id}   and  expiredate > sysdate ")
+			allrecs = ActiveRecord::Base.connection.select_all("select * from  tblfields where blktbs_id = #{rec_id}   and  expiredate > current_date ")
 			if allrecs.size>0 then
 				if proc_chk_tble_exist(pobject_code_tbl) 
 					add_modify = "modify"
@@ -44,10 +42,9 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 					prv_add_tbl_field pobject_code_tbl,allrecs
 				end
 			else  ##if allrecs
-				@errmsg << "table #{pobject_code_tbl} missing or  blktbsfieldcodes not exists "
+				@errmsg << "table #{pobject_code_tbl} missing or  tblfields not exists "
 				raise
 			end   ##if allrecs
-			###allrecs = plsql.blktbsfieldcodes.all("where blktbs_id = #{rec_id}   and  expiredate > sysdate")
 			create_or_replace_view   rec_id,pobject_code_tbl
 			Rails.cache.clear(nil)
 			create_screenfields "r_"+pobject_code_tbl
@@ -57,7 +54,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			plsql.rollback
 			@errmsg << $!.to_s
 			@errmsg << $@.to_s
-			fprnt"class #{self} : LINE #{__LINE__} @errmsg: #{@errmsg} " 
+			logger.debug"class #{self} : LINE #{__LINE__} @errmsg: #{@errmsg} " 
 		else
 			@errmsg << "  nothing "  
 			plsql.commit  
@@ -131,14 +128,14 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		rec0["updated_at"] = Time.now
 		mandatory_field.each do |key,value|
 			tmpstrsql[value[0].to_sym] = value[1] +  value[2]
-			rec0["id"] = proc_get_nextval("blktbsfieldcodes_seq")
+			rec0["id"] = proc_get_nextval("tblfields_seq")
 			rec_id = ActiveRecord::Base.connection.select_value("select id from fieldcodes where pobjects_id_fld = (select id from pobjects where code = '#{value[1]}' 
                                                    and objecttype = 'tbl_field' and expiredate  > current_date)")
 			if rec_id
 				rec0["fieldcodes_id"]  = rec_id 
 				##rec0[:seqno] = value[0]
-				###plsql.blktbsfieldcodes.insert rec0 
-				proc_tbl_insert_arel("blktbsfieldcodes",rec0)
+				###plsql.tblfields.insert rec0 
+				proc_tbl_add_arel("tblfields",rec0)
 			end
 		end
 		tmpstrsql.sort.each do |key,value|
@@ -200,7 +197,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		end
 		proc_drop_index tblname   ###importffieldsfromoracle  でも同様処理有
 		@strsql0.split(";").each do |i|
-			fprnt "line #{__LINE__} \n plsql.execute #{i}"
+			logger.debug "line #{__LINE__} \n plsql.execute #{i}"
 			ActiveRecord::Base.connection.execute(i) if i =~ /\w/
 		end
 	end
@@ -231,7 +228,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
   end
 
  def create_or_replace_view  tblid,tblname   ### 
-    subfields = ActiveRecord::Base.connection.select_all("select * from r_blktbsfieldcodes where blktbsfieldcode_blktb_id = #{tblid} and blktbsfieldcode_expiredate > sysdate")
+    subfields = ActiveRecord::Base.connection.select_all("select * from r_tblfields where tblfield_blktb_id = #{tblid} and tblfield_expiredate >  current_date")
 	tmp_union_tbl = ActiveRecord::Base.connection.select_one("select * from blktbs  where id  = #{tblid} ")
 	union_tbls =  if tmp_union_tbl["seltbls"] and tmp_union_tbl["seltbls"] != "undefined" then eval(tmp_union_tbl["seltbls"])  else [""] end ##tblname対応
 	### tmp_union_tbl[:seltbls]はarrayであること。　　checkが必要
@@ -276,12 +273,12 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 					selectstr << tblname.chop + "." +  js  + " id,"   
 					@sfd_code_id["id"] = rec["id"]
 				end
-			   case rec["blktbsfieldcode_viewflmk"]
+			   case rec["tblfield_viewflmk"]
 				    when nil			
 			            selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ,"
 						@sfd_code_id[tblname.chop + "_" +  js] = rec["id"]	
 				    when /^tblnamefields/  ##vfield対応　union
-					     tblnamefields = eval(rec["blktbsfieldcode_viewflmk"])
+					     tblnamefields = eval(rec["tblfield_viewflmk"])
 						 selectstr << utbl.to_s.split("_")[1].chop + "." +  tblnamefields[utbl] + "  vf" + tblname.chop + "_" +  js + " ,"
 						 ####@sfd_code_to   未対応
                end 								   
@@ -318,11 +315,11 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
             lngerrfield = new_xfield.split(" ")[1]
             ##p " 127 #{xfield}"
             if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end 
-			@sfd_code_id[sfd_code] = set_blktbsfieldcode_id(join_rtbl ,sfd_code,tmpfld)
+			@sfd_code_id[sfd_code] = set_tblfield_id(join_rtbl ,sfd_code,tmpfld)
         end  ## subfields.each           
         yield k           
 	end 
-	def set_blktbsfieldcode_id join_rtbl ,sfd_code,tmpfld
+	def set_tblfield_id join_rtbl ,sfd_code,tmpfld
 		if join_rtbl == "upd_persons"
 			njoin_rtbl = "r_persons" 
 			nsfd_code = sfd_code.sub("_upd","")
@@ -336,12 +333,12 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			if fld_delm =~ /_id/ 
 				nsfd_code = sfd_code.sub("_id","s_id")
 			end
-			strsql = "select id from r_blktbsfieldcodes where pobject_code_tbl = '#{njoin_rtbl.split("_",2)[1]}' 
-					and pobject_code_fld = '#{nsfd_code.split("_",2)[1].sub(tmpfld,"")}' and blktbsfieldcode_expiredate > sysdate"
+			strsql = "select id from r_tblfields where pobject_code_tbl = '#{njoin_rtbl.split("_",2)[1]}' 
+					and pobject_code_fld = '#{nsfd_code.split("_",2)[1].sub(tmpfld,"")}' and tblfield_expiredate >  current_date"
 			sfd_id = ActiveRecord::Base.connection.select_value(strsql)
 		else  
-			strsql = "select screenfield_blktbsfieldcode_id from r_screenfields where pobject_code_scr = '#{njoin_rtbl}' 
-					and pobject_code_sfd = '#{nsfd_code.sub(tmpfld,"")}' and screenfield_expiredate > sysdate"
+			strsql = "select screenfield_tblfield_id from r_screenfields where pobject_code_scr = '#{njoin_rtbl}' 
+					and pobject_code_sfd = '#{nsfd_code.sub(tmpfld,"")}' and screenfield_expiredate >  current_date"
 			sfd_id = ActiveRecord::Base.connection.select_value(strsql)
 		end
 		return sfd_id

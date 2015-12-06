@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="386" uniqueCount="130"><si><t>blktbsfieldcode_id</t></si><si><t>blktbsfieldcode_seqno</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_fieldlength</t></si><si><t>fieldcode_dataprecision</t></si><si><t>fieldcode_datascale</t></si><si><t>blktbsfieldcode_contents</t></si><si><t>fieldcode_contents</t></si><si><t>blktbsfieldcode_viewflmk</t></si><si><t>blktbsfieldcode_remark</t></si><si><t>blktbsfieldcode_expiredate</t></si><si><t>person_name_upd</t></si><si><t>person_code_upd</t></si><si><t>blktb_seltbls</t></si><si><t>blktbsfieldcode_update_ip</t></si><si><t>blktbsfieldcode_created_at</t></si><si><t>blktbsfieldcode_updated_at</t></si><si><t>opeitms</t></si><si><t>contents</t></si><si><t>varchar2</t></si><si><t>undefined</t></si><si><t xml:space="preserve"> from oracle</t></si><si><t>2099/12/31</t></si><si><t>system</t></si><si><t>127.0.0.1</t></si><si><t>2014/12/20 06:29</t></si><si><t>locas_id</t></si><si><t>number</t></si><si><t>keyではないが、trnが発生しているとlocas_idの変更は不可
+（trnにlocas_idがないので、場所が特定できなくなる。）
+
+locas_idは在庫保管部署、作業場所、業者であること。）</t></si><si><t>2014/05/02 21:57</t></si><si><t>id</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>remark</t></si><si><t>システムがセットする備考</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>update_ip</t></si><si><t>created_at</t></si><si><t>timestamp(6)</t></si><si><t>updated_at</t></si><si><t>persons_id_upd</t></si><si><t>itms_id</t></si><si><t>itms_id+proceeeseq+priorityでユニークkey</t></si><si><t>packqty</t></si><si><t>受入の時packqty毎に在庫を分けて管理する。発注時の単位
+出庫するときの、単位</t></si><si><t>2014/08/23 18:45</t></si><si><t>minqty</t></si><si><t>null又は0又はpackqtyがnullでなければpackqtyの整数倍であること</t></si><si><t>esttosch</t></si><si><t>null は999と同じ</t></si><si><t xml:space="preserve">開始日を基準にxxxestsからxxxschsに変換するまでの日数
+-1 直ぐ
+例　7 七日後　（稼働日考慮なし）　--&gt;稼働日考慮に修正予定
+999　変換しない。 </t></si><si><t>2015/03/01 13:20</t></si><si><t>stktaking_f</t></si><si><t>char</t></si><si><t>在庫データ作成の有無</t></si><si><t xml:space="preserve">1:棚卸対象
+</t></si><si><t>2015/03/12 14:38</t></si><si><t>opt_fixoterm</t></si><si><t>0,nullは365日とみなす。
+ただし、365以上の前倒しは、-1としている。
+処理メソッド　vproc_mkord_create_ord</t></si><si><t xml:space="preserve">LT毎のまとめ発注期間　 opt_term=1 :LTと同じ
+
+</t></si><si><t>2014/07/12 09:58</t></si><si><t>processseq</t></si><si><t>同一item_codeに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>priority</t></si><si><t>duration</t></si><si><t>期間　リードタイム</t></si><si><t>units_id_lttime</t></si><si><t>opeitmsのltの単位</t></si><si><t>prdpurshp</t></si><si><t xml:space="preserve">[:prd,"作業"],[:pur,"購入"],[:shp,"出庫"],[:shp,"梱包出荷"]
+</t></si><si><t>作業内容
+ファントムを追加予定
+prd 製造　社内作業　 locas_idで作業して次工程へ自動移動
+pur 購入　locas_idで購入して、業者が次工程へ納品。
+shp 出庫　出荷　　一旦locas_idに受入、保管し作業場所へ出庫
+inp:検査
+les 社外加工　組立
+cst 受注
+stk  :在庫　alloctblsで使用
+done 作業終了 
+
+　副産物作成 はnditmsに定義する。</t></si><si><t xml:space="preserve">
+</t></si><si><t>safestkqty</t></si><si><t>2014/07/29 21:24</t></si><si><t>shuffle_flg</t></si><si><t>schs,ords,instsを作成するときの既定値　x9はopeitmには指定しない。</t></si><si><t>0:シャッフルしない 　一度引き当てたら引当て変更は自動ではしない。初期は登録順に引き当てる。1:登録順にシャッフル　2:納期順にシャッフル　3:回答納期順にシャッフル　　5:登録順にシャッフルするが納期が遅くなる時は納期範囲内であること。納期遅れをだし遅くなる時はそのまま。6:納期順にシャッフルするが納期が遅くなる時は納期範囲内であること。納期遅れをだし遅くなる時はそのまま。 9:出庫指示を最優先で引き当てる。ただし　0のデータは除く。　5,6のルールは無視される。</t></si><si><t>2014/12/14 11:49</t></si><si><t>units_id_case</t></si><si><t>購入時、出庫時の単位　棚卸の時未定</t></si><si><t>入れ物の単位　瓶　缶　リール　巻</t></si><si><t>2014/10/28 23:21</t></si><si><t>shuffle_loca</t></si><si><t>1:場所違い(!= locas_id)でも、出庫オーダを作成して引き当てる。</t></si><si><t>2014/12/14 19:16</t></si><si><t>chkord</t></si><si><t>発注条件、回答条件、受け入れ条件の項目追加時には
+sql_alloc_search
+の修正が必要</t></si><si><t>autocreate_inst
+0:Σinst qty != ord qty なら　エラーとして　instsに取り込まない。ord分割の時
+1:Σinst qty  =&lt; ord qty なら取り込み　ord qty はΣinst qtyとする。
+2:Σinst qty  =&gt; ord qty なら取り込み　ord qty はΣinst qtyとする。
+3:ord qty はΣinst qtyとする。
+5:inst qty = Σord qty とする。　　ordをまとめて指示の時</t></si><si><t>2014/12/20 07:15</t></si><si><t>chkord_prc</t></si><si><t>chkord 1,2,3の時　の許容値　% null,100 は無条件の許可　0%は0と同じ</t></si><si><t>operation</t></si><si><t>shp:delivered_goods  納品
+shp:feepayment　有償支給
+shp:shipment 出庫</t></si><si><t>2014/07/06 02:58</t></si><si><t>maxqty</t></si><si><t>packqtyの整数倍であること
+0は9999999999と同じ</t></si><si><t>2014/07/06 20:37</t></si><si><t>rule_price</t></si><si><t>0:単価入力不可　 マスタの単価のみを使用する。
+1:単価入力可
+C : custs テーブルに従う D:dealersテーブルに従う
+E:ERROR  販売、購入不可</t></si><si><t xml:space="preserve">単価入力時のルール
+0:単価入力不可　 マスタの単価のみを使用する。
+</t></si><si><t>2015/03/20 23:53</t></si><si><t>autocreate_ord</t></si><si><t xml:space="preserve">xxxSCHSからxxxORDSを作成
+0:手動   xxxxx_shpordsで作成　基本r_shpordsを想定
+1：自動　confirm=1 r_ moords等で自動作成
+2:仮のxxxORDSを自動作成 confirm=0
+・データ作成後、外部へ送信して初めて確定となるケースを想定。 テーブルmkopesをベースに作成。
+・印刷し注文(作業指示)するケースを想定
+
+a:子部品がすべてそろったら（在庫にのなったら）オーダ作成
+b:子部品と設備がすべてそろったらオーダ作成
+c:自身の在庫がそろったら、出荷または出庫
+</t></si><si><t>2014/07/18 21:38</t></si><si><t>autocreate_inst</t></si><si><t>　ORDS --&gt;INSTS への分割まとめ
+0:手動又は外部からのデータ取り込みでinsts作成
+　　まとめと分解あり。
+1:無条件でordからinstsを作成　回答待ち
+a:子部品がすべてそろったら指示
+b:子部品と設備がすべてそろったら
+instsは外からので他の取り込みを基本とする。
+回答納期、現場での作業予定を取り込むことを基本とする。</t></si><si><t>2014/12/20 06:23</t></si><si><t>autocreate_act</t></si><si><t>指示と同時に実績を作成</t></si><si><t>1:自動作成</t></si><si><t>2014/12/27 14:17</t></si><si><t>chkinst</t></si><si><t>chkinst:"1"  発注数以上の受入は不可</t></si><si><t>2015/07/28 23:03</t></si><si><t>box</t></si><si><t>入荷時、出庫時の荷姿
+units_idとの整合性はない。
+例　段ボール　30*40*20</t></si><si><t>2015/10/07 01:16</t></si><si><t>boxes_id</t></si><si><t>boxの単位</t></si><si><t>2015/10/09 20:57</t></si><si><t>prjallocflg</t></si><si><t>0:prj_code dummyも引当て対象とする。
+1:同一prjnos_idのみ引当ている。
+2:同一親のprjnos_idで引き当てる。親が無いときは1と同じ</t></si><si><t>2015/09/26 16:42</t></si><si><t>mold</t></si><si><t>自身で作成することもあるのでitmsでなくopeitmsに項目をセット</t></si><si><t>1:金型　特殊道具等をイメージ</t></si><si><t>2015/06/28 20:45</t></si></sst>

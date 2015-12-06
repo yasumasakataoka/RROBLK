@@ -31,14 +31,14 @@
 					ActiveRecord::Base.connection.commit_db_transaction() if one_by_one == "one_by_one"
 				end
 			else
-				fprnt " Queue data nothing sio_session_counter = #{sio_session_counter},sio_user_id = #{sio_user_id}"
+				logger.debug " Queue data nothing sio_session_counter = #{sio_session_counter},sio_user_id = #{sio_user_id}"
 		    end
 		end
 		ActiveRecord::Base.connection.commit_db_transaction()
 	   rescue
 	        if @sio_result_f !=   "9" ##想定外error
-                fprnt"class #{self} :  $@: #{$@} " 
-                fprnt"class #{self} :  $!: #{$!} "
+                logger.debug"class #{self} #{Time.now}:  $@: #{$@} " 
+                logger.debug"class #{self} :  $!: #{$!} "
 			end		
       end		
     end   ##perform
@@ -71,16 +71,16 @@ class DbSchs  < DbCud    ###
 			recs.each do |rec|
 				case rec["sio_classname"]
 					when /_edit_/
-						@sio_classname = "perform_mksch_edit_"				
+						@sio_classname = "mksch_perform_edit_"				
 						proc_edit_from_trngantts(rec)
 					when /_delete_/
-						@sio_classname = "perform_mksch_delete_"				
+						@sio_classname = "mksch_perform_delete_"				
 						proc_edit_from_trngantts(rec)
 					when /_add_/
-					@sio_classname = "perform_mksch_add_"				
+					@sio_classname = "perform_mksch_perform_add_"				
 					proc_add_trngantts(rec)
 				end
-				proc_tbl_update_arel "mkschs", tbl, " id = #{rec["id"]}"   ###insertはtblinks updateはここ　何とかならないか
+				proc_tbl_edit_arel "mkschs", tbl, " id = #{rec["id"]}"   ###insertはtblinks updateはここ　何とかならないか
 			end
 			dbcud = DbCud.new
 			dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
@@ -88,11 +88,11 @@ class DbSchs  < DbCud    ###
 		rescue
 		        ###plsql.rollback
 				ActiveRecord::Base.connection.rollback_db_transaction()
-                fprnt"class #{self}   $@: #{$@} " 
-                fprnt"class #{self}   $!: #{$!} " 		
+                logger.debug"class #{self}   #{Time.now}$@: #{$@} " 
+                logger.debug"class #{self}   $!: #{$!} " 		
 		        rec[:result_f] = "9"  ## error
 		        rec[:message_code] = $!.to_s[0..255]
-		        rec[:message_contents] = $@.to_s[0..3999]
+		        rec[:remark] = $@.to_s[0..3999]
 		        rec[:updated_at] = Time.now
 		        rec[:where] = {:id =>rec[:id]}
 		        plsql.mkschs.update tbl
@@ -138,10 +138,10 @@ class DbSchs  < DbCud    ###
 					free_tbl["free_qty"] = 0
 				end	
 				destbl[:updated_at] = Time.now
-				Alloctbl.update(free_tbl["alloctbl_id"],:qty=>free_tbl["free_qty"])				
+				proc_tbl_edit_arel("alloctbls",{:qty=>free_tbl["free_qty"]}," id = #{free_tbl["alloctbl_id"]} ")		
+				proc_decide_alloc_inout("alloc_edit_",free_tbl["alloctbl_id"])
 				destbl[:id] = proc_get_nextval(alloctbls_seq) 
-				destbl[:created_at] = Time.now
-				###Alloctbl.create destbl			
+				destbl[:created_at] = Time.now		
 				##destbl[:id] = proc_get_nextval(alloctbls_seq) 
 				destbl[:srctblid] = free_tbl["alloctbl_srctblid"]
 				destbl[:destblname] = "trngantts"
@@ -149,7 +149,7 @@ class DbSchs  < DbCud    ###
 				destbl[:allocfee] = "other"
 				destbl[:persons_id_upd] = System_person_id
 				destbl[:expiredate] = "2099/12/31".to_date
-				Alloctbl.create destbl			
+				proc_tbl_add_arel("alloctbls",destbl)	###alloc間の関係 inoutsには関係ない
 			else ###出庫予定
 			end
 			if org_qty  > str_gantt["trngantt_qty"]
@@ -193,7 +193,8 @@ class DbSchs  < DbCud    ###
 				chng_qty  -= chil_trn["alloc_qty"]
 			else
 				vproc_alloc_gantt(chng_qty_arry,chil_trn,chng_qty)   ### alloctbl srctbl-->free_trn;destbl-->alloc_trn 
-				Alloctbl.update(chil_trn[:alloc_id],:qty=>chng_qty)
+				proc_tbl_edit_arel("alloctbls",{:qty=>chng_qty}," id = #{chil_trn[:alloc_id]}")		
+				proc_decide_alloc_inout("alloc_edit_",chil_trn[:alloc_id])
 				chng_qty = 0
 			end
 			save_chil_id = chil_trn["chil_id"]
@@ -227,18 +228,20 @@ class DbSchs  < DbCud    ###
 					alloc[:updated_at] = Time.now
 					alloc[:persons_id_upd] = System_person_id
 					alloc[:expiredate] = "2099/12/31".to_date
-					Alloctbl.create alloc  ##今の引当てを新しいtrnganttに引き継ぐ
+					proc_tbl_add_arel("alloctbls",alloc)  ##今の引当てを新しいtrnganttに引き継ぐ			
+					proc_decide_alloc_inout("alloc_add_",alloc[:id])			
 					alloc[:srctblid] = tg_gantt["gantt_id"]
 					alloc[:id] = proc_get_nextval "alloctbls_seq" 
 					alloc[:destblname] = chil_trn["alloc_destblname"]
 					alloc[:destblid] = chil_trn["alloc_destblid"]
-					Alloctbl.create alloc   ##新しいｔｒｎｇａｎｔｔに引当てをセットする。
+					proc_tbl_add_arel("alloctbls",alloc)   ##新しいｔｒｎｇａｎｔｔに引当てをセットする。
+					proc_decide_alloc_inout("alloc_add_",alloc[:id])
 					qty = 0
 				else
-					fprnt "logic error  line #{__LINE__} "
-					fprnt "str_gantt \n#{str_gantt}"
-					fprnt "chil_trn \n #{chil_trn}"
-					fprnt "strsql \n#{strsql}"
+					logger.debug "logic error  line #{__LINE__} "
+					logger.debug "str_gantt \n#{str_gantt}"
+					logger.debug "chil_trn \n #{chil_trn}"
+					logger.debug "strsql \n#{strsql}"
 					raise
 				end
 			end
@@ -332,14 +335,16 @@ class DbSchs  < DbCud    ###
 		end
 		proc_free_to_alloc(pare_strwhere,trn_strwhere,rec) if sch_ord_inst_act == "schs"
 		%Q&
-			select trngantt_id,trngantt_strdate,
+			select trngantt_id,trngantt_strdate,trngantt_orgtblname,trngantt_orgtblid,trngantt_key,
 			trngantt.opeitm_id trngantt_opeitm_id,trngantt.opeitm_loca_id trngantt_loca_id,trngantt.opeitm_itm_id trngantt_itm_id,
 			trngantt.opeitm_prdpurshp opeitm_prdpurshp,trngantt.opeitm_processseq,trngantt_prjno_id,
 			alloctbl_id,alloctbl_srctblname,alloctbl_srctblid,alloctbl_destblname,alloctbl_destblid,alloctbl_qty,alloctbl_id,
 			trn.#{rec["prdpurshp"]+sch_ord_inst_act.chop}_loca_id_to prdpurshpxxx_loca_id_to,trn.*
 		    from r_trngantts trngantt ,r_#{rec["prdpurshp"]+sch_ord_inst_act} trn ,r_alloctbls
 		    where  alloctbl_srctblname = 'trngantts' and trngantt_id = alloctbl_srctblid
-			and alloctbl_qty > 0 and alloctbl_destblname = '#{rec["prdpurshp"]+sch_ord_inst_act}' and alloctbl_destblid = trn.id
+			and alloctbl_qty > 0 
+			and alloctbl_destblname = '#{rec["prdpurshp"]+sch_ord_inst_act}' 
+			and alloctbl_destblid = trn.id
 		    #{org_strwhere}
 		    #{pare_strwhere}
 		    #{trn_strwhere}
@@ -425,7 +430,7 @@ class DbSchs  < DbCud    ###
 				rec["tblid"] = free["trngantt_orgtblid"]
 				rec["qty"] = free["trngant_qty"]
 				rec["duedate"] = free["trngantt_duedate"]
-				proc_tbl_update_arel "trngantt", {:qty=>rec["qty"]}, " id = #{rec["tblid"]}"
+				proc_tbl_edit_arel "trngantt", {:qty=>rec["qty"]}, " id = #{rec["tblid"]}"
 				proc_edit_from_trngantts rec
 			end
 		end
@@ -464,6 +469,37 @@ class DbSchs  < DbCud    ###
 			  end}
 		&
 	end
+	def vsql_chk_chil_status_abc rec,abc  ### autocreate_ord = a,b,A,B
+		%Q&
+			select srctblid,destblname,sum(alloctbls.qty) qty from trngantts ,alloctbls
+			where orgtblname = '#{rec["trngantt_orgtblname"]}' and orgtblid = #{rec["trngantt_orgtblid"]}
+			and key like '#{rec["trngantt_key"]}%' and length(key) = #{rec["trngantt_key"].size + 3}
+			and srctblname = 'trngantts' and srctblid = trngantts.id and alloctbls.qty > 0
+			#{case abc
+					when "a","b"
+						" and (destblname = 'lotstkhists'  or destblname like '%acts' )" 
+					when "A","B"
+						" and (destblname = 'lotstkhists'  or destblname like '%acts' or destblname like '%ords'  or destblname like '%insts') "
+					else
+						raise
+				end}	
+			
+		&
+	end
+	def vsql_chk_self_status_abc rec,abc  ### autocreate_ord = c,C
+		%Q&
+			select srctblid,destblname,sum(alloctbls.qty) qty from alloctbls
+			where srctblname = 'trngantts' and srctblid = rec["trngantt_id"] and alloctbls.qty > 0
+			#{case abc
+					when "c"
+						" and (destblname = 'lotstkhists'  or destblname like '%acts') " 
+					when "C"
+						" and (destblname = 'lotstkhists'  or destblname like '%acts' or destblname like '%ords'  or destblname like '%insts') "  
+					else
+						raise
+				end}	
+		&
+	end
 end
 class DbOrds  < DbSchs
     def perform_mkords recs
@@ -472,7 +508,7 @@ class DbOrds  < DbSchs
        ActiveRecord::Base.connection.begin_db_transaction()
 	    @new_sio_session_counter  = user_seq_nextval
         @pare_class = "batch"
-		@sio_classname = "perform_mkord_add_"	
+		@sio_classname = "mkord_perform_add_"	
 		tbl = {}
 		recs.each do |rec|
 		    vproc_mkord rec	
@@ -496,11 +532,11 @@ class DbOrds  < DbSchs
 		ActiveRecord::Base.connection.commit_db_transaction()
 		rescue
 		        plsql.rollback
-                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		
+                logger.debug"class #{self} : #{Time.now} $@: #{$@} " 
+                logger.debug"class #{self} :  $!: #{$!} " 		
 		        tbl[:result_f] = "9"  ## error
 		        tbl[:message_code] = $!.to_s[0..255]
-		        tbl[:message_contents] = $@.to_s[0..3999]
+		        tbl[:remark] = $@.to_s[0..3999]
 		        tbl[:updated_at] = Time.now
 		        tbl[:where] = {:id =>rec["id"]}
 		        plsql.mkords.update tbl
@@ -523,11 +559,57 @@ class DbOrds  < DbSchs
 		bal_schs.each do |sch|
 		    @inqty += sch["alloctbl_qty"]
 			@inamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))
-			if sch["#{rec["prdpurshp"]}sch_autocreate_ord"] == "0"  ##手動の時は作成しない。
-				@skipcnt += 1
-				@skipqty += sch["alloctbl_qty"]
-				@skipamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))	
-				next
+			case  sch["#{rec["prdpurshp"]}sch_autocreate_ord"] ### shp:出庫オーダ作成
+				when "0"  ##手動の時は作成しない。
+					@skipcnt += 1
+					@skipqty += sch["alloctbl_qty"]
+					@skipamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))	
+					proc_mkord_err sch,"手動のためskip"
+					next
+				when "a"
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"a"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足"   ###コーディングはまだ
+						next
+					end	
+				when "b"
+					err_f = false
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"b"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足"
+						err_f = true
+					end	
+					###   装置のチェック
+					next if err_f == true
+				when "c"
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足"
+						next
+					end	
+				when "A"
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"A"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足しオーダも不足"
+						next
+					end	
+				when "B"
+					err_f = false
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"B"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足しオーダも不足"
+						err_f = true
+					end	
+					###   装置のチェック
+					next if err_f == true
+				when "C"
+					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
+					if rec["qty"] < sch["alloctbl_qty"]
+						proc_mkord_err sch,"在庫不足しオーダも不足"
+						next
+					end	
+				else
+				### no check
 			end
 		    if opeitms_id != sch["trngantt_opeitm_id"]
 			    vproc_mkord_create_ord(save_sch,allocs) if opeitms_id != 0 
@@ -570,13 +652,17 @@ class DbOrds  < DbSchs
 		end
 	end
     def vproc_mkord_create_ord save_sch,allocs ###日付(opeitm_opt_fixoterm)による数量まとめは済んでいる。
-		 ## 包装単位での発注
+		 ## 包装単位での発注出庫　ロット単位での製造
 		@ord = {}
-	    org_qty = (save_sch["alloctbl_qty"].to_f/save_sch["opeitm_packqty"].to_f).ceil *  save_sch["opeitm_packqty"]
+	    org_qty = 	if save_sch["opeitm_packqty"] == 0 or save_sch["opeitm_packqty"].nil?
+						save_sch["alloctbl_qty"].to_f
+					else
+						(save_sch["alloctbl_qty"].to_f/save_sch["opeitm_packqty"].to_f).ceil *  save_sch["opeitm_packqty"]
+					end
 		@free_qty = org_qty - save_sch["alloctbl_qty"]
 		schtblnamechop = save_sch["opeitm_prdpurshp"] + "sch"
 		ordtblnamechop = save_sch["opeitm_prdpurshp"] + "ord"
-		proc_command_c_to_instance save_sch   ###@xxxsch_yyyy 作成
+		proc_command_instance_variable save_sch   ###@xxxsch_yyyy 作成
 		@ord[(ordtblnamechop+"_strdate").to_sym]  = save_sch[(schtblnamechop+"_strdate")]
 		@ord[(ordtblnamechop+"_depdate").to_sym]  = save_sch[(schtblnamechop+"_depdate")]    ### shpschs
 		@ord[(ordtblnamechop+"_duedate").to_sym]  = save_sch[(schtblnamechop+"_duedate")]
@@ -585,18 +671,20 @@ class DbOrds  < DbSchs
 		    ## maxqtyはpackqtyの整数倍であること。
 	        qty = @ord[(ordtblnamechop+"_qty").to_sym] = if save_sch["opeitm_maxqty"] < org_qty then save_sch["opeitm_maxqty"] else org_qty end
 	        amt = @ord[(ordtblnamechop+"_amt").to_sym] = qty * (save_sch[(ordtblnamechop+"_price")]||=0)  ###単価概算
-	        @ord[(ordtblnamechop+"_qty_case").to_sym] = qty /  save_sch["opeitm_packqty"]
+	        @ord[(ordtblnamechop+"_qty_case").to_sym] = if save_sch["opeitm_packqty"] == 0 or save_sch["opeitm_packqty"].nil?
+																qty
+														else
+																qty /  save_sch["opeitm_packqty"]
+														end
 			@outcnt += 1
 			@outqty += qty
 			@outamt += amt 
-			##vproc_create_free_trngantts save_sch if @free_qty > 0   ### free qty
 			org_qty -= save_sch["opeitm_maxqty"]	
 			__send__("proc_tblink_mkord_trngantts_#{ordtblnamechop}s_self10",allocs)   ###単価はここで求める。
 			###@ord[(ordtblnamechop+"_strdate").to_sym]  -= if (save_sch[:opeitm_opt_fixoterm]||=999) >=999 then 1 else save_sch[:opeitm_opt_fixoterm] end 
 			###@ord[(ordtblnamechop+"_duedate").to_sym]  -= if (save_sch[:opeitm_opt_fixoterm]||=999) >=999 then 1 else save_sch[:opeitm_opt_fixoterm] end
 	    end		
 	end
-	##def vproc_create_free_trngantts save_sch,mk_ord
 end
 
 ### instsの機能
@@ -610,7 +698,7 @@ class DbInsts  < DbOrds
     def perform_mkinsts recs
 	  begin
 	    @sio_user_code = 0
-		@sio_classname = "perform_mkinst_add_"
+		@sio_classname = "mkinst_perform_add_"
        ActiveRecord::Base.connection.begin_db_transaction()
 	    @new_sio_session_counter  = user_seq_nextval
         @pare_class = "batch"
@@ -639,11 +727,11 @@ class DbInsts  < DbOrds
 		ActiveRecord::Base.connection.commit_db_transaction()
 		rescue
 		        plsql.rollback
-                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		
+                logger.debug"class #{self} : #{Time.now} $@: #{$@} " 
+                logger.debug"class #{self} :  $!: #{$!} " 		
 		        rec[:result_f] = "9"  ## error
 		        rec[:message_code] = $!.to_s[0..255]
-		        rec[:message_contents] = $@.to_s[0..3999]
+		        rec[:remark] = $@.to_s[0..3999]
 		        rec[:updated_at] = Time.now
 		        rec[:where] = {:id =>rec[:id]}
 		        plsql.mkinsts.update rec
@@ -653,14 +741,12 @@ class DbInsts  < DbOrds
     handle_asynchronously :perform_mkinsts
 	def vproc_mkinst rec		
 		@inst_show_data = get_show_data "r_#{rec["prdpurshp"]}insts"
-		###fprnt  "sql =  \n #{sql_alloc_search(rec,"ords")}"
 		bal_ords = ActiveRecord::Base.connection.select_all(sql_alloc_search(rec,"ords"))   ### 
 		@incnt = bal_ords.size
 		@skipcnt = @outcnt = 0
 		@inqty = @outqty = @skipqty = 0
 		@inamt = @outamt = @skipamt = 0
 		@ordpricesym = (rec["prdpurshp"] + "ord_price")
-		##fprnt "line #{__LINE__}  \n sql_realloc_search(rec) #{sql_realloc_search(rec)}"
 		save_ord = {}
 		allocs =[]		
 		opeitms_id = 0
@@ -696,7 +782,7 @@ class DbInsts  < DbOrds
 		@inst = {}  ### proc_fld_mkinst_trngantts_xxxinsts_self10   proc_fld_xxxx  は引数なしで自動生成のため@にした。
 		ordtblnamechop = save_ord["opeitm_prdpurshp"] + "ord"
 		insttblnamechop = save_ord["opeitm_prdpurshp"] + "inst"
-		proc_command_c_to_instance save_ord  ###@xxxord_yyyy 作成
+		proc_command_instance_variable save_ord  ###@xxxord_yyyy 作成
 		@inst[:strdate]  = save_ord[(ordtblnamechop+"_strdate")]
 		@inst[:duedate]  = save_ord[(ordtblnamechop+"_duedate")]
 		org_qty = if qty <= save_ord[(ordtblnamechop+"_qty")] then qty else save_ord[(ordtblnamechop+"_qty")] end 
@@ -706,7 +792,6 @@ class DbInsts  < DbOrds
 		@outcnt += 1
 		@outqty += qty
 		@outamt += amt 
-		##vproc_create_free_trngantts save_sch if @free_qty > 0   ### free qty
 		__send__("proc_tblink_mkinst_trngantts_#{insttblnamechop}s_self10",allocs)	#### 
 	end
 end		
@@ -745,11 +830,11 @@ class DbActs  < DbInsts
 		ActiveRecord::Base.connection.commit_db_transaction()
 		rescue
 		        plsql.rollback
-                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} " 		
+                logger.debug"class #{self} : #{Time.now} $@: #{$@} " 
+                logger.debug"class #{self} :  $!: #{$!} " 		
 		        rec[:result_f] = "9"  ## error
 		        rec[:message_code] = $!.to_s[0..255]
-		        rec[:message_contents] = $@.to_s[0..3999]
+		        rec[:remark] = $@.to_s[0..3999]
 		        rec[:updated_at] = Time.now
 		        rec[:where] = {:id =>rec[:id]}
 		        plsql.mkords.update rec
@@ -764,7 +849,7 @@ class DbActs  < DbInsts
 		@skipcnt = @outcnt = 0
 		@inqty = @outqty = @skipqty = 0
 		@inamt = @outamt = @skipamt = 0
-		##fprnt "line #{__LINE__}  \n sql_realloc_search(rec) #{sql_realloc_search(rec)}"
+		##logger.debug "line #{__LINE__}  \n sql_realloc_search(rec) #{sql_realloc_search(rec)}"
 		save_inst = {}
 		allocs =[]		
 		trn_id = 0
@@ -791,7 +876,7 @@ class DbActs  < DbInsts
 		@act = {}
 		acttblnamechop = save_inst["opeitm_prdpurshp"] + "act"
 		insttblnamechop = save_inst["opeitm_prdpurshp"] + "inst"
-		proc_command_c_to_instance save_inst  ###@xxxinst_yyyy 作成
+		proc_command_instance_variable save_inst  ###@xxxinst_yyyy 作成
 		@act[(acttblnamechop+"_strdate").to_sym]  = rec["rcptdate"]
 		@act[(acttblnamechop+"_duedate").to_sym]  = save_inst[(insttblnamechop+"_duedate")]
 		qty = if rec["sno_ord"] then rec["qty"] else save_inst[(insttblnamechop+"_qty")] end 
@@ -802,7 +887,6 @@ class DbActs  < DbInsts
 		@outcnt += 1
 		@outqty += qty
 		@outamt += amt ###受入時単価決定の時はここの金額と異なる。
-		##vproc_create_free_trngantts save_sch if @free_qty > 0   ### free qty
 		__send__("proc_tblink_mkact_trngantts_#{acttblnamechop}s_self10",allocs)
 	end
 end	
@@ -811,8 +895,8 @@ class DbReplies  < DbOrds
 		##  tableは業者毎作業場所ごとにレイアウトが異なることを想定。そのレイアウトに 外部からのデータにcno(instsのcno:外部からのkey)とsno_ord(内部key)は必須
 	 begin
 		##rptblname = tbl.singularize.capitalize.constantize
-		@sio_classname = "_add_perform_setreplies" ### perform_set
-		#####repliesの時は常に追加
+		@sio_classname = "replies_add_perform" ### perform_set
+		#####replies aed a:add e:edit d:delete nil:自動判定flgを用意する。
 		sno_ord = ""
 		ord = {}
 		cno = ""
@@ -832,15 +916,14 @@ class DbReplies  < DbOrds
 			inputs.each do |input|			
 				err ={}			
 				@incnt += 1 
-				@inqty += input["qty"]	
+				@inqty += input["qty"]
 				if sno_ord != input["sno_ord"] 
 					if sno_ord != "" 
 						if sum_rply_qty != bal_qty and ord["opeitm_chkord"] == "0"   ###opeitm_chkord 分割回答時で数量不一致は不可--->rubycodesに登録
-							err[:message_contents] = "unmatch Σreply_qty != ord_balacle_qty ; Σreply_qty = #{sum_rply_qty.to_s} ,ord_balance_qty = #{bal_qty} "
+							err[:remark] = "unmatch Σreply_qty != ord_balacle_qty ; Σreply_qty = #{sum_rply_qty.to_s} ,ord_balance_qty = #{bal_qty}  #{Time.now} ::" + err[:remark][0..3000]
 							err[:message_code] = "error_xxxx "
 							err[:result_f] = "9"
-							proc_tbl_update_arel  reply["tblname"],err," sno_ord = #{input["sno_ord"]} and result_f  =  '0' "
-							@skipcnt += 1 
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," sno_ord = #{input["sno_ord"]} and result_f  =  '0' ") 
 							@skipqty += sum_rply_qty
 						end
 					end			
@@ -848,19 +931,40 @@ class DbReplies  < DbOrds
 							from r_#{prdpurshp}ords  where #{prdpurshp}ord_sno = '#{input["sno_ord"]}' "
 					ord = ActiveRecord::Base.connection.select_one(strsql)	
 					if ord.nil?
-						err[:remark] = " not find sno =  #{input["sno_ord"]} "
+						err[:remark] = " not found sno =  #{input["sno_ord"]} "
 						###err[:message_code] = "error_perform_setreplys_2 "
 						err[:result_f] = "9"
-						proc_tbl_update_arel  reply["tblname"],err," sno_ord = #{input["sno_ord"]} and result_f  =  '0' "
+						proc_tbl_edit_arel  reply["tblname"],err," sno_ord = #{input["sno_ord"]} and result_f  =  '0' "
 						next
 					end
+					case ord["confirm"] 
+						when "0"
+							err[:remark] = " unconfirm #{TIme.now} :: " 
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += input["qty"]
+							next
+						when "5"
+							err[:remark] = " waiting for sending order  #{TIme.now} :: " 
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += input["qty"]
+							next
+						when "T"
+							err[:remark] = " test date  #{TIme.now} :: " 
+							err[:result_f] = "8"
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += input["qty"]
+							next
+				end
 					bal_qty =  	ord["ord_qty"]
 					strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
 					act = ActiveRecord::Base.connection.select_one(strsql)
-					strsql = "select sno_ord,sum(qty) ret_qty from #{prdpurshp}rets  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
-					ret = ActiveRecord::Base.connection.select_one(strsql)
+					strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
+					inst = ActiveRecord::Base.connection.select_one(strsql)
+					##strsql = "select sno_ord,sum(qty) ret_qty from #{prdpurshp}rets  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
+					##ret = ActiveRecord::Base.connection.select_one(strsql)
 					bal_qty -= if act then act["qty"] else 0 end
-					bal_qty += if ret then ret["qty"] else 0 end
+					bal_qty -= if inst then inst["qty"] else 0 end
+					##bal_qty += if ret then ret["qty"] else 0 end　  #####dummyの時があるので外した。
 					sno_ord = input["sno_ord"]				
 					cno = input["cno"]
 					sum_rply_qty = 0
@@ -869,7 +973,7 @@ class DbReplies  < DbOrds
 			end		
 			if sum_rply_qty != bal_qty and ord["opeitm_chkord"] == "0"
 				err ={}
-				err[:message_contents] = "unmatch Σreply_qty != ord_balacle_qty ; Σreply_qty = #{sum_rply_qty.to_s} ,ord_balance_qty = #{bal_qty} "
+				err[:remark] = "unmatch Σreply_qty != ord_balacle_qty ; Σreply_qty = #{sum_rply_qty.to_s} ,ord_balance_qty = #{bal_qty} "
 				err[:message_code] = "error_xxxx "
 				err[:result_f] = "9"
 				err[:updated_at] = Time.now
@@ -891,22 +995,22 @@ class DbReplies  < DbOrds
 								#{if input["cno"] =~ /^dummy/ or input["cno"].nil? then "" else " and "+ prdpurshp + "inst_cno = '" + input["cno"] + "'" end} &
 					insts = ActiveRecord::Base.connection.select_all(strsql)
 					insts.each do |inst|
-						@sio_classname = "reply_delete_"
+						@sio_classname = "replies_delete_"
 						##end	
-						proc_command_c_to_instance inst
+						proc_command_instance_variable inst
 						strsql = %Q& select * from r_alloctbls where  alloctbl_srctblname = 'trngantts' and alloctbl_destblname = '#{prdpurshp}insts' and alloctbl_destblid = #{inst["id"]} and alloctbl_qty > 0 &
 						alloctbls = ActiveRecord::Base.connection.select_all(strsql)
 						__send__("proc_tblink_r_rplies_#{prdpurshp}insts_self10",alloctbls)   ######alloctbls:xxxinstsの引当て情報
 					end
 				end
 				sno_ord = input["sno_ord"]				
-				@sio_classname = "reply_add_"
+				@sio_classname = "replies_add_"
 				strsql = %Q& select * from r_#{prdpurshp}ords where  #{prdpurshp}ord_sno = '#{input["sno_ord"]}' &	
 				ord = ActiveRecord::Base.connection.select_one(strsql)  ###view
 				strsql = %Q& select * from r_alloctbls where  alloctbl_srctblname = 'trngantts' 
 				             and alloctbl_destblname = '#{prdpurshp}ords' and alloctbl_destblid = #{ord["id"]} and alloctbl_qty > 0 &
 				alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
-				proc_command_c_to_instance ord
+				proc_command_instance_variable ord
 				##proc_opeitm_instance(ord)
 				@reply_qty = input["qty"]   ###回答から引き継げる項目は、数量、納期、cno,gnoコメントのみ
 				@reply_qty_case = input["qty_case"]   
@@ -920,7 +1024,7 @@ class DbReplies  < DbOrds
 				data[:result_f] = "1"
 				data[:updated_at] = Time.now
 				##ctblname.where(:id =>input["id"]).update_all(data)
-				proc_tbl_update_arel(reply["tblname"],data," id = #{input["id"]} ")
+				proc_tbl_edit_arel(reply["tblname"],data," id = #{input["id"]} ")
 				@outcnt += 1
 				@outqty += input["qty"]
 			end		
@@ -934,12 +1038,12 @@ class DbReplies  < DbOrds
 			data[:result_f] = "1"
 			data[:updated_at] = Time.now
 			### rptblname.where(:id =>reply["id"]).update_all(data)
-			proc_tbl_update_arel(tbl,data," id = #{reply["id"]}")
+			proc_tbl_edit_arel(tbl,data," id = #{reply["id"]}")
 			ActiveRecord::Base.connection.commit_db_transaction()
 		end
 	   rescue
-                fprnt"class #{self} : LINE #{__LINE__} $@: #{$@} " 
-                fprnt"class #{self} : LINE #{__LINE__} $!: #{$!} "
+                logger.debug"class #{self} : #{Time.now} $@: #{$@} " 
+                logger.debug"class #{self} :  $!: #{$!} "
 				ActiveRecord::Base.connection.rollback_db_transaction()
       end		
 	end
@@ -950,7 +1054,7 @@ class DbResults  < DbOrds
 	begin
 		ActiveRecord::Base.connection.begin_db_transaction()
 		###rptblname = tbl.singularize.capitalize.constantize
-		@sio_classname = "_add_perform_setresults" ### perform_set
+		@sio_classname = "_results_add_perform" ### perform_set
 		#####resultの時は常に追加
 		cno = ""
 		bal_qty = 0
@@ -964,44 +1068,56 @@ class DbResults  < DbOrds
 		results.each do |result|		
 			@incnt = @skipcnt = @outcnt = 0
 			@inqty = @outqty = @skipqty = 0
-			ctblname = result["tblname"].singularize.capitalize.constantize
-		    str_gno = if  (result["gno_input"]||="dummy") =~ /dummy/ then "" else " and gno = '#{result["gno_input"]}' " end
-			strsql = "select * from #{result["tblname"]} where result_f in('0','8') and persons_id_upd = #{user_id} #{str_gno}  order by sno_ord FOR UPDATE "
+			###ctblname = result["tblname"].singularize.capitalize.constantize
+			strsql = "select * from #{result["tblname"]} where result_f in('0') and persons_id_upd = #{user_id} order by sno_ord FOR UPDATE "
 			inputs = ActiveRecord::Base.connection.select_all(strsql)
 			inputs.each do |input|				
 				@incnt += 1 
 				@inqty += input["qty"]
-				if (input["cno_inst"]||="dummy") =~ /^dummy/
-					if (input["sno_inst"]||="dummy") =~ /dummy/
+				case 
+					when  (input["cno_inst"]||="dummy")  !~ /^dummy/
 						strsql = %Q& select *
-								from r_#{prdpurshp}insts where id in(
-                                     select srctblid  from alloctbls where srctblname = '#{prdpurshp}insts' and destblname = 'alloctbls' and destblid in(
-											select id from alloctbls where srctblname = 'trngantts' and destblname = '#{prdpurshp}ords' and allocfree = 'alloc'
-												and  destblid in (select id from #{prdpurshp}ords where sno = '#{input["sno_ord"]}'
-												))) &
-					else
-						strsql = %Q& select *
-								from r_#{prdpurshp}insts where #{prdpurshp}inst_sno  = '#{input["sno_inst"]}'
-												 &
-					end
-				else
-					strsql = %Q& select *
 							from r_#{prdpurshp}insts  where #{prdpurshp}inst_cno = '#{input["cno_inst"]}' and & +
 									case prdpurshp
 											when "pur"
 												prdpurshp+"inst_dealer_id = #{input["dealers_id"]}"  
 											else
 												prdpurshp+"inst_loca_id = #{input["locas_id"]}"
-											end 
+											end  
+					when  (input["sno_inst"]||="dummy") !~ /^dummy/
+						strsql = %Q& select *
+								from r_#{prdpurshp}insts where #{prdpurshp}inst_sno  = '#{input["sno_inst"]}'
+												 &
+					when  (input["sno_ord"]||="dummy") !~ /^dummy/
+						strsql = %Q& select *
+								from r_#{prdpurshp}insts where id in(
+                                     select srctblid  from alloctbls where srctblname = '#{prdpurshp}insts' and destblname = 'alloctbls' and destblid in(
+											select id from alloctbls where srctblname = 'trngantts' and destblname = '#{prdpurshp}ords' and allocfree = 'alloc'
+												and  destblid in (select id from #{prdpurshp}ords where sno = '#{input["sno_ord"]}'
+												))) &
+					when  (input["gno_inst"]||="dummy") !~ /^dummy/
+						strsql = %Q& select *
+								from r_#{prdpurshp}insts where id in(
+										select srctblid  from alloctbls where srctblname = '#{prdpurshp}insts' and destblname = 'alloctbls' and destblid in(
+												select id from alloctbls where srctblname = 'trngantts' and destblname = '#{prdpurshp}ords' and allocfree = 'alloc'
+												and  destblid in (select id from #{prdpurshp}insts where gno_inst = '#{input["gno_inst"]}'
+												))) &
+						
+					else
+						strsql = %Q& select *
+								from r_#{prdpurshp}insts where id in(
+										select srctblid  from alloctbls where srctblname = '#{prdpurshp}insts' and destblname = 'alloctbls' and destblid in(
+												select id from alloctbls where srctblname = 'trngantts' and destblname = '#{prdpurshp}ords' and allocfree = 'alloc'
+												)) &
 				end
 				insts = ActiveRecord::Base.connection.select_all(strsql)	
 				if insts.empty?
 					err ={}
 					err[:message_code] = "error_xxx1 "
-					err[:message_contents] = %Q&  not find  #{if input["sno_ord"] then  "sno_ord = " + input["sno_ord"]   end } #{if input["cno_inst"] then "cno_inst =  " + input["cno_inst"] end }   #{if input["sno_inst"] then  "sno_inst = " + input["sno_inst"]   end } & 
+					err[:remark] = %Q&  not found  #{if input["sno_ord"] then  "sno_ord = " + input["sno_ord"]   end } #{if input["cno_inst"] then "cno_inst =  " + input["cno_inst"] end }   #{if input["sno_inst"] then  "sno_inst = " + input["sno_inst"]   end } & 
 					err[:result_f] = "9"
 					##ctblname.where(:id=>input["id"]).update_all(err)
-					proc_tbl_update_arel(input["tblname"],err,"id = #{input["id"]} ")
+					proc_tbl_edit_arel(result["tblname"],err,"id = #{input["id"]} ")
 					@skipcnt += 1 
 					@skipqty += input["qty"]
 					next
@@ -1010,53 +1126,59 @@ class DbResults  < DbOrds
 				bal_qty = ActiveRecord::Base.connection.select_value(strsql)				
 				strsql = "select sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' group by sno_ord "
 				act_qty = ActiveRecord::Base.connection.select_value(strsql)
-				strsql = "select sum(qty) ret_qty from #{prdpurshp}rets  where sno_ord = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' group by sno_ord "
-				ret_qty = ActiveRecord::Base.connection.select_value(strsql)
+				##strsql = "select sum(qty) ret_qty from #{prdpurshp}rets  where sno_ord = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' group by sno_ord "
+				##ret_qty = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty -= if act_qty then act_qty else 0 end
-				bal_qty += if ret_qty then ret_qty else 0 end
+				##bal_qty += if ret_qty then ret_qty else 0 end  ##返品はordsに紐付かないときもある。
 				if bal_qty < input["qty_bal"] and insts[0]["opeitm_chkinst"] == "1"  ###発注数以上の受入は不可
 					err = {}
-					err[:message_contents] = " over  act_qty: #{input["qty_bal"]} > ord_qty: #{bal_qty} "
+					err[:remark] = " over  act_qty: #{input["qty_bal"]} > ord_qty: #{bal_qty} "
 					err[:message_code] = "error_xxx2 "
 					err[:result_f] = "9"
 					err[:updated_at] = Time.now
-					proc_tbl_update_arel(input["tblname"],err,"id = #{input["id"]} ")
+					proc_tbl_edit_arel(input["tblname"],err,"id = #{input["id"]} ")
 					@skipcnt += 1 
 					@skipqty += sum_rply_qty
 					next
 				end
 				insts.each do |inst|			
-					@sio_classname = "result_add_"
+					@sio_classname = "results_add_"
 					strsql = %Q& select * from r_alloctbls where  alloctbl_srctblname = 'trngantts' 
 				             and alloctbl_destblname = '#{prdpurshp}insts' and alloctbl_destblid = #{inst["id"]} 
 							 and alloctbl_qty > 0 and alloctbl_allocfree = 'alloc' &
 					alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
-					proc_command_c_to_instance inst
-					##proc_opeitm_instance(inst)
-					@result_qty = input["qty"]   ###
-					@result_qty_case = input["qty_case"]   
-					case prdpurshp
-						when "prd"
-							@result_cmpldate = input["cmpldate"]
-						when "pur"
-							@result_rcptdate = input["rcptdate"]
-						when "shp"
-							@result_depdate = input["depdate"]						
-					end
-					@result_cno = input["cno"]
-					@result_gno = input["gno"]
-					@result_gno_lineno = input["gno_lineno"]
-					@result_isudate = input["isudate"]
-					@result_strdate = input["strdate"]
-					@result_content = input["contents"]		
-					__send__("proc_tblink_r_results_#{prdpurshp}acts_self10",alloctbls) ###alloctbls:xxxinstsの引当て情報		
 					data ={}
+					if alloctbls.size > 0
+						proc_command_instance_variable inst
+						##proc_opeitm_instance(inst)
+						@result_qty = input["qty"]   ###
+						@result_qty_case = input["qty_case"]   
+						case prdpurshp
+							when "prd"
+								@result_cmpldate = input["cmpldate"]
+							when "pur"
+								@result_rcptdate = input["rcptdate"]
+							when "shp"
+								@result_depdate = input["depdate"]						
+						end
+						@result_cno = input["cno"]
+						@result_gno = input["gno"]
+						@result_gno_lineno = input["gno_lineno"]
+						@result_isudate = input["isudate"]
+						@result_strdate = input["strdate"]
+						@result_content = input["contents"]		
+						@outcnt += 1
+						@outqty += input["qty"]
+						__send__("proc_tblink_r_results_#{prdpurshp}acts_self10",alloctbls) ###alloctbls:xxxinstsの引当て情報	
+						data[:remark] = ""
+						data[:result_f] = "1"
+					else
+						data[:remark] = "data not found  strsql = #{strsql} "
+						data[:result_f] = "8"
+					end
 					data[:result_f] = "1"
-					data[:remark] = ""
 					data[:updated_at] = Time.now
-					proc_tbl_update_arel(input["tblname"],data,"id = #{input["id"]} ")
-					@outcnt += 1
-					@outqty += input["qty"]
+					proc_tbl_edit_arel(result["tblname"],data,"id = #{input["id"]} ")
 				end
 			end		
 			data ={}
@@ -1066,15 +1188,15 @@ class DbResults  < DbOrds
 			data[:outqty] = @outqty
 			data[:skipcnt] = @skipcnt
 			data[:skipqty] = @skipqty
-			data[:result_f] = "1"
+			data[:result_f] = if @incnt == @outcnt and @inqty == @outqty then "1" else "8" end
 			data[:updated_at] = Time.now
 			###rptblname.where(:id =>result["id"]).update_all(data)
-			proc_tbl_update arel(tbl,data," id = #{result["id"]} ")
+			proc_tbl_edit_arel(tbl,data," id = #{result["id"]} ")
 		end
 	   rescue
 				ActiveRecord::Base.connection.rollback_db_transaction()
-                fprnt"class #{self} : $@: #{$@} " 
-                fprnt"class #{self} : $!: #{$!} "
+                logger.debug"class #{self} #{Time.now}: $@: #{$@} " 
+                logger.debug"class #{self} : $!: #{$!} "
     end
 	ActiveRecord::Base.connection.commit_db_transaction()
 	end

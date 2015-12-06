@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="855" uniqueCount="139"><si><t>blktbsfieldcode_id</t></si><si><t>blktbsfieldcode_seqno</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_fieldlength</t></si><si><t>fieldcode_dataprecision</t></si><si><t>fieldcode_datascale</t></si><si><t>blktbsfieldcode_contents</t></si><si><t>fieldcode_contents</t></si><si><t>blktbsfieldcode_viewflmk</t></si><si><t>blktbsfieldcode_remark</t></si><si><t>blktbsfieldcode_expiredate</t></si><si><t>person_name_upd</t></si><si><t>person_code_upd</t></si><si><t>blktb_seltbls</t></si><si><t>blktbsfieldcode_update_ip</t></si><si><t>blktbsfieldcode_created_at</t></si><si><t>blktbsfieldcode_updated_at</t></si><si><t>shpinsts</t></si><si><t>carton</t></si><si><t>number</t></si><si><t>carton数</t></si><si><t>2099/12/31</t></si><si><t>system</t></si><si><t>2014/01/26 18:22</t></si><si><t>2015/11/05 02:16</t></si><si><t>shpords</t></si><si><t>2014/01/21 00:27</t></si><si><t>shpacts</t></si><si><t>2014/02/02 11:36</t></si><si><t>isudate</t></si><si><t>timestamp(6)</t></si><si><t>undefined</t></si><si><t>発行日</t></si><si><t>127.0.0.1</t></si><si><t>2015/09/19 10:23</t></si><si><t>2015/09/19 11:53</t></si><si><t>cartonno</t></si><si><t>varchar2</t></si><si><t>carton　no</t></si><si><t>箱毎のカートンno
+,区切りでの入力を想定</t></si><si><t>2014/01/21 01:19</t></si><si><t>prjnos_id</t></si><si><t>発注等まとめる単位</t></si><si><t>2015/09/19 11:34</t></si><si><t>2015/09/19 12:01</t></si><si><t>opeitms_id</t></si><si><t>2015/09/19 10:35</t></si><si><t>2015/09/19 11:59</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>updated_at</t></si><si><t>qty</t></si><si><t>2014/01/26 22:25</t></si><si><t>2014/01/26 22:24</t></si><si><t>sno</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>2014/02/06 01:20</t></si><si><t>2015/07/20 20:23</t></si><si><t>depdate</t></si><si><t>出庫日　出荷日　出発日</t></si><si><t>locas_id_to</t></si><si><t>price</t></si><si><t>2014/02/08 20:44</t></si><si><t>2014/02/08 20:48</t></si><si><t>2014/02/08 20:51</t></si><si><t>remark</t></si><si><t>システムがセットする備考</t></si><si><t>created_at</t></si><si><t>update_ip</t></si><si><t>duedate</t></si><si><t>納期</t></si><si><t>2015/10/15 20:40</t></si><si><t>2015/09/19 10:30</t></si><si><t>2015/10/21 10:54</t></si><si><t>weight</t></si><si><t>amt</t></si><si><t>2014/02/08 20:42</t></si><si><t>toduedate</t></si><si><t>2015/09/19 10:31</t></si><si><t>id</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>tax</t></si><si><t>2014/02/08 20:43</t></si><si><t>2014/02/08 20:47</t></si><si><t>2014/02/02 23:12</t></si><si><t>persons_id_upd</t></si><si><t>contents</t></si><si><t>2015/09/19 11:48</t></si><si><t>itms_id_pare</t></si><si><t>2015/09/19 11:32</t></si><si><t>2015/09/19 11:56</t></si><si><t>processseq_pare</t></si><si><t>同一item_coseに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>2015/09/19 12:04</t></si><si><t>opt_fixoterm</t></si><si><t xml:space="preserve">LT毎のまとめ発注期間　 opt_term=1 :LTと同じ
+
+</t></si><si><t>2015/09/19 11:33</t></si><si><t>qty_case</t></si><si><t>瓶、リールの数
+整数であること。</t></si><si><t>2015/10/17 21:42</t></si><si><t>2015/10/17 21:43</t></si><si><t>2015/10/21 20:15</t></si><si><t>confirm</t></si><si><t>char</t></si><si><t>1:confirm  0:仮　5:確認済　印刷後又はデータ送信後　1となる。
+T:test</t></si><si><t>2015/09/19 11:31</t></si><si><t>cno</t></si><si><t>得意先、業者、又は作業現場からのｋｅｙ
+必須項目</t></si><si><t>2015/10/17 03:13</t></si><si><t>2015/10/21 20:12</t></si><si><t>cno_inst</t></si><si><t>xxxactsにセットされる。</t></si><si><t>2015/07/20 20:32</t></si><si><t>sno_ord</t></si><si><t>ords:insts = 1:n
+ordsをまとめて一つのオーダにするときはテーブルxxxordgnosを作成しgnoを利用する。</t></si><si><t>instsの元のテーブルxxxordsのsno
+必須項目</t></si><si><t>2015/10/04 21:10</t></si><si><t>2015/10/13 21:17</t></si><si><t>sno_inst</t></si><si><t>必須項目</t></si><si><t>2015/10/21 20:13</t></si><si><t>contract_price</t></si><si><t>単価契約フラグ
+1:発注日ベース　2:納期ベース　3:受入日ベース   4:出荷日ベース　5:検収ベース  
+7:出荷日までに決定する単価　8:受入日までに決定する単価　
+9:単価決定=検収日
+X:社内単価未定</t></si><si><t>2015/09/19 11:50</t></si><si><t>chrgs_id</t></si><si><t>2015/04/12 01:15</t></si><si><t>gno</t></si><si><t>注文単位別key  ユニーク性は保証されない。 
+一枚の注文書に複数の品目がある時、その注文書の識別key</t></si><si><t>2015/09/19 10:43</t></si><si><t>2015/11/05 02:26</t></si><si><t>2015/09/19 11:52</t></si><si><t>box</t></si><si><t>opeitmsにはboxes_idがセットされているが、ここでは名称のみセットする。</t></si><si><t>入荷時、出庫時の荷姿
+units_idとの整合性はない。
+例　段ボール　30*40*20</t></si><si><t>2015/10/07 01:17</t></si><si><t>2015/10/13 21:16</t></si></sst>

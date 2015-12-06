@@ -36,17 +36,17 @@ class ImportfieldsfromoracleController < ApplicationController
          ###子コードのチェック
          chk_chil_tbls = ActiveRecord::Base.connection.select_all(%Q%select c.table_name,c.COLUMN_NAME from user_constraints a, user_constraints b, user_cons_columns c
                                              where a.constraint_name = b.r_constraint_name and  b.constraint_name = c.constraint_name 
-                                             and b.constraint_type = 'R' and a.constraint_type = 'P' and a.table_name = UPPER('blktbsfieldcodes')%)
+                                             and b.constraint_type = 'R' and a.constraint_type = 'P' and a.table_name = UPPER('tblfields')%)
          chk_chil_tbls.each do |rec|
-              blktfc_ids = ActiveRecord::Base.connection.select_values("select  id from blktbsfieldcodes where blktbs_id = #{rec_id}  and  expiredate > current_date") 
+              blktfc_ids = ActiveRecord::Base.connection.select_values("select  id from tblfields where blktbs_id = #{rec_id}  and  expiredate > current_date") 
               blktfc_ids.each do |id_rec|
                  chk_done = ActiveRecord::Base.connection.select_value("select 1 from #{rec["table_name"]} where #{rec["column_name"]} = #{id_rec} ")
                  if  chk_done then
-                      @errmsg << "Can not delete blktbsfieldcodes because table #{rec["table_name"]} has   blktbsfieldcodes = #{id_rec} "
+                      @errmsg << "Can not delete tblfields because table #{rec["table_name"]} has   tblfields = #{id_rec} "
                  end
               end
          end
-         plsql.blktbsfieldcodes.delete("where blktbs_id = #{rec_id}  and  expiredate > current_date")
+         plsql.tblfields.delete("where blktbs_id = #{rec_id}  and  expiredate > current_date")
          prv_import_columns rec_id,columns
          if  @errmsg.size < 1 then 
              chk_index(pobject_code_tbl,columns) if columns
@@ -65,8 +65,8 @@ class ImportfieldsfromoracleController < ApplicationController
      @errmsg << @tsqlstr
      @errmsg << $!.to_s
      @errmsg << $@.to_s
-     fprnt"class #{self} : LINE #{__LINE__} @errmsg: #{@errmsg} " 
-     fprnt"class #{self} : LINE #{__LINE__} @tsqlstr: #{@tsqlstr} " 
+     logger.debug"class #{self} : LINE #{__LINE__} @errmsg: #{@errmsg} " 
+     logger.debug"class #{self} : LINE #{__LINE__} @tsqlstr: #{@tsqlstr} " 
      else
       @errmsg << "  nothing "  
      plsql.commit  
@@ -87,17 +87,17 @@ class ImportfieldsfromoracleController < ApplicationController
 		end
 		hash_rkey.each do|k,v|
              unless fkey.index("#{tblname.chop}_#{v.upcase}") then
-                    @tsqlstr = " ALTER TABLE #{tblname} ADD CONSTRAINT #{tblname.chop}_#{v} "
-                    @tsqlstr << " FOREIGN KEY(#{v}) REFERENCES #{v.split("_")[0]}(id)"  #####custord
-                    plsql.execute @tsqlstr
+                    @tsqlstr = " ALTER TABLE #{tblname} ADD CONSTRAINT #{tblname.chop}_#{v} 
+                                 FOREIGN KEY(#{v}) REFERENCES #{v.split("_")[0]}(id)"  #####custord
+                    ActiveRecord::Base.connection.execute @tsqlstr
              end
 		end
 		####ユニークindex
-		ukeys = plsql.r_blkukys.all("where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
+		ukeys = ActiveRecord::Base.connection.select_all("select * from r_blkukys where pobject_code_tbl = '#{tblname.downcase}' order by blkuky_grp,blkuky_seqno")
 		keyarray={}
 		ukeys.each do |rec|
-			unless  keyarray[rec[:blkuky_grp].to_sym] then  keyarray[rec[:blkuky_grp].to_sym] = [] end
-			keyarray[rec[:blkuky_grp].to_sym] << rec[:pobject_code_fld] 
+			unless  keyarray[rec["blkuky_grp"].to_sym] then  keyarray[rec["blkuky_grp"].to_sym] = [] end
+			keyarray[rec["blkuky_grp"].to_sym] << rec["pobject_code_fld"]
 		end
 		constr = plsql.blk_constraints.all("where table_name = '#{tblname}'  and  constraint_type = 'U' order by  constraint_name,position")
 		orakeyarray = []
@@ -121,7 +121,7 @@ class ImportfieldsfromoracleController < ApplicationController
 	def prv_drop_constr tblname,orakeyarray
        orakeyarray.each do |key|
           @tsqlstr = " ALTER TABLE #{tblname} drop CONSTRAINT #{key}"
-          plsql.execute @tsqlstr
+          ActiveRecord::Base.connection.execute @tsqlstr
       end
   end
   def  prv_add_constr  keyarray,tblname
@@ -131,7 +131,7 @@ class ImportfieldsfromoracleController < ApplicationController
              @tsqlstr << i+","
           end
           @tsqlstr = @tsqlstr.chop+")"
-          plsql.execute @tsqlstr
+          ActiveRecord::Base.connection.execute @tsqlstr
        end
   end
   def prv_import_columns rec_id,columns
@@ -139,15 +139,15 @@ class ImportfieldsfromoracleController < ApplicationController
        columns.each do |field,attr|
             chk_mandatory_field.delete(field)
             fieldcode = prv_chk_fieldcodes field.to_s,attr
-            prv_add_blktbsfieldcodes rec_id,fieldcode if @errmsg.size <1
+            prv_add_tblfields rec_id,fieldcode if @errmsg.size <1
        end
        chk_mandatory_field.each do |key,value|
            @errmsg << " ...#{key.to_s} not exists...." 
        end
   end
-  def  prv_add_blktbsfieldcodes rec_id,fieldcode
+  def  prv_add_tblfields rec_id,fieldcode
        tmp = {}
-       tmp[:id] = proc_get_nextval("blktbsfieldcodes_seq")
+       tmp[:id] = proc_get_nextval("tblfields_seq")
        tmp[:blktbs_id] = rec_id
        ##tmp[:ctblname] = "fieldcodes"
        tmp[:fieldcodes_id] = fieldcode[:id]
@@ -155,8 +155,8 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:expiredate]=Time.parse("2099-12-31")
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
-       tmp[:remark] = " set by prv_add_blktbsfieldcodes"
-       proc_tbl_insert_arel("blktbsfieldcodes",tmp)
+       tmp[:remark] = " set by prv_add_tblfields"
+       proc_tbl_add_arel("tblfields",tmp)
   end
   def prv_chk_pobjects field,objecttype
       rec_id = ActiveRecord::Base.connection.select_value("select id from pobjects where code = '#{field}' and objecttype = '#{objecttype}' and expiredate > current_date")
@@ -188,7 +188,7 @@ class ImportfieldsfromoracleController < ApplicationController
        tmp[:created_at] = Time.now
        tmp[:updated_at] = Time.now
        tmp[:remark] = " set by prv_add_fieldcode"
-       proc_tbl_insert_arel("fieldcodes", tmp)
+       proc_tbl_add_arel("fieldcodes", tmp)
        return tmp
   end 
   def prv_add_pobjects field,objecttype
@@ -200,7 +200,7 @@ class ImportfieldsfromoracleController < ApplicationController
       tmp[:updated_at] = Time.now
       tmp[:expiredate] = Time.parse("2099/12/31")
       tmp[:code] = field
-      proc_tbl_insert_arel("pobjects",tmp)
+      proc_tbl_add_arel("pobjects",tmp)
       return tmp
   end
 	def prv_chk_attr field,fieldcode,attr
@@ -257,17 +257,17 @@ class ImportfieldsfromoracleController < ApplicationController
 		@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
 		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
 		@tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除
-		@tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	tblfields_id)"
 		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id_ch)"
 		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id)"
 
-		plsql.execute @tsqlstr
+		ActiveRecord::Base.connection.execute @tsqlstr
 
 		@tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
 		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
 		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
 		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-		@tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	tblfields_id)"
 		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
 		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
 
@@ -278,13 +278,13 @@ class ImportfieldsfromoracleController < ApplicationController
 		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
 		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
 		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-		@tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	blktbsfieldcodes_id)"
+		@tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	tblfields_id)"
 		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
 		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
 		###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/
 
 		
-		plsql.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
+		ActiveRecord::Base.connection.execute @tsqlstr if  chktb.size == 0  ##存在しない項目削除
 		crttype    viewname                 ##interface用　ｓｉｏ作成
 	end  ##create_screenfields 
     def setscreenfields   sr,ii,viewname,row_cnt   ### sr["column_name"]
@@ -334,15 +334,15 @@ class ImportfieldsfromoracleController < ApplicationController
 			screenfields[:width] =  if ii["fieldcode_fieldlength"] * 6 > 300 then 300  else ii["fieldcode_fieldlength"] * 6 end 
 			screenfields[:width] = if /_upd$/ =~ sr["column_name"]     or  /_ip$/ =~ sr["column_name"] then 85 else screenfields[:width] end
 			screenfields[:edoptsize]  =  if ii["fieldcode_fieldlength"] > 100 then 100 else ii["fieldcode_fieldlength"] end ## if ii["fieldcode_ftype"] == "date"  or  j[:data_type] =~ /timestamp/ 
-			screenfields[:width] =  if ii["fieldcode_ftype"] == "date" or  ii["fieldcode_ftype"] =~ /timestamp/ then 9 else screenfields[:width] end
+			screenfields[:width] =  if ii["fieldcode_ftype"] == "date" or  ii["fieldcode_ftype"] =~ /timestamp/ then 90 else screenfields[:width] end
 			if  viewname.split(/_/)[1].chop  == sr["column_name"].split(/_/)[0] ##同一テーブルの項目のみ変更可
 				screenfields[:editable] =  1                  
 				screenfields[:editable] = if /_ip$|_id|at$/ =~ sr["column_name"] then   0  else   screenfields[:editable]  end ##  ## 更新者と更新時間
 			end
           
 			##   editform positon 
-			screenfields[:seqno] = 999 
-			screenfields[:seqno] = 888 if  screenfields[:editable] == 1 
+			screenfields[:seqno] = 9999 
+			screenfields[:seqno] = 8888 if  screenfields[:editable] == 1 
 			if screenfields[:editable] ==  1  then
 				screenfields[:rowpos] = row_cnt
 				screenfields[:colpos] = if sr["column_name"] =~ /_name/ then 2 else 1 end
@@ -350,9 +350,9 @@ class ImportfieldsfromoracleController < ApplicationController
 			strsql = "select pobject_code_sfd from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} " 
 			chkfield = ActiveRecord::Base.connection.select_value(strsql)
 			if chkfield.nil?
-				screenfields[:blktbsfieldcodes_id] = @sfd_code_id[sr["column_name"]]
-				debugger if screenfields[:blktbsfieldcodes_id].nil?
-				proc_tbl_insert_arel("screenfields",screenfields)
+				screenfields[:tblfields_id] = @sfd_code_id[sr["column_name"]]
+				debugger if screenfields[:tblfields_id].nil?
+				proc_tbl_add_arel("screenfields",screenfields)
 			end
 		else
 			@errmsg = " screen_code not exists screen_code #{viewname}"
@@ -374,8 +374,8 @@ class ImportfieldsfromoracleController < ApplicationController
     end 
 	def crttype   viewname  
 	  begin   
-		@tsqlstr  =  "DROP TABLE " + "SIO_" + viewname  
-		plsql.execute @tsqlstr
+		@tsqlstr  =  "DROP TABLE " + "sio_" + viewname  
+		ActiveRecord::Base.connection.execute @tsqlstr
       rescue
 			###例外が発生したときの処理
 	  else
@@ -383,7 +383,7 @@ class ImportfieldsfromoracleController < ApplicationController
       ensure
       # 例外の発生有無に関わらず最後に必ず実行する処理
 	  end         
-		@tsqlstr =  "CREATE TABLE " + "SIO_" + viewname   + " (\n" 
+		@tsqlstr =  "CREATE TABLE " + "sio_" + viewname   + " (\n" 
 		@tsqlstr <<  "          sio_id number(38)  CONSTRAINT " +  "SIO_" + viewname   + "_id_pk PRIMARY KEY \n"
 		@tsqlstr <<  "          ,sio_user_code number(38)\n"
 		@tsqlstr <<  "          ,sio_Term_id varchar(30)\n"
@@ -412,17 +412,17 @@ class ImportfieldsfromoracleController < ApplicationController
 		@tsqlstr <<  "          ,sio_message_contents varchar(4000)\n"
 		@tsqlstr <<  "          ,sio_chk_done char(1)\n"
 		@tsqlstr <<  ")\n"
-		fprnt @tsqlstr 
-		plsql.execute @tsqlstr
+		logger.debug @tsqlstr 
+		ActiveRecord::Base.connection.execute @tsqlstr
 
 		@tsqlstr =  " CREATE INDEX SIO_#{viewname}_uk1 \n"
 		@tsqlstr << "  ON SIO_#{viewname}(sio_user_code,sio_session_counter,sio_session_id,sio_Command_Response) \n"
 		@tsqlstr << "  TABLESPACE USERS  STORAGE (INITIAL 20K  NEXT 20k  PCTINCREASE 75)"  
-		##fprnt @tsqlstr 
-		plsql.execute @tsqlstr
+		##logger.debug @tsqlstr 
+		ActiveRecord::Base.connection.execute @tsqlstr
 		unless PLSQL::Sequence.find(plsql,"sio_#{viewname}_seq".to_sym)           
 			@tsqlstr =  "create sequence SIO_" + viewname + "_seq" 
-			plsql.execute @tsqlstr
+			ActiveRecord::Base.connection.execute @tsqlstr
 		end
     end #crttype 
 	def vproc_get_view_fieldname(viewname)
@@ -437,7 +437,7 @@ class ImportfieldsfromoracleController < ApplicationController
 	end
 	def sio_fields viewname
 		sio_field_strsql = ""
-		### blktbsfieldcode   xxxxxx  fieldcode_ftype  pobject_code_fld
+		### tblfield   xxxxxx  fieldcode_ftype  pobject_code_fld
 		srfields = vproc_get_view_fieldname(viewname)
 		row_cnt ||= 1
 		srfields.each do |sr|
@@ -457,7 +457,7 @@ class ImportfieldsfromoracleController < ApplicationController
 				end
 				if ii.nil?
 				debugger
-					fprnt "line : #{__LINE__} -->sio_fields error field: #{sr["column_name"]} not find  viewname: #{viewname} "
+					logger.debug "line : #{__LINE__} -->sio_fields error field: #{sr["column_name"]} not find  viewname: #{viewname} "
 					raise
 				end
 			end

@@ -21,8 +21,8 @@ class ImportfmxlsxController < ScreenController
 		@rendererrmsg = []
 		@pare_class = "online"
 		command_c = init_from_screen ###params	  
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
-	    command_c[(command_c[:sio_viewname].split("_")[1].chop+"_update_ip").to_sym] = request.remote_ip
+	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
+	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_update_ip").to_sym] = request.remote_ip
       ##SimpleXlsxReader.configuration.catch_cell_load_errors = true
       if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
       if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
@@ -58,19 +58,19 @@ class ImportfmxlsxController < ScreenController
 			                updatechk_foreignkey command_c  if  @errmsg == ""
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
                             if  @errmsg == "" then
-                                command_c[:sio_classname] = "sheet_blk_add_"
+                                command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_add_"
                                 command_c[:id] = plsql.__send__(command_c[:sio_viewname].split("_")[1] + "_seq").nextval 
                                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                             end 
                         when  /^EDIT/ then
-                            command_c[:sio_classname] = "sheet_blk_edit_"
+                            command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_edit_"
                             command_c[:id] = command_c[tblidsym]
 					        proc_updatechk_edit command_c
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
 			                updatechk_foreignkey command_c if  @errmsg == ""
 							proc_updatechk_add command_c ,"edit" if  @errmsg == ""
 	                    when /^DELETE/ then
-                           command_c[:sio_classname] = "sheet_blk_delete_"
+                           command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_delete_"
                            command_c[:id] = command_c[tblidsym]
 						   updatechk_del command_c
         	            when nil then
@@ -89,7 +89,7 @@ class ImportfmxlsxController < ScreenController
 						 @errmsg = ""
                      end
 	             end  ## if count
-				 fprnt "command_c #{command_c}" if count == 5
+				 logger.debug "command_c #{command_c}" if count == 5
            end ## row
            if  commit_flg
               sub_userproc_insert command_c

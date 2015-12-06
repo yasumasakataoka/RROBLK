@@ -10,9 +10,12 @@ before_filter :authenticate_user!
         else
           render :text=>"error"
        end
-	   testlinks if ENV["RACK_ENV"] == "development" ###開発環境のみで動く
-       crt_def_all
-       Rails.cache.clear	   
+	   if ENV["RACK_ENV"] == "development" ###開発環境のみで動く
+			logger.debug("start #{Time.now}")
+			testlinks 
+			crt_def_all
+			Rails.cache.clear
+		end
     end	
 	#### code index　チッェクを入れる。
     def crtcachelist grpcode
@@ -50,11 +53,11 @@ before_filter :authenticate_user!
 	def testlinks	###開発環境のみで動く
 	        recs = ActiveRecord::Base.connection.select_all("select * from r_tblinks where tblink_expiredate > current_date")  
 			recs.each do |rec|
-			        str_select = "select distinct a.id ,a.blktbsfieldcode_seqno from r_blktbsfieldcodes a "
-					str_select << "where blktbsfieldcode_expiredate > current_date"
+			        str_select = "select distinct a.id ,a.tblfield_seqno from r_tblfields a "
+					str_select << "where tblfield_expiredate > current_date"
 					str_select <<" and not exists(select 1 from (select * from r_tblinkflds where tblinkfld_tblink_id = #{rec["id"]}) b "
-					str_select << " where a.id = b.tblinkfld_blktbsfieldcode_id )"
-					str_select << " and a.blktbsfieldcode_blktb_id = #{rec["tblink_blktb_id_dest"]} "
+					str_select << " where a.id = b.tblinkfld_tblfield_id )"
+					str_select << " and a.tblfield_blktb_id = #{rec["tblink_blktb_id_dest"]} "
 				    fldrecs = ActiveRecord::Base.connection.select_all(str_select)
 					##debugger
 			        fldrecs.each do |fldrec|
@@ -66,14 +69,14 @@ before_filter :authenticate_user!
 			           fld[:updated_at] = Time.now
 		               fld[:remark] = "auto created "		   
 			           fld[:id] = plsql.tblinkflds_seq.nextval
-			           fld[:blktbsfieldcodes_id] = fldrec["id"]
-			           fld[:seqno] = fldrec["blktbsfieldcode_seqno"]
-					   unless plsql.tblinkflds.first("where tblinks_id = #{rec["tblink_id"]} and blktbsfieldcodes_id = #{fldrec["id"]} ")
-					      proc_tbl_insert_arel("tblinkflds", fld)
+			           fld[:tblfields_id] = fldrec["id"]
+			           fld[:seqno] = fldrec["tblfield_seqno"]
+					   unless plsql.tblinkflds.first("where tblinks_id = #{rec["tblink_id"]} and tblfields_id = #{fldrec["id"]} ")
+					      proc_tbl_add_arel("tblinkflds", fld)
 					   end
 			        end
 			end
-			strwhere = "where id in (select id  from r_tblinkflds  a where not exists(select 1 from blktbsfieldcodes b where a.tblinkfld_blktbsfieldcode_id = b.id "
+			strwhere = "where id in (select id  from r_tblinkflds  a where not exists(select 1 from tblfields b where a.tblinkfld_tblfield_id = b.id "
 			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > current_date))"
 			plsql.tblinkflds.delete(strwhere)
 	end

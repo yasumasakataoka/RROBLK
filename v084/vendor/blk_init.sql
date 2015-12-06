@@ -1045,7 +1045,7 @@ where
   person_upd.id = fieldcode.persons_id_upd 
   and pobject_fld.id = fieldcode.pobjects_id_fld
 ;
-CREATE TABLE "RAILS"."BLKTBSFIELDCODES" 
+CREATE TABLE "RAILS"."TBLFIELDS" 
    (	"ID" NUMBER(38,0), 
 	"BLKTBS_ID" NUMBER(38,0), 
 	"FIELDCODES_ID" NUMBER(38,0), 
@@ -1063,26 +1063,28 @@ CREATE TABLE "RAILS"."BLKTBSFIELDCODES"
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
-	 CONSTRAINT "BLKTBSFIELDCODES_UKYS10" UNIQUE ("BLKTBS_ID", "FIELDCODES_ID")
+	 CONSTRAINT "TBLFIELDS_UKYS10" UNIQUE ("BLKTBS_ID", "FIELDCODES_ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
-	 CONSTRAINT "BLKTBSFIELDCODE_BLKTBS_ID" FOREIGN KEY ("BLKTBS_ID")
+	 CONSTRAINT "TBLFIELD_BLKTBS_ID" FOREIGN KEY ("BLKTBS_ID")
 	  REFERENCES "RAILS"."BLKTBS" ("ID") ENABLE, 
-	 CONSTRAINT "BLKTBSFIELDCODE_FIELDCODES_ID" FOREIGN KEY ("FIELDCODES_ID")
+	 CONSTRAINT "TBLFIELD_FIELDCODES_ID" FOREIGN KEY ("FIELDCODES_ID")
 	  REFERENCES "RAILS"."FIELDCODES" ("ID") ENABLE, 
-	 CONSTRAINT "BLKTBSFIELDCODE_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
+	 CONSTRAINT "TBLFIELD_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"
-  ;CREATE 
-OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" ( 
-  "BLKTBSFIELDCODE_CONTENTS"
-  , "BLKTBSFIELDCODE_BLKTB_ID"
+  ;
+  
+  CREATE 
+OR REPLACE FORCE VIEW "RAILS"."R_TBLFIELDS" ( 
+  "TBLFIELD_CONTENTS"
+  , "TBLFIELD_BLKTB_ID"
   , "BLKTB_CONTENTS"
   , "BLKTB_ID"
   , "BLKTB_POBJECT_ID_TBL"
@@ -1094,7 +1096,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" (
   , "POBJECT_CONTENTS_TBL"
   , "BLKTB_REMARK"
   , "BLKTB_SELTBLS"
-  , "BLKTBSFIELDCODE_FIELDCODE_ID"
+  , "TBLFIELD_FIELDCODE_ID"
   , "FIELDCODE_SEQNO"
   , "FIELDCODE_FTYPE"
   , "FIELDCODE_REMARK"
@@ -1111,22 +1113,22 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKTBSFIELDCODES" (
   , "POBJECT_ID_FLD"
   , "POBJECT_CONTENTS_FLD"
   , "ID"
-  , "BLKTBSFIELDCODE_ID"
-  , "BLKTBSFIELDCODE_REMARK"
-  , "BLKTBSFIELDCODE_EXPIREDATE"
-  , "BLKTBSFIELDCODE_UPDATE_IP"
-  , "BLKTBSFIELDCODE_CREATED_AT"
-  , "BLKTBSFIELDCODE_UPDATED_AT"
-  , "BLKTBSFIELDCODE_PERSON_ID_UPD"
+  , "TBLFIELD_ID"
+  , "TBLFIELD_REMARK"
+  , "TBLFIELD_EXPIREDATE"
+  , "TBLFIELD_UPDATE_IP"
+  , "TBLFIELD_CREATED_AT"
+  , "TBLFIELD_UPDATED_AT"
+  , "TBLFIELD_PERSON_ID_UPD"
   , "PERSON_ID_UPD"
   , "PERSON_CODE_UPD"
   , "PERSON_NAME_UPD"
-  , "BLKTBSFIELDCODE_SEQNO"
-  , "BLKTBSFIELDCODE_VIEWFLMK"
+  , "TBLFIELD_SEQNO"
+  , "TBLFIELD_VIEWFLMK"
 ) AS 
 select
-  blktbsfieldcode.contents blktbsfieldcode_contents
-  , blktbsfieldcode.blktbs_id blktbsfieldcode_blktb_id
+  TBLFIELD.contents TBLFIELD_contents
+  , TBLFIELD.blktbs_id TBLFIELD_blktb_id
   , blktb.blktb_contents blktb_contents
   , blktb.blktb_id blktb_id
   , blktb.blktb_pobject_id_tbl blktb_pobject_id_tbl
@@ -1138,7 +1140,7 @@ select
   , blktb.pobject_contents_tbl pobject_contents_tbl
   , blktb.blktb_remark blktb_remark
   , blktb.blktb_seltbls blktb_seltbls
-  , blktbsfieldcode.fieldcodes_id blktbsfieldcode_fieldcode_id
+  , TBLFIELD.fieldcodes_id TBLFIELD_fieldcode_id
   , fieldcode.fieldcode_seqno fieldcode_seqno
   , fieldcode.fieldcode_ftype fieldcode_ftype
   , fieldcode.fieldcode_remark fieldcode_remark
@@ -1154,28 +1156,28 @@ select
   , fieldcode.pobject_rubycode_fld pobject_rubycode_fld
   , fieldcode.pobject_id_fld pobject_id_fld
   , fieldcode.pobject_contents_fld pobject_contents_fld
-  , blktbsfieldcode.id id
-  , blktbsfieldcode.id blktbsfieldcode_id
-  , blktbsfieldcode.remark blktbsfieldcode_remark
-  , blktbsfieldcode.expiredate blktbsfieldcode_expiredate
-  , blktbsfieldcode.update_ip blktbsfieldcode_update_ip
-  , blktbsfieldcode.created_at blktbsfieldcode_created_at
-  , blktbsfieldcode.updated_at blktbsfieldcode_updated_at
-  , blktbsfieldcode.persons_id_upd blktbsfieldcode_person_id_upd
+  , TBLFIELD.id id
+  , TBLFIELD.id TBLFIELD_ID
+  , TBLFIELD.remark TBLFIELD_remark
+  , TBLFIELD.expiredate TBLFIELD_expiredate
+  , TBLFIELD.update_ip TBLFIELD_update_ip
+  , TBLFIELD.created_at TBLFIELD_created_at
+  , TBLFIELD.updated_at TBLFIELD_updated_at
+  , TBLFIELD.persons_id_upd TBLFIELD_person_id_upd
   , person_upd.person_id_upd person_id_upd
   , person_upd.person_code_upd person_code_upd
   , person_upd.person_name_upd person_name_upd
-  , blktbsfieldcode.seqno blktbsfieldcode_seqno
-  , blktbsfieldcode.viewflmk blktbsfieldcode_viewflmk 
+  , TBLFIELD.seqno TBLFIELD_seqno
+  , TBLFIELD.viewflmk TBLFIELD_viewflmk 
 from
-  blktbsfieldcodes blktbsfieldcode
+  TBLFIELDS TBLFIELD
   , r_blktbs blktb
   , r_fieldcodes fieldcode
   , upd_persons person_upd 
 where
-  blktb.id = blktbsfieldcode.blktbs_id 
-  and fieldcode.id = blktbsfieldcode.fieldcodes_id 
-  and person_upd.id = blktbsfieldcode.persons_id_upd
+  blktb.id = TBLFIELD.blktbs_id 
+  and fieldcode.id = TBLFIELD.fieldcodes_id 
+  and person_upd.id = TBLFIELD.persons_id_upd
 
 ;
 CREATE TABLE "RAILS"."BLKUKYS" 
@@ -1187,22 +1189,22 @@ CREATE TABLE "RAILS"."BLKUKYS"
 	"CREATED_AT" TIMESTAMP (6), 
 	"UPDATED_AT" TIMESTAMP (6), 
 	"SEQNO" NUMBER(38,0), 
-	"BLKTBSFIELDCODES_ID" NUMBER(38,0), 
+	"TBLFIELDS_ID" NUMBER(38,0), 
 	"GRP" VARCHAR2(10), 
 	 CONSTRAINT "BLKUKYS_ID_PK" PRIMARY KEY ("ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
-	 CONSTRAINT "BLKUKYS_UKYS1" UNIQUE ("GRP", "BLKTBSFIELDCODES_ID")
+	 CONSTRAINT "BLKUKYS_UKYS1" UNIQUE ("GRP", "TBLFIELDS_ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
 	 CONSTRAINT "BLKUKY_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
-	 CONSTRAINT "BLKUKY_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
-	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
+	 CONSTRAINT "BLKUKY_TBLFIELDS_ID" FOREIGN KEY ("TBLFIELDS_ID")
+	  REFERENCES "RAILS"."TBLFIELDS" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
@@ -1225,9 +1227,9 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "PERSON_CODE_UPD"
   , "PERSON_NAME_UPD"
   , "BLKUKY_SEQNO"
-  , "BLKUKY_BLKTBSFIELDCODE_ID"
-  , "BLKTBSFIELDCODE_CONTENTS"
-  , "BLKTBSFIELDCODE_BLKTB_ID"
+  , "BLKUKY_TBLFIELD_ID"
+  , "TBLFIELD_CONTENTS"
+  , "TBLFIELD_BLKTB_ID"
   , "BLKTB_CONTENTS"
   , "BLKTB_ID"
   , "BLKTB_POBJECT_ID_TBL"
@@ -1239,7 +1241,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "POBJECT_CONTENTS_TBL"
   , "BLKTB_REMARK"
   , "BLKTB_SELTBLS"
-  , "BLKTBSFIELDCODE_FIELDCODE_ID"
+  , "TBLFIELD_FIELDCODE_ID"
   , "FIELDCODE_SEQNO"
   , "FIELDCODE_FTYPE"
   , "FIELDCODE_REMARK"
@@ -1255,10 +1257,10 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "POBJECT_RUBYCODE_FLD"
   , "POBJECT_ID_FLD"
   , "POBJECT_CONTENTS_FLD"
-  , "BLKTBSFIELDCODE_ID"
-  , "BLKTBSFIELDCODE_REMARK"
-  , "BLKTBSFIELDCODE_SEQNO"
-  , "BLKTBSFIELDCODE_VIEWFLMK"
+  , "TBLFIELD_ID"
+  , "TBLFIELD_REMARK"
+  , "TBLFIELD_SEQNO"
+  , "TBLFIELD_VIEWFLMK"
 ) AS 
 select
   blkuky.grp blkuky_grp
@@ -1274,47 +1276,47 @@ select
   , person_upd.person_code_upd person_code_upd
   , person_upd.person_name_upd person_name_upd
   , blkuky.seqno blkuky_seqno
-  , blkuky.blktbsfieldcodes_id blkuky_blktbsfieldcode_id
-  , blktbsfieldcode.blktbsfieldcode_contents blktbsfieldcode_contents
-  , blktbsfieldcode.blktbsfieldcode_blktb_id blktbsfieldcode_blktb_id
-  , blktbsfieldcode.blktb_contents blktb_contents
-  , blktbsfieldcode.blktb_id blktb_id
-  , blktbsfieldcode.blktb_pobject_id_tbl blktb_pobject_id_tbl
-  , blktbsfieldcode.pobject_code_tbl pobject_code_tbl
-  , blktbsfieldcode.pobject_objecttype_tbl pobject_objecttype_tbl
-  , blktbsfieldcode.pobject_remark_tbl pobject_remark_tbl
-  , blktbsfieldcode.pobject_rubycode_tbl pobject_rubycode_tbl
-  , blktbsfieldcode.pobject_id_tbl pobject_id_tbl
-  , blktbsfieldcode.pobject_contents_tbl pobject_contents_tbl
-  , blktbsfieldcode.blktb_remark blktb_remark
-  , blktbsfieldcode.blktb_seltbls blktb_seltbls
-  , blktbsfieldcode.blktbsfieldcode_fieldcode_id blktbsfieldcode_fieldcode_id
-  , blktbsfieldcode.fieldcode_seqno fieldcode_seqno
-  , blktbsfieldcode.fieldcode_ftype fieldcode_ftype
-  , blktbsfieldcode.fieldcode_remark fieldcode_remark
-  , blktbsfieldcode.fieldcode_datascale fieldcode_datascale
-  , blktbsfieldcode.fieldcode_dataprecision fieldcode_dataprecision
-  , blktbsfieldcode.fieldcode_fieldlength fieldcode_fieldlength
-  , blktbsfieldcode.fieldcode_id fieldcode_id
-  , blktbsfieldcode.fieldcode_contents fieldcode_contents
-  , blktbsfieldcode.fieldcode_pobject_id_fld fieldcode_pobject_id_fld
-  , blktbsfieldcode.pobject_code_fld pobject_code_fld
-  , blktbsfieldcode.pobject_objecttype_fld pobject_objecttype_fld
-  , blktbsfieldcode.pobject_remark_fld pobject_remark_fld
-  , blktbsfieldcode.pobject_rubycode_fld pobject_rubycode_fld
-  , blktbsfieldcode.pobject_id_fld pobject_id_fld
-  , blktbsfieldcode.pobject_contents_fld pobject_contents_fld
-  , blktbsfieldcode.blktbsfieldcode_id blktbsfieldcode_id
-  , blktbsfieldcode.blktbsfieldcode_remark blktbsfieldcode_remark
-  , blktbsfieldcode.blktbsfieldcode_seqno blktbsfieldcode_seqno
-  , blktbsfieldcode.blktbsfieldcode_viewflmk blktbsfieldcode_viewflmk 
+  , blkuky.TBLFIELDS_id blkuky_TBLFIELD_ID
+  , TBLFIELD.TBLFIELD_contents TBLFIELD_contents
+  , TBLFIELD.TBLFIELD_blktb_id TBLFIELD_blktb_id
+  , TBLFIELD.blktb_contents blktb_contents
+  , TBLFIELD.blktb_id blktb_id
+  , TBLFIELD.blktb_pobject_id_tbl blktb_pobject_id_tbl
+  , TBLFIELD.pobject_code_tbl pobject_code_tbl
+  , TBLFIELD.pobject_objecttype_tbl pobject_objecttype_tbl
+  , TBLFIELD.pobject_remark_tbl pobject_remark_tbl
+  , TBLFIELD.pobject_rubycode_tbl pobject_rubycode_tbl
+  , TBLFIELD.pobject_id_tbl pobject_id_tbl
+  , TBLFIELD.pobject_contents_tbl pobject_contents_tbl
+  , TBLFIELD.blktb_remark blktb_remark
+  , TBLFIELD.blktb_seltbls blktb_seltbls
+  , TBLFIELD.TBLFIELD_fieldcode_id TBLFIELD_fieldcode_id
+  , TBLFIELD.fieldcode_seqno fieldcode_seqno
+  , TBLFIELD.fieldcode_ftype fieldcode_ftype
+  , TBLFIELD.fieldcode_remark fieldcode_remark
+  , TBLFIELD.fieldcode_datascale fieldcode_datascale
+  , TBLFIELD.fieldcode_dataprecision fieldcode_dataprecision
+  , TBLFIELD.fieldcode_fieldlength fieldcode_fieldlength
+  , TBLFIELD.fieldcode_id fieldcode_id
+  , TBLFIELD.fieldcode_contents fieldcode_contents
+  , TBLFIELD.fieldcode_pobject_id_fld fieldcode_pobject_id_fld
+  , TBLFIELD.pobject_code_fld pobject_code_fld
+  , TBLFIELD.pobject_objecttype_fld pobject_objecttype_fld
+  , TBLFIELD.pobject_remark_fld pobject_remark_fld
+  , TBLFIELD.pobject_rubycode_fld pobject_rubycode_fld
+  , TBLFIELD.pobject_id_fld pobject_id_fld
+  , TBLFIELD.pobject_contents_fld pobject_contents_fld
+  , TBLFIELD.TBLFIELD_ID TBLFIELD_ID
+  , TBLFIELD.TBLFIELD_remark TBLFIELD_remark
+  , TBLFIELD.TBLFIELD_seqno TBLFIELD_seqno
+  , TBLFIELD.TBLFIELD_viewflmk TBLFIELD_viewflmk 
 from
   blkukys blkuky
   , upd_persons person_upd
-  , r_blktbsfieldcodes blktbsfieldcode 
+  , r_TBLFIELDS TBLFIELD 
 where
   person_upd.id = blkuky.persons_id_upd 
-  and blktbsfieldcode.id = blkuky.blktbsfieldcodes_id; 
+  and TBLFIELD.id = blkuky.TBLFIELDS_id; 
 
 
 
@@ -1351,7 +1353,7 @@ CREATE TABLE "RAILS"."SCREENFIELDS"
 	"CREATED_AT" TIMESTAMP (6), 
 	"UPDATED_AT" TIMESTAMP (6), 
 	"POBJECTS_ID_SFD" NUMBER(38,0), 
-	"BLKTBSFIELDCODES_ID" NUMBER(38,0),
+	"TBLFIELDS_ID" NUMBER(38,0),
 	"PARAGRAPH" VARCHAR2(30), 
 	"FORMATTER" VARCHAR2(4000), 
 	"CONTENTS" VARCHAR2(4000), 
@@ -1366,8 +1368,8 @@ CREATE TABLE "RAILS"."SCREENFIELDS"
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
 	 CONSTRAINT "SCREENFIELD_POBJECTS_ID_SFD" FOREIGN KEY ("POBJECTS_ID_SFD")
 	  REFERENCES "RAILS"."POBJECTS" ("ID") ENABLE, 
-	 CONSTRAINT "SCREENFIELD_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
-	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
+	 CONSTRAINT "SCREENFIELD_TBLFIELDS_ID" FOREIGN KEY ("TBLFIELDS_ID")
+	  REFERENCES "RAILS"."TBLFIELDS" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
@@ -1451,8 +1453,8 @@ OR REPLACE FORCE VIEW "RAILS"."R_SCREENFIELDS" (
   , "SCRLV_ID"
   , "SCRLV_REMARK"
   , "SCRLV_CODE"
-  , "SCREENFIELD_BLKTBSFIELDCODE_ID" 
-  , "BLKTBSFIELDCODE_CONTENTS" 
+  , "SCREENFIELD_TBLFIELD_ID" 
+  , "TBLFIELD_CONTENTS" 
   , "FIELDCODE_CONTENTS"
 ) AS 
 select
@@ -1531,20 +1533,20 @@ select
   , screen.scrlv_id scrlv_id
   , screen.scrlv_remark scrlv_remark
   , screen.scrlv_code scrlv_code 
-  , screenfield.blktbsfieldcodes_id 
-  , blktbsfieldcode.blktbsfieldcode_contents
-  , blktbsfieldcode.fieldcode_contents
+  , screenfield.TBLFIELDS_id 
+  , TBLFIELD.TBLFIELD_contents
+  , TBLFIELD.fieldcode_contents
 from
   screenfields screenfield
   , r_pobjects pobject_sfd
   , upd_persons person_upd
   , r_screens screen 
-  , R_BLKTBSFIELDCODES blktbsfieldcode
+  , R_TBLFIELDS TBLFIELD
 where
   pobject_sfd.id = screenfield.pobjects_id_sfd 
   and person_upd.id = screenfield.persons_id_upd 
   and screen.id = screenfield.screens_id
-  AND BLKTBSFIELDCODE.ID = SCREENFIELD.BLKTBSFIELDCODES_ID
+  AND TBLFIELD.ID = SCREENFIELD.TBLFIELDS_ID
 ;
 CREATE TABLE "RAILS"."CHILSCREENS" 
    (	"ID" NUMBER(38,0), 
@@ -1646,7 +1648,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_CHILSCREENS" (
   , "SCRLV_ID"
   , "SCRLV_REMARK"
   , "SCRLV_CODE"
-  , "BLKTBSFIELDCODE_CONTENTS"
+  , "TBLFIELD_CONTENTS"
   , "FIELDCODE_CONTENTS"
   , "CHILSCREEN_SCREENFIELD_ID_CH"
   , "SCREENFIELD_POBJECT_ID_SFD_CH"
@@ -1715,7 +1717,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_CHILSCREENS" (
   , "SCRLV_ID_CH"
   , "SCRLV_REMARK_CH"
   , "SCRLV_CODE_CH"
-  , "BLKTBSFIELDCODE_CONTENTS_CH"
+  , "TBLFIELD_CONTENTS_CH"
   , "FIELDCODE_CONTENTS_CH"
   , "ID"
   , "CHILSCREEN_ID"
@@ -1799,7 +1801,7 @@ select
   , screenfield.scrlv_id scrlv_id
   , screenfield.scrlv_remark scrlv_remark
   , screenfield.scrlv_code scrlv_code
-  , screenfield.blktbsfieldcode_contents blktbsfieldcode_contents
+  , screenfield.TBLFIELD_contents TBLFIELD_contents
   , screenfield.fieldcode_contents fieldcode_contents
   , chilscreen.screenfields_id_ch chilscreen_screenfield_id_ch
   , screenfield_ch.screenfield_pobject_id_sfd screenfield_pobject_id_sfd_ch
@@ -1868,7 +1870,7 @@ select
   , screenfield_ch.scrlv_id scrlv_id_ch
   , screenfield_ch.scrlv_remark scrlv_remark_ch
   , screenfield_ch.scrlv_code scrlv_code_ch
-  , screenfield_ch.blktbsfieldcode_contents blktbsfieldcode_contents_ch
+  , screenfield_ch.TBLFIELD_contents TBLFIELD_contents_ch
   , screenfield_ch.fieldcode_contents fieldcode_contents_ch
   , chilscreen.id id
   , chilscreen.id chilscreen_id
@@ -2309,22 +2311,22 @@ CREATE TABLE "RAILS"."BLKUKYS"
 	"CREATED_AT" TIMESTAMP (6), 
 	"UPDATED_AT" TIMESTAMP (6), 
 	"SEQNO" NUMBER(38,0), 
-	"BLKTBSFIELDCODES_ID" NUMBER(38,0), 
+	"TBLFIELDS_ID" NUMBER(38,0), 
 	"GRP" VARCHAR2(10), 
 	 CONSTRAINT "BLKUKYS_ID_PK" PRIMARY KEY ("ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
-	 CONSTRAINT "BLKUKYS_UKYS1" UNIQUE ("GRP", "BLKTBSFIELDCODES_ID")
+	 CONSTRAINT "BLKUKYS_UKYS1" UNIQUE ("GRP", "TBLFIELDS_ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
 	 CONSTRAINT "BLKUKY_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
-	 CONSTRAINT "BLKUKY_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
-	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
+	 CONSTRAINT "BLKUKY_TBLFIELDS_ID" FOREIGN KEY ("TBLFIELDS_ID")
+	  REFERENCES "RAILS"."TBLFIELDS" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
@@ -2346,10 +2348,10 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "PERSON_CODE_UPD"
   , "PERSON_NAME_UPD"
   , "BLKUKY_SEQNO"
-  , "BLKUKY_BLKTBSFIELDCODE_ID"
-  , "BLKTBSFIELDCODE_SEQNO"
-  , "BLKTBSFIELDCODE_REMARK"
-  , "BLKTBSFIELDCODE_FIELDCODE_ID"
+  , "BLKUKY_TBLFIELD_ID"
+  , "TBLFIELD_SEQNO"
+  , "TBLFIELD_REMARK"
+  , "TBLFIELD_FIELDCODE_ID"
   , "FIELDCODE_SEQNO"
   , "FIELDCODE_FTYPE"
   , "FIELDCODE_REMARK"
@@ -2363,7 +2365,7 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "POBJECT_OBJECTTYPE_FLD"
   , "POBJECT_REMARK_FLD"
   , "POBJECT_ID_FLD"
-  , "BLKTBSFIELDCODE_BLKTB_ID"
+  , "TBLFIELD_BLKTB_ID"
   , "BLKTB_ID"
   , "BLKTB_POBJECT_ID_TBL"
   , "POBJECT_CODE_TBL"
@@ -2372,9 +2374,9 @@ OR REPLACE FORCE VIEW "RAILS"."R_BLKUKYS" (
   , "POBJECT_ID_TBL"
   , "BLKTB_REMARK"
   , "BLKTB_SELTBLS"
-  , "BLKTBSFIELDCODE_ID"
-  , "BLKTBSFIELDCODE_CONTENTS"
-  , "BLKTBSFIELDCODE_VIEWFLMK"
+  , "TBLFIELD_ID"
+  , "TBLFIELD_CONTENTS"
+  , "TBLFIELD_VIEWFLMK"
 ) AS 
 select
   blkuky.grp blkuky_grp
@@ -2390,42 +2392,42 @@ select
   , person_upd.person_code_upd person_code_upd
   , person_upd.person_name_upd person_name_upd
   , blkuky.seqno blkuky_seqno
-  , blkuky.blktbsfieldcodes_id blkuky_blktbsfieldcode_id
-  , blktbsfieldcode.blktbsfieldcode_seqno blktbsfieldcode_seqno
-  , blktbsfieldcode.blktbsfieldcode_remark blktbsfieldcode_remark
-  , blktbsfieldcode.blktbsfieldcode_fieldcode_id blktbsfieldcode_fieldcode_id
-  , blktbsfieldcode.fieldcode_seqno fieldcode_seqno
-  , blktbsfieldcode.fieldcode_ftype fieldcode_ftype
-  , blktbsfieldcode.fieldcode_remark fieldcode_remark
-  , blktbsfieldcode.fieldcode_datascale fieldcode_datascale
-  , blktbsfieldcode.fieldcode_dataprecision fieldcode_dataprecision
-  , blktbsfieldcode.fieldcode_fieldlength fieldcode_fieldlength
-  , blktbsfieldcode.fieldcode_id fieldcode_id
-  , blktbsfieldcode.fieldcode_contents fieldcode_contents
-  , blktbsfieldcode.fieldcode_pobject_id_fld fieldcode_pobject_id_fld
-  , blktbsfieldcode.pobject_code_fld pobject_code_fld
-  , blktbsfieldcode.pobject_objecttype_fld pobject_objecttype_fld
-  , blktbsfieldcode.pobject_remark_fld pobject_remark_fld
-  , blktbsfieldcode.pobject_id_fld pobject_id_fld
-  , blktbsfieldcode.blktbsfieldcode_blktb_id blktbsfieldcode_blktb_id
-  , blktbsfieldcode.blktb_id blktb_id
-  , blktbsfieldcode.blktb_pobject_id_tbl blktb_pobject_id_tbl
-  , blktbsfieldcode.pobject_code_tbl pobject_code_tbl
-  , blktbsfieldcode.pobject_objecttype_tbl pobject_objecttype_tbl
-  , blktbsfieldcode.pobject_remark_tbl pobject_remark_tbl
-  , blktbsfieldcode.pobject_id_tbl pobject_id_tbl
-  , blktbsfieldcode.blktb_remark blktb_remark
-  , blktbsfieldcode.blktb_seltbls blktb_seltbls
-  , blktbsfieldcode.blktbsfieldcode_id blktbsfieldcode_id
-  , blktbsfieldcode.blktbsfieldcode_contents blktbsfieldcode_contents
-  , blktbsfieldcode.blktbsfieldcode_viewflmk blktbsfieldcode_viewflmk 
+  , blkuky.TBLFIELDS_id blkuky_TBLFIELD_ID
+  , TBLFIELD.TBLFIELD_seqno TBLFIELD_seqno
+  , TBLFIELD.TBLFIELD_remark TBLFIELD_remark
+  , TBLFIELD.TBLFIELD_fieldcode_id TBLFIELD_fieldcode_id
+  , TBLFIELD.fieldcode_seqno fieldcode_seqno
+  , TBLFIELD.fieldcode_ftype fieldcode_ftype
+  , TBLFIELD.fieldcode_remark fieldcode_remark
+  , TBLFIELD.fieldcode_datascale fieldcode_datascale
+  , TBLFIELD.fieldcode_dataprecision fieldcode_dataprecision
+  , TBLFIELD.fieldcode_fieldlength fieldcode_fieldlength
+  , TBLFIELD.fieldcode_id fieldcode_id
+  , TBLFIELD.fieldcode_contents fieldcode_contents
+  , TBLFIELD.fieldcode_pobject_id_fld fieldcode_pobject_id_fld
+  , TBLFIELD.pobject_code_fld pobject_code_fld
+  , TBLFIELD.pobject_objecttype_fld pobject_objecttype_fld
+  , TBLFIELD.pobject_remark_fld pobject_remark_fld
+  , TBLFIELD.pobject_id_fld pobject_id_fld
+  , TBLFIELD.TBLFIELD_blktb_id TBLFIELD_blktb_id
+  , TBLFIELD.blktb_id blktb_id
+  , TBLFIELD.blktb_pobject_id_tbl blktb_pobject_id_tbl
+  , TBLFIELD.pobject_code_tbl pobject_code_tbl
+  , TBLFIELD.pobject_objecttype_tbl pobject_objecttype_tbl
+  , TBLFIELD.pobject_remark_tbl pobject_remark_tbl
+  , TBLFIELD.pobject_id_tbl pobject_id_tbl
+  , TBLFIELD.blktb_remark blktb_remark
+  , TBLFIELD.blktb_seltbls blktb_seltbls
+  , TBLFIELD.TBLFIELD_ID TBLFIELD_ID
+  , TBLFIELD.TBLFIELD_contents TBLFIELD_contents
+  , TBLFIELD.TBLFIELD_viewflmk TBLFIELD_viewflmk 
 from
   blkukys blkuky
   , upd_persons person_upd
-  , r_blktbsfieldcodes blktbsfieldcode 
+  , r_TBLFIELDS TBLFIELD 
 where
   person_upd.id = blkuky.persons_id_upd 
-  and blktbsfieldcode.id = blkuky.blktbsfieldcodes_id
+  and TBLFIELD.id = blkuky.TBLFIELDS_id
 
 ;
 
@@ -2619,7 +2621,7 @@ CREATE TABLE "RAILS"."TBLINKFLDS"
 	"UPDATED_AT" TIMESTAMP (6), 
 	"COMMAND_C" VARCHAR2(4000), 
 	"TBLINKS_ID" NUMBER(38,0), 
-	"BLKTBSFIELDCODES_ID" NUMBER(38,0), 
+	"TBLFIELDS_ID" NUMBER(38,0), 
 	"SEQNO" NUMBER(38,0), 
 	"CONTENTS" VARCHAR2(4000), 
 	"RUBYCODE" VARCHAR2(4000), 
@@ -2628,7 +2630,7 @@ CREATE TABLE "RAILS"."TBLINKFLDS"
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"  ENABLE, 
-	 CONSTRAINT "TBLINKFLDS_UKYS10" UNIQUE ("TBLINKS_ID", "BLKTBSFIELDCODES_ID")
+	 CONSTRAINT "TBLINKFLDS_UKYS10" UNIQUE ("TBLINKS_ID", "TBLFIELDS_ID")
   USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
@@ -2637,15 +2639,15 @@ CREATE TABLE "RAILS"."TBLINKFLDS"
 	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE, 
 	 CONSTRAINT "TBLINKFLD_TBLINKS_ID" FOREIGN KEY ("TBLINKS_ID")
 	  REFERENCES "RAILS"."TBLINKS" ("ID") ENABLE, 
-	 CONSTRAINT "TBLINKFLD_BLKTBSFIELDCODES_ID" FOREIGN KEY ("BLKTBSFIELDCODES_ID")
-	  REFERENCES "RAILS"."BLKTBSFIELDCODES" ("ID") ENABLE
+	 CONSTRAINT "TBLINKFLD_TBLFIELDS_ID" FOREIGN KEY ("TBLFIELDS_ID")
+	  REFERENCES "RAILS"."TBLFIELDS" ("ID") ENABLE
    ) SEGMENT CREATION IMMEDIATE 
   PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
   STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "USERS"
   ;
-  
+   
   CREATE 
 OR REPLACE FORCE VIEW "RAILS"."R_TBLINKFLDS" ( 
   "TBLINKFLD_CONTENTS"
@@ -2866,3 +2868,4 @@ where
   and blktbsfieldcode.id = tblinkfld.blktbsfieldcodes_id 
   and tblink.id = tblinkfld.tblinks_id
 ;
+

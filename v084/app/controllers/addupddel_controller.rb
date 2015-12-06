@@ -20,15 +20,15 @@ class  AddupddelController < ScreenController
 				proc_updatechk_add command_c,"add"
 				updatechk_foreignkey command_c if  @errmsg == ""
 				if  @errmsg == "" then
-					command_c[:sio_classname] = "screen_blk_add_"
-					@newtblid = command_c[:id] = plsql.__send__(tblname + "s_seq").nextval 
+					command_c[:sio_classname] = "#{tblname}s_screen_blk_add_"
+					@newtblid = command_c[:id] = proc_get_nextval(tblname + "s_seq") 
 					command_c[(tblname + "_id").to_sym] =  command_c[:id]
 				end 
 			when /delete/
-				command_c[:sio_classname] = "screen_blk_delete_"
+				command_c[:sio_classname] = "#{tblname}s_screen_blk_delete_"
 				updatechk_del command_c
 			when /edit/
-				command_c[:sio_classname] = "screen_blk_edit_"
+				command_c[:sio_classname] = "#{tblname}s_screen_blk_edit_"
 				proc_updatechk_edit command_c
 				updatechk_foreignkey command_c  if  @errmsg == ""
 				proc_updatechk_add command_c ,"edit" if  @errmsg == ""
@@ -39,7 +39,8 @@ class  AddupddelController < ScreenController
 		if  @errmsg == "" 
 			@req_userproc = false
 			@sio_classname = command_c[:sio_classname]
-			plsql.connection.autocommit = false
+			###plsql.connection.autocommit = false
+			ActiveRecord::Base.connection.begin_db_transaction
 			command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
 			command_c[:sio_recordcount] = 1
 			Rails.cache.clear(nil) if command_c[:sio_viewname] =~ /screen/  ###db_cudではクリされた結果がscreenのクラスでは反映されない模様
@@ -47,11 +48,12 @@ class  AddupddelController < ScreenController
 			all_fields.each do |f|
 				command_c[f] = nil if command_c.has_key?(f) == false and f.to_s =~ /^#{tblname}_/
 			end
-			proc_insert_sio_c    command_c 
-			proc_userproc_chk_set command_c
-			plsql.commit
-			dbcud = DbCud.new
-			dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")
+			##proc_insert_sio_c    command_c 
+			##proc_userproc_chk_set command_c
+			##plsql.commit
+			##dbcud = DbCud.new
+			##dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")
+			proc_simple_sio_insert command_c
 			###  line画面の時
 			sym_code = (command_c[:sio_viewname].split("_")[1].chop+"_code").to_sym
 			sym_sno = (command_c[:sio_viewname].split("_")[1].chop+"_sno").to_sym
@@ -60,13 +62,14 @@ class  AddupddelController < ScreenController
 			else
 				command_c.each do |key,value|
 			     scode = value if key.to_s == /_code_#{command_c[:sio_viewname].split("_")[1].chop}/
-			end
-		end   ###serverへの送信を画面に表示
-		if  params[:copy] == "add" then jstxt = %Q%jQuery("form input").val("");jQuery("form textarea").val("");% else jstxt = "" end 
-            jstxt << %Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'>sent code:#{scode} to server</p>");%
+				end
+			end   ###serverへの送信を画面に表示
+			if  params[:copy] == "add" then jstxt = %Q%jQuery("form input").val("");jQuery("form textarea").val("");% else jstxt = "" end 
+			jstxt << %Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'>sent code:#{scode} to server</p>");%
 			render :js=>jstxt
 		else
 			render :js=>%Q%jQuery("p#blkmsg'").remove();jQuery("td.navButton").append("<p id='blkmsg'><font color='#ff0000'>#{@errmsg} </font></p>");%
 		end
+		ActiveRecord::Base.connection.commit_db_transaction
 	end  ## add_upd_del
 end

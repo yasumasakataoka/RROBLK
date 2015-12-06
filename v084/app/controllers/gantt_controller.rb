@@ -22,11 +22,12 @@ class   GanttController  <  ScreenController
         time_now =  Time.now 
 		case mst_code
 		    when "itms"
-		     itm = plsql.select(:first,"select * from itms where id = '#{id}'  ")
-             rec = plsql.select(:first,"select * from opeitms where itms_id = #{id} and Expiredate > current_date   order by priority desc, processseq desc,Expiredate ")
+		     ###itm = ActiveRecord::Base.connection.select_one("select * from itms where id = '#{id}'  ")
+             rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{id} and Expiredate > current_date   order by priority desc, processseq desc,Expiredate ")
 		end
         if rec then 
-            ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec[:itms_id],:loca_id=>rec[:locas_id],:processseq=>rec[:processseq],:priority=>rec[:priority],:endtime=>time_now,:id=>"opeitms_"+rec[:id].to_s}
+            ngantts << {:seq=>"001",:mlevel=>1,:itms_id=>rec["itms_id"],:locas_id=>rec["locas_id"],
+								:processseq=>rec["processseq"],:priority=>rec["priority"],:endtime=>time_now,:id=>"opeitms_"+rec["id"].to_s}
             cnt = 0
             @bgantts = {}
             @bgantts[:"000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:opeitm_duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>0}
@@ -50,14 +51,12 @@ class   GanttController  <  ScreenController
             "end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{value[:depends]}","level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},&
         end
         ## opeitmのsubtblidのopeitmは子のinsert用
-        ##debugger
-        ##fprnt("#{__LINE__} strgantt :#{strgantt}")
         @ganttdata = strgantt.chop + %Q|],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
     end  
 	def sql_proc_trn_gantt trn_code,id
 	    ### a.trngantt 引当て先　　b.trngantt オリジナル
         %Q& select a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.opeitm_prdpurshp prdpurshp,
-                            alloctbl_destblname,alloctbl_destblid,
+                            alloctbl_destblname,alloctbl_destblid,max(trngantt_dependon) trngantt_dependon,
 							min(a.TRNGANTT_STRDATE) org_strdate,max(a.TRNGANTT_MLEVEL) mlevel,
 							max(a.TRNGANTT_dueDATE) org_duedate,max(a.trngantt_qty) qty,
 							sum(case  when b.alloctbl_destblname like '%schs' then  b.alloctbl_qty else 0 end) qty_alloc_sch,
@@ -92,7 +91,6 @@ class   GanttController  <  ScreenController
 					   alloc["duedate"] = custtrn["custord_duedate"]  ###c
 					end
 			    else
-					###fprnt "line #{__LINE__} value #{value}"  if value["alloctbl_destblname"].nil?
 					alloc =  ActiveRecord::Base.connection.select_one(%Q& select * from #{value["alloctbl_destblname"]} where id = #{value["alloctbl_destblid"]}&)
                   ###  trn_sno = plsql.select(:first,"select * from #{value[:trngantt_tblname]} where id = #{value[:trngantt_tblid]} ")				
 		    end
@@ -107,13 +105,13 @@ class   GanttController  <  ScreenController
 														:opeitm_duration=>value["opeitm_duration"],
                                                         :end=>if value["alloctbl_destblname"] =~ /^lotstk/ then (alloc["strdate"].to_i * 1000) else (alloc["duedate"].to_i * 1000 )end,:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
 														:level=>if value["trngantt_key"] == '000' then 0 else 1 end,
-														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>""}
+														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>value["trngantt_dependon"]}
 							
-            if value["trngantt_key"].size > 3
-			    tmpgantt[value["trngantt_key"][0..-4].to_sym][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]},"  if tmpgantt[value["trngantt_key"].to_sym]
-			  else
-			    tmpgantt[:"001"][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]}," if value["trngantt_key"] > "001"
-			end
+            #if value["trngantt_key"].size > 3
+			 #   tmpgantt[value["trngantt_key"][0..-4].to_sym][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]},"  
+			 # else
+			 #   tmpgantt[:"001"][:depends] <<   "#{tmpgantt[value["trngantt_key"].to_sym][:id]}," if value["trngantt_key"] > "001"
+			#end
 		end		
         strgantt = '{"tasks":['
         tmpgantt.sort.each  do|key,gantt|
@@ -121,9 +119,8 @@ class   GanttController  <  ScreenController
             "start":#{gantt[:start]},"org_start":#{gantt[:start]},"end":#{gantt[:end]||=gantt[:org_end]},"org_end":#{gantt[:org_end]},			
 			"prdpurshp":"#{gantt[:prdpurshp]}","sno":"#{gantt[:sno]}",
 			"qty":#{gantt[:qty]},"qty_sch":#{gantt[:qty_sch]},"qty_ord":#{gantt[:qty_ord]},"qty_inst":#{gantt[:qty_inst]},"qty_stk":#{gantt[:qty_stk]},
-			"assigs":[],"level":#{gantt[:level]},"mlevel":#{gantt[:mlevel]},"subtblid":"#{gantt[:subtblid]}","paretblcode":"","depends":"#{gantt[:depends].chop}"},&
+			"assigs":[],"level":#{gantt[:level]},"mlevel":#{gantt[:mlevel]},"subtblid":"#{gantt[:subtblid]}","paretblcode":"","depends":"#{(gantt[:depends]||="").chop}"},&
         end
-		###fprnt strgantt
         @ganttdata = strgantt.chop + %Q&],"selectedRow":0,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }&
     end
 
@@ -158,7 +155,7 @@ class   GanttController  <  ScreenController
        return command_r
    end  
    def uploadgantt
-        sio_user_code = plsql.persons.first(:email =>current_user[:email])[:id]  ||= 0   ###########   LOGIN USER
+        sio_user_code = ActiveRecord::Base.connection.select_one("select * from persons where email = '#{current_user[:email]}'")["id"]   ###########   LOGIN USER
 		sio_session_counter =   user_seq_nextval(sio_user_code) 
 		command_r = {}
         command_r[:sio_user_code] = sio_user_code
@@ -171,28 +168,28 @@ class   GanttController  <  ScreenController
                    next
                 when "gantttmp"  then ### レコード追加
                     tblcode = value[:id].split("_")[1]
-                    command_r[:sio_classname] = "plsql_blk_gantt_add_"
+                    command_r[:sio_classname] = "#{tblcode}_blk_gantt_add_"
 					sub_insert(set_fields_from_gantt tblcode,value ,command_r)
                 else
           			rid = value[:id].split("_")[1].to_i 
          			if  rid.nil
-		    		    fprnt "logic err line #{__LINE__} value #{value}"
+		    		    logger.debug "logic err line #{__LINE__} value #{value}"
 			    		raise
 				   end
-                    command_r[:sio_classname] = "plsql_blk_gantt_edit_"
+                    command_r[:sio_classname] = "#{tblcode}_blk_gantt_edit_"
                     @screen_code  = jqgrid_id = "r_" + tblcode
                     command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
 			        command_r.merge!(init_from_screen(value))
                     command_r[:id] = command_r[(tblcode.chop+"_id").to_sym] = rid					
-                    sub_insert_sio_c     command_r  ##
+                    proc_insert_sio_c     command_r  ##
                     if  tblcode == "nditms"
                         @screen_code  = jqgrid_id = "r_opeitms" 
                	        command_r.merge!(init_from_screen(value))
                         command_r[:id] = command_r[:opeitm_id] = value[:subtblid].split("_")[1].to_i
-                        command_r[:sio_classname] = "plsql_blk_gantt_edit_"    
+                        command_r[:sio_classname] = "nditms_gantt_edit_"    
                         command_r[:sio_viewname]  = command_r[:sio_code] = @screen_code
                         command_r[:sio_user_code] = sio_user_code  
-			            sub_insert_sio_c     command_r  
+			            proc_insert_sio_c     command_r  
 					end
             end
         end
