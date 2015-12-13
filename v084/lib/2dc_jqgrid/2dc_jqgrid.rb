@@ -127,7 +127,7 @@ include  JqgridFilter
       options = ","
       column.except(:field, :label,:formop).each do |couple|
         if couple[0] == :editoptions
-          options << "editoptions:#{get_sub_options(couple[1])},"
+          options << %Q%editoptions:#{get_sub_options(couple[1])},%
         elsif couple[0] == :formoptions
           options << "formoptions:#{get_sub_options(couple[1])},"
         elsif couple[0] == :searchoptions
@@ -153,7 +153,7 @@ include  JqgridFilter
         if couple[0] == :value # :value => [[],[1, "Rails"], [2, "Ruby"], [3, "jQuery"]]
             options << %Q/value:"/
             couple[1].each_with_index do |v,i|    ###  修正　入力内容をそのまま
-                options << "#{v[0]}:#{v[1]};" if i >0 
+                options << %Q%#{v[0]}:#{v[1]};%  ## if i >0 
             end
             options.chop! << %Q/",/
             elsif couple[0] == :data # :data => [Category.all, :id, :title])

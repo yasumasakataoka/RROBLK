@@ -51,13 +51,13 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			proc_set_search_code_of_screen        "r_"+pobject_code_tbl
 			chk_index  pobject_code_tbl,columns if columns
 		rescue
-			plsql.rollback
+			ActiveRecord::Base.connection.rollback_db_transaction()
 			@errmsg << $!.to_s
 			@errmsg << $@.to_s
 			logger.debug"class #{self} : LINE #{__LINE__} @errmsg: #{@errmsg} " 
 		else
 			@errmsg << "  nothing "  
-			plsql.commit  
+			ActiveRecord::Base.connection.commit_db_transaction()  
 		end   ##begin
 	end
 	def proc_set_search_code_of_screen   pobject_code_scr    

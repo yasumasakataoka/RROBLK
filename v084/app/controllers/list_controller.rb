@@ -68,16 +68,16 @@ before_filter :authenticate_user!
 			           fld[:created_at] = Time.now
 			           fld[:updated_at] = Time.now
 		               fld[:remark] = "auto created "		   
-			           fld[:id] = plsql.tblinkflds_seq.nextval
+			           fld[:id] = proc_get_nextval "tblinkflds_seq"
 			           fld[:tblfields_id] = fldrec["id"]
 			           fld[:seqno] = fldrec["tblfield_seqno"]
-					   unless plsql.tblinkflds.first("where tblinks_id = #{rec["tblink_id"]} and tblfields_id = #{fldrec["id"]} ")
+					   unless ActiveRecord::Base.connection.select_value("select id from tblinkflds where tblinks_id = #{rec["tblink_id"]} and tblfields_id = #{fldrec["id"]} ")
 					      proc_tbl_add_arel("tblinkflds", fld)
 					   end
 			        end
 			end
-			strwhere = "where id in (select id  from r_tblinkflds  a where not exists(select 1 from tblfields b where a.tblinkfld_tblfield_id = b.id "
+			strwhere = " id in (select id  from r_tblinkflds  a where not exists(select 1 from tblfields b where a.tblinkfld_tblfield_id = b.id "
 			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > current_date))"
-			plsql.tblinkflds.delete(strwhere)
+			proc_tbl_delete_arel("tblinkflds",strwhere)
 	end
 end

@@ -119,7 +119,7 @@ class ScreenController < ListController
 	end
 	def  code_to_name    ### 必須keyとして登録された_codeが変化したときcall　　該当データなしの時の表示方法
 		command_c = init_from_screen
-		return if params[params[:chgname]]  =~ /dummy/   ###dummyの時は処理しない
+		return if params[params[:chgname]]  =~ /dummy/ and params[:chgname] =~ /_sno_|_cno_/  ###trn でdummyの時は処理しない
 		case 	params[:chgname]
 			when /_sno_/  ###dummyの時は処理しない
 				sw = vproc_get_contents_frm_sno 

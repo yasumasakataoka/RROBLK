@@ -183,7 +183,209 @@ where
   loca_sect.loca_id = sect.locas_id_sect 
   and person_upd.id = sect.persons_id_upd; 
 
+DROP TABLE usrgrps
+;
+CREATE TABLE usrgrps
+  ( id numeric(38)
+  ,Code varchar(10)
+  ,Name VARCHAR(50)
+  ,Email VARCHAR(50)
+  ,Remark VARCHAR(100)
+  ,Expiredate date
+  ,Persons_id_Upd numeric(38)
+  ,Update_IP varchar(40)
+  ,created_at timestamp(6)
+  ,Updated_at timestamp(6)
+  , CONSTRAINT usrgrps_id_pk PRIMARY KEY (id)
+  , CONSTRAINT usrgrps_16_uk  UNIQUE (Code)
+)
+;
+drop sequence usrgrps_seq
+;  
+create sequence usrgrps_seq
+;
 
+insert into  usrgrps(id,code,name, persons_id_upd,Expiredate)
+values(0,'0','system',0,'2099/12/31')
+;
+CREATE OR REPLACE FORCE VIEW "RAILS"."R_USRGRPS" 
+("ID", "USRGRP_ID", "USRGRP_REMARK", "USRGRP_EXPIREDATE", "USRGRP_UPDATE_IP", "USRGRP_CREATED_AT",
+ "USRGRP_UPDATED_AT", "USRGRP_PERSON_ID_UPD", "PERSON_ID_UPD", "PERSON_CODE_UPD",
+  "PERSON_NAME_UPD", 
+  "USRGRP_CODE","USRGRP_NAME", "USRGRP_CONTENTS") AS 
+  select usrgrp.id id,usrgrp.id usrgrp_id ,usrgrp.remark usrgrp_remark ,usrgrp.expiredate usrgrp_expiredate ,
+  usrgrp.update_ip usrgrp_update_ip ,usrgrp.created_at usrgrp_created_at ,usrgrp.updated_at usrgrp_updated_at ,
+  usrgrp.persons_id_upd usrgrp_person_id_upd , person_upd.person_id_upd person_id_upd,
+   person_upd.person_code_upd person_code_upd, person_upd.person_name_upd person_name_upd,
+  usrgrp.code usrgrp_code , usrgrp.name usrgrp_name ,usrgrp.contents usrgrp_contents 
+ from usrgrps usrgrp ,upd_persons  person_upd
+ where  person_upd.id = usrgrp.persons_id_upd
+ ; 
+  drop table "SIO_R_SECTS"
+;
+CREATE TABLE "SIO_R_SECTS" 
+   (	"SIO_ID" NUMBER(38,0), 
+	"SIO_USER_CODE" NUMBER(38,0), 
+	"SIO_TERM_ID" VARCHAR2(30), 
+	"SIO_SESSION_ID" NUMBER, 
+	"SIO_COMMAND_RESPONSE" CHAR(1), 
+	"SIO_SESSION_COUNTER" NUMBER(38,0), 
+	"SIO_CLASSNAME" VARCHAR2(50), 
+	"SIO_VIEWNAME" VARCHAR2(30), 
+	"SIO_CODE" VARCHAR2(30), 
+	"SIO_STRSQL" VARCHAR2(4000), 
+	"SIO_TOTALCOUNT" NUMBER(38,0), 
+	"SIO_RECORDCOUNT" NUMBER(38,0), 
+	"SIO_START_RECORD" NUMBER(38,0), 
+	"SIO_END_RECORD" NUMBER (38,0), 
+	"SIO_SORD" VARCHAR2(256), 
+	"SIO_SEARCH" VARCHAR2(10), 
+	"SIO_SIDX" VARCHAR2(256), 
+	"ID" NUMBER(22,0), 
+	"SECT_ID" NUMBER(22,0), 
+	"SECT_REMARK" VARCHAR2(100), 
+	"SECT_EXPIREDATE" DATE, 
+	"SECT_UPDATE_IP" VARCHAR2(40), 
+	"SECT_CREATED_AT" TIMESTAMP (6), 
+	"SECT_UPDATED_AT" TIMESTAMP (6), 
+	"SECT_PERSON_ID_UPD" NUMBER(22,0), 
+	"PERSON_CODE_UPD" VARCHAR2(50), 
+	"PERSON_NAME_UPD" VARCHAR2(100), 
+	"SECT_LOCA_ID" NUMBER(22,0), 
+	"LOCA_ID_SECT" NUMBER(22,0), 
+	"LOCA_CODE_SECT" VARCHAR2(50), 
+	"LOCA_NAME_SECT" VARCHAR2(100), 
+	"LOCA_ABBR_SECT" VARCHAR2(50), 
+	"LOCA_ZIP_SECT" VARCHAR2(10), 
+	"LOCA_COUNTRY_SECT" VARCHAR2(20), 
+	"LOCA_PRFCT_SECT" VARCHAR2(20), 
+	"LOCA_ADDR1_SECT" VARCHAR2(50), 
+	"LOCA_ADDR2_SECT" VARCHAR2(50), 
+	"LOCA_TEL_SECT" VARCHAR2(20), 
+	"LOCA_FAX_SECT" VARCHAR2(20), 
+	"LOCA_MAIL_SECT" VARCHAR2(20), 
+	"LOCA_REMARK_SECT" VARCHAR2(100), 
+	"SIO_ERRLINE" VARCHAR2(4000), 
+	"SIO_ORG_TBLNAME" VARCHAR2(30), 
+	"SIO_ORG_TBLID" NUMBER(38,0), 
+	"SIO_ADD_TIME" DATE, 
+	"SIO_REPLAY_TIME" DATE, 
+	"SIO_RESULT_F" CHAR(1), 
+	"SIO_MESSAGE_CODE" CHAR(10), 
+	"SIO_MESSAGE_CONTENTS" VARCHAR2(4000), 
+	"SIO_CHK_DONE" CHAR(1), 
+	 CONSTRAINT "SIO_R_SECTS_ID_PK" PRIMARY KEY ("SIO_ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"
+  ;
+  
+  
+ CREATE 
+OR REPLACE FORCE VIEW "RAILS"."R_PERSONS" ( 
+  "ID"
+  , "PERSON_ID"
+  , "PERSON_REMARK"
+  , "PERSON_EXPIREDATE"
+  , "PERSON_UPDATE_IP"
+  , "PERSON_CREATED_AT"
+  , "PERSON_UPDATED_AT"
+  , "PERSON_PERSON_ID_UPD"
+  , "PERSON_ID_UPD"
+  , "PERSON_CODE_UPD"
+  , "PERSON_NAME_UPD"
+  , "PERSON_CODE"
+  , "PERSON_NAME"
+  , "PERSON_SECT_ID"
+  , "SECT_ID"
+  , "SECT_REMARK"
+  , "SECT_LOCA_ID"
+  , "LOCA_CODE_SECT"
+  , "LOCA_ABBR_SECT"
+  , "LOCA_PRFCT_SECT"
+  , "LOCA_TEL_SECT"
+  , "LOCA_COUNTRY_SECT"
+  , "LOCA_NAME_SECT"
+  , "LOCA_REMARK_SECT"
+  , "LOCA_MAIL_SECT"
+  , "LOCA_ADDR1_SECT"
+  , "LOCA_ZIP_SECT"
+  , "LOCA_FAX_SECT"
+  , "LOCA_ADDR2_SECT"
+  , "LOCA_ID_SECT"
+  , "PERSON_EMAIL"
+  , "PERSON_SCRLV_ID"
+  , "SCRLV_LEVEL1"
+  , "SCRLV_ID"
+  , "SCRLV_REMARK"
+  , "SCRLV_CODE"
+  , "PERSON_USRGRP_ID"
+  , "USRGRP_ID"
+  , "USRGRP_REMARK"
+  , "USRGRP_CODE"
+  , "USRGRP_NAME"
+  , "USRGRP_CONTENTS"
+) AS 
+select
+  person.id id
+  , person.id person_id
+  , person.remark person_remark
+  , person.expiredate person_expiredate
+  , person.update_ip person_update_ip
+  , person.created_at person_created_at
+  , person.updated_at person_updated_at
+  , person.persons_id_upd person_person_id_upd
+  , person_upd.person_id_upd updperson_id_upd
+  , person_upd.person_code_upd updperson_code_upd
+  , person_upd.person_name_upd updperson_name_upd
+  , person.code person_code
+  , person.name person_name
+  , person.sects_id person_sect_id
+  , sect.sect_id sect_id
+  , sect.sect_remark sect_remark
+  , sect.sect_loca_id_sect sect_loca_id
+  , sect.loca_code_sect loca_code_sect
+  , sect.loca_abbr_sect loca_abbr_sect
+  , sect.loca_prfct_sect loca_prfct_sect
+  , sect.loca_tel_sect loca_tel_sect
+  , sect.loca_country_sect loca_country_sect
+  , sect.loca_name_sect loca_name_sect
+  , sect.loca_remark_sect loca_remark_sect
+  , sect.loca_mail_sect loca_mail_sect
+  , sect.loca_addr1_sect loca_addr1_sect
+  , sect.loca_zip_sect loca_zip_sect
+  , sect.loca_fax_sect loca_fax_sect
+  , sect.loca_addr2_sect loca_addr2_sect
+  , sect.SECT_loca_id_sect loca_id_sect
+  , person.email person_email
+  , person.scrlvs_id person_scrlv_id
+  , scrlv.scrlv_level1 scrlv_level1
+  , scrlv.scrlv_id scrlv_id
+  , scrlv.scrlv_remark scrlv_remark
+  , scrlv.scrlv_code scrlv_code
+  , person.usrgrps_id person_usrgrp_id
+  , usrgrp.usrgrp_id usrgrp_id
+  , usrgrp.usrgrp_remark usrgrp_remark
+  , usrgrp.usrgrp_code usrgrp_code
+  , usrgrp.usrgrp_name usrgrp_name
+  , usrgrp.usrgrp_contents usrgrp_contents 
+from
+  persons person
+  , upd_persons person_upd
+  , r_sects sect
+  , r_scrlvs scrlv
+  , r_usrgrps usrgrp
+where person.persons_id_upd = person_upd.ID
+and person.sects_id = sect.ID
+and person.SCRLVS_ID = scrlv.ID
+and person.USRGRPS_ID = usrgrp.ID
+  ;
 
 
 
@@ -274,208 +476,6 @@ where
 
 
 
-
-DROP TABLE usrgrps
-;
-CREATE TABLE usrgrps
-  ( id numeric(38)
-  ,Code varchar(10)
-  ,Name VARCHAR(50)
-  ,Email VARCHAR(50)
-  ,Remark VARCHAR(100)
-  ,Expiredate date
-  ,Persons_id_Upd numeric(38)
-  ,Update_IP varchar(40)
-  ,created_at timestamp(6)
-  ,Updated_at timestamp(6)
-  , CONSTRAINT usrgrps_id_pk PRIMARY KEY (id)
-  , CONSTRAINT usrgrps_16_uk  UNIQUE (Code)
-)
-;
-drop sequence usrgrps_seq
-;  
-create sequence usrgrps_seq
-;
-
-insert into  usrgrps(id,code,name, persons_id_upd,Expiredate)
-values(0,'0','system',0,'2099/12/31')
-;
-CREATE OR REPLACE FORCE VIEW "RAILS"."R_USRGRPS" 
-("ID", "USRGRP_ID", "USRGRP_REMARK", "USRGRP_EXPIREDATE", "USRGRP_UPDATE_IP", "USRGRP_CREATED_AT",
- "USRGRP_UPDATED_AT", "USRGRP_PERSON_ID_UPD", "PERSON_ID_UPD", "PERSON_CODE_UPD",
-  "PERSON_NAME_UPD", 
-  "USRGRP_CODE","USRGRP_NAME", "USRGRP_CONTENTS") AS 
-  select usrgrp.id id,usrgrp.id usrgrp_id ,usrgrp.remark usrgrp_remark ,usrgrp.expiredate usrgrp_expiredate ,
-  usrgrp.update_ip usrgrp_update_ip ,usrgrp.created_at usrgrp_created_at ,usrgrp.updated_at usrgrp_updated_at ,
-  usrgrp.persons_id_upd usrgrp_person_id_upd , person_upd.person_id_upd person_id_upd,
-   person_upd.person_code_upd person_code_upd, person_upd.person_name_upd person_name_upd,
-  usrgrp.code usrgrp_code , usrgrp.name usrgrp_name ,usrgrp.contents usrgrp_contents 
- from usrgrps usrgrp ,upd_persons  person_upd
- where  person_upd.id = usrgrp.persons_id_upd
- ;
- CREATE 
-OR REPLACE FORCE VIEW "RAILS"."R_PERSONS" ( 
-  "ID"
-  , "PERSON_ID"
-  , "PERSON_REMARK"
-  , "PERSON_EXPIREDATE"
-  , "PERSON_UPDATE_IP"
-  , "PERSON_CREATED_AT"
-  , "PERSON_UPDATED_AT"
-  , "PERSON_PERSON_ID_UPD"
-  , "UPDPERSON_ID_UPD"
-  , "UPDPERSON_CODE_UPD"
-  , "UPDPERSON_NAME_UPD"
-  , "PERSON_CODE"
-  , "PERSON_NAME"
-  , "PERSON_SECT_ID"
-  , "SECT_ID"
-  , "SECT_REMARK"
-  , "SECT_LOCA_ID"
-  , "LOCA_CODE_SECT"
-  , "LOCA_ABBR_SECT"
-  , "LOCA_PRFCT_SECT"
-  , "LOCA_TEL_SECT"
-  , "LOCA_COUNTRY_SECT"
-  , "LOCA_NAME_SECT"
-  , "LOCA_REMARK_SECT"
-  , "LOCA_MAIL_SECT"
-  , "LOCA_ADDR1_SECT"
-  , "LOCA_ZIP_SECT"
-  , "LOCA_FAX_SECT"
-  , "LOCA_ADDR2_SECT"
-  , "LOCA_ID_SECT"
-  , "PERSON_EMAIL"
-  , "PERSON_SCRLV_ID"
-  , "SCRLV_LEVEL1"
-  , "SCRLV_ID"
-  , "SCRLV_REMARK"
-  , "SCRLV_CODE"
-  , "PERSON_USRGRP_ID"
-  , "USRGRP_ID"
-  , "USRGRP_REMARK"
-  , "USRGRP_CODE"
-  , "USRGRP_NAME"
-  , "USRGRP_CONTENTS"
-) AS 
-select
-  person.id id
-  , person.id person_id
-  , person.remark person_remark
-  , person.expiredate person_expiredate
-  , person.update_ip person_update_ip
-  , person.created_at person_created_at
-  , person.updated_at person_updated_at
-  , person.persons_id_upd person_person_id_upd
-  , person_upd.person_id_upd updperson_id_upd
-  , person_upd.person_code_upd updperson_code_upd
-  , person_upd.person_name_upd updperson_name_upd
-  , person.code person_code
-  , person.name person_name
-  , person.sects_id person_sect_id
-  , sect.sect_id sect_id
-  , sect.sect_remark sect_remark
-  , sect.sect_loca_id_sect sect_loca_id
-  , sect.loca_code_sect loca_code_sect
-  , sect.loca_abbr_sect loca_abbr_sect
-  , sect.loca_prfct_sect loca_prfct_sect
-  , sect.loca_tel_sect loca_tel_sect
-  , sect.loca_country_sect loca_country_sect
-  , sect.loca_name_sect loca_name_sect
-  , sect.loca_remark_sect loca_remark_sect
-  , sect.loca_mail_sect loca_mail_sect
-  , sect.loca_addr1_sect loca_addr1_sect
-  , sect.loca_zip_sect loca_zip_sect
-  , sect.loca_fax_sect loca_fax_sect
-  , sect.loca_addr2_sect loca_addr2_sect
-  , sect.SECT_loca_id_sect loca_id_sect
-  , person.email person_email
-  , person.scrlvs_id person_scrlv_id
-  , scrlv.scrlv_level1 scrlv_level1
-  , scrlv.scrlv_id scrlv_id
-  , scrlv.scrlv_remark scrlv_remark
-  , scrlv.scrlv_code scrlv_code
-  , person.usrgrps_id person_usrgrp_id
-  , usrgrp.usrgrp_id usrgrp_id
-  , usrgrp.usrgrp_remark usrgrp_remark
-  , usrgrp.usrgrp_code usrgrp_code
-  , usrgrp.usrgrp_name usrgrp_name
-  , usrgrp.usrgrp_contents usrgrp_contents 
-from
-  persons person
-  , upd_persons person_upd
-  , r_sects sect
-  , r_scrlvs scrlv
-  , r_usrgrps usrgrp
-where person.persons_id_upd = person_upd.ID
-and person.sects_id = sect.ID
-and person.SCRLVS_ID = scrlv.ID
-and person.USRGRPS_ID = usrgrp.ID
-  ; 
-  drop table "SIO_R_SECTS"
-;
-CREATE TABLE "SIO_R_SECTS" 
-   (	"SIO_ID" NUMBER(38,0), 
-	"SIO_USER_CODE" NUMBER(38,0), 
-	"SIO_TERM_ID" VARCHAR2(30), 
-	"SIO_SESSION_ID" NUMBER, 
-	"SIO_COMMAND_RESPONSE" CHAR(1), 
-	"SIO_SESSION_COUNTER" NUMBER(38,0), 
-	"SIO_CLASSNAME" VARCHAR2(50), 
-	"SIO_VIEWNAME" VARCHAR2(30), 
-	"SIO_CODE" VARCHAR2(30), 
-	"SIO_STRSQL" VARCHAR2(4000), 
-	"SIO_TOTALCOUNT" NUMBER(38,0), 
-	"SIO_RECORDCOUNT" NUMBER(38,0), 
-	"SIO_START_RECORD" NUMBER(38,0), 
-	"SIO_END_RECORD" NUMBER (38,0), 
-	"SIO_SORD" VARCHAR2(256), 
-	"SIO_SEARCH" VARCHAR2(10), 
-	"SIO_SIDX" VARCHAR2(256), 
-	"ID" NUMBER(22,0), 
-	"SECT_ID" NUMBER(22,0), 
-	"SECT_REMARK" VARCHAR2(100), 
-	"SECT_EXPIREDATE" DATE, 
-	"SECT_UPDATE_IP" VARCHAR2(40), 
-	"SECT_CREATED_AT" TIMESTAMP (6), 
-	"SECT_UPDATED_AT" TIMESTAMP (6), 
-	"SECT_PERSON_ID_UPD" NUMBER(22,0), 
-	"PERSON_CODE_UPD" VARCHAR2(50), 
-	"PERSON_NAME_UPD" VARCHAR2(100), 
-	"SECT_LOCA_ID" NUMBER(22,0), 
-	"LOCA_ID_SECT" NUMBER(22,0), 
-	"LOCA_CODE_SECT" VARCHAR2(50), 
-	"LOCA_NAME_SECT" VARCHAR2(100), 
-	"LOCA_ABBR_SECT" VARCHAR2(50), 
-	"LOCA_ZIP_SECT" VARCHAR2(10), 
-	"LOCA_COUNTRY_SECT" VARCHAR2(20), 
-	"LOCA_PRFCT_SECT" VARCHAR2(20), 
-	"LOCA_ADDR1_SECT" VARCHAR2(50), 
-	"LOCA_ADDR2_SECT" VARCHAR2(50), 
-	"LOCA_TEL_SECT" VARCHAR2(20), 
-	"LOCA_FAX_SECT" VARCHAR2(20), 
-	"LOCA_MAIL_SECT" VARCHAR2(20), 
-	"LOCA_REMARK_SECT" VARCHAR2(100), 
-	"SIO_ERRLINE" VARCHAR2(4000), 
-	"SIO_ORG_TBLNAME" VARCHAR2(30), 
-	"SIO_ORG_TBLID" NUMBER(38,0), 
-	"SIO_ADD_TIME" DATE, 
-	"SIO_REPLAY_TIME" DATE, 
-	"SIO_RESULT_F" CHAR(1), 
-	"SIO_MESSAGE_CODE" CHAR(10), 
-	"SIO_MESSAGE_CONTENTS" VARCHAR2(4000), 
-	"SIO_CHK_DONE" CHAR(1), 
-	 CONSTRAINT "SIO_R_SECTS_ID_PK" PRIMARY KEY ("SIO_ID")
-  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 
-  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "USERS"  ENABLE
-   ) SEGMENT CREATION IMMEDIATE 
-  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
-  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "USERS"
-  ;
 CREATE TABLE "RAILS"."POBJGRPS" 
    (	"ID" NUMBER(38,0), 
 	"POBJECTS_ID" NUMBER(38,0), 

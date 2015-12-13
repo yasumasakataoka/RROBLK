@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<!-- saved from url=(0055)http://kentana20.hatenablog.com/entry/2014/07/21/193535 -->
+<html lang="ja" data-avail-langs="ja en" data-page="entry" data-static-domain="https://blog.st-hatena.com" data-blog="kentana20.hatenablog.com" data-blog-name="kentana20 技忘録" data-blogs-uri-base="http://kentana20.hatenablog.com" data-globalheader-color="b" data-author="kentana20" data-version="ffff16ecd19772d3f7db669cc6ba0384" data-blog-comments-top-is-new="" data-plus-available="" data-admin-domain="http://blog.hatena.ne.jp" data-brand="hatenablog" data-has-touch-view="1" itemscope="" itemtype="http://schema.org/Article" data-device="pc" data-globalheader-type="pc" class=" overthrow-enabled"><head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/redirect.js"></script><script async="" type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/dfp.config.json"></script><script type="text/javascript" async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/recaptcha__ja.js"></script><script async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/notices.count.json"></script>
+    
+    
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=7; IE=9; IE=10; IE=11">
+    <title>Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録</title>
+
+    
+
+    
+      <link rel="canonical" href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録.html">
+    
+
+    <meta itemprop="name" content="Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録">
+    
+      <meta itemprop="image" content="https://blog.st-hatena.com/images/theme/og-image-1500.png">
+    
+
+    <meta property="og:title" content="Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="http://kentana20.hatenablog.com/entry/2014/07/21/193535">
+    
+      
+      
+      
+      <meta property="og:image" content="https://blog.st-hatena.com/images/theme/og-image-1500.png">
+    
+        <meta property="og:description" content="Railsアプリの話。というかWheneverの話。 Railsアプリケーションを実装していて、「この処理はオンラインではなくて、バックグラウンドでバッチ処理にして、Cronで定期実行したいな」っていうとき、ありますよね。そんな時は whenever というgemを使えば、カンタンにバッチ処理をCron化できます。 Wheneverを使ってバックグラウンド処理をCron化する Wheneverのインストール まずはBundlerを使って、Wheneverをインストールします。 # Gemfile gem &#39;whenever&#39;, :require =&gt; false Gemfileに書いたら、bu…">
+    <meta property="og:site_name" content="http://kentana20.hatenablog.com/">
+      <meta property="article:published_time" content="1405938935">
+        <meta property="article:author" content="100001805932455">
+        <meta property="article:tag" content="Ruby">
+        <meta property="article:tag" content="rails">
+        <meta property="article:tag" content="whenever">        <meta name="twitter:card" content="summary">      <meta name="twitter:title" content="Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録">        <meta name="twitter:description" content="Railsアプリの話。というかWheneverの話。 Railsアプリケーションを実装していて、「この処理はオンラインではなくて、バックグラウンドでバッチ処理にして、Cronで定期実行したいな」っていうとき、ありますよね。そんな時は whenever というgemを使えば、カンタンにバッチ処理をCron化できます。 W…">      <meta name="twitter:app:name:iphone" content="はてなブログアプリ">
+      <meta name="twitter:app:id:iphone" content="583299321">
+      <meta name="twitter:app:url:iphone" content="hatenablog:///open?uri=http%3A%2F%2Fkentana20.hatenablog.com%2Fentry%2F2014%2F07%2F21%2F193535">      <meta name="twitter:site" content="@kentana20">        <meta name="keywords" content="kentana20, 勉強会, ブログ, Ruby, Rails, Fluentd, AWS, DevOps">        <meta name="description" content="Railsアプリの話。というかWheneverの話。 Railsアプリケーションを実装していて、「この処理はオンラインではなくて、バックグラウンドでバッチ処理にして、Cronで定期実行したいな」っていうとき、ありますよね。そんな時は whenever というgemを使えば、カンタンにバッチ処理をCron化できます。 W…">
+    
+<script type="text/javascript" async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/segmentation.js"></script><script async="" type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/user.segment.json"></script><script type="text/javascript" async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/ga.js"></script><script id="facebook-jssdk" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/sdk.js"></script><script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/cb=gapi.loaded_0" async=""></script><script async="" type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/gpt.js"></script><script async="" type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/audience"></script><script async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/analytics.js"></script><script type="text/javascript">
+// <!--
+
+if (~navigator.userAgent.indexOf('Mac OS X')) {
+  document.write('<style type="text/css">html, body { font-family: \x27Helvetica\x27, \x27Arial\x27, \x27ヒラギノ角ゴ Pro W3\x27, \x27Hiragino Kaku Gothic Pro\x27, sans-serif; } </style>');
+} else {
+  document.write('<style type="text/css">html, body { font-family: \x27Helvetica\x27, \x27Arial\x27, \x27メイリオ\x27, \x27Meiryo\x27, \x27MS PGothic\x27, sans-serif; } </style>');
+}
+
+// -->
+</script><style type="text/css">html, body { font-family: 'Helvetica', 'Arial', 'メイリオ', 'Meiryo', 'MS PGothic', sans-serif; } </style>
+
+<!--[if lt IE 9]>
+<script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+
+
+
+    <link rel="shortcut icon" href="http://cdn.image.st-hatena.com/image/favicon/d2e749b85ba9a7d0cb9f25c72ca7cdd8129d61a9/version=1/http%3A%2F%2Fcdn.mogile.archive.st-hatena.com%2Fv1%2Fimage%2Fkentana20%2F302449202955224900.jpg">
+    <link rel="icon" sizes="192x192" href="http://cdn.image.st-hatena.com/image/square/2bf77eb3673adaa459327affa8eba43f31b8da02/backend=imagemagick;height=192;version=1;width=192/http%3A%2F%2Fcdn.mogile.archive.st-hatena.com%2Fv1%2Fimage%2Fkentana20%2F302449202955224900.jpg">
+    <link rel="alternate" type="application/atom+xml" title="Atom" href="http://kentana20.hatenablog.com/feed">
+    <link rel="alternate" type="application/rss+xml" title="RSS2.0" href="http://kentana20.hatenablog.com/rss">
+    <link rel="alternate" type="application/json+oembed" href="http://hatenablog.com/oembed?url=http%3A%2F%2Fkentana20.hatenablog.com%2Fentry%2F2014%2F07%2F21%2F193535&format=json" title="oEmbed Profile of Railsアプリのバックグラウンド処理をWheneverを使ってCron化する">
+    <link rel="alternate" type="text/xml+oembed" href="http://hatenablog.com/oembed?url=http%3A%2F%2Fkentana20.hatenablog.com%2Fentry%2F2014%2F07%2F21%2F193535&format=xml" title="oEmbed Profile of Railsアプリのバックグラウンド処理をWheneverを使ってCron化する">
+      <link rel="author" href="http://www.hatena.ne.jp/kentana20/">
+
+    <link rel="stylesheet" type="text/css" href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/blog.css">
+
+      <link rel="stylesheet" type="text/css" href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/bce0b1ac9eeec9dbae8ad82b10619eb2feec7b4c">    <script>    </script>
+
+    
+    <style>
+      div#google_afc_user,
+      div#google_afc_user_container_0,
+      div#google_afc_user_container_1,
+      div#google_afc_user_container_2,
+      div#google_afc_user_container_3,
+      div#google_afc_user_container_4,
+      div#google_afc_user_container_5,
+      div.google_afc_image,
+      div.google_afc_blocklink {
+          display: block !important;
+      }
+    </style>
+
+    
+  <script type="text/javascript" charset="utf-8" async="" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/button.c44c2dc193c555561d5830b3b543eb26.js"></script><script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/pubads_impl_76.js" async=""></script><script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/osd.js"></script><script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/entries.json" type="text/javascript"></script><style type="text/css">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow-x:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:"lucida grande", tahoma, verdana, arial, "hiragino kaku gothic pro",meiryo,"ms pgothic",sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}.fb_link img{border:none}
+.fb_dialog{background:rgba(82, 82, 82, .7);position:absolute;top:-10000px;z-index:10001}.fb_reset .fb_dialog_legacy{overflow:visible}.fb_dialog_advanced{padding:10px;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px}.fb_dialog_content{background:#fff;color:#333}.fb_dialog_close_icon{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;_background-image:url(https://static.xx.fbcdn.net/rsrc.php/v2/yL/r/s816eWC-2sl.gif);cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{top:5px;left:5px;right:auto}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent;_background-image:url(https://static.xx.fbcdn.net/rsrc.php/v2/yL/r/s816eWC-2sl.gif)}.fb_dialog_close_icon:active{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent;_background-image:url(https://static.xx.fbcdn.net/rsrc.php/v2/yL/r/s816eWC-2sl.gif)}.fb_dialog_loader{background-color:#f6f7f8;border:1px solid #606060;font-size:24px;padding:20px}.fb_dialog_top_left,.fb_dialog_top_right,.fb_dialog_bottom_left,.fb_dialog_bottom_right{height:10px;width:10px;overflow:hidden;position:absolute}.fb_dialog_top_left{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/ye/r/8YeTNIlTZjm.png) no-repeat 0 0;left:-10px;top:-10px}.fb_dialog_top_right{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/ye/r/8YeTNIlTZjm.png) no-repeat 0 -10px;right:-10px;top:-10px}.fb_dialog_bottom_left{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/ye/r/8YeTNIlTZjm.png) no-repeat 0 -20px;bottom:-10px;left:-10px}.fb_dialog_bottom_right{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/ye/r/8YeTNIlTZjm.png) no-repeat 0 -30px;right:-10px;bottom:-10px}.fb_dialog_vert_left,.fb_dialog_vert_right,.fb_dialog_horiz_top,.fb_dialog_horiz_bottom{position:absolute;background:#525252;filter:alpha(opacity=70);opacity:.7}.fb_dialog_vert_left,.fb_dialog_vert_right{width:10px;height:100%}.fb_dialog_vert_left{margin-left:-10px}.fb_dialog_vert_right{right:0;margin-right:-10px}.fb_dialog_horiz_top,.fb_dialog_horiz_bottom{width:100%;height:10px}.fb_dialog_horiz_top{margin-top:-10px}.fb_dialog_horiz_bottom{bottom:0;margin-bottom:-10px}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #3a5795;color:#fff;font-size:14px;font-weight:bold;margin:0}.fb_dialog_content .dialog_title>span{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{-webkit-transform:none;height:100%;margin:0;overflow:visible;position:absolute;top:-10000px;left:0;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/ya/r/3rhSv5V8j3o.gif) white no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{width:auto;height:auto;min-height:initial;min-width:initial;background:none}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{color:#fff;display:block;padding-top:20px;clear:both;font-size:18px}#fb-root #fb_dialog_ipad_overlay{background:rgba(0, 0, 0, .45);position:absolute;left:0;top:0;width:100%;min-height:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_content .dialog_header{-webkit-box-shadow:white 0 1px 1px -1px inset;background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(#738ABA), to(#2C4987));border-bottom:1px solid;border-color:#1d4088;color:#fff;font:14px Helvetica, sans-serif;font-weight:bold;text-overflow:ellipsis;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{-webkit-font-smoothing:subpixel-antialiased;height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(#4966A6), color-stop(.5, #355492), to(#2A4887));border:1px solid #2f477a;-webkit-background-clip:padding-box;-webkit-border-radius:3px;-webkit-box-shadow:rgba(0, 0, 0, .117188) 0 1px 1px inset, rgba(255, 255, 255, .167969) 0 1px 0;display:inline-block;margin-top:3px;max-width:85px;line-height:18px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{border:none;background:none;color:#fff;font:12px Helvetica, sans-serif;font-weight:bold;margin:2px -12px;padding:2px 6px 3px 6px;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:bold;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #555;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f6f7f8;border:1px solid #555;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_button{text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(https://static.xx.fbcdn.net/rsrc.php/v2/yD/r/t-wz8gw1xG1.png);background-repeat:no-repeat;background-position:50% 50%;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.fb_iframe_widget{display:inline-block;position:relative}.fb_iframe_widget span{display:inline-block;position:relative;text-align:justify}.fb_iframe_widget iframe{position:absolute}.fb_iframe_widget_fluid_desktop,.fb_iframe_widget_fluid_desktop span,.fb_iframe_widget_fluid_desktop iframe{max-width:100%}.fb_iframe_widget_fluid_desktop iframe{min-width:220px;position:relative}.fb_iframe_widget_lift{z-index:1}.fb_hide_iframes iframe{position:relative;left:-10000px}.fb_iframe_widget_loader{position:relative;display:inline-block}.fb_iframe_widget_fluid{display:inline}.fb_iframe_widget_fluid span{width:100%}.fb_iframe_widget_loader iframe{min-height:32px;z-index:2;zoom:1}.fb_iframe_widget_loader .FB_Loader{background:url(https://static.xx.fbcdn.net/rsrc.php/v2/y9/r/jKEcVPZFk-2.gif) no-repeat;height:32px;width:32px;margin-left:-16px;position:absolute;left:50%;z-index:4}</style><script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/entries(1).json" type="text/javascript"></script></head>
+
+  <body class="page-entry      category-Ruby category-rails category-whenever  ">
+    <!-- Google Universal Analytics -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-29716941-6', 'auto', {'name': 'HatenaBlogTracker', 'sampleRate': 1});
+  ga('HatenaBlogTracker.require', 'displayfeatures');
+  ga('HatenaBlogTracker.send', 'pageview');
+  ga('create', 'UA-29716941-18', 'auto', {'name': 'HatenaBlogSeparatedTracker', 'sampleRate': 10});
+  ga('HatenaBlogSeparatedTracker.require', 'displayfeatures');
+  ga('HatenaBlogSeparatedTracker.send', 'pageview');
+</script>
+<!-- End Google Universal Analytics -->
+
+    
+    <div id="header-container">
+     <div id="sp-suggest" style="display: none;"><a id="sp-suggest-link" href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#">スマートフォン用の表示で見る</a></div>
+    </div>
+
+    <!-- ここから -->
+
+    <div class="quote-box" style="display: none;">
+      <div class="tooltip-quote tooltip-quote-star" style="display: block;">
+        <i class="blogicon-star" title="引用スターをつける"></i>
+      </div>
+      <div class="tooltip-quote tooltip-quote-stock" style="display: block;">
+        <i class="blogicon-quote" title="引用をストック"></i>
+      </div>
+    </div>
+
+    <div class="message-box" id="quote-star-message-box" style="display: none; position: absolute;">
+      スターをつけました
+    </div>
+
+    <div class="quote-stock-panel" id="quote-stock-message-box" style="position: absolute; z-index: 3000">
+      <div class="message-box" id="quote-stock-succeeded-message" style="display: none">
+        <p>引用をストックしました</p>
+        <button class="btn btn-primary" id="quote-stock-show-editor-button" data-track-name="curation-quote-edit-button">ストック一覧を見る</button>
+        <button class="btn quote-stock-close-message-button">閉じる</button>
+      </div>
+
+      <div class="message-box" id="quote-login-required-message" style="display: none">
+        <p>引用するにはまずログインしてください</p>
+        <button class="btn btn-primary" id="quote-login-button">ログイン</button>
+        <button class="btn quote-stock-close-message-button">閉じる</button>
+      </div>
+
+      <div class="error-box" id="quote-stock-failed-message" style="display: none">
+        <p>引用をストックできませんでした。再度お試しください</p>
+        <button class="btn quote-stock-close-message-button">閉じる</button>
+      </div>
+
+      <div class="error-box" id="unstockable-quote-message-box" style="display: none; position: absolute; z-index: 3000;">
+        <p>限定公開記事のため引用できません。</p>
+      </div>
+    </div>
+
+
+    <!-- ここまで -->
+
+    <script type="x-underscore-template" id="js-requote-button-template">
+      <div class="requote-button js-requote-button">
+        <button class="requote-button-btn tipsy-top" title="引用する"><i class="blogicon-quote"></i></button>
+      </div>
+    </script>
+
+    <div id="globalheader-container">
+  <iframe id="globalheader" height="37" frameborder="0" allowtransparency="true"></iframe>
+</div>
+
+
+    
+    <div id="hidden-subscribe-button">
+      <div class="hatena-follow-button-box btn-subscribe js-hatena-follow-button-box">
+
+  <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#" class="hatena-follow-button js-hatena-follow-button unsubscribing">
+    <span class="subscribing">
+      <span class="foreground">読者です</span>
+      <span class="background">読者をやめる</span>
+    </span>
+    <span class="unsubscribing" data-track-name="profile-widget-subscribe-button" data-track-once="">
+      <span class="foreground">読者になる</span>
+      <span class="background">読者になる</span>
+    </span>
+  </a>
+  <div class="subscription-count-box js-subscription-count-box" style="display: block;">
+    <i></i>
+    <u></u>
+    <span class="subscription-count js-subscription-count">24</span>
+  </div>
+</div>
+
+    </div>
+
+    <div id="container">
+      <div id="container-inner">
+        <header id="blog-title" data-brand="hatenablog">
+  <div id="blog-title-inner">
+    <div id="blog-title-content">
+      <h1 id="title"><a href="http://kentana20.hatenablog.com/">kentana20 技忘録</a></h1>
+      
+        <h2 id="blog-description">技術ネタを中心に、セミナー、勉強会、書籍、会社での出来事を綴っていきます。不定期更新。</h2>
+      
+    </div>
+  </div>
+</header>
+
+        
+        
+        
+
+
+
+<div id="content" class="hfeed">
+  <div id="content-inner">
+    <div id="wrapper">
+      <div id="main">
+        <div id="main-inner">
+          
+            
+            <!-- google_ad_section_start -->
+            <!-- rakuten_ad_target_begin -->
+            
+              
+                <article class="entry hentry js-entry-article date-first autopagerize_page_element chars-2400 words-200 mode-markdown entry-odd" id="entry-12921228815728601941" data-keyword-campaign="" data-uuid="12921228815728601941" data-comments-expanded="true">
+  <div class="entry-inner">
+    <header class="entry-header">
+      <div class="entry-date date first">
+        <a href="http://kentana20.hatenablog.com/entries/2014/07/21" rel="nofollow">
+          <time pubdate="" datetime="2014-07-21T10:35:35Z" title="2014-07-21T10:35:35Z">
+            <span class="date-year">2014</span><span class="hyphen">-</span><span class="date-month">07</span><span class="hyphen">-</span><span class="date-day">21</span>
+          </time>
+        </a>
+      </div>
+      <h1 class="entry-title">
+        <a href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録.html" class="entry-title-link bookmark">Railsアプリのバックグラウンド処理をWheneverを使ってCron化する</a>
+      </h1>
+      
+      
+        <div class="entry-categories categories">
+          
+          <a href="http://kentana20.hatenablog.com/archive/category/Ruby">Ruby</a>
+          
+          <a href="http://kentana20.hatenablog.com/archive/category/rails">rails</a>
+          
+          <a href="http://kentana20.hatenablog.com/archive/category/whenever">whenever</a>
+          
+        </div>
+      
+      
+
+      
+    </header>
+    <div class="entry-content">
+
+      
+        <p><a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails">Rails</a>アプリの話。というかWheneverの話。</p>
+
+<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails">Rails</a>アプリケーションを実装していて、「この処理はオンラインではなくて、バックグラウンドで<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%D0%A5%C3%A5%C1%BD%E8%CD%FD">バッチ処理</a>にして、Cronで定期実行したいな」っていうとき、ありますよね。そんな時は <code>whenever</code> というgemを使えば、カンタンに<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%D0%A5%C3%A5%C1%BD%E8%CD%FD">バッチ処理</a>をCron化できます。</p>
+
+<h3>Wheneverを使ってバックグラウンド処理をCron化する</h3>
+
+<h4>Wheneverのインストール</h4>
+
+<p>まずはBundlerを使って、Wheneverをインストールします。</p>
+
+<pre class="code lang-ruby" data-lang="ruby" data-unlink=""><span class="synComment"># Gemfile</span>
+gem <span class="synSpecial">'</span><span class="synConstant">whenever</span><span class="synSpecial">'</span>, <span class="synConstant">:require</span> =&gt; <span class="synConstant">false</span>
+</pre>
+
+
+<p>Gemfileに書いたら、<code>bundle install</code> します。</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ bundle <span class="synStatement">install</span>
+</pre>
+
+
+<p>インストールできたら、一応 <code>gem list</code> でwheneverがインストールできているかを確認します。</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ gem list
+</pre>
+
+
+<p>インストールされているgemにwheneverが追加されていればOKです。</p>
+
+<h4>Wheneverで動かすバックグラウンド処理を作る</h4>
+
+<p>続いて、Wheneverで動かすバックグラウンド処理（バッチプログラム的なもの）を作っていきます。<a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails">Rails</a>のお作法的には、バックグラウンド処理は</p>
+
+<ul>
+<li>/lib/tasks/</li>
+</ul>
+
+
+<p>配下に書くのが正しいカタチのようなので、お作法に従ってバックグラウンド処理を書いていきます。</p>
+
+<pre class="code lang-ruby" data-lang="ruby" data-unlink=""><span class="synComment"># /lib/tasks/test.rb</span>
+<span class="synPreProc">class</span> <span class="synType">Test</span>
+  <span class="synPreProc">def</span> <span class="synConstant">self</span>.<span class="synIdentifier">hoge</span>
+    puts <span class="synSpecial">"</span><span class="synConstant">hoge</span><span class="synSpecial">"</span>
+  <span class="synPreProc">end</span>
+<span class="synPreProc">end</span>
+</pre>
+
+
+<p>続いて、 <code>/lib/</code> 配下をロードするように <code>/config/application.rb</code> に以下を追加します。</p>
+
+<pre class="code lang-ruby" data-lang="ruby" data-unlink=""><span class="synComment"># /config/application.rb</span>
+<span class="synPreProc">module</span> xxx <span class="synComment"># railsアプリ名</span>
+  <span class="synPreProc">class</span> <span class="synType">Application</span> &lt; <span class="synType">Rails</span>::<span class="synType">Application</span>
+    config.autoload_paths += <span class="synSpecial">%W(#{</span>config.root<span class="synSpecial">}</span><span class="synConstant">/lib</span><span class="synSpecial">)</span>
+    config.autoload_paths += <span class="synType">Dir</span>[<span class="synSpecial">"#{</span>config.root<span class="synSpecial">}</span><span class="synConstant">/lib/**/</span><span class="synSpecial">"</span>]
+  <span class="synPreProc">end</span>
+<span class="synPreProc">end</span>
+</pre>
+
+
+<p>ここまで出来たら、以下のコマンドを実行してバックグラウンドで動作する処理が正しく動くことを確認します。</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ rails runner Test.hoge <span class="synComment"># 'hoge'と返ってくればOK</span>
+</pre>
+
+
+<h4>Wheneverを使ってCronジョブを設定する</h4>
+
+<p>以下のコマンドを入力して、wheneverを動かすためのひな形（schedule.rb）を作成します。</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ wheneverize<span class="synStatement"> . </span># /config/schedule.rb が作成されます
+</pre>
+
+
+<p>作成した <code>schedule.rb</code> にCronで動作させたい処理を記述します。記述方法については<a href="http://github.com/javan/whenever">こちら</a>を参照くださいませ。</p>
+
+<pre class="code lang-ruby" data-lang="ruby" data-unlink=""><span class="synComment"># /config/schedule.rb</span>
+set <span class="synConstant">:environment</span>, <span class="synConstant">:development</span>
+set <span class="synConstant">:output</span>, {<span class="synConstant">:error</span> =&gt; <span class="synSpecial">'</span><span class="synConstant">log/error.log</span><span class="synSpecial">'</span>, <span class="synConstant">:standard</span> =&gt; <span class="synSpecial">'</span><span class="synConstant">log/cron.log</span><span class="synSpecial">'</span>}
+
+<span class="synComment"># Testなので、3分毎に動作するように設定します</span>
+every <span class="synConstant">3</span>.minute <span class="synStatement">do</span>
+  <span class="synComment"># cronのコマンドライン上で動くので、二重引用符で囲っておきます</span>
+  runner <span class="synSpecial">"</span><span class="synConstant">Test.hoge</span><span class="synSpecial">"</span>
+<span class="synStatement">end</span>
+</pre>
+
+
+<p><code>schedule.rb</code> の内容をCronへ登録します。</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ bundle <span class="synStatement">exec</span> whenever <span class="synSpecial">--update-cron</span>
+</pre>
+
+
+<p>これで、<code>crontab</code>にジョブが登録されます。登録内容を確認したければ、</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ bundle <span class="synStatement">exec</span> whenever
+</pre>
+
+
+<p>とか</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ crontab <span class="synSpecial">-e</span>
+</pre>
+
+
+<p>とかで確認可能です。</p>
+
+<p>登録したジョブを削除（Cron設定の解除）をしたい場合は</p>
+
+<pre class="code lang-sh" data-lang="sh" data-unlink="">$ bundle <span class="synStatement">exec</span> whenever <span class="synSpecial">--clear-cron</span>
+</pre>
+
+
+<p>とすれば削除できます。いや〜、カンタンですね。</p>
+
+<h4>所感</h4>
+
+<p>今回、初めてWheneverを触りましたが</p>
+
+<ul>
+<li>バックグラウンドに移したい処理が既にある</li>
+<li>Cronの設定方法をある程度理解している</li>
+</ul>
+
+
+<p>という状況であれば、学習コストは殆どナシでCron化できて便利です。また、<a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails">Rails</a>アプリの一部（<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%EC%A5%DD%A5%B8%A5%C8%A5%EA">レポジトリ</a>を1つ）としてCron設定を管理できるので</p>
+
+<ul>
+<li>Cron設定を<a class="keyword" href="http://d.hatena.ne.jp/keyword/%A5%EC%A5%DD%A5%B8%A5%C8%A5%EA">レポジトリ</a>管理できる</li>
+<li><a class="keyword" href="http://d.hatena.ne.jp/keyword/Ruby">Ruby</a>でCronを記述できる</li>
+<li>Webアプリとセットで管理できる</li>
+</ul>
+
+
+<p>など、イロイロな面でメリットがあるな、と感じました。</p>
+
+<p>また、<a class="keyword" href="http://d.hatena.ne.jp/keyword/Capistrano">Capistrano</a>とかと連携すればアプリのデプロイ時に</p>
+
+<ul>
+<li><code>/lib/tasks/</code> 配下</li>
+<li><code>/config/schedule.rb</code></li>
+</ul>
+
+
+<p>に変更があった場合は <code>bundle exec whenever --update-cron</code> する、みたいなことを <code>deploy.rb</code> に書いておいてCron設定まで<a class="keyword" href="http://d.hatena.ne.jp/keyword/%BC%AB%C6%AF%B2%BD">自働化</a>しておけば、「一部のノードだけCron設定を更新し忘れた」みたいなこともなくなるハズなので、いい感じでアプリを管理できそうです。</p>
+
+<p><a class="keyword" href="http://d.hatena.ne.jp/keyword/Rails">Rails</a>の便利さ（Wheneverの便利さ？）を改めて感じた3連休最終日でした。</p>
+
+      
+    </div>
+    <footer class="entry-footer">
+      <p class="entry-footer-section">
+        <span class="author vcard"><span class="fn" data-load-nickname="1" data-user-name="kentana20">kentana20</span></span>
+        <span class="entry-footer-time"><a href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録.html"><time data-relative="" datetime="2014-07-21T10:35:35Z" title="2014-07-21T10:35:35Z" pubdate="" class="updated">1年前</time></a></span>
+      </p>
+
+      
+        <div class="hatena-star-container">
+        <span class="hatena-star-comment-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/comment.gif" tabindex="0" alt="Comments" title="Comments" class="hatena-star-comment-button" style="cursor: pointer; margin: 0px; padding: 0px; border: none; vertical-align: middle; display: none;"></span><span class="hatena-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/hatena-star-add-button.png" tabindex="0" alt="Add Star" title="Add Star" class="hatena-star-add-button" style="cursor: pointer; margin: 0px 3px; padding: 0px; border: none; vertical-align: middle;"><a href="http://blog.hatena.ne.jp/walkstepbystep/"><span class="hatena-big-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile.gif" tabindex="0" class="hatena-star-user" style="padding: 0px; border: none;"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/star.gif" tabindex="0" class="hatena-star-star" style="padding: 0px; border: none;" alt="walkstepbystep" title=""></span></a><a href="http://blog.hatena.ne.jp/walkstepbystep/"><span class="hatena-big-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile.gif" tabindex="0" class="hatena-star-user" style="padding: 0px; border: none;"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/star.gif" tabindex="0" class="hatena-star-star" style="padding: 0px; border: none;" alt="walkstepbystep" title=""></span></a><a href="http://blog.hatena.ne.jp/walkstepbystep/"><span class="hatena-big-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile.gif" tabindex="0" class="hatena-star-user" style="padding: 0px; border: none;"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/star.gif" tabindex="0" class="hatena-star-star" style="padding: 0px; border: none;" alt="walkstepbystep" title=""></span></a></span></div>
+        <div class="hatena-star-metadata" style="display: none">
+          <a class="hatena-star-permalink" href="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録.html">Railsアプリのバックグラウンド処理をWheneverを使ってCron化する</a>
+        </div>
+      
+
+      
+<div class="social-buttons">
+  
+  
+    <div class="social-button-item">
+      <iframe class="hatena-bookmark-button-frame" title="この記事をはてなブックマークに追加" frameborder="0" scrolling="no" width="80" height="60" src="javascript:false" style="width: 80px; height: 60px;"></iframe>
+    </div>
+  
+  
+    <div class="social-button-item">
+      <div class="fb-share-button fb_iframe_widget" data-layout="box_count" data-href="http://kentana20.hatenablog.com/entry/2014/07/21/193535" fb-xfbml-state="rendered" fb-iframe-plugin-query="app_id=719729204785177&amp;container_width=0&amp;href=http%3A%2F%2Fkentana20.hatenablog.com%2Fentry%2F2014%2F07%2F21%2F193535&amp;layout=box_count&amp;locale=ja_JP&amp;sdk=joey"><span style="vertical-align: bottom; width: 58px; height: 61px;"><iframe name="f653f96f4" width="1000px" height="1000px" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" title="fb:share_button Facebook Social Plugin" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/share_button.html" style="border: none; visibility: visible; width: 58px; height: 61px;" class=""></iframe></span></div>
+    </div>
+  
+  
+    <div class="social-button-item">
+      <iframe id="twitter-widget-0" scrolling="no" frameborder="0" allowtransparency="true" class="twitter-share-button twitter-share-button-rendered twitter-tweet-button" title="Twitter Tweet Button" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/tweet_button.781f4f0ed6951ea86890554cec78adec.ja.html" style="position: static; visibility: visible; width: 66px; height: 20px;" data-url="http://kentana20.hatenablog.com/entry/2014/07/21/193535"></iframe>
+    </div>
+  
+  
+    <div class="social-button-item">
+      <div id="___plusone_0" style="text-indent: 0px; margin: 0px; padding: 0px; border-style: none; float: none; line-height: normal; font-size: 1px; vertical-align: baseline; display: inline-block; width: 50px; height: 60px; background: transparent;"><iframe frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" style="position: static; top: 0px; width: 50px; margin: 0px; border-style: none; left: 0px; visibility: visible; height: 60px;" tabindex="0" vspace="0" width="100%" id="I0_1449411529237" name="I0_1449411529237" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/fastbutton.html" data-gapiattached="true" title="+1"></iframe></div>
+    </div>
+  
+  
+  
+  
+</div>
+
+
+      
+        
+          
+          <div class="google-afc-image test-google-rectangle-ads ">
+            
+            
+              <script>
+  var hatenadfp = hatenadfp || {};
+  hatenadfp.adUnits = hatenadfp.adUnits || [];
+  hatenadfp.adUnits.push(
+    
+      { unitName: 'blog_user', size: [[300, 250], [336, 280]], divId: 'google_afc_user_container_0', allowContentMatch: true }
+    
+  );
+  hatenadfp.isNGContent = false;
+  
+</script>
+
+              <div id="google_afc_user_container_0" class="google_afc_blocklink2_5 google_afc_boder"><div id="google_ads_iframe_/4374287/blog_user_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/4374287/blog_user_0" name="google_ads_iframe_/4374287/blog_user_0" width="336" height="280" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:"<html><body style='background:transparent'></body></html>"" style="border: 0px; vertical-align: bottom;"></iframe></div><iframe id="google_ads_iframe_/4374287/blog_user_0__hidden__" name="google_ads_iframe_/4374287/blog_user_0__hidden__" width="0" height="0" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:"<html><body style='background:transparent'></body></html>"" style="border: 0px; vertical-align: bottom; visibility: hidden; display: none;"></iframe></div>
+              
+                <a href="http://blog.hatena.ne.jp/guide/pro" class="open-pro-modal" data-guide-pro-modal-ad-url="http://hatenablog.com/guide/pro/modal/ad">広告を非表示にする</a>
+              
+              
+            
+          </div>
+        
+      
+
+      <div class="customized-footer">
+
+        
+
+          
+
+          
+
+          
+        
+      </div>
+
+      <div class="comment-box">
+        
+        <ul class="comment"><li id="comment-12921228815728651843" class="entry-comment js-entry-comment
+    comment-hatena-user
+  " data-comment-uuid="12921228815728651843" data-blog-uuid="11696248318758177004" onclick="">
+  <p class="comment-user-name"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile(1).gif" class="hatena-id-icon" alt="" title=""> <a href="http://blog.hatena.ne.jp/naoya/" class="comment-user-id"><span class="comment-nickname" data-load-nickname="1" data-user-name="naoya"><span class="user-name-nickname">なおや</span> <span class="user-name-paren">(</span><span class="user-name-hatena-id">id:naoya</span><span class="user-name-paren">)</span></span></a></p>
+  <div class="comment-content"><p>delayed_job もね</p>
+</div>
+
+  <p class="comment-metadata">
+    
+    <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#comment-12921228815728651843" class="permalink" style="display:none"></a>
+
+    <time data-relative="" data-epoch="1406003641000">1年前</time>
+  <span class="hatena-star-comment-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/comment.gif" tabindex="0" alt="Comments" title="Comments" class="hatena-star-comment-button" style="cursor: pointer; margin: 0px; padding: 0px; border: none; vertical-align: middle; display: none;"></span><span class="hatena-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/hatena-star-add-button.png" tabindex="0" alt="Add Star" title="Add Star" class="hatena-star-add-button" style="cursor: pointer; margin: 0px 3px; padding: 0px; border: none; vertical-align: middle;"><a href="http://blog.hatena.ne.jp/kentana20/"><span class="hatena-big-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile(2).gif" tabindex="0" class="hatena-star-user" style="padding: 0px; border: none;"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/star.gif" tabindex="0" class="hatena-star-star" style="padding: 0px; border: none;" alt="kentana20" title=""></span></a></span></p>
+
+  <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#" class="comment-delete-button js-comment-delete-button">
+  </a>
+</li>
+<li id="comment-12921228815728701358" class="entry-comment js-entry-comment
+    comment-hatena-user
+  " data-comment-uuid="12921228815728701358" data-blog-uuid="11696248318758177004" onclick="">
+  <p class="comment-user-name"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile(2).gif" class="hatena-id-icon" alt="" title=""> <a href="http://blog.hatena.ne.jp/kentana20/" class="comment-user-id"><span class="comment-nickname" data-load-nickname="1" data-user-name="kentana20">id:kentana20</span></a></p>
+  <div class="comment-content"><p>delayed_job 見ました！<br>
+めっちゃカンタンに非同期処理を実装できそうですね～。こちらも試してみたいと思います。非同期処理系は</p>
+
+<ul>
+<li>delayed_job</li>
+<li>Resque</li>
+</ul><p>があるみたいですね。</p>
+</div>
+
+  <p class="comment-metadata">
+    
+    <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#comment-12921228815728701358" class="permalink" style="display:none"></a>
+
+    <time data-relative="" data-epoch="1406075825000">1年前</time>
+  <span class="hatena-star-comment-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/comment.gif" tabindex="0" alt="Comments" title="Comments" class="hatena-star-comment-button" style="cursor: pointer; margin: 0px; padding: 0px; border: none; vertical-align: middle; display: none;"></span><span class="hatena-star-star-container"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/hatena-star-add-button.png" tabindex="0" alt="Add Star" title="Add Star" class="hatena-star-add-button" style="cursor: pointer; margin: 0px 3px; padding: 0px; border: none; vertical-align: middle;"></span></p>
+
+  <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#" class="comment-delete-button js-comment-delete-button">
+  </a>
+</li>
+          
+        </ul>
+        
+          <a class="leave-comment-title" style="display: none;">コメントを書く</a>
+        
+      </div>
+    </footer>
+  </div>
+</article>
+
+                
+
+                
+                  
+                  
+                  <div class="permalink pager">
+                    
+                      
+                      <span class="pager-prev">
+                        <a href="http://kentana20.hatenablog.com/entry/2014/08/11/021949" rel="prev">
+                          <span class="pager-arrow">« </span>
+                          開発合宿的なものに行ってきた
+                        </a>
+                      </span>
+                    
+                    
+                      
+                      <span class="pager-next">
+                        <a href="http://kentana20.hatenablog.com/entry/2014/07/05/172717" rel="next">
+                          作業中のファイルをgit stashして、一部の…
+                          <span class="pager-arrow"> »</span>
+                        </a>
+                      </span>
+                    
+                  </div>
+                
+
+              
+            
+            <!-- rakuten_ad_target_end -->
+            <!-- google_ad_section_end -->
+
+            
+          
+        </div>
+      </div>
+
+      
+      <aside id="box1">
+        <div id="box1-inner">
+        </div>
+      </aside>
+
+    </div><!-- #wrapper -->
+
+    <aside id="box2">
+  <div id="box2-inner">
+    
+      
+
+<div class="hatena-module hatena-module-profile">
+  <div class="hatena-module-title">
+    プロフィール
+  </div>
+  <div class="hatena-module-body">
+    
+    <a href="http://kentana20.hatenablog.com/about" class="profile-icon-link">
+      <img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile(3).gif" alt="id:kentana20" class="profile-icon">
+    </a>
+    
+
+    
+    <span class="id">
+      <a href="http://kentana20.hatenablog.com/about" class="hatena-id-link"><span data-load-nickname="1" data-user-name="kentana20">id:kentana20</span></a>
+      
+  
+    
+    
+  
+
+
+    </span>
+    
+
+    
+
+    
+      <div class="hatena-follow-button-box btn-subscribe js-hatena-follow-button-box">
+
+  <a href="http://kentana20.hatenablog.com/entry/2014/07/21/193535#" class="hatena-follow-button js-hatena-follow-button unsubscribing">
+    <span class="subscribing">
+      <span class="foreground">読者です</span>
+      <span class="background">読者をやめる</span>
+    </span>
+    <span class="unsubscribing" data-track-name="profile-widget-subscribe-button" data-track-once="">
+      <span class="foreground">読者になる</span>
+      <span class="background">読者になる</span>
+    </span>
+  </a>
+  <div class="subscription-count-box js-subscription-count-box" style="display: block;">
+    <i></i>
+    <u></u>
+    <span class="subscription-count js-subscription-count">24</span>
+  </div>
+</div>
+
+    
+
+    
+
+    
+
+    
+  </div>
+</div>
+
+    
+      <div class="hatena-module hatena-module-recent-entries ">
+  <div class="hatena-module-title">
+    <a href="http://kentana20.hatenablog.com/archive">
+      最新記事
+    </a>
+  </div>
+  <div class="hatena-module-body">
+    <ul class="recent-entries hatena-urllist ">
+  
+    
+    <li class="urllist-item recent-entries-item">
+      <div class="urllist-item-inner recent-entries-item-inner">
+        
+        
+        <a href="http://kentana20.hatenablog.com/entry/2015/11/10/011312" class="urllist-title-link recent-entries-title-link          urllist-title recent-entries-title        ">飛騨の古民家で開発合宿をしてきた        </a>
+        
+        
+
+              </div>
+    </li>
+  
+    
+    <li class="urllist-item recent-entries-item">
+      <div class="urllist-item-inner recent-entries-item-inner">
+        
+        
+        <a href="http://kentana20.hatenablog.com/entry/2015/08/24/011452" class="urllist-title-link recent-entries-title-link          urllist-title recent-entries-title        ">YAPC::Asia 2015 に行ってきた        </a>
+        
+        
+
+              </div>
+    </li>
+  
+    
+    <li class="urllist-item recent-entries-item">
+      <div class="urllist-item-inner recent-entries-item-inner">
+        
+        
+        <a href="http://kentana20.hatenablog.com/entry/2015/06/19/093839" class="urllist-title-link recent-entries-title-link          urllist-title recent-entries-title        ">WWDCに行ってきた（セッションまとめ編）        </a>
+        
+        
+
+              </div>
+    </li>
+  
+    
+    <li class="urllist-item recent-entries-item">
+      <div class="urllist-item-inner recent-entries-item-inner">
+        
+        
+        <a href="http://kentana20.hatenablog.com/entry/2015/04/25/171319" class="urllist-title-link recent-entries-title-link          urllist-title recent-entries-title        ">現場改善プロジェクトを1年間やってみて        </a>
+        
+        
+
+              </div>
+    </li>
+  
+    
+    <li class="urllist-item recent-entries-item">
+      <div class="urllist-item-inner recent-entries-item-inner">
+        
+        
+        <a href="http://kentana20.hatenablog.com/entry/2015/02/09/000538" class="urllist-title-link recent-entries-title-link          urllist-title recent-entries-title        ">hatena engineer seminar#4 に行ってきた        </a>
+        
+        
+
+              </div>
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+    
+      
+
+<div class="hatena-module hatena-module-category">
+  <div class="hatena-module-title">
+    カテゴリ
+  </div>
+  <div class="hatena-module-body">
+    <ul class="hatena-urllist">
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Swift">
+            Swift (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E5%90%88%E5%AE%BF">
+            合宿 (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%83%9E%E3%82%A4%E3%83%B3%E3%83%89">
+            マインド (7)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/YAPC">
+            YAPC (3)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%82%A4%E3%83%B3%E3%83%95%E3%83%A9">
+            インフラ (5)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E7%8F%BE%E5%A0%B4">
+            現場 (6)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E5%8B%89%E5%BC%B7%E4%BC%9A">
+            勉強会 (27)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Elasticsearch">
+            Elasticsearch (3)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/CI">
+            CI (3)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/CROSS">
+            CROSS (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/jenkins">
+            jenkins (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Ruby">
+            Ruby (4)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/rails">
+            rails (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Python">
+            Python (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%83%87%E3%83%96%E3%82%B5%E3%83%9F">
+            デブサミ (10)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/ISUCON">
+            ISUCON (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Heroku">
+            Heroku (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/github">
+            github (5)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Ruboty">
+            Ruboty (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Slack">
+            Slack (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Hubot">
+            Hubot (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Go">
+            Go (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/whenever">
+            whenever (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/chef">
+            chef (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/serverspec">
+            serverspec (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%83%86%E3%82%B9%E3%83%88">
+            テスト (4)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Redis">
+            Redis (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/KPT">
+            KPT (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%83%84%E3%83%BC%E3%83%AB">
+            ツール (6)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/redmine">
+            redmine (2)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%9E%E3%82%A4%E3%83%8B%E3%83%B3%E3%82%B0">
+            データマイニング (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/solr">
+            solr (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/selenium">
+            selenium (1)
+          </a>
+        </li>
+      
+        <li>
+          <a href="http://kentana20.hatenablog.com/archive/category/Kibana">
+            Kibana (2)
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+    
+      <div class="hatena-module hatena-module-links">
+  <div class="hatena-module-title">
+    リンク
+  </div>
+  <div class="hatena-module-body">
+    <ul class="hatena-urllist">
+      
+        <li>
+          <a href="http://www.ikyu.com/">一休.com</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+    
+      
+
+<div class="hatena-module hatena-module-archive" data-archive-type="default" data-archive-url="http://kentana20.hatenablog.com/archive">
+  <div class="hatena-module-title">
+    <a href="http://kentana20.hatenablog.com/archive">月別アーカイブ</a>
+  </div>
+  <div class="hatena-module-body">
+  
+
+  
+    
+    
+      <ul class="hatena-urllist">
+        
+          <li class="archive-module-year archive-module-year-hidden" data-year="2015">
+            <div class="archive-module-button">
+              <span class="archive-module-hide-button">▼</span>
+              <span class="archive-module-show-button">▶</span>
+            </div>
+            <a href="http://kentana20.hatenablog.com/archive/2015" class="archive-module-year-title">
+              2015 (7)
+            </a>
+            <ul class="archive-module-months">
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/11" class="archive-module-month-title">
+                    2015 / 11 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/8" class="archive-module-month-title">
+                    2015 / 8 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/6" class="archive-module-month-title">
+                    2015 / 6 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/4" class="archive-module-month-title">
+                    2015 / 4 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/2" class="archive-module-month-title">
+                    2015 / 2 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2015/1" class="archive-module-month-title">
+                    2015 / 1 (2)
+                  </a>
+                </li>
+              
+            </ul>
+          </li>
+        
+          <li class="archive-module-year" data-year="2014">
+            <div class="archive-module-button">
+              <span class="archive-module-hide-button">▼</span>
+              <span class="archive-module-show-button">▶</span>
+            </div>
+            <a href="http://kentana20.hatenablog.com/archive/2014" class="archive-module-year-title">
+              2014 (39)
+            </a>
+            <ul class="archive-module-months">
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/12" class="archive-module-month-title">
+                    2014 / 12 (3)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/11" class="archive-module-month-title">
+                    2014 / 11 (4)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/10" class="archive-module-month-title">
+                    2014 / 10 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/9" class="archive-module-month-title">
+                    2014 / 9 (1)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/8" class="archive-module-month-title">
+                    2014 / 8 (4)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/7" class="archive-module-month-title">
+                    2014 / 7 (2)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/6" class="archive-module-month-title">
+                    2014 / 6 (2)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/5" class="archive-module-month-title">
+                    2014 / 5 (3)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/4" class="archive-module-month-title">
+                    2014 / 4 (2)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/3" class="archive-module-month-title">
+                    2014 / 3 (4)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/2" class="archive-module-month-title">
+                    2014 / 2 (10)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2014/1" class="archive-module-month-title">
+                    2014 / 1 (3)
+                  </a>
+                </li>
+              
+            </ul>
+          </li>
+        
+          <li class="archive-module-year archive-module-year-hidden" data-year="2013">
+            <div class="archive-module-button">
+              <span class="archive-module-hide-button">▼</span>
+              <span class="archive-module-show-button">▶</span>
+            </div>
+            <a href="http://kentana20.hatenablog.com/archive/2013" class="archive-module-year-title">
+              2013 (5)
+            </a>
+            <ul class="archive-module-months">
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2013/12" class="archive-module-month-title">
+                    2013 / 12 (2)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2013/11" class="archive-module-month-title">
+                    2013 / 11 (2)
+                  </a>
+                </li>
+              
+                <li class="archive-module-month">
+                  <a href="http://kentana20.hatenablog.com/archive/2013/9" class="archive-module-month-title">
+                    2013 / 9 (1)
+                  </a>
+                </li>
+              
+            </ul>
+          </li>
+        
+      </ul>
+    
+  
+
+
+</div>
+</div>
+
+    
+      
+
+<div class="hatena-module hatena-module-circles">
+  <div class="hatena-module-title">
+    参加グループ
+  </div>
+  <div class="hatena-module-body">
+    <ul class="hatena-urllist circle-urllist">
+      
+        <li title="プログラミング" data-circle-id="11696248318754550880" data-circle-mtime="1449399212">
+  <a href="http://hatenablog.com/g/11696248318754550880"><img class="circle-image" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/computers.gif" alt="プログラミング" title="プログラミング"></a>
+  <a href="http://hatenablog.com/g/11696248318754550880">プログラミング</a>
+</li>
+      
+    </ul>
+  </div>
+</div>
+
+    
+    
+  </div>
+</aside>
+
+  </div>
+</div>
+
+
+
+
+  <script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/hatena_dfp2.js"></script>
+
+
+
+        
+      </div>
+    </div>
+
+    
+      <footer id="footer" data-brand="hatenablog">
+  <div id="footer-inner">
+    <address>
+      
+      <a href="http://kentana20.hatenablog.com/about"><img src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/profile(2).gif" width="16" height="16" alt="">
+        <span data-load-nickname="1" data-user-name="kentana20">kentana20</span>
+      </a>
+    </address>
+    <p class="services">Powered by <a href="http://hatenablog.com/">Hatena Blog</a></p>
+  </div>
+</footer>
+
+    
+
+    
+
+    
+      <script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/HatenaStar.js"></script>
+    
+
+    <script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/widgets.js"></script>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/plusone.js" gapi_processed="true">
+  {"parsetags": "explicit"}
+</script>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/bookmark_button.js" charset="utf-8" async="async"></script>
+
+
+
+  <script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/react-with-addons.min.js"></script>
+
+
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/jquery-ui.1.10.0.custom.min.js"></script>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/jquery.flot.0.8.3.js"></script>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/jquery.flot.time.0.8.3.js"></script>
+
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/hatenablog.js"></script><div style="position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; display: none;"></div>
+<script type="text/javascript" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/texts-ja.js"></script>
+
+
+  <script type="text/javascript">Hatena.Diary.loadGlobalHeader()</script>
+
+
+<script src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/api.js" async="" defer=""></script>
+
+
+
+
+
+
+
+    
+      <div id="fb-root" class=" fb_reset"><div style="position: absolute; top: -10000px; height: 0px; width: 0px;"><div><iframe name="fb_xdm_frame_http" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" title="Facebook Cross Domain Communication Frame" aria-hidden="true" tabindex="-1" id="fb_xdm_frame_http" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/TlA_zCeMkxl.html" style="border: none;"></iframe><iframe name="fb_xdm_frame_https" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" title="Facebook Cross Domain Communication Frame" aria-hidden="true" tabindex="-1" id="fb_xdm_frame_https" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/TlA_zCeMkxl(1).html" style="border: none;"></iframe></div></div><div style="position: absolute; top: -10000px; height: 0px; width: 0px;"><div><iframe name="f7c71a464" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/ping.html" style="display: none;"></iframe></div></div></div>
+      <script>(function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/ja_JP/sdk.js#xfbml=1&appId=719729204785177&version=v2.0";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));</script>
+    
+
+    
+       <script id="google-analytics-script" type="text/javascript">
+var _gaq = _gaq || [];
+
+(function(){
+  
+  
+    
+    
+      
+      var current_domain = "hatenablog.com".split(":")[0];
+    
+  
+
+  
+
+  
+
+   
+   _gaq.push(['all._setAccount', 'UA-7855606-1']);
+   _gaq.push(['all._setDomainName', current_domain]);
+   _gaq.push(['all._setSampleRate', '1']);
+   _gaq.push(['all._trackPageview']);
+})();
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script><iframe src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/container.html" style="visibility: hidden; display: none;"></iframe>
+
+       
+
+
+    
+
+  
+
+
+<div id="cboxOverlay" style="display: none;"></div><div id="colorbox" class="" role="dialog" tabindex="-1" style="display: none;"><div id="cboxWrapper"><div><div id="cboxTopLeft" style="float: left;"></div><div id="cboxTopCenter" style="float: left;"></div><div id="cboxTopRight" style="float: left;"></div></div><div style="clear: left;"><div id="cboxMiddleLeft" style="float: left;"></div><div id="cboxContent" style="float: left;"><div id="cboxTitle" style="float: left;"></div><div id="cboxCurrent" style="float: left;"></div><button type="button" id="cboxPrevious"></button><button type="button" id="cboxNext"></button><button id="cboxSlideshow"></button><div id="cboxLoadingOverlay" style="float: left;"></div><div id="cboxLoadingGraphic" style="float: left;"></div></div><div id="cboxMiddleRight" style="float: left;"></div></div><div style="clear: left;"><div id="cboxBottomLeft" style="float: left;"></div><div id="cboxBottomCenter" style="float: left;"></div><div id="cboxBottomRight" style="float: left;"></div></div></div><div style="position: absolute; width: 9999px; visibility: hidden; display: none; max-width: none;"></div></div><div style="top: -9999px; z-index: -9999;"></div><iframe src="./Railsアプリのバックグラウンド処理をWheneverを使ってCron化する - kentana20 技忘録_files/beacon.html" style="display: none;"></iframe><iframe id="google_osd_static_frame_1714506584685" name="google_osd_static_frame" style="display: none; width: 0px; height: 0px;"></iframe><div style="color: rgb(0, 0, 0); position: absolute; display: none; z-index: 10002; left: 0px; top: 0px; border: 0px; padding: 0px; text-align: center; background-color: rgb(255, 255, 255);"><div style="text-align: left; margin: 0px; padding: 0px;"></div></div></body></html>
