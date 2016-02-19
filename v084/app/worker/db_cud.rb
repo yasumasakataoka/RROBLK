@@ -61,12 +61,25 @@
 		crt_def_all
 	end
       handle_asynchronously :perform_crt_def_all
+	def auto_create_ords_insts
+		###itm_code毎にmkordsを作成
+		strsql = " select trngantt_prdpurshp,itm_code from r_trngantts,alloctbs
+					inner join trngantt.id = srctblid
+					where trngantt_autocreate_ord in('a','b','c','A','B') 
+					and  srctblname = 'trngantts' and destblname like '%schs' and alloctbls.qty > 0 "
+		###
+		strsql = " select trngantt_prdpurshp,itm_code from r_trngantts,alloctbls
+					inner join trngantt.id = srctblid
+					where trngantt_autocreate_inst in('a','A') 
+					and  srctblname = 'trngantts' and destblname like '%ords' and alloctbls.qty > 0 "
+		insts = ActiveRecord::Base.connection.select_all(strsql)
+	end
     def perform_mkschs recs
 		crt_def_all  unless respond_to?("dummy_def")
 		begin
 			@sio_user_code = 0
 			ActiveRecord::Base.connection.begin_db_transaction()
-			@new_sio_session_counter  = user_seq_nextval
+			##@new_sio_session_counter  = user_seq_nextval
 			@pare_class = "batch"
 			cnt = 0
 			tbl= {}
@@ -82,13 +95,13 @@
 						@sio_classname = "mksch_perform_delete_"				
 						proc_edit_from_trngantts(rec)
 					when /_add_/
-					@sio_classname = "perform_mksch_perform_add_"		
-					proc_add_trngantts(rec)
+						@sio_classname = "perform_mksch_perform_add_"		
+						proc_add_trngantts(rec)
 				end
 				proc_tbl_edit_arel "mkschs", tbl, " id = #{rec["id"]}"   ###insertはtblinks updateはここ　何とかならないか
 			end
-			dbcud = DbCud.new
-			dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
+			##dbcud = DbCud.new
+			##dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
 			ActiveRecord::Base.connection.commit_db_transaction()
 		rescue
 				ActiveRecord::Base.connection.rollback_db_transaction()
@@ -475,30 +488,30 @@
 	end
 	def vsql_chk_chil_status_abc rec,abc  ### autocreate_ord = a,b,A,B
 		%Q&
-			select srctblid,destblname,sum(alloctbls.qty) qty from trngantts ,alloctbls
-			where orgtblname = '#{rec["trngantt_orgtblname"]}' and orgtblid = #{rec["trngantt_orgtblid"]}
-			and key like '#{rec["trngantt_key"]}%' and length(key) = #{rec["trngantt_key"].size + 3}
+			select itm_code from r_trngantts ,alloctbls
+			where trngantt_orgtblname = '#{rec["trngantt_orgtblname"]}' and trngantt_orgtblid = #{rec["trngantt_orgtblid"]}
+			and trngantt_key like '#{rec["trngantt_key"]}%' and length(trngantt_key) = #{rec["trngantt_key"].size + 3}
 			and srctblname = 'trngantts' and srctblid = trngantts.id and alloctbls.qty > 0
 			#{case abc
 					when "a","b"
-						" and (destblname = 'lotstkhists'  or destblname like '%acts' )" 
+						" and (destblname like '%schs'  or destblname like '%ords'  or destblname like '%insts' )" 
 					when "A","B"
-						" and (destblname = 'lotstkhists'  or destblname like '%acts' or destblname like '%ords'  or destblname like '%insts') "
+						" and destblname  like '%schs'  "
 					else
 						raise
 				end}	
 			
 		&
 	end
-	def vsql_chk_self_status_abc rec,abc  ### autocreate_ord = c,C
+	def vsql_chk_self_status_abc rec,abc  ### autocreate_ord = c,
 		%Q&
 			select srctblid,destblname,sum(alloctbls.qty) qty from alloctbls
 			where srctblname = 'trngantts' and srctblid = rec["trngantt_id"] and alloctbls.qty > 0
 			#{case abc
 					when "c"
 						" and (destblname = 'lotstkhists'  or destblname like '%acts') " 
-					when "C"
-						" and (destblname = 'lotstkhists'  or destblname like '%acts' or destblname like '%ords'  or destblname like '%insts') "  
+					##when "C"
+					##	" and (destblname = 'lotstkhists'  or destblname like '%acts' or destblname like '%ords'  or destblname like '%insts') "  
 					else
 						raise
 				end}	
@@ -508,7 +521,7 @@
 		crt_def_all  unless respond_to?("dummy_def")
 	  begin
 	    @sio_user_code = 0
-       ActiveRecord::Base.connection.begin_db_transaction()
+		ActiveRecord::Base.connection.begin_db_transaction()
 	    @new_sio_session_counter  = user_seq_nextval
         @pare_class = "batch"
 		@sio_classname = "mkord_perform_add_"	
@@ -570,45 +583,45 @@
 					proc_mkord_err sch,"手動のためskip"
 					next
 				when "a"
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"a"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足"   ###コーディングはまだ
+					itms = ActiveRecord::Base.connection.select_values(vsql_chk_chil_status_abc(sch,"a"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　#{itms} "[0.3999]   ###コーディングはまだ
 						next
 					end	
 				when "b"
 					err_f = false
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"b"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足"
+					itms = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"b"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　#{itms} "[0.3999]
 						err_f = true
 					end	
 					###   装置のチェック
 					next if err_f == true
 				when "c"
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足"
+					itms = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　#{itms} "[0.3999]
 						next
 					end	
 				when "A"
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"A"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足しオーダも不足"
+					itms = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"A"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　又はオーダ未発行　#{itms} "[0.3999]
 						next
 					end	
 				when "B"
 					err_f = false
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"B"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足しオーダも不足"
+					itms = ActiveRecord::Base.connection.sedlect_one(vsql_chk_chil_status_abc(sch,"B"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　又はオーダ未発行　#{itms} "[0.3999]
 						err_f = true
 					end	
 					###   装置のチェック
 					next if err_f == true
 				when "C"
-					rec = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
-					if rec["qty"] < sch["alloctbl_qty"]
-						proc_mkord_err sch,"在庫不足しオーダも不足"
+					itms = ActiveRecord::Base.connection.sedlect_one(vsql_chk_self_status_abc(sch,"c"))
+					if itms
+						proc_mkord_err sch,"子部品在庫不足　又はオーダ未発行　#{itms} "[0.3999]
 						next
 					end	
 				else
@@ -690,24 +703,19 @@
 	end
 
 ### instsの機能
-#autocreate_inst　ORDS -->INSTS への分割まとめTYPE
-#0:手動又は外部からのデータ取り込みでinsts作成
-#　　まとめと分解あり。
-#1:無条件でordからinstsを作成　回答待ち
-#2:子部品がそろったら指示
-#3:子部品と設備がそろったら指示
-    def perform_mkinsts recs
+    def perform_mkinsts insts
 		crt_def_all  unless respond_to?("dummy_def")
 	  begin
 	    @sio_user_code = 0
 		@sio_classname = "mkinst_perform_add_"
        ActiveRecord::Base.connection.begin_db_transaction()
-	    @new_sio_session_counter  = user_seq_nextval
+	    ##@new_sio_session_counter  = user_seq_nextval
         @pare_class = "batch"
 		@savekey = ""								
 		@gno_lineno = 0
-		recs.each do |rec|  ###recsはautocreate_instでsortされていること
-		    vproc_mkinst rec
+		rec = {}
+		##recs.each do |rec|  ###recsはautocreate_instでsortされていること
+		    vproc_mkinst inst
 		    rec[:result_f] = "1"  ## normal end
 		    rec[:updated_at] = Time.now
 		    rec[:cmpldate] = Time.now
@@ -720,9 +728,10 @@
 		    rec[:inamt] = @inamt
 		    rec[:outamt] = @outamt
 		    rec[:skipamt] = @skipamt
+			rec[:id] = proc_get_nextval("mkinsts_seq")
 		    ##rec[:where] = {:id =>rec[:id]}
-			proc_tbl_edit_arel("mkinsts",rec," id = #{rec["id"]} ")
-		end
+			proc_tbl_edit_arel("mkinsts",rec)
+		##end
         ##dbcud = DbCud.new
         ##dbcud.perform(@new_sio_session_counter ,@sio_user_code,"") 
 		##ActiveRecord::Base.connection.commit_db_transaction()
@@ -739,7 +748,7 @@
 		        ActiveRecord::Base.connection.commit_db_transaction()
 	  end
     end
-    handle_asynchronously :perform_mkinsts
+    ##handle_asynchronously :perform_mkinsts
 	def vproc_mkinst rec		
 		@inst_show_data = get_show_data "r_#{rec["prdpurshp"]}insts"
 		bal_ords = ActiveRecord::Base.connection.select_all(sql_alloc_search(rec,"ords"))   ### 
@@ -799,7 +808,7 @@
 	### sno instsと一対一で実行 qtyは必須
 	### gno カートン毎まとめて入力　qty入力は無効
 	### snoの時もgnoの時も 受入日,qtyは必須
-    def perform_mkacts recs
+    def perform_mkacts insts
 		crt_def_all  unless respond_to?("dummy_def")
 	  begin
 	    @sio_user_code = 0
@@ -809,7 +818,7 @@
 		@savekey = ""								
 		@gno_lineno = 0
 		recs.each do |rec|  ###
-		    vproc_mkact rec
+		    vproc_mkact insts
 		    rec[:result_f] = "1"  ## normal end
 		    rec[:updated_at] = Time.now
 		    rec[:cmpldate] = Time.now
@@ -1049,7 +1058,7 @@
     handle_asynchronously :perform_setreplies
     def perform_setresults id ### user_id integer
 	begin
-	crt_def_all  unless respond_to?("dummy_def")
+		crt_def_all  unless respond_to?("dummy_def")
 		###rptblname = tbl.singularize.capitalize.constantize
 		@sio_classname = "_results_add_perform" ### perform_set
 		#####resultの時は常に追加

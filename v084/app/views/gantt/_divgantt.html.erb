@@ -1,13 +1,13 @@
-<div id="workSpace" style="padding:0px; overflow-y:auto; overflow-x:hidden; border:1px solid #e5e5e5; position:relative; margin:0 5px; width:1800px; height:300px;"></div>
+﻿<div id="workSpace" style="padding:0px; overflow-y:auto; overflow-x:hidden; border:1px solid #e5e5e5; position:relative; margin:0 5px; width:1800px; height:300px;"></div>
 <div id="gantEditorTemplates" >
 <div class="__template__" type="GANTBUTTONS"><!--
 <div class="ganttButtonBar">
 <p style="float:left"> tree/gantt</p>
 <div class="ui-button-text">
-<button onclick="$('#workSpace').trigger('undo.gantt');" class="button textual" title="undo"><span class="teamworkIcon">&#39;</span></button>
+<% ##trigger　は ganttMater の　GanttMaster.prototype.init　の place .bindに対応 %>
+<% ## <button onclick="$('#workSpace').trigger('undo.gantt');" class="button textual" title="undo"><span class="teamworkIcon">&#39;</span></button> %>
 <span class="ganttButtonSeparator"></span>
 <button onclick="$('#workSpace').trigger('addBelowCurrentTask.gantt');" class="button textual" title="insert below"><span class="teamworkIcon">X</span></button>
-<button onclick="$('#workSpace').trigger('addSameCurrentTask.gantt');" class="button textual" title="insert same level"><span class="teamworkIcon">v</span></button>
 <span class="ganttButtonSeparator"></span>
 <button onclick="$('#workSpace').trigger('zoomMinus.gantt');" class="button textual" title="zoom out"><span class="teamworkIcon">)</span></button>
 <button onclick="$('#workSpace').trigger('zoomPlus.gantt');" class="button textual" title="zoom in"><span class="teamworkIcon">(</span></button>
@@ -29,31 +29,35 @@
 <tr style="height:40px">
 <th class="gdfColHeader" style="width:15px;"></th>
 <th class="gdfColHeader" style="width:10px;"></th>
-<th class="gdfColHeader gdfResizable" style="width:100px;"><%=raw sub_blkgetpobj("itm_name","view_field") %></th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">item_code</th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">loca_name</th>
-<th class="gdfColHeader gdfResizable" style="width:20px;">loca_code</th>
+<th class="gdfColHeader gdfResizable" style="width:300px;"><%=raw sub_blkgetpobj("itm_name","view_field") %></th>
+<th class="gdfColHeader gdfResizable" style="width:150px;">item_code</th>
+<th class="gdfColHeader gdfResizable" style="width:100px;">loca_name</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">loca_code</th>
+<th class="gdfColHeader gdfResizable" style="width:10px;display:none;" >itms_id</th>
+<th class="gdfColHeader gdfResizable" style="width:10px;display:none;" >locas_id</th>
+<th class="gdfColHeader gdfResizable" style="width:10px;display:none;" >trngantts_id</th>
 <% if @master == true %>
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_parenum</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;">nditm_chilnum</th>
-<% else %>
+<th class="gdfColHeader gdfResizable" style="width:100px;display:none;" name="appear_by_insert">copy_itemcode</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">processseq</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">priority</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;" align="right">prdpurshp</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">sno</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_sch</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_ord</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_inst</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_stk</th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">org_start</th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">org_end</th>
+<% else %>
+<th class="gdfColHeader gdfResizable" style="width:90px;" align="right">sno</th>
+<th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty</th>
+<th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty_sch</th>
+<th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty_ord</th>
+<th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty_inst</th>
+<th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty_stk</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">org_start</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">org_end</th>
 <% end %>
-<th class="gdfColHeader gdfResizable" style="width:50px;">start</th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">end</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">start</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">end</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;">dur.</th>
-<th class="gdfColHeader gdfResizable" style="width:50px;">dep.</th>
+<th class="gdfColHeader gdfResizable" style="width:100px;">dep.</th>
 <th class="gdfColHeader gdfResizable" style="width:200px;">assignees</th>
-<th class="gdfColHeader gdfResizable" style="width:20px;">subtblid</th>
-<th class="gdfColHeader gdfResizable" style="width:20px;">paretblcode</th>
 
 </tr>
 </thead>
@@ -70,11 +74,17 @@
 
 <td class="gdfCell"><input type="text" name="loca_name" value="(#=obj.loca_name#)" readonly ></td>
 <td class="gdfCell"><input type="text" name="loca_code" value="(#=obj.loca_code#)" readonly></td>
+<td class="gdfCell" style="display:none" ><input type="text" name="itms_id" value="(#=obj.itms_id#)"  readonly></td>
+<td class="gdfCell" style="display:none" ><input type="text" name="locas_id" value="(#=obj.locas_id#)"  readonly></td>
+<td class="gdfCell" style="display:none" ><input type="text" name="trangantts_id" value="(#=obj.trngantts_id#)"  readonly></td>
 <% if @master == true %>
 <td class="gdfCell"><input type="text" name="nditm_parenum" value="(#=obj.nditm_parenum#)"></td>
 <td class="gdfCell"><input type="text" name="nditm_chilnum" value="(#=obj.nditm_chilnum#)"></td>
-<% else %>
+<td class="gdfCell" style="display:none" name="appear_by_insert"><input type="text" name="copy_itemcode" value="(#=obj.copy_itemcode#)" ></td>
+<td class="gdfCell"><input type="text" name="processseq" value="(#=obj.processseq#)" ></td>
+<td class="gdfCell"><input type="text" name="priority" value="(#=obj.priority#)" ></td>
 <td class="gdfCell"><input type="text" name="prdpurshp"  style="text-align:right" value="(#=obj.prdpurshp#)"></td>
+<% else %>
 <td class="gdfCell"><input type="text" name="sno" style="text-align:right" value="(#=obj.sno#)"></td>
 <td class="gdfCell"><input type="text" name="qty"  style="text-align:right" value="(#=obj.qty#)"></td>
 <td class="gdfCell"><input type="text" name="qty_sch" style="text-align:right" value="(#=obj.qty_sch#)"></td>
@@ -89,8 +99,6 @@
 <td class="gdfCell"><input type="text" name="opeitm_duration" value="(#=obj.opeitm_duration#)"></td>
 <td class="gdfCell"><input type="text" name="depends" value="(#=obj.depends#)" (#=obj.hasExternalDep?"readonly":""#) readonly></td>
 <td class="gdfCell taskAssigs">(#=obj.getAssigsString()#)</td>
-<td class="gdfCell"><input type="text" name="subtblid" value="(#=obj.subtblid#)" readonly></td>
-<td class="gdfCell"><input type="text" name="paretblcode" value="(#=obj.paretblcode#)" readonly></td>
 
 
 </tr>
@@ -145,14 +153,20 @@
 <tr>
 <td><label for="itm_code">itm_code</label><br><input type="text" name="itm_code" id="itm_code" value="" class="formElements"></td>
 <td><label for="itm_name">itm_name</label><br><input type="text" name="itm_name" id="itm_name" value="" size="20" class="formElements"></td>
+<td><label for="itms_id" style="display:none" >itms_id</label><br><input type="text" name="itms_id" id="itms_id" value=""  class="formElements" ></td>
+<td><label for="locas_id" style="display:none" >locas_id</label><br><input type="text" name="locas_id" id="locas_id" value=""  class="formElements" ></td>
+<td><label for="trngantts_id" style="display:none" >trngantts_id</label><br><input type="text" name="trngantts_id" id="trangantts_id" value=""  class="formElements" ></td>
 </tr>
 
 <tr  align="right">
 <% if @master == true %>
 <td><label for="nditm_parenum">nditm_parenum</label><br><input type="text" name="nditm_parenum" id="nditm_parenum" value="" class="formElements"></td>
 <td><label for="nditm_chilnum">nditm_chilnum</label><br><input type="text" name="nditm_chilnum" id="nditm_chilnum" value=""  class="formElements"></td>
-<% else %>
+<td><label for="copy_itemcode" style="display:none" name="appear_by_insert">copy_itemcode</label><br><input type="text" name="copy_itemcode" id="copy_itemcode" value=""  class="formElements" ></td>
+<td><label for="processseq">processseq</label><br><input type="text" name="processseq" id="processseq" value="" class="formElements" ></td>
+<td><label for="priority">priority</label><br><input type="text" name="priority" id="priority" value="" class="formElements" ></td>
 <td><label for="prdpurshp">prdpurshp</label><br><input type="text" name="prdpurshp" id="prdpurshp" value=""  class="formElements"></td>
+<% else %>
 <td><label for="sno">sno</label><br><input type="text" name="sno" id="sno" value=""  class="formElements"></td>
 <td><label for="qty">qty</label><br><input type="text" name="qty" id="qty" value=""  class="formElements"></td>
 <td><label for="qty_sch">qty_sch</label><br><input type="text" name="qty_sch" id="qty_sch" value=""  class="formElements"></td>
@@ -160,8 +174,6 @@
 <td><label for="qty_inst">qty_inst</label><br><input type="text" name="qty_inst" id="qty_inst" value=""  class="formElements"></td>
 <td><label for="qty_stk">qty_stk</label><br><input type="text" name="qty_stk" id="qty_stk" value=""  class="formElements"></td>
 <% end %>
-<td><label for="name">subtblid</label><br><input type="text" name="subtblid" id="subtblid" value="" class="formElements"></td>
-<td><label for="paretblcode">paretblcode</label><br><input type="text" name="paretblcode" id="paretblcode" value="" class="formElements"></td>
 
 </tr>
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
   Copyright (c) 2012-2013 Open Lab
   Written by Roberto Bicchierai and Silvia Chelazzi http://roberto.open-lab.com
   Permission is hereby granted, free of charge, to any person obtaining
@@ -108,7 +108,6 @@ GanttMaster.prototype.init = function(place) {
       self.endTransaction();
     }
 
-
   }).bind("addAboveCurrentTask.gantt", function() {
     var factory = new TaskFactory();
 
@@ -131,7 +130,7 @@ GanttMaster.prototype.init = function(place) {
       task.rowElement.find("[name=itm_code]").focus();  //blk modify
     }
     self.endTransaction();
-
+// blk modify
   }).bind("addBelowCurrentTask.gantt", function() {
     var factory = new TaskFactory();
     self.beginTransaction();
@@ -140,7 +139,12 @@ GanttMaster.prototype.init = function(place) {
     if (self.currentTask) {
       row = self.currentTask.getRow() + 1;
       var inftask =  self.tasks[row-1];
-      ch = factory.build("gantttmp_" + self.currentTask.id + new Date().getTime(), self.currentTask.subtblid.split("_")[0],self.currentTask.subtblid, self.currentTask.level,"",self.currentTask.start,1, self.currentTask.mlevel+1);  //blk modify
+	  var newEnd = computeStartByDuration(inftask.start, 1); // dur =1 blk
+	  var newStart = computeStartByDuration(newEnd, 1); // dur =1  blk 
+		//function(id, copy_itemcode,processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+		//                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end)
+       ch = factory.build("gantttmp_"+ self.currentTask.id + new Date().getTime(),"",999,999,self.currentTask.level,newStart,newEnd,"1",self.currentTask.mlevel+1,"","","","",1,1,
+							"","",0,0,0,0,0,newStart,newEnd,"","","");
     } else {
       return;    //blk modify
     } 
@@ -166,8 +170,8 @@ GanttMaster.prototype.init = function(place) {
         }
 
     self.endTransaction();
-
-  // blk add
+	jQuery("[name='appear_by_insert']").show();
+  // blk add 2016/01/30   addSameCurrentTask.gantt　使用中止
   }).bind("addSameCurrentTask.gantt", function() {
     var factory = new TaskFactory();
 
@@ -177,12 +181,17 @@ GanttMaster.prototype.init = function(place) {
         var infTask = self.currentTask.getInferiors();
         var infTaskId = infTask[0].to.rowElement[0].rowIndex-1;
         var inftask =  self.tasks[infTaskId];
+		var newStart = inftask.start; //   blk
+		var newEnd = computeEndByDuration(newStart, 1); // dur =1 blk
       //cannot add brothers to root
       if (self.currentTask.level<=0) 
         return;
-// ch = factory.build("gantttmp_" + self.currentTask.id + new Date().getTime(), "",self.currentTask.subtblid, self.currentTask.level,"",self.currentTask.start,1, self.currentTask.mlevel+1); 
+// TaskFactory: factory.build("gantttmp_" + self.currentTask.id + new Date().getTime(), "",self.currentTask.processseq, self.currentTask.level,"",self.currentTask.start,1, self.currentTask.mlevel+1); 
+//function(id, copy_itemcode,processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+//                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end)
 
-      ch = factory.build("gantttmp_"+ self.currentTask.id +  + new Date().getTime(),  self.currentTask.subtblid.split("_")[0],inftask.id, self.currentTask.level,"", inftask.start - 24 * 60 * 60 * 1000, 1,self.currentTask.mlevel);
+      ch = factory.build("gantttmp_"+ self.currentTask.id + new Date().getTime(),"",999,999,self.currentTask.level+1,"","","1",self.currentTask.mlevel+1,"","","","",1,1,
+							"","",0,0,0,0,0,newStart,newEnd,"","","");
       row = self.currentTask.getRow()+1;
     } else {
       return;
@@ -272,12 +281,12 @@ GanttMaster.messages = {
 };
 
 
-GanttMaster.prototype.createTask = function (id, subtblid,paretblcode,level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch_qty_ord,qty_inst,qty_stk,org_start,org_end) {
+GanttMaster.prototype.createTask = function (id, copy_itemcode,processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch_qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id) {
   var factory = new TaskFactory();
 
-  return factory.build(id,subtblid,paretblcode, level, start, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                       prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end);
+  return factory.build(id,copy_itemcode,processseq,priority, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                       prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id);
 };
 
 
@@ -391,12 +400,15 @@ GanttMaster.prototype.loadTasks = function(tasks, selectedRow) {
   //reset
   this.reset();
 
+	//factory (id, copy_itemcode,processseq,priority,level, start,end,
+	//										opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+    //                                        prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end)
   for (var i=0;i<tasks.length;i++){
     var task = tasks[i];
     if (!(task instanceof Task)) {  
-      var t = factory.build(task.id, task.subtblid, task.paretblcode, task.level, task.start,task.end,
+      var t = factory.build(task.id, task.copy_itemcode,task.processseq, task.priority, task.level, task.start,task.end,
 	  task.opeitm_duration,task.mlevel,task.loca_code,task.loca_name,task.itm_code,task.itm_name,task.nditm_parenum,task.nditm_chilnum,
-	  task.prdpurshp,task.sno,task.qty,task.qty_sch,task.qty_ord,task.qty_inst,task.qty_stk,task.org_start,task.org_end);
+	  task.prdpurshp,task.sno,task.qty,task.qty_sch,task.qty_ord,task.qty_inst,task.qty_stk,task.org_start,task.org_end,itms_id,locas_id,trangantts_id);
       for (var key in task) {
         if (key!="end" && key!="start")  
           t[key] = task[key]; //copy all properties

@@ -9,7 +9,7 @@
   overflow: hidden;
   text-overflow: clip;
   white-space: nowrap;
-  font-size: 10px
+  font-size: 14px
 }
 
 .gdfCell {
@@ -267,7 +267,7 @@
 
 .taskEditRow input{
   border: 0 none;
-  font-size: 10px;
+  font-size: 14px;
   height: 14px;
   margin: 0;
   padding: 0;

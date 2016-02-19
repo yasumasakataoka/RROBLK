@@ -66,3 +66,4 @@ gem 'dalli'
 gem 'barby'
 gem 'prawn-qrcode'
 gem 'clockwork'
+gem 'whenever', :require => false

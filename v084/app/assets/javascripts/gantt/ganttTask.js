@@ -30,25 +30,29 @@ function TaskFactory() {
   /**
    * Build a new Task
    */
-  /*this.build = function(id, subtblid, paretblcode, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) { */
-	this.build = function(id, subtblid,paretblcode,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end){
+  /*this.build = function(id, processseq, priority, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) { */
+	this.build = function(id, copy_itemcode,processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id){
     // Set at beginning of day
     //var adjusted_end = computeEnd(end);    //blk modify
     //var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration); blk modify
 
-   /* return new Task(id, subtblid, paretblcode, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum); */
-   return new Task(id, subtblid,paretblcode,level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end);
+   /* return new Task(id, processseq, priority, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum); */
+   return new Task(id, copy_itemcode,processseq,priority,level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id);
   };
 
 }
 
-function Task(id, subtblid,paretblcode,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end) {
+function Task(id,copy_itemcode, processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id) {
   this.id = id;
-  this.subtblid = subtblid;
-  this.paretblcode = paretblcode;
+  this.copy_itemcode = copy_itemcode;
+  this.itms_id = itms_id;
+  this.locas_id = locas_id;
+  this.trangantts_id = trangantts_id;
+  this.processseq = processseq;
+  this.priority = priority;
   this.level = level;
   this.status = "STATUS_UNDEFINED";
 
@@ -61,7 +65,7 @@ function Task(id, subtblid,paretblcode,level, start,end, opeitm_duration,mlevel,
   this.loca_name = loca_name;
   this.itm_code = itm_code;
   this.itm_name = itm_name;
-  this.nditm_parernum = nditm_parenum;
+  this.nditm_parenum = nditm_parenum;
   this.nditm_chilnum = nditm_chilnum;
   
   this.prdpurshp = prdpurshp;
@@ -212,7 +216,7 @@ Task.prototype.setPeriod = function (start, end) {
     for (var i=0;i<children.length;i++) {
 
       ch = children[i];
-      //console.debug("restricting: test child "+ch.subtblid+" "+ch.end)
+      //console.debug("restricting: test child "+ch.processseq+" "+ch.end)
       if (restrictingEnd) {
         be = Math.max(be, ch.end);
       } else {

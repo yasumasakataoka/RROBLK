@@ -1,23 +1,22 @@
 class CrttblviewscreenController < ImportfieldsfromoracleController
 #### 残作業
-### 開発環境でしか動かないようにすること。
-### テーブルに項目を追加すると　railsの再起動が必要　　plsqlのlogoff connnectで解決　2014/6/25 　　　2015/11　logoff　中止
+### テーブルに項目を追加すると　railsの再起動が必要　　logoff connnectで解決　2014/6/25 　　　2015/11　logoff　中止
 ### id等の必須key check
 ###  xxx_idの重複チェック
 
 	before_filter :authenticate_user!  
 	def index
-		if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{params[:jqgrid_id]}  ")  
-			if rec["blktb_expiredate"] > Time.now 
-				##plsql.logoff
-				##plsql.connect! "rails", "rails", :host => "localhost", :port => 1521, :database => "xe"
-				sub_crt_tbl_view_screen rec["pobject_code_tbl"],rec["id"]
-				##Rails.cache.clear(nil)
-            else
-             @errmsg = "out of expiredate"
+		if ENV["RACK_ENV"] == "development" ###開発環境のみで動く
+			if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{params[:jqgrid_id]}  ")  
+				if rec["blktb_expiredate"] > Time.now 
+					sub_crt_tbl_view_screen rec["pobject_code_tbl"],rec["id"]
+					##Rails.cache.clear(nil)
+				else
+					@errmsg = "out of expiredate"
+				end
+			else
+				@errmsg = " id not correct"
 			end
-        else
-             @errmsg = " id not correct"
 		end
 	end
 	def sub_crt_tbl_view_screen  pobject_code_tbl,rec_id
@@ -61,7 +60,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		end   ##begin
 	end
 	def proc_set_search_code_of_screen   pobject_code_scr    
-		##keys = plsql.user_ind_columns.all("  where table_name = '#{pobject_code_tbl}' and  column_position = 1")
 		### 以下　blkukysに変更して　全面コーディングし直した　2014/12/26
 		strsql = "select * from r_screenfields where pobject_code_scr = '#{pobject_code_scr}' "
 		screenfields = ActiveRecord::Base.connection.select_all(strsql)
@@ -134,7 +132,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			if rec_id
 				rec0["fieldcodes_id"]  = rec_id 
 				##rec0[:seqno] = value[0]
-				###plsql.tblfields.insert rec0 
 				proc_tbl_add_arel("tblfields",rec0)
 			end
 		end
@@ -144,7 +141,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		@strsql0 <<  " CONSTRAINT #{tblname}_id_pk PRIMARY KEY (id),"
 		##  primkey key対応
 		@strsql0 = @strsql0.chop + ")"
-		###plsql.execute @strsql0
 		ActiveRecord::Base.connection.execute @strsql0
 	end
 	def prv_modify_tbl_field tblname,allrecs,columns
@@ -197,16 +193,16 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		end
 		proc_drop_index tblname   ###importffieldsfromoracle  でも同様処理有
 		@strsql0.split(";").each do |i|
-			logger.debug "line #{__LINE__} \n plsql.execute #{i}"
+			logger.debug "line #{__LINE__} \n execute #{i}"
 			ActiveRecord::Base.connection.execute(i) if i =~ /\w/
 		end
 	end
 	def proc_drop_index tblname
 		### ＯＲＡＣＬＥの時	
-		constr = plsql.blk_constraints.all("where table_name = '#{tblname.upcase}'  and  constraint_type = 'U' order by  constraint_name,position")
+		constr = proc_blk_constrains tblname,nil,'U',nil  ###constraints.all("where table_name = '#{tblname.upcase}'  and  constraint_type = 'U' order by  constraint_name,position")
 		orakeyarray = []
 		constr.each do |rec|
-           unless  orakeyarray.index(rec[:constraint_name]) then  orakeyarray << rec[:constraint_name]   end  
+           unless  orakeyarray.index(rec["constraint_name"]) then  orakeyarray << rec["constraint_name"]   end  
 		end 
         prv_drop_constr tblname,orakeyarray if orakeyarray.size > 0
 	end
@@ -291,21 +287,21 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
     sub_rtbl = "r_" + tblname   ##create view name  tbl:view=1:1  自動作成されるviewはr_xxxxで固定
     @strsql1 = "create or replace view  " + sub_rtbl + " as "   
     @strsql1 << selectstr.chop 
-    plsql.execute  @strsql1   
+    ActiveRecord::Base.connection.execute(@strsql1)   
 	#### sql実行時のエラー表示　がまだできてない。
  end  #end create_or_replace_view  
 
 
 	def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:join_rtbl + safix
         k = ""
-	    if PLSQL::View.find(plsql, join_rtbl.to_sym).nil?
+	    unless ActiveRecord::Base.connection.table_exists?(join_rtbl)
            @errmsg << "create view #{ join_rtbl }"
            raise 
            ### create_or_replace_view  tblid,tblname
 	    end
-	    subfields = plsql.__send__(join_rtbl).column_names
+	    subfields = columns = ActiveRecord::Base.connection.columns(join_rtbl)
         subfields.each do |j|
-        js = xfield = sfd_code =  j.to_s  
+        js = xfield = sfd_code =  j.name
 			next if js.upcase == "ID"
 			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|EXPIREDATE|REMARK/ and  join_rtbl  !=  "upd_persons"
 			tmpfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end

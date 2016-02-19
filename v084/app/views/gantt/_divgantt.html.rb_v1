@@ -1,0 +1,217 @@
+<div id="workSpace" style="padding:0px; overflow-y:auto; overflow-x:hidden; border:1px solid #e5e5e5; position:relative; margin:0 5px; width:1800px; height:300px;"></div>
+<div id="gantEditorTemplates" >
+<div class="__template__" type="GANTBUTTONS"><!--
+<div class="ganttButtonBar">
+<p style="float:left"> tree/gantt</p>
+<div class="ui-button-text">
+<button onclick="$('#workSpace').trigger('undo.gantt');" class="button textual" title="undo"><span class="teamworkIcon">&#39;</span></button>
+<span class="ganttButtonSeparator"></span>
+<button onclick="$('#workSpace').trigger('addBelowCurrentTask.gantt');" class="button textual" title="insert below"><span class="teamworkIcon">X</span></button>
+<button onclick="$('#workSpace').trigger('addSameCurrentTask.gantt');" class="button textual" title="insert same level"><span class="teamworkIcon">v</span></button>
+<span class="ganttButtonSeparator"></span>
+<button onclick="$('#workSpace').trigger('zoomMinus.gantt');" class="button textual" title="zoom out"><span class="teamworkIcon">)</span></button>
+<button onclick="$('#workSpace').trigger('zoomPlus.gantt');" class="button textual" title="zoom in"><span class="teamworkIcon">(</span></button>
+<span class="ganttButtonSeparator"></span>
+<button onclick="$('#workSpace').trigger('deleteCurrentTask.gantt');" class="button textual" title="delete"><span class="teamworkIcon">&cent;</span></button>
+
+<span class="ganttButtonSeparator"></span>
+
+&nbsp; &nbsp; &nbsp; &nbsp;
+<span class="ganttButtonSeparator"></span>
+&nbsp; &nbsp; &nbsp; &nbsp;
+<button onclick="uploadOnServer();" class="button textual" title="upload&save"><span class="teamworkIcon">3</span></button>
+</div></div>
+--></div>
+
+<div class="__template__" type="TASKSEDITHEAD"><!--
+<table class="gdfTable" cellspacing="0" cellpadding="0">
+<thead>
+<tr style="height:40px">
+<th class="gdfColHeader" style="width:15px;"></th>
+<th class="gdfColHeader" style="width:10px;"></th>
+<th class="gdfColHeader gdfResizable" style="width:100px;"><%=raw sub_blkgetpobj("itm_name","view_field") %></th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">item_code</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">loca_name</th>
+<th class="gdfColHeader gdfResizable" style="width:20px;">loca_code</th>
+<% if @master == true %>
+<th class="gdfColHeader gdfResizable" style="width:30px;">nditm_parenum</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">nditm_chilnum</th>
+<% else %>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">prdpurshp</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">sno</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_sch</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_ord</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_inst</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">qty_stk</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">org_start</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">org_end</th>
+<% end %>
+<th class="gdfColHeader gdfResizable" style="width:50px;">start</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">end</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">dur.</th>
+<th class="gdfColHeader gdfResizable" style="width:50px;">dep.</th>
+<th class="gdfColHeader gdfResizable" style="width:200px;">assignees</th>
+<th class="gdfColHeader gdfResizable" style="width:20px;">subtblid</th>
+<th class="gdfColHeader gdfResizable" style="width:20px;">paretblcode</th>
+
+</tr>
+</thead>
+</table>
+--></div>
+
+  <div class="__template__" type="TASKROW"><!--
+<tr taskId="(#=obj.id#)" class="taskEditRow" level="(#=level#)">
+<th class="gdfCell edit" align="right" style="cursor:pointer;"><span class="taskRowIndex">(#=obj.getRow()+1#)</span> <span class="teamworkIcon" style="font-size:12px;" >e</span></th>
+<td class="gdfCell" align="center"><div class="taskStatus cvcColorSquare" status="(#=obj.status#)"></div></td>
+
+<td class="gdfCell indentCell" style="padding-left:(#=obj.level*10#)px;"><input type="text" name="itm_name" value="(#=obj.itm_name#)" style="(#=obj.level>0?'border-left:2px dotted orange':''#)" readonly></td>
+<td class="gdfCell"><input type="text" name="itm_code" value="(#=obj.itm_code#)" readonly></td>
+
+<td class="gdfCell"><input type="text" name="loca_name" value="(#=obj.loca_name#)" readonly ></td>
+<td class="gdfCell"><input type="text" name="loca_code" value="(#=obj.loca_code#)" readonly></td>
+<% if @master == true %>
+<td class="gdfCell"><input type="text" name="nditm_parenum" value="(#=obj.nditm_parenum#)"></td>
+<td class="gdfCell"><input type="text" name="nditm_chilnum" value="(#=obj.nditm_chilnum#)"></td>
+<% else %>
+<td class="gdfCell"><input type="text" name="prdpurshp"  style="text-align:right" value="(#=obj.prdpurshp#)"></td>
+<td class="gdfCell"><input type="text" name="sno" style="text-align:right" value="(#=obj.sno#)"></td>
+<td class="gdfCell"><input type="text" name="qty"  style="text-align:right" value="(#=obj.qty#)"></td>
+<td class="gdfCell"><input type="text" name="qty_sch" style="text-align:right" value="(#=obj.qty_sch#)"></td>
+<td class="gdfCell"><input type="text" name="qty_ord"  style="text-align:right" value="(#=obj.qty_ord#)"></td>
+<td class="gdfCell"><input type="text" name="qty_inst"  style="text-align:right" value="(#=obj.qty_inst#)"></td>
+<td class="gdfCell"><input type="text" name="qty_stk"  style="text-align:right" value="(#=obj.qty_stk#)"></td>
+<td class="gdfCell"><input type="text" name="org_start" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="org_end" value="" class="date" readonly></td>
+<% end %>
+<td class="gdfCell"><input type="text" name="start" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="end" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="opeitm_duration" value="(#=obj.opeitm_duration#)"></td>
+<td class="gdfCell"><input type="text" name="depends" value="(#=obj.depends#)" (#=obj.hasExternalDep?"readonly":""#) readonly></td>
+<td class="gdfCell taskAssigs">(#=obj.getAssigsString()#)</td>
+<td class="gdfCell"><input type="text" name="subtblid" value="(#=obj.subtblid#)" readonly></td>
+<td class="gdfCell"><input type="text" name="paretblcode" value="(#=obj.paretblcode#)" readonly></td>
+
+
+</tr>
+--></div>
+
+  <div class="__template__" type="TASKEMPTYROW"><!--
+<tr class="taskEditRow emptyRow" >
+<th class="gdfCell" align="right"></th>
+<td class="gdfCell" align="center"></td>
+<td class="gdfCell"></td>
+<td class="gdfCell"></td>
+
+</tr>
+--></div>
+
+  <div class="__template__" type="TASKBAR"><!--
+<div class="taskBox" taskId="(#=obj.id#)" >
+<div class="layout (#=obj.hasExternalDep?'extDep':''#)">
+<div class="taskStatus" status="(#=obj.status#)"></div>
+<div class="taskProgress" style="width:100%; background-color:(#=obj.progress>100?'red':'rgb(153,255,51);'#);"></div>
+<div class="milestone (#=obj.startIsMilestone?'active':''#)" ></div>
+
+<div class="taskLabel"></div>
+<div class="milestone end (#=obj.endIsMilestone?'active':''#)" ></div>
+</div>
+</div>
+--></div>
+
+
+  <div class="__template__" type="CHANGE_STATUS"><!--
+<div class="taskStatusBox">
+<div class="taskStatus cvcColorSquare" status="STATUS_ACTIVE" title="active"></div>
+<div class="taskStatus cvcColorSquare" status="STATUS_DONE" title="completed"></div>
+<div class="taskStatus cvcColorSquare" status="STATUS_FAILED" title="failed"></div>
+<div class="taskStatus cvcColorSquare" status="STATUS_SUSPENDED" title="suspended"></div>
+<div class="taskStatus cvcColorSquare" status="STATUS_UNDEFINED" title="undefined"></div>
+</div>
+--></div>
+
+
+<div class="__template__" type="TASK_EDITOR"><!--
+<div class="ganttTaskEditor">
+<table width="100%" height="100%">
+<tr>
+<td>
+<table cellpadding="5">
+<tr>
+<td><label for="loca_code">loca_code</label><br><input type="text" name="loca_code" id="loca_code" value="" class="formElements"></td>
+<td><label for="loca_name">loca_name</label><br><input type="text" name="loca_name" id="loca_name" value="" size="20" class="formElements"></td>
+</tr>
+
+<tr>
+<td><label for="itm_code">itm_code</label><br><input type="text" name="itm_code" id="itm_code" value="" class="formElements"></td>
+<td><label for="itm_name">itm_name</label><br><input type="text" name="itm_name" id="itm_name" value="" size="20" class="formElements"></td>
+</tr>
+
+<tr  align="right">
+<% if @master == true %>
+<td><label for="nditm_parenum">nditm_parenum</label><br><input type="text" name="nditm_parenum" id="nditm_parenum" value="" class="formElements"></td>
+<td><label for="nditm_chilnum">nditm_chilnum</label><br><input type="text" name="nditm_chilnum" id="nditm_chilnum" value=""  class="formElements"></td>
+<% else %>
+<td><label for="prdpurshp">prdpurshp</label><br><input type="text" name="prdpurshp" id="prdpurshp" value=""  class="formElements"></td>
+<td><label for="sno">sno</label><br><input type="text" name="sno" id="sno" value=""  class="formElements"></td>
+<td><label for="qty">qty</label><br><input type="text" name="qty" id="qty" value=""  class="formElements"></td>
+<td><label for="qty_sch">qty_sch</label><br><input type="text" name="qty_sch" id="qty_sch" value=""  class="formElements"></td>
+<td><label for="qty_ord">qty_ord</label><br><input type="text" name="qty_ord" id="qty_ord" value=""  class="formElements"></td>
+<td><label for="qty_inst">qty_inst</label><br><input type="text" name="qty_inst" id="qty_inst" value=""  class="formElements"></td>
+<td><label for="qty_stk">qty_stk</label><br><input type="text" name="qty_stk" id="qty_stk" value=""  class="formElements"></td>
+<% end %>
+<td><label for="name">subtblid</label><br><input type="text" name="subtblid" id="subtblid" value="" class="formElements"></td>
+<td><label for="paretblcode">paretblcode</label><br><input type="text" name="paretblcode" id="paretblcode" value="" class="formElements"></td>
+
+</tr>
+
+<tr>
+<% if @master == true %>
+<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+<% else %>
+<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+<td><label for="org_start">org_start</label><br><input type="text" name="org_start" id="org_start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="org_end">org_end</label><br><input type="text" name="org_end" id="org_end" value="" class="date" size="10" class="formElements"></td>
+<% end %>
+<td class="graph" style="padding-left:50px"><label for="opeitm_duration">dur.</label><br><input type="text" name="opeitm_duration" id="opeitm_duration" value="" size="5" class="formElements"></td>
+</tr>
+
+
+<td colspan="3">
+<label for="description">description</label><br>
+<textarea rows="2" cols="60" id="description" name="description" class="formElements"></textarea>
+</td>
+</tr>
+</table>
+
+<h2>assignments</h2>
+<table cellspacing="1" cellpadding="0" width="100%" id="assigsTable">
+<tr>
+<th style="width:100px;">name</th>
+<th style="width:70px;">role</th>
+<th style="width:30px;">est.wklg.</th>
+<th style="width:30px;" id="addAssig"><span class="teamworkIcon" style="cursor: pointer">+</span></th>
+</tr>
+</table>
+
+<div style="text-align: right;  padding-top: 30px">
+<button id="saveButton" class="button big">save&return</button>
+<button id="cancelButton" class="button big">cancel</button>
+</div>
+</table>
+</div>
+--></div>
+
+
+<div class="__template__" type="ASSIGNMENT_ROW"><!--
+<tr taskId="(#=obj.task.id#)" assigId="(#=obj.assig.id#)" class="assigEditRow" >
+<td ><select name="resourceId" class="formElements" (#=obj.assig.id.indexOf("tmp_")==0?"":"disabled"#) ></select></td>
+<td ><select type="select" name="roleId" class="formElements"></select></td>
+<td ><input type="text" name="effort" value="(#=getMillisInHoursMinutes(obj.assig.effort)#)" size="5" class="formElements"></td>
+<td align="center"><span class="teamworkIcon delAssig" style="cursor: pointer">d</span></td>
+</tr>
+--></div>
+</div>
+<p> test </p>

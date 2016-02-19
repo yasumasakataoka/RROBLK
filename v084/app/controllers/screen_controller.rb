@@ -29,7 +29,6 @@ class ScreenController < ListController
         command_c[:sio_search] = if params[:_search] == "true" or params[:undefined_search] == "true" then "true" else "false" end  
         command_c[:sio_sidx]  = params[:sidx]
         rdata = subpaging(command_c,@screen_code)     ## rdata[データの中身,レコード件数]
-        ####plsql.commit    要チェック
         @tbldata = rdata[0].to_jqgrid_xml(@show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
         respond_with @tbldata
     end  ##disp
@@ -43,52 +42,49 @@ class ScreenController < ListController
         @options ={}
         @options[:div_repl_id] = "#{pare_code}_div_#{chil_code}"  ### 親画面内の子画面表示のための　div のid
         @options[:autowidth] = "false"  
-        strsql = " where pobject_code_scr_ch = '#{chil_code}' and pobject_code_scr = '#{pare_code}' and chilscreen_Expiredate > current_date order by chilscreen_expiredate "
-        chilf = plsql.r_chilscreens.all(strsql)
-	    chil_screen = chilf[0][:pobject_code_scr_ch]
+        strsql = " select * from  r_chilscreens where pobject_code_scr_ch = '#{chil_code}' and pobject_code_scr = '#{pare_code}' and chilscreen_Expiredate > current_date order by chilscreen_expiredate "
+        chilf = ActiveRecord::Base.connection.select_all(strsql)
+	    chil_screen = chilf[0]["pobject_code_scr_ch"]
 	    pkey = []
 	    rcd_id = []
 	    chilf.each do |rec|
-           rcd_id  << params[:data][rec[:pobject_code_sfd].to_sym]  ### 親画面テーブル内の子画面へのkeyとなるid
-		   pkey << rec[:pobject_code_sfd_ch]
+           rcd_id  << params[:data][rec["pobject_code_sfd"].to_sym]  ### 親画面テーブル内の子画面へのkeyとなるid
+		   pkey << rec["pobject_code_sfd_ch"]
 	    end
         @ss_id = user_parescreen_nextval.to_s   ###子画面に引き継ぐセッションid 
 	    ### 
         hash_rcd = {}
         hash_rcd[:rcd_id_val] = rcd_id ##### rcd_id:親画面テーブル内の子画面へのkeyとなるid
 	    ###子の画面の既定値をセット
-	    tmp_str = plsql.r_screens.first("where pobject_code_scr = '#{chil_screen}' and screen_Expiredate > current_date order by screen_expiredate ")
-        if  tmp_str[:screen_strwhere] =~ /where / 
-	        hash_rcd[:strsql] = "(select * from #{tmp_str[:pobject_code_view]} " +  tmp_str[:screen_strwhere]
+	    tmp_str = ActiveRecord::Base.connection.select_one(" select * from r_screens where pobject_code_scr = '#{chil_screen}' and screen_Expiredate > current_date order by screen_expiredate ")
+        if  tmp_str["screen_strwhere"] =~ /where / 
+	        hash_rcd[:strsql] = "(select * from #{tmp_str["pobject_code_view"]} " +  tmp_str["screen_strwhere"]
 	     else
-		    hash_rcd[:strsql] = "(select * from #{tmp_str[:pobject_code_view]} where "
+		    hash_rcd[:strsql] = "(select * from #{tmp_str["pobject_code_view"]} where "
         end		
         pkey.each_with_index do |ele,idx|
 	  	   hash_rcd[:strsql]  << "#{ele} = #{rcd_id[idx]}  and " 
         end	
-	    if  tmp_str[:screen_strgrouporder]
-	        hash_rcd[:strsql]  =  hash_rcd[:strsql][0..-5] +	  tmp_str[:screen_strgrouporder] + " )  a " 
+	    if  tmp_str["screen_strgrouporder"]
+	        hash_rcd[:strsql]  =  hash_rcd[:strsql][0..-5] +	  tmp_str["screen_strgrouporder"] + " )  a " 
 		  else
 		    hash_rcd[:strsql]  =  hash_rcd[:strsql][0..-5] +	" )  a "
 	    end
         sub_parescreen_insert hash_rcd
         render :layout=>false 
-        plsql.commit
+            ActiveRecord::Base.connection.commit_db_transaction()
     end   ### nst
 #####
     def get_strsql 
-        hash_rcd = plsql.__send__("parescreen#{@sio_user_code}s").first("where id = #{params[:ss_id]} and expiredate > current_date")
-        ##if Rails.cache.exist?(rcdkey)   then  ### 
-        if hash_rcd   then   strsql =  hash_rcd[:strsql] else  strsql = nil  end  ### 親からのidで子を表示
-        return strsql
+        ActiveRecord::Base.connection.select_value("select strsql from parescreen#{@sio_user_code}s where id = #{params[:ss_id]} and expiredate > current_date")
     end  
     def  get_url_from_code  ###params[:sio_viewname]  screen_code   ,params[:fieldname] page downが押された項目
 		init_from_screen
 		case params[:fieldname]
 			when /_code/
-				akeyfs,viewname,delm,mltblname =  get_ary_find_field params[:fieldname]
-				if   viewname then   
-					@getname = {:viewname => viewname}
+				akeyfs,scrname,delm,mltblname =  get_ary_find_field params[:fieldname]
+				if   scrname then   
+					@getname = {:scrname => scrname}
 					render :json => @getname
 				else
 					render :nothing => true
@@ -138,7 +134,7 @@ class ScreenController < ListController
 				end
 				@errmsg = ""
 				if respond_to?("proc_view_field_#{params[:chgname]}_chk")
-					__send__("proc_view_field_#{params[:chgname]}_chk",params)
+					__send__("proc_view_field_#{params[:chgname]}_chk",params)  ###バッチで処理することもあるのであえてparamsを引数にしている。
 					if @errmsg != ""
 						@getname = {}
 						@getname[params[:chgname].to_sym] = @errmsg
@@ -176,10 +172,10 @@ class ScreenController < ListController
 		strwhere = "select * from r_screenfields where pobject_code_sfd = '#{field}' and screenfield_paragraph is not null  "    ##検索元のテーブルを求める。
 		strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
 		v = ActiveRecord::Base.connection.select_one(strwhere)
-		viewname =  rec = delm = nil
+		scrname =  rec = delm = nil
 		akeyfs = []
 		if   v then   ###グループを求める。
-			viewname,delm =  v["screenfield_paragraph"].split(":_")
+			scrname,delm =  v["screenfield_paragraph"].split(":_")
 			strwhere = "select * from r_screenfields where screenfield_paragraph = '#{v["screenfield_paragraph"]}' "
 			strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
 			keyfs = ActiveRecord::Base.connection.select_all(strwhere)
@@ -188,10 +184,10 @@ class ScreenController < ListController
 			end
 		end
 		mktblname = if field =~ /^mk/ then field.split("_")[0] else nil end
-		return akeyfs,viewname,delm,mktblname
+		return akeyfs,scrname,delm,mktblname
 	end	
 	def    oth_tbl_code_to_name params ####tblnamechop
-		akeyfs,viewname,delm,mktblname =  get_ary_find_field params[:chgname]
+		akeyfs,scrname,delm,mktblname =  get_ary_find_field params[:chgname]
 		keyfields = {}
 		sw = "ON"
 		params.each do |key,val|
@@ -199,7 +195,7 @@ class ScreenController < ListController
 				if  params[key] and params[key] != "" and key.to_s !~ /_cno/ then keyfields[key] = val else sw = "OFF" end
 			end
 		end
-		rec = get_tblfieldval_from_code keyfields,viewname,delm ,mktblname if sw == "ON"   ###data get
+		rec = get_tblfieldval_from_code keyfields,scrname,delm ,mktblname if sw == "ON"   ###data get
 		@getname ={}
 		if  rec then
 			rec.each do |key,val|
@@ -214,43 +210,45 @@ class ScreenController < ListController
     end
 
    def  same_tbl_code_to_name tblnamechop,field
-      sw = "ON"
-	  strsql = %Q% where table_name = '#{(tblnamechop+"s").upcase}'  and  constraint_type = 'U' and  column_name =  '#{field.upcase}'  %
-      grp  = plsql.blk_constraints.first(strsql)
-      if  grp then
-		  strsql = %Q% where table_name = '#{(tblnamechop+"s").upcase}'  and  constraint_type = 'U' and  constraint_name =  '#{grp[:constraint_name]}'  %
-          keyfs = plsql.blk_constraints.all(strsql)
-          akeyfs = []
-          keyfs.each do |rec|
-             akeyfs << rec[:column_name]
-          end
-          keyfields = {}
-          params.each do |key,val|
-             if  key.to_s.split("_")[0]  == tblnamechop and akeyfs.index(key.to_s.split("_",2)[1].upcase) then
-                 if  params[key] and params[key] != "" then keyfields[key] = val else sw = "OFF" end
-             end
-          end
-         else
-           sw = "OFF"
-       end 
-       rec = nil
-       rec = get_tblfieldval_from_code keyfields,"r_"+tblnamechop+"s",nil,nil  if sw == "ON" 
-       @getname ={}
-       if rec then
-             rec.each do |key,val|
-                  if  key != "id" then  @getname[key] = rec[key] end  ### 
-             end
+		sw = "OFF"
+		grps  = proc_blk_constrains(tblnamechop+"s",field,"U",nil)
+		keyfields = {}
+		grps.each do  |grp| 
+			keyfs = proc_blk_constrains(tblnamechop+"s",nil,"U",grp["constraint_name"])
+			keyfs.each do |rec|
+				fld = rec["column_name"].downcase
+				if params[tblnamechop+"_"+fld]
+					if params[tblnamechop+"_"+fld] != "" 
+						keyfields[tblnamechop+"_"+fld] = params[tblnamechop+"_"+fld]
+						sw = "ON"
+					else
+						sw = "OFF"
+					end
+				else
+					sw = "OFF"
+				end
+			end
+			break if sw == "ON"
+			keyfields = {}
+		end 
+		rec = nil
+		rec = get_tblfieldval_from_code keyfields,"r_"+tblnamechop+"s",nil,nil  if sw == "ON" 
+		@getname ={}
+		if rec then
+            rec.each do |key,val|
+                if  key != "id" then  @getname[key] = rec[key] end  ### 
+            end
              @getname[:errmsg] = " #{keyfields.values.join(',')}.....already exists"
-          else
+        else
              @getname.delete(params[:chgname].to_sym)
         end
         return sw
-   end
+    end
    def get_tblfieldval_from_code keys,viewname,delm,mktblname
       strwhere = " where "
       tblname = viewname.split("_")[1].chop
       keys.each do |key,val|
-           if  delm then nkey = key.to_s.sub("_#{delm}","") else nkey = key.to_s end
+           if  delm then nkey = key.to_s.sub("_#{delm}","") else nkey = key end
            nkey = if  mktblname then nkey.sub("#{mktblname}_","") else nkey end
            strwhere << nkey + " = '" + val  + "'    and "
       end
@@ -258,7 +256,7 @@ class ScreenController < ListController
       rec = ActiveRecord::Base.connection.select_one("select * from #{viewname} #{strwhere}")
    end
    def   get_view_code_frm_screen_tblname params
-      akeyfs,viewname,delm,mktblname =  get_ary_find_field params[:chgname]
+      akeyfs,scrname,delm,mktblname =  get_ary_find_field params[:chgname]
       keyfields = {}
       sw = "ON"
       params.each do |key,val|
@@ -269,7 +267,7 @@ class ScreenController < ListController
 	  if sw == "ON" 	     
          mytbl = @screen_code.split("_")[1].chop
 	     tblnamekey = (mytbl+"_tblname").to_sym
-	     viewname = params[tblnamekey].to_s
+	     scrname = params[tblnamekey].to_s
 		 prgfs = ActiveRecord::Base.connection.select_all(" select * from r_tblfields where pobject_code_tbl = '#{@screen_code.split("_")[1]}' 
 											and tblfield_viewflmk like 'tblnamefields%' and tblfield_expiredate > current_date ")
 		 newkeyfields = {}
@@ -281,7 +279,7 @@ class ScreenController < ListController
                newkeyfields[tblarray[params[tblnamekey].to_sym].to_sym] = params[key.to_sym]			   
 			end
 		 end
-         rec = get_tblfieldval_from_code newkeyfields,viewname,nil, nil  #### delm = mktblname = nil 
+         rec = get_tblfieldval_from_code newkeyfields,scrname,nil, nil  #### delm = mktblname = nil 
          @getname ={}
          if   rec then
 			 @getname[(mytbl+"_tblid")] = rec["id"]
@@ -443,9 +441,9 @@ class ScreenController < ListController
     end
     def preview_prnt 
         rdata =  []
-        pdfscript = plsql.r_reports.first("where pobject_Code_rep = '#{params[:pdflist]}' and  report_Expiredate > current_date")
+        pdfscript = ActiveRecord::Base.connection.select_one("select * from r_reports where pobject_Code_rep = '#{params[:pdflist]}' and  report_Expiredate > current_date")
         if  pdfscript
-            reports_id = pdfscript[:id]
+            reports_id = pdfscript["id"]
 		    command_c = init_from_screen ###params   ##get @show_data
             strwhere = proc_pdfwhere(pdfscript,command_c)
             command_c[:sio_strsql] = " (select * from #{@show_data[:screen_code_view]} " + strwhere + " ) a"
@@ -455,7 +453,7 @@ class ScreenController < ListController
 			command_c[:sio_classname] = @sio_classname = "preview_prnt_paging"
             ##p "strwhere #{strwhere}"
             rdata = subpaging(command_c,@screen_code)     ## subpaging  
-            plsql.commit
+            ActiveRecord::Base.connection.commit_db_transaction()
             ##respond_with @tbldata.to_jqgrid_json(@show_data[:allfields] ,params[:page], params[:rows],command_c[:sio_totalcount]) 
             @tbldata = rdata[0].to_jqgrid_xml(@show_data[:allfields] ,params[:page], params[:rows],rdata[1]) 
             respond_with @tbldata
@@ -475,15 +473,15 @@ class ScreenController < ListController
     def proc_updatechk_add command_c,add_edit   ### view blk_constraintsは初期セットしていること
 		## addのとき
 		## ukeyの重複はエラー
-		strsql = %Q% where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'U' order by constraint_name %
-		constr = plsql.blk_constraints.all(strsql)
+		####strsql = %Q% where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'U' order by constraint_name %
+		constr = proc_blk_constrains command_c[:sio_viewname].split("_")[1],nil,'U',nil
 		orakeyarray = {}
 		constr.each do |rec|
-			if  orakeyarray[rec[:constraint_name].to_sym] then
-				orakeyarray[rec[:constraint_name].to_sym]  << rec[:column_name]  ##二回目以降
+			if  orakeyarray[rec["constraint_name"].to_sym] then
+				orakeyarray[rec["constraint_name"].to_sym]  << rec["column_name"]  ##二回目以降
             else
-				orakeyarray[rec[:constraint_name].to_sym]  =[]      ###初回
-				orakeyarray[rec[:constraint_name].to_sym]  << rec[:column_name]
+				orakeyarray[rec["constraint_name"].to_sym]  =[]      ###初回
+				orakeyarray[rec["constraint_name"].to_sym]  << rec["column_name"]
 			end
 		end
 		orakeyarray.each do |inx,val|
@@ -503,9 +501,9 @@ class ScreenController < ListController
 		if updtbl
 			if updtbl[:code]
 				if updtbl[:code] != command_c[(command_c[:sio_viewname].split("_")[1].chop + "_code").to_sym]
-					constr = plsql.blk_constraints.all("where column_name like '#{command_c[:sio_viewname].split("_")[1].upcase}_ID%'  and  constraint_type = 'R' ")
+					constr = proc_blk_constrains nil,"#{command_c[:sio_viewname].split("_")[1].upcase}_ID%",'R',nil
 					constr.each do |rec|
-						ex = plsql.__send__(rec[:table_name]).first ("where  #{rec[:column_name]} = #{command_c[:id]}")
+						ex = ActiveRecord::Base.connection.select_one("select * from #{rec["table_name"]} where  #{rec[:column_name]} = #{command_c[:id]}")
 						@errmsg << " #{rec[:table_name]}," if ex
 					end
 				end
@@ -515,21 +513,12 @@ class ScreenController < ListController
 			end
 		end
     end
-	##def proc_command_c_chk command_c
-	##	command_c.each do |key,val|
-	##		if val  ##必須チェックは画面又はimportで実施のこと
-	##			if respond_to?("proc_view_field_#{key.to_s}_chk")
-	##				__send__("proc_view_field_#{key.to_s}_chk",command_c,val)
-	##			end
-	##		end
-	##	end
-	##end
     def updatechk_del command_c
 		## delのとき
 		##すでに外部keyとして参照されているときは削除不可
 		### idだけでなくなくcodeとの整合性も確認のこと
-		strsql = %Q& select * from blk_constraints where column_name like '#{command_c[:sio_viewname].split("_",2)[1].upcase}_ID%'  and  constraint_type = 'R' &
-		constr = ActiveRecord::Base.connection.select_all(strsql)
+		### strsql = %Q& select * from blk_constraints where column_name like '#{command_c[:sio_viewname].split("_",2)[1].upcase}_ID%'  and  constraint_type = 'R' &
+		constr = proc_blk_constrains nil,"#{command_c[:sio_viewname].split("_")[1].upcase}_ID%",'R',nil
 		constr.each do |rec|
 			ex = ActiveRecord::Base.connection.select_one(%Q& select * from #{rec["table_name"]}  where  #{rec["column_name"]} = #{command_c[:id]} &)
 		    @errmsg << " #{rec["table_name"]}," if ex
@@ -582,28 +571,5 @@ class ScreenController < ListController
 				new_val = new_val.to_s
 		end
 		return key + " = " + new_val
-    end	
-    ##def batchrun
-	##	command_c = init_from_screen
-	##	command_c[:sio_session_id] =   1
-	##	case @screen_code
-	##		when "purord_replyinputs"
-	##			command_c[:purrplie_result_f] = "0"
-	##			command_c[:purrplie_runtime] = -1
-	##			command_c[:purrplie_person_id_upd] = command_c[:sio_user_code]
-	##			command_c[:purrplie_update_ip] = request.remote_ip
-	##			command_c[:purrplie_tblname] = "replyinputs"
-	##			command_c[:sio_viewname] = "r_purrplies"
-    ##            command_c[:sio_session_counter] =   user_seq_nextval   ##
-    ##            command_c[:sio_classname] = "_add_by_batchrun"
-    ##            command_c[:id] = command_c[:purrplie_id] = proc_get_nextval("purrplies_seq") 
-    ##            command_c[:sio_user_code] = ActiveRecord::Base.connection.select_one("select * from persons where email = '#{current_user[:email]}'")["id"]
-    ##            proc_insert_sio_c command_c			
-	##			@sendmsg = {:msg=>proc_blkgetpobj("replyinputs","msg") + proc_blkgetpobj("納期回答セット実行","msg")}
-	##	end
-    ##    proc_userproc_chk_set command_c
-    ##    dbcud = DbCud.new
-    ##    dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")
-	##	render :json => @sendmsg
-    ##end
+    end
 end ## ScreenController

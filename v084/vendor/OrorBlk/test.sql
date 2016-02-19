@@ -8,6 +8,30 @@ truncate table sio_r_mkords;
 
 truncate table sio_r_custords
 ;
+truncate table sio_r_custinsts
+;
+truncate table sio_r_custacts
+;
+truncate table custinsts
+;
+truncate table custacts
+;
+truncate table sio_r_billschs
+;
+truncate table sio_r_billords
+;
+truncate table sio_r_billinsts
+;
+truncate table sio_r_billacts
+;
+truncate table billinsts
+;
+truncate table billacts
+;
+truncate table billschs
+;
+truncate table dlvords
+;
 truncate table shpschs;
 truncate table shpords;
 truncate table shpinsts;

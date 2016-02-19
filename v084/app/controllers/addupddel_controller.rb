@@ -39,7 +39,7 @@ class  AddupddelController < ScreenController
 		if  @errmsg == "" 
 			@req_userproc = false
 			@sio_classname = command_c[:sio_classname]
-			###plsql.connection.autocommit = false
+			eval("@#{tblname}s_classname = @sio_classname")
 			ActiveRecord::Base.connection.begin_db_transaction
 			command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
 			command_c[:sio_recordcount] = 1
@@ -50,7 +50,6 @@ class  AddupddelController < ScreenController
 			end
 			##proc_insert_sio_c    command_c 
 			##proc_userproc_chk_set command_c
-			##plsql.commit
 			##dbcud = DbCud.new
 			##dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")
 			proc_simple_sio_insert command_c

@@ -92,7 +92,7 @@ module JqgridFilter
     conditions.chomp("AND ")
   end
 	def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
-		show_cache_key =  "show" + (screen_code||=" coding err missing screen_code") +  sub_blkget_grpcode
+		show_cache_key =  "show" + (screen_code||=" coding err  :screen_code is nil") +  sub_blkget_grpcode
 		show_data = Rails.cache.read(show_cache_key)
 		logger.debug " JqgridJson line #{__LINE__} show_cache_key:#{show_cache_key}" if show_data.nil?
 		show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns

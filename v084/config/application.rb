@@ -58,6 +58,8 @@ module V084
     ##config.assets.version = '1.0'
     ## for pdf prawn
     config.autoload_paths << "#{Rails.root}/app/reports"
+	#####	
+    config.autoload_paths << "#{Rails.root}/app/whenevers"
     ##config.autoload_paths += Dir["#{config.root}/lib/2dc_jqgrid/2dc_jqgrid.rb"]
 	##config.cache_store = :memory_store
 	config.cache_store = :dalli_store

@@ -1,4 +1,4 @@
-/*
+﻿/*
   Copyright (c) 2012-2013 Open Lab
   Written by Roberto Bicchierai and Silvia Chelazzi http://roberto.open-lab.com
   Permission is hereby granted, free of charge, to any person obtaining
@@ -52,7 +52,7 @@ GridEditor.prototype.fillEmptyLines = function() {
 
       //fill all empty previouses
       emptyRow.prevAll(".emptyRow").andSelf().each(function() {
-        var ch = factory.build("tmp_fk" + new Date().getTime(), "", "", level, start, 1);
+        var ch = factory.build("",999,999,self.currentTask.mlevel+1,"","","1",level,"","","","",1,1);  //blk
         var task = master.addTask(ch);
         lastTask = ch;
       });
@@ -68,7 +68,6 @@ GridEditor.prototype.fillEmptyLines = function() {
     this.element.append(emptyRow);
   }
 };
-
 
 GridEditor.prototype.addTask = function(task, row) {
   //console.debug("GridEditor.addTask",task,row);
@@ -122,13 +121,19 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   row.find("[name=nditm_parenum]").val(task.nditm_parenum);  //add
   row.find("[name=nditm_chilnum]").val(task.nditm_chilnum);  //add
   row.find("[name=prdpurshp]").val(task.prdpurshp);  //add v2
+  row.find("[name=copy_itemcode]").val(task.copy_itemcode);  //add
+  row.find("[name=itms_id]").val(task.itms_id);  //add
+  row.find("[name=locas_id]").val(task.locas_id);  //add
+  row.find("[name=trangantts_id]").val(task.trangantts_id);  //add
+  row.find("[name=processseq]").val(task.processseq);  //add
+  row.find("[name=priority]").val(task.priority);  //add v2
   row.find("[name=sno]").val(task.sno);  //add v2
   row.find("[name=qty]").val(task.qty);  //add v2
   row.find("[name=qty_sch]").val(task.qty_sch);  //add v2
   row.find("[name=qty_ord]").val(task.qty_ord);  //add v2
   row.find("[name=qty_inst]").val(task.qty_inst);  //add v2
   row.find("[name=qty_stk]").val(task.qty_stk);  //add v2
-  row.find("[name=opeitm_duration]").val(task.opeitm_duration);
+  //row.find("[name=opeitm_duration]").val(task.opeitm_duration); //durationを変更しても元に戻るのでコメントとした。
   row.find("[name=start]").val(new Date(task.start).format("yyyy/MM/dd")).updateOldValue(); // called on dates only because for other field is called on focus event
   row.find("[name=end]").val(new Date(task.end).format("yyyy/MM/dd")).updateOldValue();
   row.find("[name=org_start]").val(new Date(task.org_start).format("yyyy/MM/dd")).updateOldValue(); // add v2
@@ -353,26 +358,56 @@ taskRow.find("input:[name=itm_code]").blur(function () {
     self.master.beginTransaction();
     task.itm_code =  el.val();     
     jQuery.ajaxSetup({ async: false }); 	
-    jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code,"code_to_name_oper":"add","q":"gantt_itms"},function(data){task.itm_name = data.itm_name;});
+    jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code,"itm_code":task.itm_code,"code_to_name_oper":"add","jqgrid_id":"pop_itms"},
+						function(data){task.itm_name = data.itm_name;task.itms_id = data.itm_id;});
     jQuery.ajaxSetup({ async: true }); 
     self.master.endTransaction();}
   });
-taskRow.find("input:[name=itm_code]").click(function () {
+taskRow.find("input:[name=itm_code]").dblclick(function () {
         if(this.readOnly){}
           else{
                var el  = $(this);
                var row = el.closest("tr");
                var taskId = row.attr("taskId");
                var newwin;
-               var url = "/screen/index?id=r_itms&grid_key=itm_code&taskid="+taskId;
+               var url = "/screen/index?jqgrid_id=pop_itms&grid_key=itm_code&taskid="+taskId;
         	if(!newwin||newwin.closed){
-				  newwin = window.open(url,"blkpopup","width=800,height=300,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+				  newwin = window.open(url,"blkpopup","width=800,height=390,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+			else{
+                                  newwin.focus();}
+               }
+  });
+taskRow.find("input:[name=loca_code]").blur(function () {
+  if(this.readOnly){}
+    else{
+    var el  = $(this);
+    var row = el.closest("tr");
+    var taskId = row.attr("taskId");
+    var task = self.master.getTask(taskId);
+     //update task from editor
+    self.master.beginTransaction();
+    task.loca_code =  el.val();     
+    jQuery.ajaxSetup({ async: false }); 	
+    jQuery.getJSON("/screen/code_to_name",{"chgname":"loca_code","chgval":task.loca_code,"loca_code":task.loca_code,"code_to_name_oper":"add","jqgrid_id":"pop_locas"},
+							function(data){task.loca_name = data.loca_name;task.locas_id = data.loca_id;});
+    jQuery.ajaxSetup({ async: true }); 
+    self.master.endTransaction();}
+  });
+taskRow.find("input:[name=loca_code]").dblclick(function () {
+        if(this.readOnly){}
+          else{
+               var el  = $(this);
+               var row = el.closest("tr");
+               var taskId = row.attr("taskId");
+               var newwin;
+               var url = "/screen/index?jqgrid_id=pop_locas&grid_key=loca_code&taskid="+taskId;
+        	if(!newwin||newwin.closed){
+				  newwin = window.open(url,"blkpopup","width=800,height=390,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
 			else{
                                   newwin.focus();}
                }
   });
 };
-
 
 GridEditor.prototype.openFullEditor = function (task, taskRow) {
 
@@ -385,12 +420,10 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
 
   //make task editor
   var taskEditor = $.JST.createFromTemplate({}, "TASK_EDITOR");
-
-  taskEditor.find("#subtblid").val(task.subtblid);
   //add blk
-  taskEditor.find("#itm_name").val(task.itm_name); //add
+  taskEditor.find("#itm_name").val(task.itm_name).attr("readOnly", true).attr("disabled", true); //add
   taskEditor.find("#itm_code").val(task.itm_code);  //add
-  taskEditor.find("#loca_name").val(task.loca_name); //add
+  taskEditor.find("#loca_name").val(task.loca_name).attr("readOnly", true).attr("disabled", true); //add
   taskEditor.find("#loca_code").val(task.loca_code);  //add
   taskEditor.find("#prdpurshp").val(task.prdpurshp);  //add v2
   taskEditor.find("#sno").val(task.sno);  //add v2
@@ -401,9 +434,14 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   taskEditor.find("#qty_stk").val(task.qty_stk);  //add v2
   taskEditor.find("#nditm_parenum").val(task.nditm_parenum); //add
   taskEditor.find("#nditm_chilnum").val(task.nditm_chilnum); //add
+  taskEditor.find("#copy_itemcode").val(task.copy_itemcode); //add
+  taskEditor.find("#itms_id").val(task.itms_id); //add
+  taskEditor.find("#locas_id").val(task.locas_id); //add
+  taskEditor.find("#trangantts_id").val(task.trangantts_id); //add
   //
+  taskEditor.find("#processseq").val(task.processseq);
+  taskEditor.find("#priority").val(task.priority); //add
   taskEditor.find("#description").val(task.description);
-  taskEditor.find("#paretblcode").val(task.paretblcode); //add
   taskEditor.find("#progress").val(task.progress ? parseFloat(task.progress) : 0);
   taskEditor.find("#status").attr("status", task.status);
 
@@ -413,12 +451,12 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
     taskEditor.find("#endIsMilestone").attr("checked", true);
 
   taskEditor.find("#opeitm_duration").val(task.opeitm_duration);
-  taskEditor.find("#start").val(new Date(task.start).format());
-  taskEditor.find("#end").val(new Date(task.end).format());
-  taskEditor.find("#org_start").val(new Date(task.org_start).format()); //add v2
-  taskEditor.find("#org_end").val(new Date(task.org_end).format()); //add v2
+  taskEditor.find("#start").val(new Date(task.start).format()).attr("readOnly", true).attr("disabled", true);
+  taskEditor.find("#end").val(new Date(task.end).format()).attr("readOnly", true).attr("disabled", true);
+  taskEditor.find("#org_start").val(new Date(task.org_start).format()).attr("readOnly", true).attr("disabled", true); //add v2
+  taskEditor.find("#org_end").val(new Date(task.org_end).format()).attr("readOnly", true).attr("disabled", true); //add v2
 
-  //taskEditor.find("[name=depends]").val(task.depends);
+  taskEditor.find("#depends").val(task.depends);
 
   //make assignments table
   var assigsTable = taskEditor.find("#assigsTable");
@@ -436,35 +474,35 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   } else {
 
     //bind dateField on dates
-    taskEditor.find("#start").click(function () {
-      $(this).dateField({
-        inputField:$(this),
-        callback:  function (date) {
-          var dur = parseInt(taskEditor.find("#opeitm_duration").val());
-          date.clearTime();
-          taskEditor.find("#end").val(new Date(computeEndByDuration(date.getTime(), dur)).format());
-        }
-      });
-    });
+    //taskEditor.find("#start").click(function () {  //blk #opeitm_durationで対応
+     // $(this).dateField({
+    //    inputField:$(this),
+    //    callback:  function (date) {
+    //      var dur = parseInt(taskEditor.find("#opeitm_duration").val());
+    //      date.clearTime();
+    //      taskEditor.find("#end").val(new Date(computeEndByDuration(date.getTime(), dur)).format());
+    //    }
+    //  });
+    //});
 
     //bind dateField on dates
-    taskEditor.find("#end").click(function () {
-      $(this).dateField({
-        inputField:$(this),
-        callback:  function (end) {
-          var start = Date.parseString(taskEditor.find("#start").val());
-          end.setHours(23, 59, 59, 999);
-
-          if (end.getTime() < start.getTime()) {
-            var dur = parseInt(taskEditor.find("#opeitm_duration").val());
-            start = incrementDateByWorkingDays(end.getTime(), -dur);
-            taskEditor.find("#start").val(new Date(computeStart(start)).format());
-          } else {
-            taskEditor.find("#opeitm_duration").val(recomputeDuration(start.getTime(), end.getTime()));  
-          }
-        }
-      });
-    });
+    //taskEditor.find("#end").click(function () {
+    //  $(this).dateField({
+    //    inputField:$(this),
+    //    callback:  function (end) {
+    //      var start = Date.parseString(taskEditor.find("#start").val());
+    //      end.setHours(23, 59, 59, 999);
+//
+    //      if (end.getTime() < start.getTime()) {
+    //        var dur = parseInt(taskEditor.find("#opeitm_duration").val());
+    //        start = incrementDateByWorkingDays(end.getTime(), -dur);
+    //        taskEditor.find("#start").val(new Date(computeStart(start)).format());
+    //      } else {
+    //        taskEditor.find("#opeitm_duration").val(recomputeDuration(start.getTime(), end.getTime()));  
+    //      }
+    //    }
+    //  });
+    //});
 
     //bind blur on opeitm_duration
 //    taskEditor.find("#opeitm_duration").change(function () {
@@ -484,6 +522,42 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       el.val(dur);
       taskEditor.find("#start").val(new Date(computeStartByDuration(end.getTime(), dur)).format());
     });
+	
+    taskEditor.find("#itm_code").dblclick(function () {
+		var newwin;
+        var url = "/screen/index?jqgrid_id=pop_itms&grid_key=itm_code&taskid="+taskId;
+        if(!newwin||newwin.closed){
+			newwin = window.open(url,"blkpopup","width=800,height=390,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+		else{
+            newwin.focus();}
+	});
+	
+    taskEditor.find("#loca_code").dblclick(function () {
+		var newwin;
+        var url = "/screen/index?jqgrid_id=pop_locas&grid_key=itm_code&taskid="+taskId;
+        if(!newwin||newwin.closed){
+			newwin = window.open(url,"blkpopup","width=800,height=390,menubar=no,toolbar=no,status=no,menubar=no,scrollbars=yes");}
+		else{
+            newwin.focus();}
+	});
+
+	taskEditor.find("#loca_code").change(function () {
+		var el  = $(this);
+		var loca_code =  el.val();
+		jQuery.ajaxSetup({ async: false }); 	
+		jQuery.getJSON("/screen/code_to_name",{"chgname":"loca_code","chgval":loca_code,"loca_code":loca_code,"code_to_name_oper":"add","jqgrid_id":"pop_locas"},
+												function(data){taskEditor.find("#loca_name").val(data.loca_name);taskEditor.find("#locas_id").val(data.loca_id);});
+		jQuery.ajaxSetup({ async: true }); 
+	});
+
+	taskEditor.find("#itm_code").change(function () {
+		var el  = $(this);
+		var itm_code =  el.val();
+		jQuery.ajaxSetup({ async: false }); 	
+		jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":itm_code,"itm_code":itm_code,"code_to_name_oper":"add","jqgrid_id":"pop_itms"},
+												function(data){taskEditor.find("#itm_name").val(data.itm_name);taskEditor.find("#itms_id").val(data.itm_id);});
+		jQuery.ajaxSetup({ async: true }); 
+	});
 
     //bind add assignment
     taskEditor.find("#addAssig").click(function () {
@@ -514,7 +588,6 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       var task = self.master.getTask(taskId); // get task again because in case of rollback old task is lost
 
       self.master.beginTransaction();
-      task.subtblid = taskEditor.find("#subtblid").val();
       //blk add
       task.itm_name = taskEditor.find("#itm_name").val();
       task.itm_code = taskEditor.find("#itm_code").val();
@@ -532,7 +605,12 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
 
       task.depends = taskEditor.find("#depends").val();
       task.description = taskEditor.find("#description").val();
-      task.paretblcode = taskEditor.find("#paretblcode").val();
+      task.copy_itemcode = taskEditor.find("#copy_itemcode").val();
+	  task.itms_id = taskEditor.find("#itms_id").val();
+	  task.locas_id = taskEditor.find("#locas_id").val();
+	  task.trangantts_id = taskEditor.find("#trangantts_id").val();
+      task.processseq = taskEditor.find("#processseq").val();
+      task.priority = taskEditor.find("#priority").val();
       task.progress = parseFloat(taskEditor.find("#progress").val());
       task.opeitm_duration = parseInt(taskEditor.find("#opeitm_duration").val());
       task.startIsMilestone = taskEditor.find("#startIsMilestone").is(":checked");

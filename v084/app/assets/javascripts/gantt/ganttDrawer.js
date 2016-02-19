@@ -1,4 +1,4 @@
-/*
+﻿/*
   Copyright (c) 2012-2013 Open Lab
   Written by Roberto Bicchierai and Silvia Chelazzi http://roberto.open-lab.com
   Permission is hereby granted, free of charge, to any person obtaining
@@ -549,14 +549,14 @@ Ganttalendar.prototype.drawLink = function (from, to, type) {
       ndo.append(l3);
     }
 
-    //arrow
-    var arr = jQuery("<img src='/assets/linkArrow.png'>").css({
-      position: 'absolute',
-      top: rectTo.top + rectTo.height / 2 - 5,
-      left: rectTo.left - 5
-    });
+    //arrow //HTTP エラー 304 (Not Modified)が発生のため削除
+    //var arr = jQuery("<img src='/assets/linkArrow.png'>").css({
+    //  position: 'absolute',
+    //  top: rectTo.top + rectTo.height / 2 - 5,
+     // left: rectTo.left - 5
+    //});
 
-    ndo.append(arr);
+    //ndo.append(arr);
 
     return ndo;
   }
