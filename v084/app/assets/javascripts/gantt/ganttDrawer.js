@@ -301,7 +301,7 @@ Ganttalendar.prototype.create = function(zoom, originalStartmillis, originalEndM
   //console.debug(new Date(period.start) + "   " + new Date(period.end));
   self.startMillis = period.start; //real dimension of gantt
   self.endMillis = period.end;
-  self.originalStartMillis = originalStartmillis; //minimal dimension required by user or by task opeitm_duration
+  self.originalStartMillis = originalStartmillis; //minimal dimension required by user or by task duration
   self.originalEndMillis = originalEndMillis;
 
   var table = createGantt(zoom, period.start, period.end);

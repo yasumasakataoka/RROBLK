@@ -209,7 +209,7 @@ class ScreenController < ListController
 		return sw
     end
 
-   def  same_tbl_code_to_name tblnamechop,field
+    def  same_tbl_code_to_name tblnamechop,field
 		sw = "OFF"
 		grps  = proc_blk_constrains(tblnamechop+"s",field,"U",nil)
 		keyfields = {}

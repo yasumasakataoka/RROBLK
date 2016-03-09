@@ -111,19 +111,20 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   //var profiler = new Profiler("editorRefreshTaskRow");
   var row = task.rowElement;
 
-  row.find(".taskRowIndex").html(task.getRow() + 1);
+  //row.find(".taskRowIndex").html(task.getRow()+1);  //modify
+  row.find(".taskRowIndex").html(task.getRow());
   row.find(".indentCell").css("padding-left", task.mlevel * 10); //add mlevel
   row.find("[name=loca_name]").val(task.loca_name); //add
   row.find("[name=loca_code]").val(task.loca_code); //add
   row.find("[name=itm_name]").val(task.itm_name);  //add
   row.find("[name=itm_code]").val(task.itm_code);  //add
   row.find("[status]").attr("status", task.status);
-  row.find("[name=nditm_parenum]").val(task.nditm_parenum);  //add
-  row.find("[name=nditm_chilnum]").val(task.nditm_chilnum);  //add
+  row.find("[name=parenum]").val(task.parenum);  //add
+  row.find("[name=chilnum]").val(task.chilnum);  //add
   row.find("[name=prdpurshp]").val(task.prdpurshp);  //add v2
   row.find("[name=copy_itemcode]").val(task.copy_itemcode);  //add
-  row.find("[name=itms_id]").val(task.itms_id);  //add
-  row.find("[name=locas_id]").val(task.locas_id);  //add
+  row.find("[name=itm_id]").val(task.itm_id);  //add
+  row.find("[name=loca_id]").val(task.loca_id);  //add
   row.find("[name=trangantts_id]").val(task.trangantts_id);  //add
   row.find("[name=processseq]").val(task.processseq);  //add
   row.find("[name=priority]").val(task.priority);  //add v2
@@ -133,7 +134,7 @@ GridEditor.prototype.refreshTaskRow = function(task) {
   row.find("[name=qty_ord]").val(task.qty_ord);  //add v2
   row.find("[name=qty_inst]").val(task.qty_inst);  //add v2
   row.find("[name=qty_stk]").val(task.qty_stk);  //add v2
-  //row.find("[name=opeitm_duration]").val(task.opeitm_duration); //durationを変更しても元に戻るのでコメントとした。
+  row.find("[name=duration]").val(task.duration); //durationを変更しても元に戻るのでコメントとした。
   row.find("[name=start]").val(new Date(task.start).format("yyyy/MM/dd")).updateOldValue(); // called on dates only because for other field is called on focus event
   row.find("[name=end]").val(new Date(task.end).format("yyyy/MM/dd")).updateOldValue();
   row.find("[name=org_start]").val(new Date(task.org_start).format("yyyy/MM/dd")).updateOldValue(); // add v2
@@ -203,7 +204,7 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
             lstart = date.getTime();
             if (lstart >= lend) {
               var end_as_date = new Date(lstart);
-              lend = end_as_date.add('d', task.opeitm_duration).getTime();
+              lend = end_as_date.add('d', task.duration).getTime();
             }
 
             //update task from editor
@@ -215,7 +216,7 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
             var end_as_date = new Date(date.getTime());
             lend = end_as_date.getTime();
             if (lstart >= lend) {
-              end_as_date.add('d', -1 * task.opeitm_duration);
+              end_as_date.add('d', -1 * task.duration);
               lstart = end_as_date.getTime();
             }
 
@@ -266,12 +267,13 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
           self.master.changeTaskDates(task, task.start, task.end);
         }
 
-      } else if (field == "opeitm_duration") {
-        var dur = task.opeitm_duration;
+      } else if (field == "duration") {
+        var dur = task.duration;
         dur = parseInt(el.val()) || 1;
         el.val(dur);
         var newStart = computeStartByDuration(task.end, dur); //blk
         self.master.changeTaskDates(task, newStart,task.end);  //blk
+        task[field] = el.val(); //blk
 
       } else  {
         task[field] = el.val();
@@ -359,7 +361,7 @@ taskRow.find("input:[name=itm_code]").blur(function () {
     task.itm_code =  el.val();     
     jQuery.ajaxSetup({ async: false }); 	
     jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":task.itm_code,"itm_code":task.itm_code,"code_to_name_oper":"add","jqgrid_id":"pop_itms"},
-						function(data){task.itm_name = data.itm_name;task.itms_id = data.itm_id;});
+						function(data){task.itm_name = data.itm_name;task.itm_id = data.itm_id;});
     jQuery.ajaxSetup({ async: true }); 
     self.master.endTransaction();}
   });
@@ -389,7 +391,7 @@ taskRow.find("input:[name=loca_code]").blur(function () {
     task.loca_code =  el.val();     
     jQuery.ajaxSetup({ async: false }); 	
     jQuery.getJSON("/screen/code_to_name",{"chgname":"loca_code","chgval":task.loca_code,"loca_code":task.loca_code,"code_to_name_oper":"add","jqgrid_id":"pop_locas"},
-							function(data){task.loca_name = data.loca_name;task.locas_id = data.loca_id;});
+							function(data){task.loca_name = data.loca_name;task.loca_id = data.loca_id;});
     jQuery.ajaxSetup({ async: true }); 
     self.master.endTransaction();}
   });
@@ -432,11 +434,11 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   taskEditor.find("#qty_ord").val(task.qty_ord);  //add v2
   taskEditor.find("#qty_inst").val(task.qty_inst);  //add v2
   taskEditor.find("#qty_stk").val(task.qty_stk);  //add v2
-  taskEditor.find("#nditm_parenum").val(task.nditm_parenum); //add
-  taskEditor.find("#nditm_chilnum").val(task.nditm_chilnum); //add
+  taskEditor.find("#parenum").val(task.parenum); //add
+  taskEditor.find("#chilnum").val(task.chilnum); //add
   taskEditor.find("#copy_itemcode").val(task.copy_itemcode); //add
-  taskEditor.find("#itms_id").val(task.itms_id); //add
-  taskEditor.find("#locas_id").val(task.locas_id); //add
+  taskEditor.find("#itm_id").val(task.itm_id); //add
+  taskEditor.find("#loca_id").val(task.loca_id); //add
   taskEditor.find("#trangantts_id").val(task.trangantts_id); //add
   //
   taskEditor.find("#processseq").val(task.processseq);
@@ -450,7 +452,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   if (task.endIsMilestone)
     taskEditor.find("#endIsMilestone").attr("checked", true);
 
-  taskEditor.find("#opeitm_duration").val(task.opeitm_duration);
+  taskEditor.find("#duration").val(task.duration);
   taskEditor.find("#start").val(new Date(task.start).format()).attr("readOnly", true).attr("disabled", true);
   taskEditor.find("#end").val(new Date(task.end).format()).attr("readOnly", true).attr("disabled", true);
   taskEditor.find("#org_start").val(new Date(task.org_start).format()).attr("readOnly", true).attr("disabled", true); //add v2
@@ -474,11 +476,11 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
   } else {
 
     //bind dateField on dates
-    //taskEditor.find("#start").click(function () {  //blk #opeitm_durationで対応
+    //taskEditor.find("#start").click(function () {  //blk #durationで対応
      // $(this).dateField({
     //    inputField:$(this),
     //    callback:  function (date) {
-    //      var dur = parseInt(taskEditor.find("#opeitm_duration").val());
+    //      var dur = parseInt(taskEditor.find("#duration").val());
     //      date.clearTime();
     //      taskEditor.find("#end").val(new Date(computeEndByDuration(date.getTime(), dur)).format());
     //    }
@@ -494,18 +496,18 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
     //      end.setHours(23, 59, 59, 999);
 //
     //      if (end.getTime() < start.getTime()) {
-    //        var dur = parseInt(taskEditor.find("#opeitm_duration").val());
+    //        var dur = parseInt(taskEditor.find("#duration").val());
     //        start = incrementDateByWorkingDays(end.getTime(), -dur);
     //        taskEditor.find("#start").val(new Date(computeStart(start)).format());
     //      } else {
-    //        taskEditor.find("#opeitm_duration").val(recomputeDuration(start.getTime(), end.getTime()));  
+    //        taskEditor.find("#duration").val(recomputeDuration(start.getTime(), end.getTime()));  
     //      }
     //    }
     //  });
     //});
 
-    //bind blur on opeitm_duration
-//    taskEditor.find("#opeitm_duration").change(function () {
+    //bind blur on duration
+//    taskEditor.find("#duration").change(function () {
 //      var start = Date.parseString(taskEditor.find("#start").val());
 //      var el = $(this);
 //      var dur = parseInt(el.val());
@@ -513,8 +515,8 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
  //     el.val(dur);
  //     taskEditor.find("#end").val(new Date(computeEndByDuration(start.getTime(), dur)).format());
  //   });
-    //bind blur on opeitm_duration   blk modify
-    taskEditor.find("#opeitm_duration").change(function () {
+    //bind blur on duration   blk modify
+    taskEditor.find("#duration").change(function () {
       var end = Date.parseString(taskEditor.find("#end").val());
       var el = $(this);
       var dur = parseInt(el.val());
@@ -546,7 +548,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
 		var loca_code =  el.val();
 		jQuery.ajaxSetup({ async: false }); 	
 		jQuery.getJSON("/screen/code_to_name",{"chgname":"loca_code","chgval":loca_code,"loca_code":loca_code,"code_to_name_oper":"add","jqgrid_id":"pop_locas"},
-												function(data){taskEditor.find("#loca_name").val(data.loca_name);taskEditor.find("#locas_id").val(data.loca_id);});
+												function(data){taskEditor.find("#loca_name").val(data.loca_name);taskEditor.find("#loca_id").val(data.loca_id);});
 		jQuery.ajaxSetup({ async: true }); 
 	});
 
@@ -555,7 +557,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
 		var itm_code =  el.val();
 		jQuery.ajaxSetup({ async: false }); 	
 		jQuery.getJSON("/screen/code_to_name",{"chgname":"itm_code","chgval":itm_code,"itm_code":itm_code,"code_to_name_oper":"add","jqgrid_id":"pop_itms"},
-												function(data){taskEditor.find("#itm_name").val(data.itm_name);taskEditor.find("#itms_id").val(data.itm_id);});
+												function(data){taskEditor.find("#itm_name").val(data.itm_name);taskEditor.find("#itm_id").val(data.itm_id);});
 		jQuery.ajaxSetup({ async: true }); 
 	});
 
@@ -593,26 +595,26 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       task.itm_code = taskEditor.find("#itm_code").val();
       task.loca_name = taskEditor.find("#loca_name").val();
       task.loca_code = taskEditor.find("#loca_code").val();
-      task.nditm_parenum = taskEditor.find("#nditm_parenum").val();
-      task.nditm_chilnum = taskEditor.find("#nditm_chilnum").val();
+      task.parenum = taskEditor.find("#parenum").val();
+      task.chilnum = taskEditor.find("#chilnum").val();
       task.prdpurshp = taskEditor.find("#prdpurshp").val();
-      task.sno = taskEditor.find("#sno").val();
-      task.qty = taskEditor.find("#qty").val();
-      task.qty_sch = taskEditor.find("#qty_sch").val();
-      task.qty_ord = taskEditor.find("#qty_ord").val();
-      task.qty_inst = taskEditor.find("#qty_inst").val();
-      task.qty_stk = taskEditor.find("#qty_stk").val();
+     // task.sno = taskEditor.find("#sno").val();
+     // task.qty = taskEditor.find("#qty").val();
+     // task.qty_sch = taskEditor.find("#qty_sch").val();
+     // task.qty_ord = taskEditor.find("#qty_ord").val();
+     // task.qty_inst = taskEditor.find("#qty_inst").val();
+     // task.qty_stk = taskEditor.find("#qty_stk").val();
 
-      task.depends = taskEditor.find("#depends").val();
+    //  task.depends = taskEditor.find("#depends").val();
       task.description = taskEditor.find("#description").val();
       task.copy_itemcode = taskEditor.find("#copy_itemcode").val();
-	  task.itms_id = taskEditor.find("#itms_id").val();
-	  task.locas_id = taskEditor.find("#locas_id").val();
-	  task.trangantts_id = taskEditor.find("#trangantts_id").val();
+	//  task.itm_id = taskEditor.find("#itm_id").val();
+	//  task.loca_id = taskEditor.find("#loca_id").val();
+	//  task.trangantts_id = taskEditor.find("#trangantts_id").val();
       task.processseq = taskEditor.find("#processseq").val();
       task.priority = taskEditor.find("#priority").val();
       task.progress = parseFloat(taskEditor.find("#progress").val());
-      task.opeitm_duration = parseInt(taskEditor.find("#opeitm_duration").val());
+      task.duration = parseInt(taskEditor.find("#duration").val());
       task.startIsMilestone = taskEditor.find("#startIsMilestone").is(":checked");
       task.endIsMilestone = taskEditor.find("#endIsMilestone").is(":checked");
 

@@ -30,26 +30,26 @@ function TaskFactory() {
   /**
    * Build a new Task
    */
-  /*this.build = function(id, processseq, priority, level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum) { */
-	this.build = function(id, copy_itemcode,processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id){
+  /*this.build = function(id, processseq, priority, level, start, end,duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,chilnum) { */
+	this.build = function(id, copy_itemcode,processseq,priority,level, start,end, duration,mlevel,loca_code,loca_name,itm_code,itm_name,parenum,chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itm_id,loca_id,trangantts_id){
     // Set at beginning of day
     //var adjusted_end = computeEnd(end);    //blk modify
-    //var calculated_start = computeStartByDuration(adjusted_end, opeitm_duration); blk modify
+    //var calculated_start = computeStartByDuration(adjusted_end, duration); blk modify
 
-   /* return new Task(id, processseq, priority, level, start, end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,nditm_chilnum); */
-   return new Task(id, copy_itemcode,processseq,priority,level, start, end,opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id);
+   /* return new Task(id, processseq, priority, level, start, end, duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_paenum,chilnum); */
+   return new Task(id, copy_itemcode,processseq,priority,level, start, end,duration,mlevel,loca_code,loca_name,itm_code,itm_name,parenum,chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itm_id,loca_id,trangantts_id);
   };
 
 }
 
-function Task(id,copy_itemcode, processseq,priority,level, start,end, opeitm_duration,mlevel,loca_code,loca_name,itm_code,itm_name,nditm_parenum,nditm_chilnum,
-                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itms_id,locas_id,trangantts_id) {
+function Task(id,copy_itemcode, processseq,priority,level, start,end, duration,mlevel,loca_code,loca_name,itm_code,itm_name,parenum,chilnum,
+                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end,itm_id,loca_id,trangantts_id) {
   this.id = id;
   this.copy_itemcode = copy_itemcode;
-  this.itms_id = itms_id;
-  this.locas_id = locas_id;
+  this.itm_id = itm_id;
+  this.loca_id = loca_id;
   this.trangantts_id = trangantts_id;
   this.processseq = processseq;
   this.priority = priority;
@@ -57,7 +57,7 @@ function Task(id,copy_itemcode, processseq,priority,level, start,end, opeitm_dur
   this.status = "STATUS_UNDEFINED";
 
   this.start = start;
-  this.opeitm_duration = opeitm_duration;
+  this.duration = duration;
   this.end = end;
 
   this.mlevel = mlevel;
@@ -65,8 +65,8 @@ function Task(id,copy_itemcode, processseq,priority,level, start,end, opeitm_dur
   this.loca_name = loca_name;
   this.itm_code = itm_code;
   this.itm_name = itm_name;
-  this.nditm_parenum = nditm_parenum;
-  this.nditm_chilnum = nditm_chilnum;
+  this.parenum = parenum;
+  this.chilnum = chilnum;
   
   this.prdpurshp = prdpurshp;
   this.sno = sno;
@@ -135,7 +135,7 @@ Task.prototype.setPeriod = function (start, end) {
   var originalPeriod = {
     start: this.start,
     end:  this.end,
-    opeitm_duration: this.opeitm_duration
+    duration: this.duration
   };
 
   //console.debug("setStart",date,date instanceof Date);
@@ -184,7 +184,7 @@ Task.prototype.setPeriod = function (start, end) {
     somethingChanged = true;
   }
 
-  // this.opeitm_duration = recomputeDuration(this.start, this.end);  blk modify
+  // this.duration = recomputeDuration(this.start, this.end);  blk modify
 
   //profilerSetPer.stop();
 
@@ -201,12 +201,12 @@ Task.prototype.setPeriod = function (start, end) {
   var todoOk = true;
 
   //I'm restricting
-  var deltaPeriod = originalPeriod.opeitm_duration - this.opeitm_duration;
+  var deltaPeriod = originalPeriod.duration - this.duration;
   var restricting = deltaPeriod > 0;
   var restrictingStart = restricting && (originalPeriod.start < this.start);
   var restrictingEnd = restricting && (originalPeriod.end > this.end);
 
-  //console.debug( " originalPeriod.opeitm_duration "+ originalPeriod.opeitm_duration +" deltaPeriod "+deltaPeriod+" "+"restricting "+restricting);
+  //console.debug( " originalPeriod.duration "+ originalPeriod.duration +" deltaPeriod "+deltaPeriod+" "+"restricting "+restricting);
 
   if (restricting) {
     //loops children to get boundaries
@@ -232,7 +232,7 @@ Task.prototype.setPeriod = function (start, end) {
       this.start = Math.min(bs, this.start);
     }
 
-     // this.opeitm_duration = recomputeDuration(this.start, this.end);  blk modify
+     // this.duration = recomputeDuration(this.start, this.end);  blk modify
   } else {
 
     //check global boundaries
@@ -307,14 +307,14 @@ Task.prototype.moveTo = function (start, ignoreMilestones) {
   //set a legal start
   start = computeStart(start);
 
-  var end = computeEndByDuration(start, this.opeitm_duration);
+  var end = computeEndByDuration(start, this.duration);
   end = this.end;  // blk modify
 
   if (this.start != start || this.start != wantedStartMillis) {
-    //in case of end is milestone it never changes, but recompute opeitm_duration
+    //in case of end is milestone it never changes, but recompute duration
     if (!ignoreMilestones && this.endIsMilestone) {
       end = this.end;
-    //  this.opeitm_duration = recomputeDuration(start, end);   blk modify
+    //  this.duration = recomputeDuration(start, end);   blk modify
     }
     this.start = start;
     this.end = end;

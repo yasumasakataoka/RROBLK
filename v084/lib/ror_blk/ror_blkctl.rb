@@ -773,32 +773,32 @@
 	end
 
     def vproc_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0["id"]} and Expiredate > current_date order by opeitms_id ")
+		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0["id"]} and Expiredate > current_date  ")
 		if rnditms.size > 0 then
-			ngantts = []
+			ngantts = []  ###viewの内容なので　itm_id  loca_id
 			mlevel = n0[:mlevel] + 1
 			rnditms.each.with_index(1)  do |i,cnt|
-				strsql = "select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0["priority"]} and locas_id = #{i["locas_id_nditm"]} 
-												and processseq = #{i["processseq_nditm"]} and  Expiredate > current_date  order by processseq desc"
-				chilopeitm = ActiveRecord::Base.connection.select_one(strsql)
+				##strsql = "select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0["priority"]} and locas_id = #{i["locas_id_nditm"]} 
+				##								and processseq = #{i["processseq_nditm"]} and  Expiredate > current_date  order by processseq desc"
+				##chilopeitm = ActiveRecord::Base.connection.select_one(strsql)
 				###if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
-				if chilopeitm 
-					chil_loca = chilopeitm["locas_id"]
-					prdpurshp = chilopeitm["prdpurshp"] 
-					processseq = chilopeitm["processseq"] 
-					priority = chilopeitm["priority"]
-					opeitms_id = chilopeitm["id"]
-				else
-					chil_loca = 0
-					prdpurshp = "end"  ###endは使用しなくなった。　後で修正
-					processseq = 999
-				end
-				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itms_id=>i["itms_id_nditm"],:prd_pur_shp=>prdpurshp,
-		               :locas_id=>chil_loca,:locas_id_to=>r0[:locas_id],:opeitms_id =>opeitms_id,
-					   :priority=>priority,:processseq=>processseq,
-					   :endtime=>endtime,:duration=>chilopeitm["duration"],
+				##if chilopeitm 
+				##	chil_loca = chilopeitm["locas_id"]
+				##	prdpurshp = chilopeitm["prdpurshp"] 
+				##	processseq = chilopeitm["processseq"] 
+				##	priority = chilopeitm["priority"]
+				##	opeitms_id = chilopeitm["id"]
+				##else
+				##	chil_loca = 0
+				##	prdpurshp = "end"  ###endは使用しなくなった。　後で修正
+				##	processseq = 999
+				##end
+				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i["itms_id_nditm"],:prd_pur_shp=>"shp",
+		               :loca_id=>i["locas_id_nditm"],:loca_id_to=>r0[:locas_id],:opeitms_id =>i["opeitms_id"],
+					   :priority=>nil,:processseq=>i["processseq_nditm"],
+					   :endtime=>endtime,:duration=>(i["duration"]||=0),
 					   :nditm_consumtype=>i["consumtype"],:nditm_consumauto=>i["consumauto"],
-					   :nditm_parenum=>i["parenum"],:nditm_chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}  ###
+					   :parenum=>i["parenum"],:chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}  ###
 			end 
 		else
 			ngantts  = [{}]	   
@@ -810,9 +810,9 @@
 																			and Priority = #{r0["priority"]} and processseq < #{r0["processseq"]}  order by   processseq desc")
       if rec
 	       ngantts = []
-           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itms_id=>rec["itms_id"],:locas_id=>rec["locas_id"],:opeitms_id=>rec["id"],
-		   :locas_id_to=>r0["locas_id"],
-		   :endtime=>endtime,:prd_pur_shp=>rec["prdpurshp"],:duration=>rec["duration"],:nditm_parenum=>1,:nditm_chilnum=>1,
+           ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec["itms_id"],:loca_id=>rec["locas_id"],:opeitms_id=>rec["id"],
+		   :loca_id_to=>r0["locas_id"],
+		   :endtime=>endtime,:prd_pur_shp=>rec["prdpurshp"],:duration=>rec["duration"],:parenum=>rec["parenum"],:chilnum=>rec["chilnum"],
 		   :autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],:autoord_p=>rec["autoord_p"],:autoinst_p=>rec["autoinst_p"],
 		   :safestkqty=>rec["safestkqty"],:id=>"opeitms_"+rec["id"].to_s,:priority=>rec["priority"],:processseq=>rec["processseq"],
             :strdate => proc_get_strdate(endtime ,rec["duration"],"day",nil)}  ###基準日　期間　タイプ　休日考慮
@@ -950,7 +950,7 @@
     def proc_get_tree_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック  itms_idは必須
         n0 = ngantts.shift
 	    if n0.size > 0  ###子部品がいなかったとき{}になる。
-            r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where itms_id = #{n0[:itms_id]}  
+            r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where itms_id = #{n0[:itm_id]}  
 																and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > current_date")
             if r0 then
                 strtime = proc_get_chil_contents(n0,r0)
@@ -970,7 +970,7 @@
 		ngantts = []
 		n0 = {}
 		r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{opeitms_id} ")
-		n0[:itms_id] = r0["itms_id"]
+		n0[:itm_id] = r0["itms_id"]
 		n0[:processseq] = r0["processseq"]
 		n0[:priority] = r0["priority"]
 		n0[:seq] = "000"
@@ -987,27 +987,27 @@
         return ngantts
     end
 
-    def proc_get_chil_contents(n0,r0)   ##
+    def proc_get_chil_contents(n0,r0)   ##n0[:itm_id] r0[:itms_id]
         ##logger.debug "n0:#{n0}"
 	    ##logger.debug "r0:#{r0}"
         bgantt = {}
-        itm = ActiveRecord::Base.connection.select_one("select * from  itms where id = #{n0[:itms_id]} ")
-	    if n0[:locas_id]
-            loca = ActiveRecord::Base.connection.select_one("select * from locas where id = #{n0[:locas_id]} ")
+        itm = ActiveRecord::Base.connection.select_one("select * from  itms where id = #{n0[:itm_id]} ")
+	    if n0[:loca_id]
+            loca = ActiveRecord::Base.connection.select_one("select * from locas where id = #{n0[:loca_id]} ")
 	       else
 	        rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{r0["itms_id"]} and Expiredate > current_date and Priority = #{r0["priority"]}   order by   processseq desc")
 	        loca = ActiveRecord::Base.connection.select_one("select * from locas  where id = #{rec["locas_id"]} ")
         end
 	    qty = if n0[:seq].size > 4 then (@bgantts[n0[:seq][0..-4]][:qty] ||= 1) else  (@bgantts["000"][:qty] ||= 1) end
-	    new_qty = qty / (n0[:nditm_parenum]||=1) * (n0[:nditm_chilnum]||=1)
+	    new_qty = qty / (n0[:parenum]||=1) * (n0[:chilnum]||=1)
 		###:autocreate_ord,:autocreate_instは画面にはセットしない。
         bgantt[n0[:seq]] = {:mlevel=>n0[:mlevel],:itm_code=>itm["code"],:itm_name=>itm["name"],:loca_code=>loca["code"],:loca_name=>loca["name"],
-								:opeitm_duration=>(r0["duration"]||=1),:assigs=>"",:endtime=>n0[:endtime],:endtime_est=>n0[:endtime],
+								:duration=>(r0["duration"]||=1),:assigs=>"",:endtime=>n0[:endtime],:endtime_est=>n0[:endtime],
 								 :starttime=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),
 								 :starttime_est=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),:depends=>"",
-								 :nditm_parenum=>n0[:nditm_parenum]||=1,:nditm_chilnum=>n0[:nditm_chilnum]||=1,:prdpurshp=>r0["prdpurshp"],
+								 :parenum=>n0[:parenum]||=1,:chilnum=>n0[:chilnum]||=1,:prdpurshp=>r0["prdpurshp"],
 								 :nditm_consumtype=>n0[:nditm_consumtype],:nditm_consumauto=>n0[:nditm_consumauto],
-                                 :subtblid=>"opeitms_"+r0["id"].to_s,:id=>n0[:id],:opeitms_id=>r0["id"],:itms_id=>r0["itms_id"],
+                                 :subtblid=>"opeitms_"+r0["id"].to_s,:id=>n0[:id],:opeitms_id=>r0["id"],:itm_id=>r0["itms_id"],:loca_id=>r0["locas_id"],
 								 :processseq=>r0["processseq"],:priority=>r0["priority"],:qty=>new_qty,:qty_src=>new_qty}
         @bgantts.merge! bgantt
 	    @min_time = bgantt[n0[:seq]][:starttime] if (@min_tim||="2099/12/31".to_time) > bgantt[n0[:seq]][:starttime]
@@ -1028,12 +1028,12 @@
                 if  value[:depends] == ""
 		    	    if @bgantts[key][:starttime_est]  <  today
                        @bgantts[key][:starttime_est]  =  today		   
-                       @bgantts[key][:endtimeest]  =   proc_get_strdate(@bgantts[key][:starttime_est], value[:opeitm_duration]*-1,"day",nil)    ###稼働日考慮今なし
+                       @bgantts[key][:endtimeest]  =   proc_get_strdate(@bgantts[key][:starttime_est], value[:duration]*-1,"day",nil)    ###稼働日考慮今なし
                     end					  
 			    end
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est] ) < @bgantts[key][:endtime_est]
                     @bgantts[key.to_s[0..-4].to_sym][:starttime_est]  =   @bgantts[key][:endtime_est]   ###稼働日考慮今なし
-                    @bgantts[key.to_s[0..-4].to_sym][:endtime_est] =  proc_get_strdate(@bgantts[key.to_s[0..-4].to_sym][:starttime_est],@bgantts[key.to_s[0..-4].to_sym][:opeitm_duration]*-1,"day",nil)
+                    @bgantts[key.to_s[0..-4].to_sym][:endtime_est] =  proc_get_strdate(@bgantts[key.to_s[0..-4].to_sym][:starttime_est],@bgantts[key.to_s[0..-4].to_sym][:duration]*-1,"day",nil)
 				    ##p key
 				    ##p @bgantts[key]
 			    end
@@ -1043,7 +1043,7 @@
 		    if key.to_s.size > 3
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est]  ) > @bgantts[key][:endtime_est]  			   
                       @bgantts[key][:endtime_est]  =   @bgantts[key.to_s[0..-4].to_sym][:starttime_est]    ###稼働日考慮今なし
-                      @bgantts[key][:starttime_est] =  proc_get_strdate(@bgantts[key][:endtime_est],value[:opeitm_duration] ,"day",nil)
+                      @bgantts[key][:starttime_est] =  proc_get_strdate(@bgantts[key][:endtime_est],value[:duration] ,"day",nil)
                 end					  
             end
         end
@@ -2009,9 +2009,9 @@
 										else
 											ActiveRecord::Base.connection.select_value("select id from opeitms where itms_id = #{rec["itms_id"]} and priority = 999 and processseq = 999")
 										end,
-							:opeitm_duration=>"",:assigs=>"",
-							:itms_id=>rec["itms_id"],
-							:locas_id=>rec["locas_id"],
+							:duration=>"",:assigs=>"",
+							:itm_id=>rec["itms_id"],
+							:loca_id=>rec["locas_id"],
 							:endtime=>rec["duedate"],:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
 							:autoord_p=>rec["autoord_p"],:autoinst_p=>rec["autoinst_p"],
 							:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
@@ -2020,7 +2020,7 @@
 							:depends=>""}
 	    ngantts = []
         ngantts << {:seq=>"001",:mlevel=>1,
-					:itms_id=>rec["itms_id"],:locas_id=>rec["locas_id"],
+					:itm_id=>rec["itms_id"],:loca_id=>rec["locas_id"],
 					:processseq=>rec["processseq"],:priority=>rec["priority"],:prdpurshp=>["prdpurshp"],
 					:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
 					:autoord_p=>rec["autoord_p"],:autoinst_p=>rec["autoinst_p"],:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
@@ -2033,7 +2033,7 @@
         @bgantts[:"000"][:starttime] = if @min_time < Time.now then Time.now else @min_time end
         prv_resch_trn  ####再計算
         @bgantts[:"000"][:endtime] = @bgantts[:"001"][:endtime] 
-        @bgantts[:"000"][:opeitm_duration] = " #{(@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]}"
+        @bgantts[:"000"][:duration] = " #{(@bgantts[:"000"][:endtime]  - @bgantts[:"000"][:starttime] ).divmod(24*60*60)[0]}"
 	    tmp_gantt = {}
 		trn_ids = []
         @bgantts.sort.each  do|key,value|   ###依頼されたオーダ等をopeitms,nditmsを使用してgantttableに展開
@@ -2045,9 +2045,9 @@
 			:opeitms_id=>value[:opeitms_id],
 			:strdate=>value[:starttime],
 			:duedate=>value[:endtime],
-            :parenum=>value[:nditm_parenum],:chilnum=>value[:nditm_chilnum],:consumtype=>value[:nditm_consumtype],
+            :parenum=>value[:parenum],:chilnum=>value[:chilnum],:consumtype=>value[:nditm_consumtype],
 			:autocreate_ord=>value["autocreate_ord"],:autocreate_inst=>value["autocreate_inst"],:autoord_p=>value["autoord_p"],:autoinst_p=>value["autoinst_p"],
-			:consumauto=>value[:nditm_consumauto],
+			:consumauto=>value[:nditm_consumauto],:itm_id=>value[:itm_id],:loca_id=>value[:loca_id],
 			:qty=>value[:qty],
 			:qty_src=>value[:qty_src],
 			:dependon=>value[:depends],
@@ -2272,7 +2272,7 @@
 				newgantt[:qty] = 0 if newgantt[:qty] < 0  	
 				newgantt[:qty_src] = rec["qty"]
 				newgantt[:duedate] = rec["duedate"]	
-				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["opeitm_duration"],"day",nil)
+				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["duration"],"day",nil)
 				proc_tbl_edit_arel("trngantts",newgantt,"id = #{gantt["trngantt_id"]}") ##trnganttsのみ変更
 			else  ###2階層以降　
 				key = 	if gantt["trngantt_key"] == "001" then  "000" else gantt["trngantt_key"][0..-4]	end
@@ -2282,7 +2282,7 @@
 				pare_gantt = ActiveRecord::Base.connection.select_one(strsql)
 				newgantt[:qty] = pare_gantt["qty"] * gantt["trngantt_chilnum"] / gantt["trngantt_parenum"]
 				newgantt[:duedate] = proc_get_strdate(pare_gantt["strdate"],-1,"day",nil)  ### 構成を作成するときと合わすこと	
-				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["opeitm_duration"],"day",nil)
+				newgantt[:strdate] = proc_get_strdate(newgantt[:duedate],gantt["duration"],"day",nil)
 				if key == "000" ### key 親のkey
 					case 
 					    when  old_qty > newgantt[:qty] ### 減数された時
