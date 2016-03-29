@@ -2,7 +2,7 @@
 class   GanttController  <  ScreenController
 ###同一priorityのもののみ抽出
     before_filter :authenticate_user!  
-    respond_to :html ,:xml ##  将来　タイトルに変更
+    respond_to :html ,:xml ,:json##  将来　タイトルに変更
     def index
 	    scr_code = params[:screen_code].split("_")[1]
         case params[:screen_code]
@@ -23,11 +23,15 @@ class   GanttController  <  ScreenController
 		case mst_code
 		    when "itms"
 		     ###itm = ActiveRecord::Base.connection.select_one("select * from itms where id = '#{id}'  ")
-             rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{id} and Expiredate > current_date   order by priority desc, processseq desc,Expiredate ")
+             rec = ActiveRecord::Base.connection.select_one("select * from r_opeitms where opeitm_itm_id = #{id} and opeitm_Expiredate > current_date
+																order by opeitm_priority desc, opeitm_processseq desc,opeitm_Expiredate ")
 		end
         if rec then 
-            ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec["itms_id"],:loca_id=>rec["locas_id"],
-								:processseq=>rec["processseq"],:priority=>rec["priority"],:endtime=>time_now,:id=>"opeitms_"+rec["id"].to_s}
+            ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec["opeitm_itm_id"],:loca_id=>rec["opeitm_loca_id"],:opeitms_id=>rec["id"],
+								:itm_code=>rec["itm_code"],:itm_name=>rec["itm_name"],
+								:loca_code=>rec["loca_code"],:loca_name=>rec["loca_name"],
+								:parenum=>1,:chilnum=>1,:duration=>rec["opeitm_duration"],
+								:processseq=>rec["opeitm_processseq"],:priority=>rec["opeitm_priority"],:endtime=>time_now,:id=>"opeitms_"+rec["id"].to_s}
             cnt = 0
             @bgantts = {}
             @bgantts["000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>nil,:depends=>"",:id=>"000"}
@@ -39,7 +43,6 @@ class   GanttController  <  ScreenController
           else
             return ""
         end
-     
         @bgantts["000"][:starttime] = Time.now
         prv_resch  ####再計算
         @bgantts["000"][:endtime] = @bgantts["001"][:endtime] 
@@ -136,7 +139,7 @@ class   GanttController  <  ScreenController
 	def update_opeitm_from_gantt(copy_opeitm,value ,command_r)
 		if copy_opeitm
 			copy_opeitm.each do |k,v|
-				command_r["opeitm_#{k}".to_sym] = v if k =~ /^opeitm_/
+				command_r["#{k}".to_sym] = v if k =~ /^opeitm_/
 			end
 		end
 		command_r[:opeitm_itm_id] = value[:itm_id]
@@ -151,22 +154,30 @@ class   GanttController  <  ScreenController
 		command_r[:opeitm_person_id_upd] = command_r[:sio_user_code] 
         command_r[:opeitm_expiredate] = Time.parse("2099/12/31")
 		yield
-		proc_simple_sio_insert command_r
-		opeitm = ActiveRecord::Base.connection.select_one("select * from opeitms where id = #{command_r[:id]} ")
+		proc_simple_sio_insert command_r  ###重複チェックは　params[:tasks][@tree[key]][:processseq] > value[:processseq]　が確定済なので不要
 	end
 	def update_nditm_from_gantt(key,value ,command_r)
-		pare_opeitm_id = params[:tasks][@tree[key]][:opeitms_id]
+		strsql = "select id from opeitms where itms_id = #{params[:tasks][@tree[key]][:itm_id]} and locas_id = #{params[:tasks][@tree[key]][:loca_id]} and 
+					processseq = #{params[:tasks][@tree[key]][:processseq]} and priority = #{params[:tasks][@tree[key]][:priority]}"
+		pare_opeitm_id = ActiveRecord::Base.connection.select_value(strsql)
 		if pare_opeitm_id
 			###削除されてないか、再度確認
 			##pare_opeitm_id = ActiveRecord::Base.connection.select_value("select id from opeitms where id = #{pare_opeitm_id} ")
 			##if pare_opeitm_id
-				yield
-				update_nditm_rec(pare_opeitm_id,value ,command_r)
+			yield
+			update_nditm_rec(pare_opeitm_id,value ,command_r)
 			##else
-			##	@ganttreturn[key]  = {:itm_name=>"opeitm not exists line #{__LINE__} ,opeitm_id = #{pare_opeitm_id} "}
+			##	@ganttdata[key]  = {:itm_name=>"opeitm not exists line #{__LINE__} ,opeitm_id = #{pare_opeitm_id} "}
 			##end
 		else
-			@ganttreturn[key] = {:itm_name=>"opeitm is null line #{__LINE__} ,opeitm_id = #{pare_opeitm_id} "}
+			@ganttdata[key][:itm_name] = @err = "opeitm is null line #{__LINE__} ,opeitm_id = #{pare_opeitm_id} "
+		end
+	end
+	def chk_alreadt_exists_nditm(command_r)
+		strsql = "select 1 from nditms where  opeitms_id = #{command_r[:nditm_opeitm_id]} and  itm_id_nditm = #{command_r[:nditm_itm_id_nditm]} and
+					processseq_nditm = #{command_r[:nditm_processseq_nditm]} and   locas_id_nditm  = #{command_r[:nditm_loca_id_nditm]} " 
+		if ActiveRecord::Base.connection.select_one (strsql)
+			@ganttdata[key][:itm_name] = @err = " ??? !!! already exists !!!"
 		end
 	end
 	def update_nditm_rec(pare_opeitm_id,value ,command_r)
@@ -183,14 +194,13 @@ class   GanttController  <  ScreenController
 				command_r[:nditm_duration] = value[:duration]
 				command_r[:nditm_person_id_upd] = command_r[:sio_user_code] 
 				command_r[:nditm_expiredate] = Time.parse("2099/12/31")
-				command_r[:nditm_id] = command_r[:id] = value[:nditms_id]
-				debugger
-				proc_simple_sio_insert command_r
+				chk_alreadt_exists_nditm(command_r) if command_r[:sio_classname] =~ /_add_/
+				proc_simple_sio_insert command_r  if @err == "no"					
 			else
-				@ganttreturn[key] = {:loca_code=>"???"}
+				@ganttdata[key][:loca_code] =  @err = "???"
 			end
 		else
-			@ganttreturn[key] = {:itm_cod =>"???"}
+			@ganttdata[key][:itm_code] = @err = "???" 
 		end
 	end
     def exits_opeitm_from_gantt(key,value ,command_r) ###画面の内容をcommand_r from gantt screen
@@ -208,7 +218,7 @@ class   GanttController  <  ScreenController
 				else
 					strsql = "select * from r_opeitms where itm_code = '#{value["copy_itemcode"]}' and loca_code = '#{value["loca_code"]}' and opeitm_processseq = #{value[:processseq]} " 
 					if ActiveRecord::Base.connection.select_one(strsql)
-						@ganttreturn[key] = {:priority=>"???"}  ###priority違いで同じものがいる。
+						@ganttdata[key][:priority] = "???"  ###priority違いで同じものがいる。
 					else
 						update_opeitm_from_gantt(copy_opeitm,value ,command_r) do
 							command_r[:sio_classname] = "_edit_opeitms_rec"
@@ -217,17 +227,17 @@ class   GanttController  <  ScreenController
 					end
 				end
 			else
-				@ganttreturn[key] = {:itm_name=>"logic error LINE : #{__LINE__}"} 
+				@ganttdata[key][:itm_name] = @err = "logic error LINE : #{__LINE__}"  
 			end
 		else
 			if copy_opeitm
 				update_opeitm_from_gantt(copy_opeitm,value ,command_r)do
-					ommand_r[:sio_classname] = "_add_opeitm_rec"
+					command_r[:sio_classname] = "_add_opeitm_rec"
 					command_r[:opeitm_id] = command_r[:id] = proc_get_nextval "opeitms_seq"
 				end
 				params[:tasks][key][:opeitms_id] = command_r[:opeitm_id]
 			else
-				@ganttreturn[key] = {:copy_itemcode=>"???"}
+				@ganttdata[key][:copy_itemcode] = @err = "???"
 			end
 		end
 	end
@@ -240,7 +250,7 @@ class   GanttController  <  ScreenController
 					command_r[:nditm_id] = command_r[:id] = value[:nditms_id]
 				end
 			else ###
-				@ganttreturn[key] = {:itm_name =>"logic error  line #{__LINE__} "}
+				@ganttdata[key][:itm_name] = @err = "logic error  line #{__LINE__} "
 			end
 		else
 			update_nditm_from_gantt(key,value ,command_r) do
@@ -257,21 +267,44 @@ class   GanttController  <  ScreenController
 					if (params[:tasks][@tree[key]][:priority] > value[:priority] and params[:tasks][@tree[key]][:priority] == 999) or params[:tasks][@tree[key]][:priority] == value[:priority]
 						exits_opeitm_from_gantt(key,value ,command_r)
 					else ###作業の一貫性
-						@ganttreturn[key] = {:priority=>"???"}
+						@ganttdata[key][:priority] = @err = "???"
 					end
 				else  ###seq error
-					@ganttreturn[key] = {:processseq=>"???"}
+					@ganttdata[key][:processseq] = @err = "???"
 				end
 			else   ###nditms追加
 				if  value[:processseq] == "999"  ###品目違いの時はprocessseq == 999
 					if (params[:tasks][@tree[key]][:priority] > value[:priority] and params[:tasks][@tree[key]][:priority] == 999) or params[:tasks][@tree[key]][:priority] == value[:priority]
-						exits_opeitm_from_gantt(key,value ,command_r)
-						exits_nditm_from_gantt(key,value ,command_r)
+						if value[:itm_id] != "" and value[:loca_id] != ""
+							strsql = "select id from opeitms where itms_id = #{value[:itm_id]} and locas_id = #{value[:loca_id]} and processseq = #{value[:processseq]} and priority = #{value[:priority]} "
+							ope = ActiveRecord::Base.connection.select_one(strsql)
+							if ope.nil?
+								strsql = "select * from r_opeitms where itm_code = '#{value["copy_itemcode"]}' and opeitm_processseq = 999 and opeitm_priority = 999 "
+								copy_opeitm = ActiveRecord::Base.connection.select_one(strsql)
+								if copy_opeitm
+									update_opeitm_from_gantt(copy_opeitm,value ,command_r)do
+										command_r[:sio_classname] = "_add_opeitm_rec"
+										command_r[:opeitm_id] = command_r[:id] = proc_get_nextval "opeitms_seq"
+									end
+									params[:tasks][key][:opeitms_id] = command_r[:opeitm_id]
+									command_r = {}
+									command_r[:sio_user_code] = @sio_user_code
+									command_r[:sio_session_counter] =   @sio_session_counter
+									exits_nditm_from_gantt(key,value ,command_r)	
+								else
+									@ganttdata[key][:copy_itemcode] = @err = "???"
+								end
+							else
+								exits_nditm_from_gantt(key,value ,command_r)
+							end
+						else
+							@ganttdata[key][:itm_code] = @ganttdata[key][:loca_code] = @err = "???"
+						end
 					else ###作業の一貫性
-						@ganttreturn[key] = {:priority=>"???"}
+						@ganttdata[key][:priority] = @err = "???"
 					end
 				else  ###seq error
-					@ganttreturn[key] = {:processseq=>"???"}
+					@ganttdata[key][:processseq] = @err = "???"
 				end
 			end
 		else
@@ -281,8 +314,9 @@ class   GanttController  <  ScreenController
 	def uploadgantt   ### trnは別		
 		ActiveRecord::Base.connection.begin_db_transaction()
         @sio_user_code =  ActiveRecord::Base.connection.select_value("select id from persons where email = '#{current_user[:email]}'")   ###########   LOGIN USER
-		sio_session_counter = user_seq_nextval
-		@ganttreturn = {}
+		@sio_session_counter = user_seq_nextval
+		@ganttdata = params[:tasks]
+		@err = "no"
 		@tree = {}   ###親のid
 		err = false
         params[:tasks].each do |key,value|
@@ -291,7 +325,7 @@ class   GanttController  <  ScreenController
 			end
 			command_r = {}
 			command_r[:sio_user_code] = @sio_user_code
-			command_r[:sio_session_counter] =   sio_session_counter
+			command_r[:sio_session_counter] =   @sio_session_counter
 			case value[:id] 
                 when  "000" then
                 ##top record
@@ -300,11 +334,11 @@ class   GanttController  <  ScreenController
 					if value[:itm_id] and  value[:processseq] =~ /[000-999]/ and value[:priority] =~ /[000-999]/   
 						chk_opeitm_nditm_from_gantt(key,value ,command_r)
 					else
-						if value[:itm_id].nil? then @ganttreturn[key] = {:itm_code=>"???"} end
-						if value[:processseq] !~ /[000-999]/  then @ganttreturn[key]  = {:processseq=>"???"} end
-						if value[:priority] !~ /[000-999]/ then @ganttreturn[key] = {:priority =>"???"} end
+						if value[:itm_id].nil? then @ganttdata[key][:itm_code] = @err= "???" end
+						if value[:processseq] !~ /[000-999]/  then @ganttdata[key][:processseq] = @err = "???"  end
+						if value[:priority] !~ /[000-999]/ then @ganttdata[key][:priority] = @err = "???" end
 					end
-                when /opeitms/   ###追加更新もある?
+                when /opeitms/   ###追加更新もある?\
 					params[:tasks][key][:opeitms_id] = value[:id].split("_")[1].to_i   
 					chk_opeitm_nditm_from_gantt(key,value ,command_r)
 				when /nditms/
@@ -315,7 +349,27 @@ class   GanttController  <  ScreenController
             end
         end
 		###画面のラインを削除された時	
-		ActiveRecord::Base.connection.commit_db_transaction()		
+		if @err == "no"
+			ActiveRecord::Base.connection.commit_db_transaction()
+			render :json=>'{"result":"ok"}'
+		else
+			## logger.debug  "#{Time.now} #{__LINE__} :#{@ganttdata} "
+			ActiveRecord::Base.connection.rollback_db_transaction()
+			strgantt = '{"tasks":['
+			@ganttdata.each  do|key,value|
+				strgantt << %Q&{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}",
+				"loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}",
+				"loca_id":"#{value[:loca_id]}","itm_id":"#{value[:itm_id]}",
+				"parenum":"#{value[:parenum]}","chilnum":"#{value[:chilnum]}","start":#{value[:start]},"duration":"#{value[:duration]}",
+				"end":#{value[:end]},"assigs":[],"depends":"#{value[:depends]}",
+				"processseq":"#{value[:processseq]}","priority":"#{value[:priority]}","prdpurshp":"#{value[:prdpurshp]}",
+				"level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},&
+			end
+        ## opeitmのsubtblidのopeitmは子のinsert用
+			@ganttdata = strgantt.chop + %Q|],"selectedRow":11,"deletedTaskIds":[],"canWrite":true,"canWriteOnParent":true }|
+			####@ganttdata= %Q%["aaa":"bbb"}%
+			render :json=>@ganttdata
+		end
 	end   
 	def prv_resch   ##本日を起点に再計算
         dp_id = 0

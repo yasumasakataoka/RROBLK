@@ -602,7 +602,7 @@
 		1
 	end
     def proc_get_cons_chil(opeitms_id)  ###工程の始まり=前工程の終わり
-		strsql = "select * from r_nditms where nditm_opeitm_id = #{opeitms_id}   and nditm_Expiredate > current_date  "  
+		strsql = "select * from r_nditms where nditm_opeitm_id = #{opeitms_id}   and nditm_Expiredate > current_date  order by itm_code"  
 		rnditms = ActiveRecord::Base.connection.select_all(strsql)
 		return rnditms
     end
@@ -772,50 +772,45 @@
 
 	end
 
-    def vproc_get_chil_itms(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{r0["id"]} and Expiredate > current_date  ")
+    def vproc_get_chil_itms(n0,endtime)  ###工程の始まり=前工程の終わり
+		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{n0[:opeitms_id]} and Expiredate > current_date  ")
 		if rnditms.size > 0 then
 			ngantts = []  ###viewの内容なので　itm_id  loca_id
 			mlevel = n0[:mlevel] + 1
 			rnditms.each.with_index(1)  do |i,cnt|
-				##strsql = "select * from opeitms where itms_id = #{i["itms_id_nditm"]} and priority = #{r0["priority"]} and locas_id = #{i["locas_id_nditm"]} 
-				##								and processseq = #{i["processseq_nditm"]} and  Expiredate > current_date  order by processseq desc"
-				##chilopeitm = ActiveRecord::Base.connection.select_one(strsql)
-				###if chilopeitm then chil_loca = chilopeitm[:opeitms_locas_id]  else chil_loca = 0 end
-				##if chilopeitm 
-				##	chil_loca = chilopeitm["locas_id"]
-				##	prdpurshp = chilopeitm["prdpurshp"] 
-				##	processseq = chilopeitm["processseq"] 
-				##	priority = chilopeitm["priority"]
-				##	opeitms_id = chilopeitm["id"]
-				##else
-				##	chil_loca = 0
-				##	prdpurshp = "end"  ###endは使用しなくなった。　後で修正
-				##	processseq = 999
-				##end
-				ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i["itms_id_nditm"],:prd_pur_shp=>"shp",
-		               :loca_id=>i["locas_id_nditm"],:loca_id_to=>r0[:locas_id],:opeitms_id =>i["opeitms_id"],
-					   :priority=>nil,:processseq=>i["processseq_nditm"],
-					   :endtime=>endtime,:duration=>(i["duration"]||=0),
+				chil_ope = vproc_get_ope_id_priority(i,n0)
+				if chil_ope
+					ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itm_id=>i["itms_id_nditm"],:prd_pur_shp=>"shp",
+		               :loca_id=>i["locas_id_nditm"],:loca_id_to=>n0[:loca_id],:opeitms_id =>chil_ope["id"],
+					   :priority=>chil_ope["priority"],:processseq=>i["processseq_nditm"],
+					   :endtime=>endtime,:duration=>(i["duration"]||=1),
 					   :nditm_consumtype=>i["consumtype"],:nditm_consumauto=>i["consumauto"],
 					   :parenum=>i["parenum"],:chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}  ###
+			   else
+					logger.debug "logic error opeitms missing "
+					raise
+			   end
 			end 
 		else
 			ngantts  = [{}]	   
 		end
 		return ngantts
     end
-    def proc_get_prev_process(n0,r0,endtime)  ###工程の始まり=前工程の終わり
-      rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{r0["itms_id"]} and Expiredate > current_date 
-																			and Priority = #{r0["priority"]} and processseq < #{r0["processseq"]}  order by   processseq desc")
+	def vproc_get_ope_id_priority(i,n0)
+		strsql = "select id,priority from opeitms where itms_id = #{i["itms_id_nditm"]} and locas_id = #{i["locas_id_nditm"]} and processseq = #{i["processseq_nditm"]} and priority = #{n0[:priority]} " 
+		ActiveRecord::Base.connection.select_one(strsql)
+	end
+    def vproc_get_prev_process(n0,endtime)  ###工程の始まり=前程の終わり
+      rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{n0[:itm_id]} and Expiredate > current_date 
+																			and Priority = #{n0[:priority]} and processseq < #{n0[:processseq]}  order by   processseq desc")
       if rec
 	       ngantts = []
            ngantts << {:seq=>(n0[:seq] + "000"),:mlevel=>n0[:mlevel]+1,:itm_id=>rec["itms_id"],:loca_id=>rec["locas_id"],:opeitms_id=>rec["id"],
-		   :loca_id_to=>r0["locas_id"],
-		   :endtime=>endtime,:prd_pur_shp=>rec["prdpurshp"],:duration=>rec["duration"],:parenum=>rec["parenum"],:chilnum=>rec["chilnum"],
+		   :loca_id_to=>n0[:loca_id],
+		   :endtime=>endtime,:prd_pur_shp=>rec["prdpurshp"],:duration=>(rec["duration"]||=1),:parenum=>rec["parenum"],:chilnum=>rec["chilnum"],
 		   :autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],:autoord_p=>rec["autoord_p"],:autoinst_p=>rec["autoinst_p"],
 		   :safestkqty=>rec["safestkqty"],:id=>"opeitms_"+rec["id"].to_s,:priority=>rec["priority"],:processseq=>rec["processseq"],
-            :strdate => proc_get_strdate(endtime ,rec["duration"],"day",nil)}  ###基準日　期間　タイプ　休日考慮
+            :strdate => proc_get_strdate(endtime ,(rec["duration"]||=1),"day",nil)}  ###基準日　期間　タイプ　休日考慮
 		else
           ngantts = [{}]		
       end
@@ -950,44 +945,36 @@
     def proc_get_tree_itms_locas ngantts ### bgantt 表示内容　ngantt treeスタック  itms_idは必須
         n0 = ngantts.shift
 	    if n0.size > 0  ###子部品がいなかったとき{}になる。
-            r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where itms_id = #{n0[:itm_id]}  
-																and processseq = #{n0[:processseq] ||= 999} and priority = #{n0[:priority] ||= 999} and Expiredate > current_date")
-            if r0 then
-                strtime = proc_get_chil_contents(n0,r0)
-                tmp = vproc_get_chil_itms(n0,r0,strtime)
-                ngantts.concat(tmp) if tmp[0].size > 0 
-                tmp = proc_get_prev_process(n0,r0,strtime)
-                ngantts.concat(tmp) if tmp[0].size > 0 
-              else
-                proc_get_chil_contents(n0,{})
-                logger.debug "where itms_id = #{n0[:itm_id]} and locas_id = #{n0[:loca_id]} and processseq = #{n0[:processseq]} and priority = #{n0[:priority]} and Expiredate > current_date"
-				raise
-            end
+            strtime = proc_get_chil_contents(n0)
+            tmp = vproc_get_chil_itms(n0,strtime)
+            ngantts.concat(tmp) if tmp[0].size > 0 
+            tmp = vproc_get_prev_process(n0,strtime)
+            ngantts.concat(tmp) if tmp[0].size > 0 
 	    end	
         return ngantts
     end  ##    
-    def proc_get_tree_under_opeitm opeitms_id
-		ngantts = []
-		n0 = {}
-		r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{opeitms_id} ")
-		n0[:itm_id] = r0["itms_id"]
-		n0[:processseq] = r0["processseq"]
-		n0[:priority] = r0["priority"]
-		n0[:seq] = "000"
-		n0[:endtime]  = Time.now
-		n0[:mlevel] = 0
-		ngantts << n0			
-		if r0 then
-            strtime = proc_get_chil_contents(n0,r0)
-            tmp = vproc_get_chil_itms(n0,r0,strtime)
-            ngantts.concat(tmp) if tmp[0].size > 0 
-            tmp = proc_get_prev_process(n0,r0,strtime)
-            ngantts.concat(tmp) if tmp[0].size > 0 
-         end
-        return ngantts
-    end
+    #def proc_get_tree_under_opeitm opeitms_id
+	#	ngantts = []
+	#	n0 = {}
+	#	r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{opeitms_id} ")
+	#	n0[:itm_id] = r0["itms_id"]
+	#	n0[:processseq] = r0["processseq"]
+	#	n0[:priority] = r0["priority"]
+	#	n0[:seq] = "000"
+	#	n0[:endtime]  = Time.now
+	#	n0[:mlevel] = 0
+	#	ngantts << n0			
+	#	if r0 then
+    #        strtime = proc_get_chil_contents(n0,r0)
+    #        tmp = vproc_get_chil_itms(n0,r0,strtime)
+    #        ngantts.concat(tmp) if tmp[0].size > 0 
+    #        tmp = proc_get_prev_process(n0,r0,strtime)
+    #        ngantts.concat(tmp) if tmp[0].size > 0 
+    #     end
+    #    return ngantts
+    #end
 
-    def proc_get_chil_contents(n0,r0)   ##n0[:itm_id] r0[:itms_id]
+    def proc_get_chil_contents(n0)   ##n0[:itm_id] r0[:itms_id]
         ##logger.debug "n0:#{n0}"
 	    ##logger.debug "r0:#{r0}"
         bgantt = {}
@@ -995,20 +982,20 @@
 	    if n0[:loca_id]
             loca = ActiveRecord::Base.connection.select_one("select * from locas where id = #{n0[:loca_id]} ")
 	       else
-	        rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{r0["itms_id"]} and Expiredate > current_date and Priority = #{r0["priority"]}   order by   processseq desc")
+	        rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{n0[:itm_id]} and Expiredate > current_date and Priority = #{n0[:priority]}   order by   processseq desc")
 	        loca = ActiveRecord::Base.connection.select_one("select * from locas  where id = #{rec["locas_id"]} ")
         end
 	    qty = if n0[:seq].size > 4 then (@bgantts[n0[:seq][0..-4]][:qty] ||= 1) else  (@bgantts["000"][:qty] ||= 1) end
 	    new_qty = qty / (n0[:parenum]||=1) * (n0[:chilnum]||=1)
 		###:autocreate_ord,:autocreate_instは画面にはセットしない。
         bgantt[n0[:seq]] = {:mlevel=>n0[:mlevel],:itm_code=>itm["code"],:itm_name=>itm["name"],:loca_code=>loca["code"],:loca_name=>loca["name"],
-								:duration=>(r0["duration"]||=1),:assigs=>"",:endtime=>n0[:endtime],:endtime_est=>n0[:endtime],
-								 :starttime=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),
-								 :starttime_est=>proc_get_strdate(n0[:endtime],(r0["duration"]||=1),"day",nil),:depends=>"",
-								 :parenum=>n0[:parenum]||=1,:chilnum=>n0[:chilnum]||=1,:prdpurshp=>r0["prdpurshp"],
+								:duration=>(n0[:duration]||=1),:assigs=>"",:endtime=>n0[:endtime],:endtime_est=>n0[:endtime],
+								 :starttime=>proc_get_strdate(n0[:endtime],(n0[:duration]||=1),"day",nil),
+								 :starttime_est=>proc_get_strdate(n0[:endtime],(n0[:duration]||=1),"day",nil),:depends=>"",
+								 :parenum=>n0[:parenum]||=1,:chilnum=>n0[:chilnum]||=1,:prdpurshp=>n0[:prdpurshp],
 								 :nditm_consumtype=>n0[:nditm_consumtype],:nditm_consumauto=>n0[:nditm_consumauto],
-                                 :subtblid=>"opeitms_"+r0["id"].to_s,:id=>n0[:id],:opeitms_id=>r0["id"],:itm_id=>r0["itms_id"],:loca_id=>r0["locas_id"],
-								 :processseq=>r0["processseq"],:priority=>r0["priority"],:qty=>new_qty,:qty_src=>new_qty}
+                                 :subtblid=>"opeitms_"+n0[:opeitms_id].to_s,:id=>n0[:id],:opeitms_id=>n0[:opeitms_id],:itm_id=>n0[:itm_id],:loca_id=>n0[:loca_id],
+								 :processseq=>n0[:processseq],:priority=>n0[:priority],:qty=>new_qty,:qty_src=>new_qty}
         @bgantts.merge! bgantt
 	    @min_time = bgantt[n0[:seq]][:starttime] if (@min_tim||="2099/12/31".to_time) > bgantt[n0[:seq]][:starttime]
         return bgantt[n0[:seq]][:starttime]
@@ -1028,7 +1015,7 @@
                 if  value[:depends] == ""
 		    	    if @bgantts[key][:starttime_est]  <  today
                        @bgantts[key][:starttime_est]  =  today		   
-                       @bgantts[key][:endtimeest]  =   proc_get_strdate(@bgantts[key][:starttime_est], value[:duration]*-1,"day",nil)    ###稼働日考慮今なし
+                       @bgantts[key][:endtimeest]  =   proc_get_strdate(@bgantts[key][:starttime_est], (value[:duration]||=1)*-1,"day",nil)    ###稼働日考慮今なし
                     end					  
 			    end
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est] ) < @bgantts[key][:endtime_est]
@@ -1043,7 +1030,7 @@
 		    if key.to_s.size > 3
                 if  (@bgantts[key.to_s[0..-4].to_sym][:starttime_est]  ) > @bgantts[key][:endtime_est]  			   
                       @bgantts[key][:endtime_est]  =   @bgantts[key.to_s[0..-4].to_sym][:starttime_est]    ###稼働日考慮今なし
-                      @bgantts[key][:starttime_est] =  proc_get_strdate(@bgantts[key][:endtime_est],value[:duration] ,"day",nil)
+                      @bgantts[key][:starttime_est] =  proc_get_strdate(@bgantts[key][:endtime_est],(value[:duration]||=1) ,"day",nil)
                 end					  
             end
         end
@@ -2019,12 +2006,14 @@
 							:qty_src=>rec["qty_src"],
 							:depends=>""}
 	    ngantts = []
+		r0 =  ActiveRecord::Base.connection.select_one("select * from  opeitms where id = #{@bgantts[:"000"][:opeitms_id]} ")
         ngantts << {:seq=>"001",:mlevel=>1,
 					:itm_id=>rec["itms_id"],:loca_id=>rec["locas_id"],
 					:processseq=>rec["processseq"],:priority=>rec["priority"],:prdpurshp=>["prdpurshp"],
 					:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
 					:autoord_p=>rec["autoord_p"],:autoinst_p=>rec["autoinst_p"],:autocreate_ord=>rec["autocreate_ord"],:autocreate_inst=>rec["autocreate_inst"],
-					:endtime=>rec["duedate"],:id=>"000"}
+					:endtime=>rec["duedate"],:id=>"000",
+					:duration=>(r0["duration"]||=1),:subtblid=>"opeitms_"+r0["id"].to_s,:opeitms_id=>r0["id"]}
         until ngantts.size == 0
             cnt += 1
             ngantts = proc_get_tree_itms_locas ngantts
@@ -2132,7 +2121,6 @@
 				end
 			end
 		else
-			debugger
 			case str_gantt_sch["trngantt_orgtblname"]
 				when "custords"   ###在庫品で無いときは処理を分ける。　作成テーブルをdlvでなく　xxxにする。
 					r_custord = ActiveRecord::Base.connection.select_one("select * from r_custords where id = #{str_gantt_sch["trngantt_orgtblid"]} ")
@@ -2372,7 +2360,7 @@
 	end
 	def proc_update_trangantts(id,newgantt,gantt_alloc)  ### id = trngantt_id
 		opeitm = ActiveRecord::Base.connection.select_one(%Q& select * from opeitms where id = #{gantt_alloc["trngantt_opeitm_id"]} &)
-		newgantt[:strdate] =  proc_get_strdate(newgantt[:duedate], (opeitm["duration"]||=0),"day",nil)  ###稼働日考慮に  ###starttimeと合わすこと。
+		newgantt[:strdate] =  proc_get_strdate(newgantt[:duedate], (opeitm["duration"]||=1),"day",nil)  ###稼働日考慮に  ###starttimeと合わすこと。
 		newgantt[:amt] = newgantt[:qty] * (gantt_alloc["trngantt_price"]||=0)
 		proc_tbl_edit_arel("trngantts",newgantt," id = #{id} ")
 		schtblname = gantt_alloc["opeitm_prdpurshp"] + "schs"

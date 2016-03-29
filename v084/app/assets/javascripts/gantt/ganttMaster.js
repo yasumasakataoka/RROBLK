@@ -58,7 +58,7 @@ GanttMaster.prototype.init = function(place) {
 
   //load templates
   $("#gantEditorTemplates").loadTemplates().remove();  // TODO: Remove inline jquery, this should be injected
-
+ 
   //create editor
   this.editor = new GridEditor(this);
   this.editor.element.width(place.width() * .9 - 10);
@@ -134,26 +134,25 @@ GanttMaster.prototype.init = function(place) {
   }).bind("addBelowCurrentTask.gantt", function() {
     var factory = new TaskFactory();
     self.beginTransaction();
-    var ch;
     var row = 0;
     if (self.currentTask) {
-      row = self.currentTask.getRow() + 1;
-      var inftask =  self.tasks[row-1];
+      row = self.currentTask.getRow() ;
+      var inftask =  self.tasks[row];
 	  var newEnd = computeStartByDuration(inftask.start, 1); // dur =1 blk
 	  var newStart = computeStartByDuration(newEnd, 1); // dur =1  blk 
 		//function(id, copy_itemcode,processseq,priority,level, start,end, duration,mlevel,loca_code,loca_name,itm_code,itm_name,parenum,chilnum,
 		//                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end)
-       ch = factory.build("gantttmp_"+ self.currentTask.id + new Date().getTime(),"",999,999,self.currentTask.level,newStart,newEnd,"1",self.currentTask.mlevel+1,"","","","",1,1,
+    var  ch = factory.build("gantttmp_"+ self.currentTask.id + new Date().getTime(),"",999,999,self.currentTask.level,newStart,newEnd,"1",self.currentTask.mlevel+1,"","","","",1,1,
 							"","",0,0,0,0,0,newStart,newEnd,"","","");
     } else {
       return;    //blk modify
     } 
-    var task = self.addTask(ch, row);
+    var task = self.addTask(ch, row+1);
     if (task) {
       task.rowElement.click();
       task.rowElement.find("[name=loca_code]").removeAttr("readonly"); //blk add
-      task.rowElement.find("[name=itm_code]").removeAttr("readonly"); //blk add
-      task.rowElement.find("[name=itm_code]").focus();
+      task.rowElement.find("[name=itm_code]").removeAttr("readonly").focus(); //blk add
+      // task.rowElement.find("[name=itm_code]").focus();
     }
     // update links
     if(inftask.depends){inftask.depends += ",";}
@@ -170,7 +169,7 @@ GanttMaster.prototype.init = function(place) {
         }
 
     self.endTransaction();
-	jQuery("[name='appear_by_insert']").show();
+    jQuery("[name='appear_by_insert']").show();
   // blk add 2016/01/30   addSameCurrentTask.gantt　使用中止
   }).bind("addSameCurrentTask.gantt", function() {
     var factory = new TaskFactory();
@@ -306,7 +305,8 @@ GanttMaster.prototype.updateDependsStrings = function() {
   for (var i=0;i<this.links.length;i++) {
     var link = this.links[i];
     var dep = link.to.depends;
-    link.to.depends = link.to.depends + (link.to.depends == "" ? "" : ",") + (link.from.getRow() + 1) + (link.lag ? ":" + link.lag : "");
+    // link.to.depends = link.to.depends + (link.to.depends == "" ? "" : ",") + (link.from.getRow() + 1) + (link.lag ? ":" + link.lag : ""); //blk
+    link.to.depends = link.to.depends + (link.to.depends == "" ? "" : ",") + (link.from.getRow() ) + (link.lag ? ":" + link.lag : "");
   }
 
 };

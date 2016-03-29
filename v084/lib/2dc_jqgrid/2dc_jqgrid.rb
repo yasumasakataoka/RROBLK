@@ -63,9 +63,15 @@ include  JqgridFilter
      ##    nst_div  << ' ge = new GanttMaster(); ge.init(jQuery("#workSpace"));
      ##       var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
      ##       function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
-     ## end      
-         nst_div << 'function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/gantt/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
-         nst_div <<  'function getUrlVars()
+     ## end
+		if @scren_code =~ /^gantt/ 
+			nst_div << %Q|ge = new GanttMaster(); function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;
+					jQuery.post("/gantt/uploadgantt",prj,function(rd){if(rd.tasks){ge.loadProject(rd);jQuery("[name='appear_by_insert']").show();}
+																	else{ jQuery("[name='appear_by_insert']").hide();var gsr = jQuery("##{@screen_code}").getGridParam("selrow");
+																		if(gsr){jQuery.getJSON("/gantt/index",{id:gsr,screen_code:"#{@screen_code}",authenticity_token:p_authenticity_token},
+																		function(ganttdata){ge.loadProject( ganttdata);})}}},"json");}|
+		end
+         nst_div <<  %Q|function getUrlVars()
                             {
                              var vars = [], hash;
                              var hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
@@ -76,7 +82,7 @@ include  JqgridFilter
                                vars[hash[0]] = hash[1];
                              }
                             return vars;
-                            } ' 
+                            } |
       replace_end = ""
       unless options[:div_repl_id] == ''
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
@@ -95,7 +101,7 @@ include  JqgridFilter
 	   else	
         id_data_javascript,id_data_html = create_screen_field(options)
      end		
-     screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{@jqgrid_id}"; var p_authenticity_token = "#{authenticity_token}";var ge;var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
+     screen = %Q% #{init_jq}  <script type="text/javascript"> var id = "#{@jqgrid_id}"; var p_authenticity_token = "#{authenticity_token}";var inLineFlg;var lno = 0;var addline;var p_ss_id = "#{ss_id}";%
        screen <<   nst_div
        screen << id_data_javascript
        screen << " });</script>" 

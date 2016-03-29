@@ -98,7 +98,8 @@ GridEditor.prototype.addTask = function(task, row) {
 
   }
   this.element.find(".taskRowIndex").each(function(i, el) {
-    $(el).html(i + 1);
+    // $(el).html(i + 1);   //blk
+    $(el).html(i);   //blk
   });
   //prof.stop();
 
