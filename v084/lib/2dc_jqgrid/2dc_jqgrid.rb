@@ -39,7 +39,7 @@ include  JqgridFilter
       js1 << javascript_include_tag('gantt/ganttMaster.js') + "\n"  
    end
    def jqgrid( options = {},authenticity_token,ss_id)
-		logger.debug " @screen_code  strart #{@scren_code} #{Time.now}" 
+		logger.debug " @screen_code  strart #{@screen_code} #{Time.now}" 
 		strsql = "select * from r_screens where pobject_code_scr = '#{@screen_code}' and SCREEN_EXPIREDATE >current_date order by  screen_expiredate "  
         @r_screens = ActiveRecord::Base.connection.select_one(strsql)
       ## id ：screen_code又は親画面コード+(_div_)+子画面コード
@@ -64,7 +64,7 @@ include  JqgridFilter
      ##       var workSpace = jQuery("#workSpace"); workSpace.css({width:jQuery(window).width() - 10,heigt:jQuery(window).height() - 250}); 
      ##       function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;jQuery.post("/screen/uploadgantt",prj,function(rd){alert(rd.error)},"json");}'
      ## end
-		if @scren_code =~ /^gantt/ 
+		if @screen_code =~ /^gantt/ 
 			nst_div << %Q|ge = new GanttMaster(); function uploadOnServer(){var prj = ge.saveProject();prj.authenticity_token=p_authenticity_token;
 					jQuery.post("/gantt/uploadgantt",prj,function(rd){if(rd.tasks){ge.loadProject(rd);jQuery("[name='appear_by_insert']").show();}
 																	else{ jQuery("[name='appear_by_insert']").hide();var gsr = jQuery("##{@screen_code}").getGridParam("selrow");
@@ -109,7 +109,7 @@ include  JqgridFilter
        screen << id_data_html
        screen <<  replace_end
        screen.gsub!(/\s+/," ")    if init_jq  =~ /replaceWith/  ###repacewithが \nだと変換してくれない。\s+ \nの変換も含む
-	   	logger.debug " @screen_code  end #{@scren_code} #{Time.now}"
+	   	logger.debug " @screen_code  end #{@screen_code} #{Time.now}"
      return screen 
     end  ## 
    private
