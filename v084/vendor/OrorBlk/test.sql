@@ -131,3 +131,19 @@ truncate table shprsltinputs;
 truncate table sio_r_shprsltinputs;
 truncate table prdreplyinputs;
 truncate table sio_r_prdreplyinputs;
+truncate table mkbttables;
+truncate table sio_r_mkbttables;
+
+truncate table conschs;
+
+truncate table sio_r_conschs;
+truncate table conords;
+
+truncate table sio_r_conords;
+
+truncate table coninsts;
+
+truncate table sio_r_coninsts;
+truncate table conacts;
+
+truncate table sio_r_conacts;

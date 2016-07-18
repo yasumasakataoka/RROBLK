@@ -48,14 +48,10 @@ class  AddupddelController < ScreenController
 			all_fields.each do |f|
 				command_c[f] = nil if command_c.has_key?(f) == false and f.to_s =~ /^#{tblname}_/
 			end
-			##proc_insert_sio_c    command_c 
-			##proc_userproc_chk_set command_c
-			##dbcud = DbCud.new
-			##dbcud.perform(command_c[:sio_session_counter],@sio_user_code.to_i,"")
 			proc_simple_sio_insert command_c
 			###  line画面の時
-			sym_code = (command_c[:sio_viewname].split("_")[1].chop+"_code").to_sym
-			sym_sno = (command_c[:sio_viewname].split("_")[1].chop+"_sno").to_sym
+			sym_code = (command_c[:sio_viewname].split("_")[1].chop+"_code")
+			sym_sno = (command_c[:sio_viewname].split("_")[1].chop+"_sno")
 			if command_c[sym_code]||command_c[sym_sno]
 				scode =  if  command_c[sym_code] then   command_c[sym_code] else command_c[sym_sno]  end
 			else

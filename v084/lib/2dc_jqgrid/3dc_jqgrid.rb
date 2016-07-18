@@ -94,8 +94,15 @@ module JqgridFilter
 	def get_show_data screen_code   ##popup画面もあるので@screen_codeは使用できない。
 		show_cache_key =  "show" + (screen_code||=" coding err  :screen_code is nil") +  sub_blkget_grpcode
 		show_data = Rails.cache.read(show_cache_key)
-		logger.debug " JqgridJson line #{__LINE__} show_cache_key:#{show_cache_key}" if show_data.nil?
-		show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
+		if show_data.nil?
+			logger.debug " JqgridJson line #{__LINE__} show_cache_key:#{show_cache_key}" 
+			show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
+			show_data = set_detail("r_#{screen_code.split("_")[1]}") if show_data.nil? 
+			if show_data
+				show_cache_key =  "show" + "r_#{screen_code.split("_")[1]}" +  sub_blkget_grpcode
+				Rails.cache.write(show_cache_key,show_data)
+			end
+		end
 		raise if show_data.nil? 
 		return show_data  ###popup画面もあるのでここで@show_dataにはできない。
 	end
@@ -120,6 +127,7 @@ module JqgridFilter
 		gridcolumns = []
 		allfields = []
 		alltypes =  {}
+		paragraph = []
 		icnt = 10000
 	    det_screen.each do |i|  
             ## lable名称はユーザgroup固有よりセット    editable はtblから持ってくるように将来はする。
@@ -176,11 +184,15 @@ module JqgridFilter
 			gridcolumns << tmp_columns 
             allfields << i["pobject_code_sfd"].to_sym  #**
             alltypes [i["pobject_code_sfd"].to_sym] =  i["screenfield_type"].downcase
+			if i["screenfield_paragraph"]
+			   paragraph << {:pobject_code_sfd=>i["pobject_code_sfd"],:screenfield_paragraph=>i["screenfield_paragraph"]}
+			end
         end   ## screenfields.each
 	    show_data[:allfields] =  allfields  
         show_data[:alltypes]  =  alltypes  
         show_data[:screen_code_view] = screen_code_view
         show_data[:gridcolumns] = gridcolumns
+		show_data[:paragraph] = paragraph
         show_cache_key =  "show" + screen_code +  sub_blkget_grpcode
 	    ## logger.debug "line #{__LINE__} show_cache_key:#{show_cache_key}"
         Rails.cache.write(show_cache_key,show_data) 

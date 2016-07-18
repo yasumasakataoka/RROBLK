@@ -272,8 +272,8 @@ GridEditor.prototype.bindRowInputEvents = function (task, taskRow) {
         var dur = task.duration;
         dur = parseInt(el.val()) || 1;
         el.val(dur);
-        var newStart = computeStartByDuration(task.end, dur); //blk
-        self.master.changeTaskDates(task, newStart,task.end);  //blk
+        //var newStart = computeStartByDuration(task.end, dur); //blk
+        //self.master.changeTaskDates(task, newStart,task.end);  //blk
         task[field] = el.val(); //blk
 
       } else  {
@@ -523,7 +523,7 @@ GridEditor.prototype.openFullEditor = function (task, taskRow) {
       var dur = parseInt(el.val());
       dur = dur <= 0 ? 1 : dur;
       el.val(dur);
-      taskEditor.find("#start").val(new Date(computeStartByDuration(end.getTime(), dur)).format());
+      //taskEditor.find("#start").val(new Date(computeStartByDuration(end.getTime(), dur)).format());  //blk
     });
 	
     taskEditor.find("#itm_code").dblclick(function () {

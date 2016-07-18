@@ -1,25 +1,24 @@
-﻿<div id="workSpace" style="padding:0px; overflow-y:auto; overflow-x:hidden; border:1px solid #e5e5e5; position:relative; margin:0 5px; width:1800px; height:300px;"></div>
+﻿<div id="workSpace" style="padding:0px; overflow-y:auto; overflow-x:hidden; border:1px solid #e5e5e5; position:relative; margin:0 5px; width:1850px; height:500px;"></div>
 <div id="gantEditorTemplates" >
 <div class="__template__" type="GANTBUTTONS"><!--
 <div class="ganttButtonBar">
-<p style="float:left"> tree/gantt</p>
 <div class="ui-button-text">
 <% ##trigger　は ganttMater の　GanttMaster.prototype.init　の place .bindに対応 %>
 <% ## <button onclick="$('#workSpace').trigger('undo.gantt');" class="button textual" title="undo"><span class="teamworkIcon">&#39;</span></button> %>
 <span class="ganttButtonSeparator"></span>
-<button onclick="$('#workSpace').trigger('addBelowCurrentTask.gantt');" class="button textual" title="insert below"><span class="teamworkIcon">X</span></button>
+<button onclick="$('#workSpace').trigger('addBelowCurrentTask.gantt');" class="button textual" title="insert below"  name="hide_when_readonly"><span class="teamworkIcon">X</span></button>
 <span class="ganttButtonSeparator"></span>
 <button onclick="$('#workSpace').trigger('zoomMinus.gantt');" class="button textual" title="zoom out"><span class="teamworkIcon">)</span></button>
 <button onclick="$('#workSpace').trigger('zoomPlus.gantt');" class="button textual" title="zoom in"><span class="teamworkIcon">(</span></button>
 <span class="ganttButtonSeparator"></span>
-<button onclick="$('#workSpace').trigger('deleteCurrentTask.gantt');" class="button textual" title="delete"><span class="teamworkIcon">&cent;</span></button>
+<button onclick="$('#workSpace').trigger('deleteCurrentTask.gantt');" class="button textual" title="delete"   name="hide_when_readonly" ><span class="teamworkIcon">&cent;</span></button>
 
 <span class="ganttButtonSeparator"></span>
 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <span class="ganttButtonSeparator"></span>
 &nbsp; &nbsp; &nbsp; &nbsp;
-<button onclick="uploadOnServer();" class="button textual" title="upload&save"><span class="teamworkIcon">3</span></button>
+<button onclick="uploadOnServer();" class="button textual" title="upload&save"><span class="teamworkIcon"   name="hide_when_readonly">3</span></button>
 </div></div>
 --></div>
 
@@ -43,6 +42,9 @@
 <th class="gdfColHeader gdfResizable" style="width:30px;">processseq</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;">priority</th>
 <th class="gdfColHeader gdfResizable" style="width:30px;" align="right">prdpurshp</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">start</th>
+<th class="gdfColHeader gdfResizable" style="width:80px;">end</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">dur.</th>
 <% else %>
 <th class="gdfColHeader gdfResizable" style="width:90px;" align="right">sno</th>
 <th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty</th>
@@ -52,10 +54,15 @@
 <th class="gdfColHeader gdfResizable" style="width:60px;" align="right">qty_stk</th>
 <th class="gdfColHeader gdfResizable" style="width:80px;">org_start</th>
 <th class="gdfColHeader gdfResizable" style="width:80px;">org_end</th>
-<% end %>
+<th class="gdfColHeader gdfResizable" style="width:30px;">dur.</th>
 <th class="gdfColHeader gdfResizable" style="width:80px;">start</th>
 <th class="gdfColHeader gdfResizable" style="width:80px;">end</th>
-<th class="gdfColHeader gdfResizable" style="width:30px;">dur.</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">parenum</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">chilnum</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">processseq</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;">priority</th>
+<th class="gdfColHeader gdfResizable" style="width:30px;" align="right">prdpurshp</th>
+<% end %>
 <th class="gdfColHeader gdfResizable" style="width:100px;">dep.</th>
 <th class="gdfColHeader gdfResizable" style="width:200px;">assignees</th>
 
@@ -82,6 +89,9 @@
 <td class="gdfCell"><input type="text" name="processseq" value="(#=obj.processseq#)" ></td>
 <td class="gdfCell"><input type="text" name="priority" value="(#=obj.priority#)" ></td>
 <td class="gdfCell"><input type="text" name="prdpurshp"  style="text-align:right" value="(#=obj.prdpurshp#)"></td>
+<td class="gdfCell"><input type="text" name="start" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="end" value="" class="date" readonly></td>
+<td class="gdfCell"><input type="text" name="duration" value="(#=obj.duration#)"></td>
 <% else %>
 <td class="gdfCell"><input type="text" name="sno" style="text-align:right" value="(#=obj.sno#)"></td>
 <td class="gdfCell"><input type="text" name="qty"  style="text-align:right" value="(#=obj.qty#)"></td>
@@ -91,10 +101,15 @@
 <td class="gdfCell"><input type="text" name="qty_stk"  style="text-align:right" value="(#=obj.qty_stk#)"></td>
 <td class="gdfCell"><input type="text" name="org_start" value="" class="date" readonly></td>
 <td class="gdfCell"><input type="text" name="org_end" value="" class="date" readonly></td>
-<% end %>
+<td class="gdfCell"><input type="text" name="duration" value="(#=obj.duration#)"></td>
 <td class="gdfCell"><input type="text" name="start" value="" class="date" readonly></td>
 <td class="gdfCell"><input type="text" name="end" value="" class="date" readonly></td>
-<td class="gdfCell"><input type="text" name="duration" value="(#=obj.duration#)"></td>
+<td class="gdfCell"><input type="text" name="parenum" value="(#=obj.parenum#)"></td>
+<td class="gdfCell"><input type="text" name="chilnum" value="(#=obj.chilnum#)"></td>
+<td class="gdfCell"><input type="text" name="processseq" value="(#=obj.processseq#)" ></td>
+<td class="gdfCell"><input type="text" name="priority" value="(#=obj.priority#)" ></td>
+<td class="gdfCell"><input type="text" name="prdpurshp"  style="text-align:right" value="(#=obj.prdpurshp#)"></td>
+<% end %>
 <td class="gdfCell"><input type="text" name="depends" value="(#=obj.depends#)" (#=obj.hasExternalDep?"readonly":""#) readonly></td>
 <td class="gdfCell taskAssigs">(#=obj.getAssigsString()#)</td>
 
@@ -168,6 +183,11 @@
 <td><label for="processseq">processseq</label><br><input type="text" name="processseq" id="processseq" value="" class="formElements" ></td>
 <td><label for="priority">priority</label><br><input type="text" name="priority" id="priority" value="" class="formElements" ></td>
 <td><label for="prdpurshp">prdpurshp</label><br><input type="text" name="prdpurshp" id="prdpurshp" value=""  class="formElements"></td>
+<tr>
+<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+</tr>
+<td class="graph" style="padding-left:50px"><label for="duration">dur.</label><br><input type="text" name="duration" id="duration" value="" size="5" class="formElements"></td>
 <% else %>
 <td><label for="sno">sno</label><br><input type="text" name="sno" id="sno" value=""  class="formElements"></td>
 <td><label for="qty">qty</label><br><input type="text" name="qty" id="qty" value=""  class="formElements"></td>
@@ -177,21 +197,18 @@
 <td><label for="qty_ord">qty_ord</label><br><input type="text" name="qty_ord" id="qty_ord" value=""  class="formElements"></td>
 <td><label for="qty_inst">qty_inst</label><br><input type="text" name="qty_inst" id="qty_inst" value=""  class="formElements"></td>
 <td><label for="qty_stk">qty_stk</label><br><input type="text" name="qty_stk" id="qty_stk" value=""  class="formElements"></td>
-<% end %>
-
-</tr>
-
 <tr>
-<% if @master == true %>
-<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
-<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
-<% else %>
-<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
-<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
 <td><label for="org_start">org_start</label><br><input type="text" name="org_start" id="org_start" value="" class="date" size="10" class="formElements"> </td>
 <td><label for="org_end">org_end</label><br><input type="text" name="org_end" id="org_end" value="" class="date" size="10" class="formElements"></td>
-<% end %>
+</tr>
 <td class="graph" style="padding-left:50px"><label for="duration">dur.</label><br><input type="text" name="duration" id="duration" value="" size="5" class="formElements"></td>
+<td><label for="start">start</label><br><input type="text" name="start" id="start" value="" class="date" size="10" class="formElements"> </td>
+<td><label for="end">end</label><br><input type="text" name="end" id="end" value="" class="date" size="10" class="formElements"></td>
+<tr>
+<td><label for="processseq">processseq</label><br><input type="text" name="processseq" id="processseq" value="" class="formElements" ></td>
+<td><label for="priority">priority</label><br><input type="text" name="priority" id="priority" value="" class="formElements" ></td>
+<td><label for="prdpurshp">prdpurshp</label><br><input type="text" name="prdpurshp" id="prdpurshp" value=""  class="formElements"></td>
+<% end %>
 </tr>
 
 
@@ -204,7 +221,7 @@
 
 <h2>assignments</h2>
 <table cellspacing="1" cellpadding="0" width="100%" id="assigsTable">
-<tr>
+<tr>\
 <th style="width:100px;">name</th>
 <th style="width:70px;">role</th>
 <th style="width:30px;">est.wklg.</th>
@@ -230,4 +247,3 @@
 </tr>
 --></div>
 </div>
-<p> test </p>

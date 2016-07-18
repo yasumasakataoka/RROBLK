@@ -88,10 +88,11 @@ include  JqgridFilter
              init_jq= %Q|jQuery("#div_#{options[:div_repl_id]}").replaceWith('<div id="div_#{options[:div_repl_id]}">|
              replace_end = "'); "
       end
-     show_cache_key =  "show" + @screen_code +  sub_blkget_grpcode
-     @show_data = Rails.cache.read(show_cache_key)
-	 @show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
-     logger.debug "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
+	 @show_data = get_show_data @screen_code
+     ##show_cache_key =  "show" + @screen_code +  sub_blkget_grpcode
+     ##@show_data = Rails.cache.read(show_cache_key)
+	 ##@show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
+     ##logger.debug "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
      @gridcolumns = @show_data[:gridcolumns]
      id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
      id_data_javascript = Rails.cache.read(id_cache_key)
@@ -248,11 +249,12 @@ include  JqgridFilter
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
 					end
-				when /_sno_|_cno_/
+				when /_sno|_cno/
 					tblchop = scrfield.split("_")[0]
 					notblchop = pscreen_code.split("_")[1].chop
 					### snoのテーブルの内容と　残数　qty_bal
-					if (secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) or tcolm[:field] =~ /_bal/) and tcolm[:editable] == true 
+					###if (secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) or secgridc.index(tcolm[:field].sub(tblchop,notblchop).sub(delm,"").to_sym) or tcolm[:field] =~ /_bal/) and tcolm[:editable] == true 
+					if tcolm[:editable] == true  ###r_purreplyinputsでloca_nameが表示されなかったので修正
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
@@ -280,8 +282,12 @@ include  JqgridFilter
 		strkeydata = %Q% "jqgrid_id":"#{@r_screens["pobject_code_scr"]}","fieldname":keyname%
 		hprice = {}
 		@gridcolumns.each do |tcolm|
-            if ( tcolm[:editable] == true and tcolm[:formop] == 2 )   
-               javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
+            if  tcolm[:editable] == true 
+				if tcolm[:formop] == 2    
+					javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",true);%
+				else 
+					javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",false);%
+				end
                 require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
                 strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
 	        end
@@ -291,20 +297,10 @@ include  JqgridFilter
 				  ###################################
 				  ### _id は自身のテーブル以外のidは必須以外セットしない。
 				  ################改良項目
-                require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
-                strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
 				hprice[:itm] = true if tcolm[:field]  == "itm_code"
 				hprice[:tblname] = tcolm[:field] if tcolm[:field]  == "loca_code_cust" or  tcolm[:field]  == "loca_code_dealer"
 	        end
-            if tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true  then 
-                if  oper != "add" and  oper != "copyandadd"  
-					javascript_edit << ""  ### 中止　外部keyでチェックする。jQuery("##{tcolm[:field]}",formid).attr("disabled",true); 
-					require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
-                else  
-					javascript_edit << %Q% jQuery("##{tcolm[:field]}",formid).attr("disabled",false);%
-					require_fields << %Q% var p_#{tcolm[:field]} =  jQuery("##{tcolm[:field]}",formid).val();%
-				end
-				strsenddata << %Q% "#{tcolm[:field]}":p_#{tcolm[:field]},%
+            if tcolm[:field].split("_")[0] == @screen_code.split("_")[1].chop and tcolm[:editrules][:required]  == true  
 				hprice[:qty] = tcolm[:field] if tcolm[:field] =~ /_qty/
 				hprice[:duedate] = tcolm[:field] if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_duedate"  ##2:納期ベース
 				hprice[:isudate] = tcolm[:field] if tcolm[:field]  == "#{@screen_code.split("_")[1].chop}_isudate"	##1:発注日ベース　			
@@ -333,18 +329,24 @@ include  JqgridFilter
 		end
 		javascript_edit << %Q% jQuery("#sData").show();% 
 		###既定値等セット  ### jQuery("##{tcolm[:field]}",formid).val()にセットすべきもの
-        strsql = "select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  
-			and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph"
-		recs = ActiveRecord::Base.connection.select_all(strsql)
-		recs.each do |rec|
-			strsql = " select * from r_screenfields where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  = '#{rec["screenfield_paragraph"]}' AND screenfield_expiredate > sysdate "
-			seartbls = ActiveRecord::Base.connection.select_all(strsql)
-			seartbls.each do |srtcolm|
-				tmp_code_to_name << %Q% if(p_chgname=="#{srtcolm["pobject_code_sfd"]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
+        #strsql = "select screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'  
+		#	and screenfield_paragraph  is not null AND screenfield_expiredate > sysdate group by screenfield_paragraph"
+		#recs = ActiveRecord::Base.connection.select_all(strsql)
+		#recs.each do |rec|
+		#	strsql = " select * from r_screenfields where pobject_code_scr = '#{@screen_code}'  and screenfield_paragraph  = '#{rec["screenfield_paragraph"]}' AND screenfield_expiredate > sysdate "
+		#	seartbls = ActiveRecord::Base.connection.select_all(strsql)
+		#	seartbls.each do |srtcolm|
+		#		tmp_code_to_name << %Q% if(p_chgname=="#{srtcolm["pobject_code_sfd"]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
+        #                                  {#{strsenddata.chop}},function(data){
+		#									#{get_return_name_val(srtcolm["pobject_code_sfd"],srtcolm["screenfield_paragraph"])}
+		#																		})}%
+		#	end
+		#end
+		@show_data[:paragraph].each do |srtcolm|
+			tmp_code_to_name << %Q% if(p_chgname=="#{srtcolm[:pobject_code_sfd]}"&&btn == "#{oper}"){jQuery.getJSON("/screen/code_to_name",
                                           {#{strsenddata.chop}},function(data){
-											#{get_return_name_val(srtcolm["pobject_code_sfd"],srtcolm["screenfield_paragraph"])}
+											#{get_return_name_val(srtcolm[:pobject_code_sfd],srtcolm[:screenfield_paragraph])}
 																				})}%
-			end
 		end
 		tmp_code_to_name << ";"
 		javascript_edit << %Q%
@@ -370,23 +372,22 @@ include  JqgridFilter
 		##
 		javascript_edit << "}"
 	end
-	def set_onInitializeForm addorcopy
+	def set_onInitializeForm addorcopy   ###_dflt_screenを実行
 		require_fields =  "function(formid) {"
 		@gridcolumns.each do |tcolm|
 	        if (tcolm[:field].split("_")[0] == @screen_code.split("_")[1] and tcolm[:editable] == true ) or  (tcolm[:required] == true )
                require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
 			end
-			if addorcopy == "add"
+			if addorcopy =~ /add/
 				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt_screen")
-					##debugger ### tcolm[:field]でnil[]のエラーが発生した　上のifはokなのに　原因がわかるまで残しておく　2014/12/20
-					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt_screen",nil)
+					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt_screen",addorcopy)
 					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
-				 else 
-					if respond_to?("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
-						   dflt_val = __send__("proc_field_#{tcolm[:field].split('_')[1]}_dflt_screen",nil)
-			               require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
+				else 
+					if respond_to?("proc_field_#{tcolm[:field].split('_',2)[1]}_dflt_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
+						dflt_val = __send__("proc_field_#{tcolm[:field].split('_',2)[1]}_dflt_screen",addorcopy)
+						require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
 					end
-			   end
+				end
 			end
         end
         require_fields << %Q% jQuery("#sData").show();% 
@@ -633,7 +634,7 @@ include  JqgridFilter
                                                                 ,bSubmit: "#{button["button_code"]}" ,recreateForm: true 
                                                                 ,editData:{jqgrid_id:"#{@jqgrid_id}",copy:"#{button["button_code"]}",authenticity_token:p_authenticity_token,ss_id:p_ss_id}
                                                                 ,afterShowForm:#{set_aftershowform(button["button_code"])}
-                                                                ,beforeShowForm:#{set_onInitializeForm("copyandadd")}
+                                                                ,beforeShowForm:#{set_onInitializeForm(button["button_code"])}
                                                                 ,afterSubmit:#{set_aftersubmit}})}
                                    else { alert("Please select Row") } }} 
 														})%

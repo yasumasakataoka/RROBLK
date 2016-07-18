@@ -198,13 +198,10 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 		end
 	end
 	def proc_drop_index tblname
-		### ＯＲＡＣＬＥの時	
-		constr = proc_blk_constrains tblname,nil,'U',nil  ###constraints.all("where table_name = '#{tblname.upcase}'  and  constraint_type = 'U' order by  constraint_name,position")
-		orakeyarray = []
-		constr.each do |rec|
-           unless  orakeyarray.index(rec["constraint_name"]) then  orakeyarray << rec["constraint_name"]   end  
-		end 
-        prv_drop_constr tblname,orakeyarray if orakeyarray.size > 0
+		proc_blk_get_constrains(tblname,'U').each do |key|
+			@tsqlstr = " ALTER TABLE #{tblname} drop CONSTRAINT #{key}"
+			ActiveRecord::Base.connection.execute @tsqlstr
+		end
 	end
   def prv_add_field tblname,frec
       case frec["fieldcode_ftype"] 
@@ -232,7 +229,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 	fromstr = ""
 	wherestr = ""
 	@sfd_code_id = {}
-	union_tbls.each_with_index do |utbl,idx|
+	union_tbls.each_with_index do |utbl,idx|   ###うまくセットできてない。　2016/4/24
         selectstr <<  if idx == 0 then  " select " else "\n union \n select " end
         wherestr << if utbl == "" then "\n where "  else  "\n where #{tblname.chop}.tblid = #{utbl.to_s.split("_")[1].chop}.id  and 
 		                                 #{tblname.chop}.tblname = '#{utbl.to_s}' and " end ##join条件
@@ -303,7 +300,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
         subfields.each do |j|
         js = xfield = sfd_code =  j.name
 			next if js.upcase == "ID"
-			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|EXPIREDATE|REMARK/ and  join_rtbl  !=  "upd_persons"
+			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|REMARK/ and  join_rtbl  !=  "upd_persons"
 			tmpfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end
 			sfd_code = xfield + tmpfld
             new_xfield = rtblname + "." + xfield + " " + sfd_code  

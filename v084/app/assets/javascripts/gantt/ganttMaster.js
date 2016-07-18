@@ -138,8 +138,10 @@ GanttMaster.prototype.init = function(place) {
     if (self.currentTask) {
       row = self.currentTask.getRow() ;
       var inftask =  self.tasks[row];
-	  var newEnd = computeStartByDuration(inftask.start, 1); // dur =1 blk
-	  var newStart = computeStartByDuration(newEnd, 1); // dur =1  blk 
+	  //var newEnd = computeStartByDuration(inftask.start, 1); // dur =1 blk
+	  //var newStart = computeStartByDuration(newEnd, 1); // dur =1  blk
+	  var newEnd = inftask.end; // dur =1 blk
+	  var newStart = inftask.start; // dur =1  blk 
 		//function(id, copy_itemcode,processseq,priority,level, start,end, duration,mlevel,loca_code,loca_name,itm_code,itm_name,parenum,chilnum,
 		//                                            prdpurshp,sno,qty,qty_sch,qty_ord,qty_inst,qty_stk,org_start,org_end)
     var  ch = factory.build("gantttmp_"+ self.currentTask.id + new Date().getTime(),"",999,999,self.currentTask.level,newStart,newEnd,"1",self.currentTask.mlevel+1,"","","","",1,1,

@@ -26,7 +26,7 @@ before_filter :authenticate_user!
 	       else ##
 	         @cate_list = []
              @max_cnt = chk_cnt =  1
-			 strsql = "select * from r_screens where screen_grpcodename != '#' and screen_expiredate >current_date order by screen_grpcodename"
+			 strsql = "select * from r_screens where substr(screen_grpcodename,1,1) != '#' and screen_expiredate >current_date order by screen_grpcodename"
 	         ActiveRecord::Base.connection.select_all(strsql).each do |i|
                 if   @cate_list[-1] then
                      if   @cate_list[-1][0] == i["screen_grpcodename"][0,1] then 

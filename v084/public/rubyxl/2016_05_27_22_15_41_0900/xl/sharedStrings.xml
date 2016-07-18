@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="330" uniqueCount="100"><si><t>tblfield_id</t></si><si><t>tblfield_seqno</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_fieldlength</t></si><si><t>fieldcode_dataprecision</t></si><si><t>fieldcode_datascale</t></si><si><t>tblfield_contents</t></si><si><t>fieldcode_contents</t></si><si><t>tblfield_remark</t></si><si><t>tblfield_expiredate</t></si><si><t>tblfield_viewflmk</t></si><si><t>blktb_seltbls</t></si><si><t>tblfield_updated_at</t></si><si><t>tblfield_created_at</t></si><si><t>tblfield_update_ip</t></si><si><t>person_code_upd</t></si><si><t>person_name_upd</t></si><si><t>id</t></si><si><t>number</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>2099/12/31</t></si><si><t>undefined</t></si><si><t>2014/06/16 23:15</t></si><si><t>system</t></si><si><t>remark</t></si><si><t>varchar2</t></si><si><t>システムがセットする備考</t></si><si><t>2014/10/29 19:24</t></si><si><t>127.0.0.1</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>update_ip</t></si><si><t>created_at</t></si><si><t>timestamp(6)</t></si><si><t>2014/10/29 19:23</t></si><si><t>updated_at</t></si><si><t>persons_id_upd</t></si><si><t>qty</t></si><si><t>2014/11/29 15:32</t></si><si><t>price</t></si><si><t>amt</t></si><si><t>sno</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>2014/11/29 15:43</t></si><si><t>duedate</t></si><si><t>納期</t></si><si><t>2014/11/29 15:31</t></si><si><t>toduedate</t></si><si><t>isudate</t></si><si><t>発行日</t></si><si><t>strdate</t></si><si><t>この日までに、注文書を発行すれば納期までに間に合う日</t></si><si><t>開始日</t></si><si><t>2014/11/29 15:34</t></si><si><t>2014/10/22 23:05</t></si><si><t>opt_fixoterm</t></si><si><t xml:space="preserve">LT毎のまとめ発注期間　 opt_term=1 :LTと同じ
+
+</t></si><si><t xml:space="preserve"> from oracle</t></si><si><t>2014/10/26 17:00</t></si><si><t>locas_id_to</t></si><si><t>2015/06/30 21:07</t></si><si><t>2014/10/26 16:25</t></si><si><t>tax</t></si><si><t>2015/06/30 21:08</t></si><si><t>qty_case</t></si><si><t>瓶、リールの数
+整数であること。</t></si><si><t>2014/10/29 19:28</t></si><si><t>confirm</t></si><si><t>char</t></si><si><t xml:space="preserve">0:仮　有効期間　1week    1:confirm 　　　 </t></si><si><t>1:confirm  0:仮　5:確認済　印刷後又はデータ送信後　1となる。
+T:test</t></si><si><t>2015/01/11 23:16</t></si><si><t>2014/10/30 00:32</t></si><si><t>contract_price</t></si><si><t>画面から入力された時　"Z"をセット
+rule_price="1"(画面からの入力可)が条件</t></si><si><t>単価契約フラグ
+1:発注日ベース　2:納期ベース　3:受入日ベース   4:出荷日ベース　5:検収ベース  
+7:出荷日までに決定する単価　8:受入日までに決定する単価　
+9:単価決定=検収日
+X:社内単価未定</t></si><si><t>2015/04/02 10:34</t></si><si><t>gno</t></si><si><t>注文書毎の番号</t></si><si><t>注文単位別key  ユニーク性は保証されない。 
+一枚の注文書に複数の品目がある時、その注文書の識別key</t></si><si><t>2015/11/05 02:24</t></si><si><t>2015/08/16 20:58</t></si><si><t>prjnos_id</t></si><si><t>発注等まとめる単位</t></si><si><t>2015/02/11 16:52</t></si><si><t>2014/12/28 09:21</t></si><si><t>itms_id_pare</t></si><si><t>processseq_pare</t></si><si><t>購入後受け入れ先のproceeeseq</t></si><si><t>同一item_coseに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>2014/10/26 16:26</t></si><si><t>chrgs_id</t></si><si><t>2015/04/12 01:15</t></si><si><t>iprords</t><phoneticPr fontId="2"/></si><si><t>itms_id</t><phoneticPr fontId="2"/></si><si><t>processseq</t><phoneticPr fontId="2"/></si><si><t>locas_id</t><phoneticPr fontId="2"/></si></sst>

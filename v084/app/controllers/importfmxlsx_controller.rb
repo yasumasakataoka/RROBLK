@@ -19,12 +19,25 @@ class ImportfmxlsxController < ScreenController
     def import
 		@rendererrmsg = []
 		@pare_class = "online"
-		command_c = init_from_screen ###params	  
-	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_person_id_upd").to_sym] = command_c[:sio_user_code]
-	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_update_ip").to_sym] = request.remote_ip
-		##SimpleXlsxReader.configuration.catch_cell_load_errors = true
+		@sio_user_code =  ActiveRecord::Base.connection.select_value("select id from persons where email = '#{current_user[:email]}'")
+		##command_c = init_from_screen ###params	
+		get_screen_code			
+		@sio_user_code = ActiveRecord::Base.connection.select_value("select id from persons where email = '#{current_user[:email]}'")
+	    @show_data = get_show_data @screen_code   #####popup画面もあるので@screen_codeをもパラメータにしている。
+	    if @show_data.nil?
+	       render :text=> "Create screen #{@screen_code} " and return
+	    end
 		if params[:dump] then @screen_code = params[:dump][:screen_code] else render :index and return end
 		if  params[:dump][:excel_file] then temp = params[:dump][:excel_file].tempfile else render :index and return end
+        command_c = params[:dump].dup
+		command_c[:sio_user_code] = @sio_user_code  ###########   LOGIN USER
+	    command_c[:sio_viewname]  = @show_data[:screen_code_view]
+	    command_c[:sio_code]  = @screen_code
+		command_c = char_to_number_data(command_c)
+	    command_c = proc_set_fields_from_allfields
+	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_person_id_upd")] = command_c[:sio_user_code] 
+	    command_c[(command_c[:sio_viewname].split("_",2)[1].chop+"_update_ip")] = request.remote_ip
+		##SimpleXlsxReader.configuration.catch_cell_load_errors = true
 		file = File.join("public/rubyxl",params[:dump][:excel_file].original_filename)
 		FileUtils.cp temp.path, file
 		ws = RubyXL::Parser.parse file

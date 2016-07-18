@@ -112,41 +112,23 @@ class ImportfieldsfromoracleController < ApplicationController
 			unless  keyarray[rec["blkuky_grp"].to_sym] then  keyarray[rec["blkuky_grp"].to_sym] = [] end
 			keyarray[rec["blkuky_grp"].to_sym] << rec["pobject_code_fld"]
 		end
-		constr = proc_blk_constrains tblname ,nil,'U',nil   ###"where table_name = '#{tblname}'  and  constraint_type = 'U' order by  constraint_name,position")
-		orakeyarray = []
-		constr.each do |rec|
-           unless  orakeyarray.index(rec["constraint_name"]) then  orakeyarray << rec["constraint_name"]   end  
+		### constr = proc_blk_constrains tblname ,nil,'U',nil   ###"where table_name = '#{tblname}'  and  constraint_type = 'U' order by  constraint_name,position")
+		proc_blk_get_constrains(tblname,'U').each do |key|
+			@tsqlstr = " ALTER TABLE #{tblname} drop CONSTRAINT #{key}"
+			ActiveRecord::Base.connection.execute @tsqlstr
 		end
-		case  keyarray.size 
-            when 0 then
-                case  orakeyarray.size
-                     when 1..999
-                            prv_drop_constr tblname,orakeyarray
-                end  
-            when 1..999 then
-               case  orakeyarray.size
-                     when 1..999
-                          prv_drop_constr tblname,orakeyarray
-               end  
-                prv_add_constr  keyarray,tblname
-		end         
+        prv_add_constr  keyarray,tblname         
 	end
-	def prv_drop_constr tblname,orakeyarray
-       orakeyarray.each do |key|
-          @tsqlstr = " ALTER TABLE #{tblname} drop CONSTRAINT #{key}"
-          ActiveRecord::Base.connection.execute @tsqlstr
-      end
-  end
-  def  prv_add_constr  keyarray,tblname
-       keyarray.each do |key,val|
-          @tsqlstr = " ALTER TABLE #{tblname} Add CONSTRAINT #{tblname}_UKYS#{key.to_s} UNIQUE ( "
-          val.each do |i|
-             @tsqlstr << i+","
-          end
-          @tsqlstr = @tsqlstr.chop+")"
-          ActiveRecord::Base.connection.execute @tsqlstr
-       end
-  end
+	def  prv_add_constr  keyarray,tblname
+		keyarray.each do |key,val|
+			@tsqlstr = " ALTER TABLE #{tblname} Add CONSTRAINT #{tblname}_UKYS#{key.to_s} UNIQUE ( "
+			val.each do |i|
+				@tsqlstr << i+","
+			end
+			@tsqlstr = @tsqlstr.chop+")"
+			ActiveRecord::Base.connection.execute @tsqlstr
+		end
+	end
   def prv_import_columns tbl_id,columns
        chk_mandatory_field = prv_init
        columns.each do |column|
@@ -267,20 +249,20 @@ class ImportfieldsfromoracleController < ApplicationController
 	end #
 	def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxxS_ID
 
-		@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
-		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-		@tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除
-		@tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	tblfields_id)"
-		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id_ch)"
-		@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id)"
+		##@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
+		##@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
+		##@tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除
+		##@tsqlstr << " and not exists (select 1 from blkukys where a.id  = 	tblfields_id)"
+		##@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id_ch)"
+		##@tsqlstr << " and not exists (select 1 from chilscreens where a.id  = 	screenfields_id)"
 
-		ActiveRecord::Base.connection.execute @tsqlstr
+		##ActiveRecord::Base.connection.execute @tsqlstr
 
 		@tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
 		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-		@tsqlstr << " and ( exists (select 1 from  blkukys where a.id  = 	tblfields_id)"
+		@tsqlstr << " and  not exists( select 1 from USER_TAB_COLUMNS  "
+		@tsqlstr << "  where upper(table_name) = upper(a.pobject_code_view) and upper(a.pobject_code_sfd) = upper(column_name)  )"  ###　oracle"
+		@tsqlstr << " and ( exists (select 1 from r_blkukys x where a.screenfield_tblfield_id = 	x.blkuky_tblfield_id and x.pobject_code_tbl = '#{viewname.split("_")[1]}')"
 		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
 		@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
 
@@ -289,9 +271,9 @@ class ImportfieldsfromoracleController < ApplicationController
 		@errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
 		@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
 		@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
-		@tsqlstr << " and id in (select id from r_screenfields where not exists( select 1 from "
-		@tsqlstr << "  USER_TAB_COLUMNS where upper(table_name) = '#{viewname.upcase}' and upper(pobject_code_sfd) = column_name))"
-		@tsqlstr << " and not exists (select 1 from  blkukys where a.id  = 	tblfields_id)"
+		@tsqlstr << " and  not exists( select 1 from USER_TAB_COLUMNS ,r_screenfields b "
+		@tsqlstr << "  where upper(table_name) = upper(b.pobject_code_view) and upper(b.pobject_code_sfd) = upper(column_name) and a.id = b.id )"  ###　oracle
+		@tsqlstr << " and not exists (select 1 from  r_blkukys x where a.tblfields_id = 	x.blkuky_tblfield_id and x.pobject_code_tbl = '#{viewname.split("_")[1]}')"
 		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
 		@tsqlstr << " and not exists (select 1 from  chilscreens where a.id  = 	screenfields_id)"
 		###     @tsqlstr << " and created_at = updated_at   " ##自動作成分のみ削除 削除は自分で  中止 1/
@@ -311,7 +293,7 @@ class ImportfieldsfromoracleController < ApplicationController
         screenfields[:editable] =  indisp  
         screenfields[:hideflg] = 0
         screenfields[:id]  = proc_get_nextval("screenfields_seq")
-        screens_id = ActiveRecord::Base.connection.select_value("select id from r_screens where pobject_code_scr = '#{viewname}' and screen_expiredate > current_date")
+        screens_id = ActiveRecord::Base.connection.select_value("select id from r_screens where pobject_code_view = '#{viewname}' and screen_expiredate > current_date")
 		if screens_id
 			screenfields[:screens_id]   = screens_id
 			if  sr_name =~ /_code|_name|_gno|_cno|_sno|itm_/ then
@@ -368,7 +350,7 @@ class ImportfieldsfromoracleController < ApplicationController
 				proc_tbl_add_arel("screenfields",screenfields)
 			end
 		else
-			@errmsg = " screen_code not exists screen_code #{viewname}"
+			@errmsg = " viewname not exists or expiredate < Today    viewname: #{viewname}"
 			raise
 		end
     end ##setscreenfields  

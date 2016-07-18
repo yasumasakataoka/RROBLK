@@ -125,7 +125,7 @@ class ScreenController < ListController
 				keyfields = {}
 				if params[:chgname] =~ /^mk/
 					mktblname,tblnamechop,field,delm = params[:chgname].split("_",4)
-					if mktblname =~ /mksch|mkord|mkinst|mkact/
+					if mktblname =~ /mksch|mkord|mkinst|mkact|mktrngantts/
 					else
 						return
 					end
@@ -161,7 +161,6 @@ class ScreenController < ListController
 					end
 				end
 		end
-		fprnt " line #{__LINE__} @getname #{@getname}" if @getname.has_key?(:custinst_loca_id_custrcvplc)
 		if sw == "ON" or sw == "MISSING"
 			render :json => @getname
 		else
@@ -169,20 +168,29 @@ class ScreenController < ListController
 		end
 	end
 	def get_ary_find_field field   ###excel importでも使用 そのためscreen_code等が引数になっている。
-		strwhere = "select * from r_screenfields where pobject_code_sfd = '#{field}' and screenfield_paragraph is not null  "    ##検索元のテーブルを求める。
-		strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
-		v = ActiveRecord::Base.connection.select_one(strwhere)
-		scrname =  rec = delm = nil
+		#strwhere = "select * from r_screenfields where pobject_code_sfd = '#{field}' and screenfield_paragraph is not null  "    ##検索元のテーブルを求める。
+		#strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
+		#v = ActiveRecord::Base.connection.select_one(strwhere)
+		#scrname =  rec = delm = nil
+		#akeyfs = []
+		#if   v then   ###グループを求める。
+		#	scrname,delm =  v["screenfield_paragraph"].split(":_")
+		#	strwhere = "select * from r_screenfields where screenfield_paragraph = '#{v["screenfield_paragraph"]}' "
+		#	strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
+		#	keyfs = ActiveRecord::Base.connection.select_all(strwhere)
+		#	keyfs.each do |rec|
+		#		akeyfs << rec["pobject_code_sfd"] 
+		#	end
+		#end
 		akeyfs = []
-		if   v then   ###グループを求める。
-			scrname,delm =  v["screenfield_paragraph"].split(":_")
-			strwhere = "select * from r_screenfields where screenfield_paragraph = '#{v["screenfield_paragraph"]}' "
-			strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
-			keyfs = ActiveRecord::Base.connection.select_all(strwhere)
-			keyfs.each do |rec|
-				akeyfs << rec["pobject_code_sfd"] 
-			end
+		v = nil
+		@show_data[:paragraph].each do |paragraph|
+			v = paragraph[:screenfield_paragraph] if paragraph[:pobject_code_sfd] == field 
 		end
+		@show_data[:paragraph].each do |paragraph| 
+			akeyfs <<  paragraph[:pobject_code_sfd] if paragraph[:screenfield_paragraph] == v 
+		end
+		scrname,delm =  v.split(":_")
 		mktblname = if field =~ /^mk/ then field.split("_")[0] else nil end
 		return akeyfs,scrname,delm,mktblname
 	end	
@@ -306,34 +314,43 @@ class ScreenController < ListController
 			sno_rec = ActiveRecord::Base.connection.select_one(strsql)    ### snoのrec
 			@getname ={}
 			if sno_rec
-				bal_qty = proc_get_bal_qty(sno_tblnamechop+"s",sno_rec["id"])
+				bal_qty = proc_get_bal_qty(sno_tblnamechop+"s",sno_rec)
 				##proc_opeitm_instance(sno_rec)
 				screen_show_data = get_show_data(@screen_code)[:allfields]
-				flds_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:allfields]
+				###flds_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:allfields]
 				type_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:alltypes]
 				screen_show_data.each do |scrf|
-					if flds_sno_show_data.index(scrf) and sno_rec[scrf.to_s] and params[scrf] == ""
-						case type_sno_show_data[scrf]
-							when /date/
-								@getname[scrf] = sno_rec[scrf.to_s].strftime("%Y/%m/%d")
-							when /time/
-								@getname[scrf] = sno_rec[scrf.to_s].strftime("%Y/%m/%d %H:%M")
-							else
-								@getname[scrf] = sno_rec[scrf.to_s] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-						end
-					else
-						fld = if scrf.to_s.split("_",2)[1]  then (sno_tblnamechop + "_" + scrf.to_s.split("_",2)[1]) else "" end
-						if sno_rec[fld]  and params[scrf]   == "" ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
-							case type_sno_show_data[fld.to_sym]
+					###if params[scrf]   == "" ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
+						if  sno_rec[scrf.to_s]
+							case type_sno_show_data[scrf]
 								when /date/
-									@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d")
+									@getname[scrf] = sno_rec[scrf.to_s].strftime("%Y/%m/%d")
 								when /time/
-									@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d %H:%M")
+									@getname[scrf] = sno_rec[scrf.to_s].strftime("%Y/%m/%d %H:%M")
 								else
-									@getname[scrf] = sno_rec[fld] ## if k_to_s != "id" 
+									@getname[scrf] = sno_rec[scrf.to_s] ## if k_to_s != "id" @getname
 							end
-						end		
-					end
+						else
+							if scrf.to_s.split("_")[0] == @screen_code.split("_")[1].chop	
+								fld = scrf.to_s.sub(scrf.to_s.split("_")[0],sno_tblnamechop)
+								if scrf.to_s.split("_",3)[2] and screenfield_paragraph.split(":")[1]
+									if scrf.to_s.split("_",3)[2] == screenfield_paragraph.split(":_")[1]
+										fld.sub!("_"+screenfield_paragraph.split(":_")[1],"")
+									end
+								end
+								if sno_rec[fld]
+									case type_sno_show_data[fld.to_sym]
+										when /date/
+											@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d")
+										when /time/
+											@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d %H:%M")
+										else
+											@getname[scrf] = sno_rec[fld] ## if k_to_s != "id" @getname
+									end
+								end
+							end	
+						end
+					###end
 				end
 				sym_balqty = (@screen_code.split("_",2)[1].chop + "_qty_bal").to_sym 
 				@getname[sym_balqty] = bal_qty
@@ -350,21 +367,25 @@ class ScreenController < ListController
         end
 		return sw
     end
-	def proc_get_bal_qty tblname,id
+	def proc_get_bal_qty tblname,sno_rec
 		case tblname
 			when /ords$/
-				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{id} and qty > 0
+				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
 					group by srctblname "
 				bal_qty_ord = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty_ord ||= 0
 				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname.sub(/ords$/,"insts")}'
-
-													and destblid in (select id from #{tblname.sub(/ords$/,"insts")} where sno_ord in(select  sno from #{tblname} where id = #{id}))
+													and destblid in (select id from #{tblname.sub(/ords$/,"insts")} where sno_ord in(select  sno from #{tblname} where id = #{sno_rec["id"]}))
 							group by srctblname"
 				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
-				bal_qty_inst ||= 0			
+				bal_qty_inst ||= 0		
+				if bal_qty_ord > 0
+					if  sno_rec[@screen_code.split("_")[1]+"_confirm"]  != "1"   ###エラーの表示ができてない。
+						@getname[(@screen_code.split("_")[1].chop+"_message_code").to_sym] = " not confirm "
+					end
+				end
 			when /insts$/
-				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{id} and qty > 0
+				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
 					group by srctblname , destblname, destblid "
 				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty_inst ||= 0
@@ -406,26 +427,20 @@ class ScreenController < ListController
 				flds_cno_show_data = get_show_data(cno_screen)[:allfields]
 				type_cno_show_data = get_show_data(cno_screen)[:alltypes]
 				screen_show_data.each do |scrf|
-					if flds_cno_show_data.index(scrf) and cno_rec[scrf.to_s]
-						case type_cno_show_data[scrf]
-							when /date/
-								@getname[scrf] = cno_rec[scrf.to_s].strftime("%Y/%m/%d")
-							when /time/
-								@getname[scrf] = cno_rec[scrf.to_s].strftime("%Y/%m/%d %H:%M")
-							else
-								@getname[scrf] = cno_rec[scrf.to_s] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+					fld = if scrf.to_s.split("_",2)[1]  then (cno_screen.split("_",2)[1].chop + "_" + scrf.to_s.split("_",2)[1]) else "" end
+					if scrf.to_s.split("_",3)[2] and screenfield_paragraph.split(":")[1]
+						if scrf.to_s.split("_",3)[2] == screenfield_paragraph.split(":_")[1]
+							fld = cno_screen.split("_",2)[1].chop + "_" + scrf.to_s.split("_",3)[1]
 						end
-					else
-						fld = if scrf.to_s.split("_",2)[1]  then (cno_screen.split("_",2)[1].chop + "_" + scrf.to_s.split("_",2)[1]) else "" end
-						if cno_rec[fld] and  fld =~/_qty|_duedate|_sno_|_id/  ###cnoの引き継ぎ項目 ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
-							case type_cno_show_data[fld.to_sym]
-								when /date/
-									@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d")
-								when /time/
-									@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d %H:%M")
-								else
-									@getname[scrf] = cno_rec[fld] ## if k_to_s != "id"  									   
-							end
+					end
+					if sno_rec[fld]  and params[scrf]   == "" ###cnoの引き継ぎ項目 ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
+						case type_cno_show_data[fld.to_sym]
+							when /date/
+								@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d")
+							when /time/
+								@getname[scrf] = cno_rec[fld].strftime("%Y/%m/%d %H:%M")
+							else
+								@getname[scrf] = cno_rec[fld] ## if k_to_s != "id"  									   
 						end
 					end
 				end
@@ -491,7 +506,7 @@ class ScreenController < ListController
 			end
 			rec_id = ActiveRecord::Base.connection.select_value(%Q& select id from #{command_c[:sio_viewname].split("_")[1]} #{strwhere[0..-5]} &)
 			@errmsg << "err:duplicate #{strwhere[6..-5]} " if rec_id and add_edit == "add"
-			@errmsg << "err:already exists #{strwhere[6..-5]} " if rec_id and rec_id != command_c[:id] and add_edit == "edit"
+			@errmsg << "err:id ummatch  #{strwhere[6..-5]} id:#{command_r[:id]} ,rec_id:#{rec_id} " if rec_id and rec_id != command_c[:id] and add_edit == "edit"
 		end
 	end
 	def proc_updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="258" uniqueCount="105"><si><t>tblfield_id</t></si><si><t>tblfield_seqno</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_fieldlength</t></si><si><t>fieldcode_dataprecision</t></si><si><t>fieldcode_datascale</t></si><si><t>tblfield_contents</t></si><si><t>fieldcode_contents</t></si><si><t>tblfield_remark</t></si><si><t>tblfield_expiredate</t></si><si><t>tblfield_viewflmk</t></si><si><t>blktb_seltbls</t></si><si><t>tblfield_update_ip</t></si><si><t>tblfield_created_at</t></si><si><t>tblfield_updated_at</t></si><si><t>person_code_upd</t></si><si><t>person_name_upd</t></si><si><t>locas_id</t></si><si><t>number</t></si><si><t>すべての倉庫を対象とするときはコードにdummyをセットする。</t></si><si><t>undefined</t></si><si><t>2099/12/31</t></si><si><t>127.0.0.1</t></si><si><t>2014/07/19 00:43</t></si><si><t>2014/07/26 15:39</t></si><si><t>system</t></si><si><t>id</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>2014/07/19 11:57</t></si><si><t>2014/07/26 15:36</t></si><si><t>remark</t></si><si><t>varchar2</t></si><si><t>システムがセットする備考</t></si><si><t>2014/07/26 15:34</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>2014/07/26 15:31</t></si><si><t>update_ip</t></si><si><t>2014/07/26 15:35</t></si><si><t>created_at</t></si><si><t>timestamp(6)</t></si><si><t>updated_at</t></si><si><t>2014/07/26 15:32</t></si><si><t>persons_id_upd</t></si><si><t>itms_id</t></si><si><t>qty</t></si><si><t xml:space="preserve">  </t></si><si><t>2014/07/26 16:02</t></si><si><t>sno</t></si><si><t>中止
+proc_field_sno_dflt_for_tbl_set
+が使用できない。自身の登録変更とxxxschsの登録変更の区別がつかない。</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>2015/07/12</t></si><si><t>2014/11/01 23:31</t></si><si><t>2015/07/13 21:22</t></si><si><t>duedate</t></si><si><t>納期</t></si><si><t>2014/10/09 19:59</t></si><si><t>isudate</t></si><si><t>発行日</t></si><si><t>2014/07/26 15:51</t></si><si><t>sio_classname</t></si><si><t xml:space="preserve">  元テーブルの登録、変更、削除を示す。</t></si><si><t>レコードの照会、更新
+　/_add_/ 追加
+ /_edit_/ 更新
+ /_delete_/ 削除
+
+入力タイプ
+　/_screen_/画面
+　/_sheet_/ excel
+その他
+　/_reply_/ 回答</t></si><si><t>2014/12/06 20:40</t></si><si><t>2015/03/14 17:36</t></si><si><t>processseq</t></si><si><t>同一item_codeに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>2014/07/26 15:40</t></si><si><t>priority</t></si><si><t>2014/10/08 22:38</t></si><si><t>tblname</t></si><si><t>対象テーブル
+対象となる親を一意に決める。</t></si><si><t>tblnameを持つテーブルを作成したテーブル</t></si><si><t>2014/07/19 00:23</t></si><si><t>2015/05/26 20:17</t></si><si><t>tblid</t></si><si><t>対象テーブル</t></si><si><t>tblname が示すテーブルのid</t></si><si><t>2014/10/08 22:39</t></si><si><t>prjnos_id</t></si><si><t>親からの情報を引き継ぐ</t></si><si><t>発注等まとめる単位</t></si><si><t>2014/12/28 09:21</t></si><si><t>2015/02/11 16:54</t></si><si><t>cmpldate</t></si><si><t>実行完了日</t></si><si><t>完成日</t></si><si><t>2014/11/01 22:36</t></si><si><t>2014/11/01 23:12</t></si><si><t>runtime</t></si><si><t>-99 処理対象外</t></si><si><t>実行タイミング　-1すぐ実行　0から23。 0時から23時で毎日実行  clockworkによって  未処理データ(result_f= '0')が作成される。</t></si><si><t>2014/07/19 00:32</t></si><si><t>2015/02/16 23:53</t></si><si><t>result_f</t></si><si><t>char</t></si><si><t>結果　フラグ　0:未処理 1:normal end  9:error   5:Queuing</t></si><si><t xml:space="preserve"> 結果　フラグ　0:未処理 1:normal end  9:error</t></si><si><t>2014/07/19 12:34</t></si><si><t>2014/11/01 23:04</t></si><si><t>message_code</t></si><si><t>mktrngantts</t><phoneticPr fontId="2"/></si></sst>
