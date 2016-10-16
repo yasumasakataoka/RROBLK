@@ -10,15 +10,6 @@ class ImportfieldsfromoracleController < ApplicationController
 			###tblid  = params[:jqgrid].to_i
 			if  rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where id = #{tblid}  ") 
 				if rec["blktb_expiredate"] > Time.now 
-					##ActiveRecord::Base.remove_connection()
-					### db 毎の変更が必要
-					##ActiveRecord::Base.establish_connection(
-					##	:adapter  => "oracle_enhanced",
-					##	:host     => "localhost",
-					##	:username => "rails",
-					##	:password => "rails",
-					##	:database => "xe"
-					##	)
 					ActiveRecord::Base.connection.query_cache.clear
 					sub_import_fields_from_oracle rec["pobject_code_tbl"],rec["id"]
 					##Rails.cache.clear(nil)
@@ -346,7 +337,10 @@ class ImportfieldsfromoracleController < ApplicationController
 			chkfield = ActiveRecord::Base.connection.select_value(strsql)
 			if chkfield.nil?
 				screenfields[:tblfields_id] = @sfd_code_id[sr_name]
-				debugger if screenfields[:tblfields_id].nil?
+				if screenfields[:tblfields_id].nil?
+				   logger.debug " missing sr_name :#{sr_name} "
+				   raise
+				end
 				proc_tbl_add_arel("screenfields",screenfields)
 			end
 		else

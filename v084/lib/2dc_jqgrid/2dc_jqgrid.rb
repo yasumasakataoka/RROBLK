@@ -3,7 +3,7 @@ module Jqgrid
 include  JqgridFilter
 
    def jqgrid_stylesheets
-      css  = stylesheet_link_tag("jqgrid/themes/default/jquery-ui-1.10.3.custom.css") + "\n"
+      css  = stylesheet_link_tag('jqgrid/themes/default/jquery-ui-1.10.3.custom.css') + "\n"
       css << stylesheet_link_tag('jqgrid/ui.jqgrid.css') + "\n"
       css << stylesheet_link_tag('gantt/platform.css') + "\n"
    end
@@ -14,7 +14,6 @@ include  JqgridFilter
       css1 << stylesheet_link_tag('gantt/teamworkFont.css') + "\n"
    end
    def jqgrid_javascripts
-      locale = I18n.locale rescue :en
       js = javascript_include_tag('jquery-1.7.2.min.js') + "\n"
       js << javascript_include_tag('jquery-ui.min1.8.js') + "\n"
       js << javascript_include_tag("jqgrid/i18n/grid.locale-#{locale}.js") + "\n"
@@ -218,7 +217,7 @@ include  JqgridFilter
                     t_extbutton << %Q|<input type="radio" id="radio#{pare_screen_code}#{k.to_s}"  name="nst_radio#{pare_screen_code}"|
                     t_extbutton << %Q| value="#{i["pobject_code_scr"]}_div_#{i["pobject_code_scr_ch"]}_div_| ### 親のview
                     t_extbutton << %Q|#{i["pobject_code_scr_ch"]}_div_1"/>|    #**
-                    t_extbutton << %Q| <label for="radio#{pare_screen_code}#{k.to_s}">  #{sub_blkgetpobj(i["pobject_code_scr_ch"],"screen")} </label> |   ##"screen"画面
+                    t_extbutton << %Q| <label for="radio#{pare_screen_code}#{k.to_s}">  #{proc_blkgetpobj(i["pobject_code_scr_ch"],"screen")} </label> |   ##"screen"画面
                     t_extdiv_id << %Q|<div id="div_#{i["pobject_code_scr"]}_div_#{i["pobject_code_scr_ch"]}"> </div> |   #**
             end   ### rad_screen.each
 	    return  t_extbutton,t_extdiv_id

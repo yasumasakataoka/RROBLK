@@ -9,7 +9,7 @@ class ScreenController < ListController
       @pare_class = "online"
       @scriptopt = @options = {}
       @options[:div_repl_id] =   @ss_id = "" ###@ss_id 親画面から引き継いだid
-      @title = sub_blkgetpobj(@screen_code,"screen")
+      @title = proc_blkgetpobj(@screen_code,"screen")
 	  if @screen_code =~ /gantttrn/ 
 	      @master = false  
 		else
@@ -36,7 +36,7 @@ class ScreenController < ListController
         init_from_screen ###params
         pare_code =  params[:nst_tbl_val].split("_div_")[0]   ### 親のviewのcode
         chil_code =  params[:nst_tbl_val].split("_div_")[1]   ### 子のviewのcode
-        @title =  sub_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
+        @title =  proc_blkgetpobj(params[:nst_tbl_val].split("_div_")[1],"screen")   ### 子の画面
         #####cnt_detail =  params[:nst_tbl_val].split(";")[3]   ### 子の画面位置
         ##########
         @options ={}
@@ -115,6 +115,7 @@ class ScreenController < ListController
 	end
 	def  code_to_name    ### 必須keyとして登録された_codeが変化したときcall　　該当データなしの時の表示方法
 		command_c = init_from_screen
+		@getname ={}
 		return if params[params[:chgname]]  =~ /dummy/ and params[:chgname] =~ /_sno_|_cno_/  ###trn でdummyの時は処理しない
 		case 	params[:chgname]
 			when /_sno_/  ###dummyの時は処理しない
@@ -136,32 +137,33 @@ class ScreenController < ListController
 				if respond_to?("proc_view_field_#{params[:chgname]}_chk")
 					__send__("proc_view_field_#{params[:chgname]}_chk",params)  ###バッチで処理することもあるのであえてparamsを引数にしている。
 					if @errmsg != ""
-						@getname = {}
 						@getname[params[:chgname].to_sym] = @errmsg
 						render :json => @getname and return
 					end
 				end
 				if @errmsg == ""
-					if respond_to?("proc_view_field_#{params[:chgname]}_init")
-						__send__("proc_view_field_#{params[:chgname]}_init",params)
-						##tbs,screen,field,の時は　pobjectへの登録もしている。
-					else	  
-						fld_key = params[:chgname].split("_",2)[1]
-						if respond_to?("proc_field_#{fld_key}_init")
-							__send__("proc_field_#{fld_key}_init",params) 
-						end
-					end
 					case tblnamechop
 						when @screen_code.split("_",2)[1].chop  ###同一テーブル新規のときのチェック		        
 							sw = same_tbl_code_to_name tblnamechop,field
 						when "vf"+@screen_code.split("_")[1].chop
-							sw = get_view_code_frm_screen_tblname params ###tblname対応
+							sw = get_view_code_frm_screen_tblname params ###tblname対応  excelからの取り込み(バッチ)で処理する事があるので　paramsを引数にした。
 						else
 							sw = oth_tbl_code_to_name params ####tblnamechop  
 					end
 				end
 		end
 		if sw == "ON" or sw == "MISSING"
+			if sw == "ON" 
+				if respond_to?("proc_view_field_#{params[:chgname]}_init")
+					__send__("proc_view_field_#{params[:chgname]}_init",params)
+					##tbs,screen,field,の時は　pobjectへの登録もしている。
+				else	  
+					fld_key = params[:chgname].split("_",2)[1]
+					if respond_to?("proc_field_#{fld_key}_init")
+						__send__("proc_field_#{fld_key}_init",params) 
+					end
+				end
+			end
 			render :json => @getname
 		else
 			render :nothing => true
@@ -288,7 +290,6 @@ class ScreenController < ListController
 			end
 		 end
          rec = get_tblfieldval_from_code newkeyfields,scrname,nil, nil  #### delm = mktblname = nil 
-         @getname ={}
          if   rec then
 			 @getname[(mytbl+"_tblid")] = rec["id"]
              prgfs.each do |keys|
@@ -306,13 +307,11 @@ class ScreenController < ListController
 		sw = "ON"
 		strsql = "select screenfield_paragraph from r_screenfields where pobject_code_sfd = '#{params[:chgname]}' and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
 		screenfield_paragraph = ActiveRecord::Base.connection.select_value(strsql)   ###画面のfield
-		@getname ={}
 		if screenfield_paragraph
 			sno_tblnamechop = screenfield_paragraph.split(":_")[0].split("_")[1].chop
 			sno_fld = params[:chgname].split("_",2)[1].sub((screenfield_paragraph.split(":")[1]||=""),"")   ### params[:chgname] = table name _ field
 			strsql = "select * from r_#{sno_tblnamechop}s where #{sno_tblnamechop}_#{sno_fld} = '#{params[params[:chgname]]}'  and #{sno_tblnamechop}_expiredate > current_date "
 			sno_rec = ActiveRecord::Base.connection.select_one(strsql)    ### snoのrec
-			@getname ={}
 			if sno_rec
 				bal_qty = proc_get_bal_qty(sno_tblnamechop+"s",sno_rec)
 				##proc_opeitm_instance(sno_rec)
@@ -410,7 +409,6 @@ class ScreenController < ListController
 		strsql = %Q& select pobject_code_sfd,screenfield_paragraph from r_screenfields where pobject_code_scr = '#{@screen_code}'
 								and screenfield_paragraph like '#{cno_screen}%' AND screenfield_expiredate > current_date& 
 		cno_keys = ActiveRecord::Base.connection.select_all(strsql)
-		@getname ={}
 		strwhere = "where "
 		cno_keys.each do |cno_key|
 			if cno_key["pobject_code_sfd"] =~ /_cno/

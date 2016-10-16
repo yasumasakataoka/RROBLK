@@ -74,8 +74,6 @@ truncate table mkinsts;
 truncate table sio_r_mkinsts;
 truncate table puracts;
 truncate table sio_r_puracts;
-truncate table stkhists;
-truncate table sio_r_stkhists;
 delete from SIO_R_tblfields where tblfield_created_at < current_date - 90
 ;
 delete from SIO_R_screenFIELDS where screenfield_created_at < current_date - 90
@@ -147,3 +145,14 @@ truncate table sio_r_coninsts;
 truncate table conacts;
 
 truncate table sio_r_conacts;
+
+truncate table sio_r_picschs;
+truncate table sio_r_picords;
+truncate table sio_r_picinsts;
+truncate table sio_r_picacts;
+
+
+truncate table picschs;
+truncate table picords;
+truncate table picinsts;
+truncate table picacts;

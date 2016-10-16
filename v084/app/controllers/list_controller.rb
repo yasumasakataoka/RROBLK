@@ -5,7 +5,7 @@ before_filter :authenticate_user!
     def index
 		###debugger  ##debugger  の位置を変更するとエラーになる。???
 		grpcode = sub_blkget_grpcode 
-		if grpcode  then
+		if grpcode  
 	        crtcachelist(grpcode)
         else
           render :text=>"error"
@@ -20,16 +20,16 @@ before_filter :authenticate_user!
 	#### code index　チッェクを入れる。
     def crtcachelist grpcode
           ##debugger # breakpoint
-        if   Rails.cache.exist?("listindex" + grpcode) then
-             @cate_list,@max_cnt = Rails.cache.read("listindex" + grpcode) 
+        if   Rails.cache.exist?("listindex" + grpcode) 
+             @cate_list,@max_cnt = Rails.cache.read("listindex" + grpcode)   ##@max_cnt 横のレンジ　viewで使用
 	         Rails.cache.delete("listindex" + grpcode) if @cate_list.nil?
 	       else ##
 	         @cate_list = []
              @max_cnt = chk_cnt =  1
 			 strsql = "select * from r_screens where substr(screen_grpcodename,1,1) != '#' and screen_expiredate >current_date order by screen_grpcodename"
 	         ActiveRecord::Base.connection.select_all(strsql).each do |i|
-                if   @cate_list[-1] then
-                     if   @cate_list[-1][0] == i["screen_grpcodename"][0,1] then 
+                if   @cate_list[-1]
+                     if   @cate_list[-1][0] == i["screen_grpcodename"][0,1]  
                           chk_cnt += 1
                           @max_cnt = chk_cnt if chk_cnt > @max_cnt 
                         else
@@ -39,7 +39,7 @@ before_filter :authenticate_user!
                     else
                        @cate_list << [i["screen_grpcodename"][0,1],i["screen_grpcodename"][2..-1],{}]
                  end
-                   @cate_list[-1][2][i["pobject_code_scr"].downcase.to_sym] = sub_blkgetpobj(i["pobject_code_scr"],"screen") ## 
+                   @cate_list[-1][2][i["pobject_code_scr"].downcase.to_sym] = proc_blkgetpobj(i["pobject_code_scr"],"screen") ## 
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
              end 

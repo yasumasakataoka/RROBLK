@@ -94,7 +94,7 @@ class   GanttController  <  ScreenController
 		trn_gantts = ActiveRecord::Base.connection.select_all(sql_proc_trn_gantt(trn_code,id))
 		@bgantts = {}
 		trn_gantts.each_with_index do |value,idx|
-            ##break if idx >= 1001
+			break if idx >= 1001
 			if value["alloctbl_destblname"].nil?
 				logger.debug"error class #{self}   #{Time.now}  value: #{value["alloctbl_destblname"]}  "
 				raise
@@ -138,6 +138,18 @@ class   GanttController  <  ScreenController
 					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name"]
 					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
 					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_starttime"] 
+					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					case value["alloctbl_destblname"]
+						when /^prdacts/
+							@bgantts[value["trngantt_key"]][:endtime] = alloc["prdact_cmpldate"]
+						when /^puracts|^ipracts/
+							@bgantts[value["trngantt_key"]][:endtime] = alloc["puract_rcptdate"]
+					end
+				when /^pic/
+					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code_asstwh"]
+					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name_asstwh"]
+					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_asstwh"]
+					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_isudate"] 
 					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 				when /^lotstk/
 					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code"]

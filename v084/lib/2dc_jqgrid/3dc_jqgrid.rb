@@ -97,7 +97,7 @@ module JqgridFilter
 		if show_data.nil?
 			logger.debug " JqgridJson line #{__LINE__} show_cache_key:#{show_cache_key}" 
 			show_data = set_detail(screen_code) if show_data.nil? ## set gridcolumns
-			show_data = set_detail("r_#{screen_code.split("_")[1]}") if show_data.nil? 
+			##show_data = set_detail("r_#{screen_code.split("_")[1]}") if show_data.nil? 
 			if show_data
 				show_cache_key =  "show" + "r_#{screen_code.split("_")[1]}" +  sub_blkget_grpcode
 				Rails.cache.write(show_cache_key,show_data)
@@ -114,10 +114,16 @@ module JqgridFilter
                                  and screenfield_selection = '1' order by screenfield_seqno,screenfield_colpos ")  ###
                                  
            ## when no_data 該当データ 「r_screenfields」が無かった時の処理
-        if det_screen.empty?
-	         logger.debug "line #{(__LINE__).to_s }  #{if screen_code =~ /coding*err/ then screen_code else  ' create screen_code ' + screen_code  end}" 
-	          show_data = nil
-              return show_data 
+        if det_screen.empty?  
+			det_screen = ActiveRecord::Base.connection.select_all("select * from r_screenfields
+                                 where pobject_code_scr = 'r_#{screen_code.split("_")[1]}'  
+                                 and screenfield_expiredate > sysdate 
+                                 and screenfield_selection = '1' order by screenfield_seqno,screenfield_colpos ")
+			if det_screen.empty?
+				logger.debug "line #{(__LINE__).to_s } coding err screen_code #{screen_code}  " 
+				show_data = nil
+				return show_data
+			end
         end   
            ###
            ### pare_screen = det_screen[0][:screenfield_screens_id]
@@ -135,7 +141,7 @@ module JqgridFilter
             tmp_editrules = {}
 			tmp_columns = {}
 			tmp_columns[:field] = ActiveRecord::Base.connection.select_value("select code from pobjects where id =  #{i["screenfield_pobject_id_sfd"]} ")   ##**
-			tmp_columns[:label] = sub_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
+			tmp_columns[:label] = proc_blkgetpobj( tmp_columns[:field] ,"view_field")  ##:viewの項目
 			case i["screenfield_hideflg"]
 				when 1 
 					tmp_columns[:hidden] = true 

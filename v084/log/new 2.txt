@@ -1,0 +1,59 @@
+﻿ 	case @puract_classname
+         when/_add_/
+			@lotstkhist_classname = "lotstkhists_add_"
+			strsql = "select *  from r_alloctbls where alloctbl_srctblname = 'trngantts' and alloctbl_destblname = 'puracts' and alloctbl_destblid = #{@puract_id} "
+			allocs = ActiveRecord::Base.connection.select_all(strsql)
+			qty = @puract_qty ## @puract_qty 瓶の数又はリールの数
+			add_fields = {}
+			add_fields[:lotstkhist_lotno] = if @puract_lotno then @puract_lotno else proc_flg_process_lotno_flg end   ###lotno毎に入力する。lotno毎にpuractsができる。
+			add_fields[:lotstkhist_packno] = "dummy"
+			@opeitm_packqty = 1 if (@opeitm_packqty||=0) == 0 
+			allocs.each do |alloc|
+				add_fields= {} 
+				if @opeitm_packno_flg  ==  "1" and  @opeitm_packqty  > 1
+					alloc_qty = alloc["alloctbl_qty"]
+					until  qty <= 0
+						until alloc_qty <= 0
+							##if alloc_qty >=1
+								add_fields[:lotstkhist_qty_stk]  =  @opeitm_packqty 
+								alloc_qty -= 1
+								alloc["alloctbl_qty"] -= 1
+							##else
+							##	add_fields[:lotstkhist_qty_stk]  =  @opeitm_packqty *  alloc_qty
+							##	alloc_qty = 0
+							##	alloc["alloctbl_qty"] = alloc_qty
+							##end
+							add_fields[:lotstkhist_packno] = proc_flg_process_packno_flg(@puract_opeitm_id,@lotstkhist_packno)
+                            rec =  proc_decision_id_by_key("lotstkhists","  itms_id = #{@opeitm_itm_id} and locas_id = #{@puract_loca_id_to} and lotno = '#{add_fields[:lotstkhist_lotno]}' and                 
+                                              processseq = #{@puract_processseq_pare}  and prjnos_id = #{@puract_prjno_id} and packno =  '#{add_fields[:lotstkhist_packno]}'")
+                            add_fields[:id]  = rec["id"]
+                            add_fields[:lotstkhist_qty_stk] += (rec["qty_stk"]||=0)    
+							proc_fld_r_puracts_lotstkhists_self30   do 
+                                            add_fields
+                            end ##
+							trn = {}
+							proc_save_trn_of_opeitm(trn) do
+								trn[:tblname] = "lotstkhists"
+							end
+							proc_update_gantt_alloc_fm_acttrn trn,alloc,nil
+						end
+						next if alloc_qty <= 0
+						qty -= 1
+					end
+				else
+					add_fields[:lotstkhist_qty_stk] =   alloc["alloctbl_qty"] * @opeitm_packqty
+                    rec =  proc_decision_id_by_key("lotstkhists","  itms_id = #{@opeitm_itm_id} and locas_id = #{@puract_loca_id_to} and lotno = '#{add_fields[:lotstkhist_lotno]}' and                 
+                                              processseq = #{@puract_processseq_pare}  and prjnos_id = #{@puract_prjno_id} and packno =  'dummy'")
+                    add_fields[:id]  = rec["id"]
+                    add_fields[:lotstkhist_qty_stk] += (rec["qty_stk"]||=0)    
+					proc_fld_r_puracts_lotstkhists_self30   do 
+                        add_fields
+                    end ##
+					proc_save_trn_of_opeitm(trn) do
+						trn[:tblname] = "lotstkhists"
+					end
+					proc_update_gantt_alloc_fm_acttrn trn,alloc,nil
+				end
+			end
+		when /edit|delete/
+	end

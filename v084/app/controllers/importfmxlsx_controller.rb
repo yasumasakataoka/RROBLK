@@ -10,7 +10,7 @@ class ImportfmxlsxController < ScreenController
   ##   excelを　漢字等で修正するとカタカナに変換されてセットされる。　'1.2.10'　　バージョンを上げるには　rubyzip rubyのバージョンを上げる必要がある。
     def index
 		init_from_screen ###params
-		@tblname =  sub_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
+		@tblname =  proc_blkgetpobj("r_"+@screen_code.split("_")[1],"view")
     end
 ###By default, cell load errors (ex. if a date cell contains the string 'hello')
 ### result in a SimpleXlsxReader::CellLoadError.
