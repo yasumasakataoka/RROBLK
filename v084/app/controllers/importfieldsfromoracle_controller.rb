@@ -1,5 +1,5 @@
 class ImportfieldsfromoracleController < ApplicationController
-  ###  created_at updated_at remark は必須
+  ###  created_at updated_at remark は必須項目
   ###  _idは自動的に外部keyを作成する。
   ###開発環境でのみ動く
 	before_filter :authenticate_user!  
