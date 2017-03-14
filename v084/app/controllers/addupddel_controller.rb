@@ -36,6 +36,9 @@ class  AddupddelController < ScreenController
 				## textは表示できないのでメッセージの変更要
 				render :text => "return to menu because session loss params:#{params[:oper]} "
 		end ## case parems[:oper]
+		##Rails.cache.clear(nil) if command_c[:sio_viewname] =~ /screen/  ###db_cudではクリされた結果がscreenのクラスでは反映されない模様
+		@show_data = get_show_data(command_c[:sio_code])
+		befor_chk_update
 		if  @errmsg == "" 
 			@req_userproc = false
 			@sio_classname = command_c[:sio_classname]
@@ -43,9 +46,7 @@ class  AddupddelController < ScreenController
 			ActiveRecord::Base.connection.begin_db_transaction
 			command_c[:sio_session_counter] =   @new_sio_session_counter  = user_seq_nextval
 			command_c[:sio_recordcount] = 1
-			Rails.cache.clear(nil) if command_c[:sio_viewname] =~ /screen/  ###db_cudではクリされた結果がscreenのクラスでは反映されない模様
-			all_fields = get_show_data(command_c[:sio_code])[:allfields]
-			all_fields.each do |f|
+			@show_data[:allfields].each do |f|
 				command_c[f] = nil if command_c.has_key?(f) == false and f.to_s =~ /^#{tblname}_/
 			end
 			proc_simple_sio_insert command_c
@@ -67,4 +68,13 @@ class  AddupddelController < ScreenController
 		end
 		ActiveRecord::Base.connection.commit_db_transaction
 	end  ## add_upd_del
+    def befor_chk_update
+		@show_data[:gridcolumns].each do |fld|
+			if fld[:editable] == true
+				if respond_to?("proc_view_field_#{fld[:field]}_chk")
+					__send__("proc_view_field_#{fld[:field]}_chk",params)  ###バッチで処理することもあるのであえてparamsを引数にしている。
+				end
+			end
+		end
+    end
 end

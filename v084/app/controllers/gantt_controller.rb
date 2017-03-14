@@ -30,38 +30,39 @@ class   GanttController  <  ScreenController
 																order by opeitm_priority desc, opeitm_processseq desc,opeitm_Expiredate ")
 		end
         if rec then 
-            ngantts << {:seq=>"001",:mlevel=>1,:itm_id=>rec["opeitm_itm_id"],:loca_id=>rec["opeitm_loca_id"],:opeitms_id=>rec["id"],
+            ngantts << {:seq=>"001",:mlevel=>1,:itms_id=>rec["opeitm_itm_id"],:locas_id=>rec["opeitm_loca_id"],:opeitms_id=>rec["id"],
 								:itm_code=>rec["itm_code"],:itm_name=>rec["itm_name"],
 								:loca_code=>rec["loca_code"],:loca_name=>rec["loca_name"],
 								:parenum=>1,:chilnum=>1,:duration=>rec["opeitm_duration"],:prdpurshp=>rec["opeitm_prdpurshp"],
 								:processseq=>"#{if params[:screen_code] =~ /_itms/ then '999' else  rec["opeitm_processseq"] end}",
 								:priority=>"#{if params[:screen_code] =~ /_itms/ then '999' else rec["opeitm_priority"] end}",
-								:starttime=>time_now,:endtime=>time_now,:id=>"opeitms_"+rec["id"].to_s}
+								:starttime=>time_now,:duedate=>time_now,:id=>"opeitms_"+rec["id"].to_s}
             cnt = 0
             @bgantts = {}
-            @bgantts["000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:duration=>"",:assigs=>"",:endtime=>time_now,:starttime=>time_now,:depends=>"",:id=>"000"}
+			@bgantts["000"] = {:mlevel=>0,:itm_code=>"",:itm_name=>"全行程",:loca_code=>"",:loca_name=>"",:duration=>"",:assigs=>"",
+								:duedate=>time_now,:starttime=>time_now,:depends=>"",:id=>"000",:starttime => Time.now}
             until ngantts.size == 0
 				cnt += 1
-				ngantts = proc_get_tree_pare_itms_locas ngantts,gantt_reverse
+				ngantts = proc_get_tree_pare_itms_locas ngantts,gantt_reverse  ###trngantt 作成時も利用
 				break if cnt >= 1000
             end
           else
             return ""
         end
-        @bgantts["000"][:starttime] = Time.now
         prv_resch  	if params[:screen_code] =~ /^gantt/  ####再計算
-        @bgantts["000"][:endtime] = @max_time 
-        @bgantts["000"][:duration] = " #{(@bgantts["000"][:endtime]  - @bgantts["000"][:starttime] ).divmod(24*60*60)[0]}"
+        @bgantts["000"][:duedate] = @max_time 
+        @bgantts["000"][:duration] = " #{(@bgantts["000"][:duedate]  - @bgantts["000"][:starttime] ).divmod(24*60*60)[0]}"
         strgantt = '{"tasks":['
 		i = 0
 		dep ={}
         @bgantts.sort.each  do|key,value|
 			dep[key] = i
+			##opeitm = ActiveRecord::Base.connection.select_all("select * from r_opeitms where id = #{value[:opeitms_id]} ")
             strgantt << %Q&{"id":"#{value[:id]}","itm_code":"#{value[:itm_code]}","itm_name":"#{value[:itm_name]}",
 			"loca_code":"#{value[:loca_code]}","loca_name":"#{value[:loca_name]}",
-			"loca_id":"#{value[:loca_id]}","itm_id":"#{value[:itm_id]}",
+			"locas_id":"#{value[:loca_id]}","itms_id":"#{value[:itm_id]}",
             "parenum":"#{value[:parenum]}","chilnum":"#{value[:chilnum]}","start":#{value[:starttime].to_i.*1000},"duration":"#{value[:duration]}",
-            "end":#{value[:endtime].to_i.*1000},"assigs":[],"depends":"#{if params[:screen_code] =~ /^reverse/ then dep[key[0..-4]]  else value[:depends] end}",
+            "end":#{value[:duedate].to_i.*1000},"assigs":[],"depends":"#{if params[:screen_code] =~ /^reverse/ then dep[key[0..-4]]  else value[:depends] end}",
 			"processseq":"#{value[:processseq]}","priority":"#{value[:priority]}","prdpurshp":"#{value[:prdpurshp]}",
 			"level":#{if value[:mlevel] == 0 then 0 else 1 end},"mlevel":#{value[:mlevel]},"subtblid":"#{value[:subtblid]}","paretblcode":""},&
 			i += 1
@@ -76,15 +77,17 @@ class   GanttController  <  ScreenController
 							a.itm_id,a.loca_id,max(a.trngantt_parenum) parenum,max(a.trngantt_chilnum) chilnum,max(a.trngantt_duration) duration,
 							max(a.trngantt_processseq) processseq,max(a.trngantt_priority) priority,
 							min(a.TRNGANTT_starttime) org_starttime,max(a.TRNGANTT_MLEVEL) mlevel,
-							max(a.TRNGANTT_dueDATE) org_duedate,max(a.trngantt_qty) qty,
+							max(a.TRNGANTT_dueDATE) org_duedate,max(a.trngantt_qty + a.trngantt_qty_stk) qty,
 							sum(case  when b.alloctbl_destblname like '%schs' then  b.alloctbl_qty else 0 end) qty_alloc_sch,
 							sum(case  when b.alloctbl_destblname like '%ords' then  b.alloctbl_qty else 0 end) qty_alloc_ord,
 							sum(case  when b.alloctbl_destblname like '%insts' then  b.alloctbl_qty else 0 end) qty_alloc_inst,
-							sum(case  when b.alloctbl_destblname like '%act%' then  b.alloctbl_qty 
-							          when b.alloctbl_destblname like '%lotstk%' then  b.alloctbl_qty   else 0 end) qty_alloc_stk,
+							sum(case  when b.alloctbl_destblname like '%act%' then  b.alloctbl_qty else 0 end) qty_alloc_act,
+							sum(case  when b.alloctbl_destblname like '%lotstk%' then  b.alloctbl_qty_stk   else 0 end) qty_alloc_stk,
+							sum(case  when b.alloctbl_destblname like 'cons%' then  b.alloctbl_qty   else 0 end) qty_alloc_cons,
 							a.trngantt_orgtblname,a.trngantt_orgtblid
                       from r_trngantts a 
-					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_qty > 0
+					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_allocfree = 'alloc'
+					  and (b.alloctbl_qty > 0 or b.alloctbl_qty_stk > 0)
 					  where   a.trngantt_orgtblname = '#{trn_code}' and a.trngantt_orgtblid = #{id}  
 					  group by a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_orgtblname,a.trngantt_orgtblid,
 								alloctbl_destblname,alloctbl_destblid,a.trngantt_prdpurshp,a.itm_id,a.loca_id
@@ -93,14 +96,17 @@ class   GanttController  <  ScreenController
     def  proc_trn_gantt  trn_code,id
 		trn_gantts = ActiveRecord::Base.connection.select_all(sql_proc_trn_gantt(trn_code,id))
 		@bgantts = {}
+		save_pare_key = {}
 		trn_gantts.each_with_index do |value,idx|
-			break if idx >= 1001
-			if value["alloctbl_destblname"].nil?
-				logger.debug"error class #{self}   #{Time.now}  value: #{value["alloctbl_destblname"]}  "
-				raise
+			break if idx > 10000
+			if value["alloctbl_destblname"]
+				alloc =  proc_get_viewrec_from_id(value["alloctbl_destblname"],value["alloctbl_destblid"])
+			else
+				alloc={}
+				value["alloctbl_destblname"] = "lotstkhists"
+				alloc["#{value["alloctbl_destblname"].chop}_sno"] = "Done"
 			end
-			alloc =  proc_get_viewrec_from_id(value["alloctbl_destblname"],value["alloctbl_destblid"])	
-            @bgantts[value["trngantt_key"]] = {:id=>(idx).to_s,
+			@bgantts[sprintf("%04d",idx)] = {:id=>(idx).to_s,
 														:itm_id=>value["itm_id"],:itm_code=>value["itm_code"],:itm_name=>value["itm_name"],
 			                                            :loca_code=>if value["alloctbl_destblname"] == "lotstkhists" then alloc["loca_code_to"] else value["loca_code"] end,
 														:loca_name=>if value["alloctbl_destblname"] == "lotstkhists" then alloc["loca_name_to"] else value["loca_name"] end,
@@ -108,74 +114,82 @@ class   GanttController  <  ScreenController
 														:parenum=>"#{value["parenum"]}",:chilnum=>"#{value["chilnum"]}",:duration=>"#{value["duration"]}",
 														:sno=>alloc["#{value["alloctbl_destblname"].chop}_sno"],:qty=>"#{value["qty"]||=0}",
 														:qty_sch=>"#{value["qty_alloc_sch"]||=0}",:qty_ord=>"#{value["qty_alloc_ord"]||=0}",
-														:qty_inst=>"#{value["qty_alloc_inst"]||=0}",:qty_stk=>"#{value["qty_alloc_stk"]||=0}",
+														:qty_inst=>"#{value["qty_alloc_inst"]||=0}",:qty_stk=>"#{(value["qty_alloc_stk"]||=0)+(value["qty_alloc_act"]||=0)}",
 														:starttime=> value["org_starttime"],:org_start=>(value["org_starttime"].to_i * 1000),
 														:duration=>value["duration"],:processseq=>"#{value["processseq"]}",:priority=>"#{value["priority"]}",:prdpurshp=>"#{value["prdpurshp"]}",
-                                                        :endtime=>value["org_duedate"],:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
+                                                        :duedate=>value["org_duedate"],:org_end=>(value["org_duedate"].to_i * 1000),"assigs"=>[],
 														:level=>if value["trngantt_key"] == '000' then 0 else 1 end,
 														:mlevel=>value["mlevel"],:subtblid=>"",:paretblcode=>"",:depends=>""}
 			case value["alloctbl_destblname"]
 				when /^cust/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code_cust"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name_cust"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_cust"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_isudate"] 
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code_cust"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name_cust"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_cust"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_isudate"] 
+					@bgantts[sprintf("%04d",idx)][:duedate] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 				when /^dlv/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code_to"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name_to"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_to"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_depdate"] 
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code_to"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name_to"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_to"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_depdate"] 
+					@bgantts[sprintf("%04d",idx)][:duedate] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 				when /^shp/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_depdate"]
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_depdate"]
+					@bgantts[sprintf("%04d",idx)][:duedate] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 				when /^prd|^pur|^ipr|^con/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_starttime"] 
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_starttime"] 
+					@bgantts[sprintf("%04d",idx)][:duedate] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 					case value["alloctbl_destblname"]
 						when /^prdacts/
-							@bgantts[value["trngantt_key"]][:endtime] = alloc["prdact_cmpldate"]
+							@bgantts[sprintf("%04d",idx)][:duedate] = alloc["prdact_cmpldate"]
 						when /^puracts|^ipracts/
-							@bgantts[value["trngantt_key"]][:endtime] = alloc["puract_rcptdate"]
+							@bgantts[sprintf("%04d",idx)][:duedate] = alloc["puract_rcptdate"]
 					end
 				when /^pic/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code_asstwh"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name_asstwh"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id_asstwh"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_isudate"] 
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_isudate"] 
+					@bgantts[sprintf("%04d",idx)][:duedate] = alloc["#{value["alloctbl_destblname"].chop}_duedate"]
 				when /^lotstk/
-					@bgantts[value["trngantt_key"]][:loca_code] = alloc["loca_code"]
-					@bgantts[value["trngantt_key"]][:loca_name] = alloc["loca_name"]
-					@bgantts[value["trngantt_key"]][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
-					@bgantts[value["trngantt_key"]][:starttime] = alloc["#{value["alloctbl_destblname"].chop}_starttime"] 
-					@bgantts[value["trngantt_key"]][:endtime] = alloc["#{value["alloctbl_destblname"].chop}_starttime"] 
+					@bgantts[sprintf("%04d",idx)][:loca_code] = alloc["loca_code"]
+					@bgantts[sprintf("%04d",idx)][:loca_name] = alloc["loca_name"]
+					@bgantts[sprintf("%04d",idx)][:loca_id] = alloc["#{value["alloctbl_destblname"].chop}_loca_id"]
+					@bgantts[sprintf("%04d",idx)][:starttime] = Time.now 
+					@bgantts[sprintf("%04d",idx)][:duedate] = Time.now 
 				else
-					logger.debug"error class #{self}   #{Time.now}  alloctbl_destblname: #{value["alloctbl_destblname"]} "
-					raise
+					##logger.debug"error class #{self}   #{Time.now}  alloctbl_destblname: #{value["alloctbl_destblname"]} "
+					##raise
+					@bgantts[sprintf("%04d",idx)][:loca_code] = ""
+					@bgantts[sprintf("%04d",idx)][:loca_name] = ""
+					@bgantts[sprintf("%04d",idx)][:loca_id] = 0
+					@bgantts[sprintf("%04d",idx)][:starttime] = Time.now  
+					@bgantts[sprintf("%04d",idx)][:duedate] =  Time.now
 			end
-			debugger if @bgantts[value["trngantt_key"]][:starttime].nil?
+			save_pare_key[value["trngantt_key"]] = sprintf("%04d",idx)
+			pare_key = if save_pare_key[value["trngantt_key"][0..-4]] then  save_pare_key[value["trngantt_key"][0..-4]] else nil end
+			@bgantts[pare_key][:depends] << idx.to_s + "," if pare_key
 		end
-        dp_id = 0
-        @bgantts.sort.each  do|key,value|    ###set depends
-           if key.to_s.size > 3 then
-             @bgantts[key[0..-4]][:depends] << dp_id.to_s + ","
-           end
-           dp_id += 1
-        end
+        ##dp_id = 0
+        ##@bgantts.sort.each  do|key,value|    ###set depends
+        ##   if key.size > 3 ###(key+ idx(%4d)
+		##   debugger
+        ##     @bgantts[key[0..-4]][:depends] << dp_id.to_s + ","
+        ##   end
+        ##   dp_id += 1
+        ##end
         strgantt = '{"tasks":['
         @bgantts.sort.each  do|key,gantt|
             strgantt << %Q&{"id":"#{gantt[:id]}","itm_code":"#{gantt[:itm_code]}","itm_name":"#{gantt[:itm_name]}",
 			"loca_code":"#{gantt[:loca_code]}","loca_name":"#{gantt[:loca_name]}",
 			"loca_id":"#{gantt[:loca_id]}","itm_id":"#{gantt[:itm_id]}",
-            "start":#{gantt[:starttime].to_i*1000},"org_start":#{gantt[:org_start]},"end":#{gantt[:endtime].to_i*1000},"org_end":#{gantt[:org_end]},			
+            "start":#{gantt[:starttime].to_i*1000},"org_start":#{gantt[:org_start]},"end":#{gantt[:duedate].to_i*1000},"org_end":#{gantt[:org_end]},			
 			"prdpurshp":"#{gantt[:prdpurshp]}","sno":"#{gantt[:sno]}",
 			"qty":#{gantt[:qty]},"qty_sch":#{gantt[:qty_sch]},"qty_ord":#{gantt[:qty_ord]},"qty_inst":#{gantt[:qty_inst]},"qty_stk":#{gantt[:qty_stk]},
 			"processseq":#{gantt[:processseq]},"priority":#{gantt[:priority]},"parenum":"#{gantt[:parenum]}","chilnum":"#{gantt[:chilnum]}","duration":"#{gantt[:duration]}",
@@ -465,7 +479,7 @@ class   GanttController  <  ScreenController
 	def prv_resch   ##本日を起点に再計算
         dp_id = 0
         @bgantts.sort.each  do|key,value|    ###set depends
-           if key.to_s.size > 3 then
+           if key.size > 3 then
              @bgantts[key[0..-4]][:depends] << dp_id.to_s + ","
 			 @bgantts[key[0..-4]][:duration] = 0  if @bgantts[key[0..-4]][:itm_id] != @bgantts[key][:itm_id]
            end
@@ -474,26 +488,26 @@ class   GanttController  <  ScreenController
 	
 			today = Time.now
 			@bgantts.sort.reverse.each  do|key,value|  ###計算
-				if key.size > 3
+				if key.size > 3  ###master は分割はない
 					if  value[:depends] == ""
 						if @bgantts[key][:starttime]  <  today
 							@bgantts[key][:starttime]  =  today		   
-							@bgantts[key][:endtime]  =   @bgantts[key][:starttime] + value[:duration]*24*60*60    ###稼働日考慮今なし
+							@bgantts[key][:duedate]  =   @bgantts[key][:starttime] + value[:duration]*24*60*60    ###稼働日考慮今なし
 						end					  
 					end
-					debugger if @bgantts[key][:endtime].nil? or @bgantts[key[0..-4]][:starttime].nil?
-					if  (@bgantts[key[0..-4]][:starttime] ) < @bgantts[key][:endtime]
-						@bgantts[key[0..-4]][:starttime]  =   @bgantts[key][:endtime]   ###稼働日考慮今なし
-						@bgantts[key[0..-4]][:endtime] =  @bgantts[key[0..-4]][:starttime]  + @bgantts[key[0..-4]][:duration] *24*60*60
+					debugger if @bgantts[key][:duedate].nil? or @bgantts[key[0..-4]][:starttime].nil?
+					if  (@bgantts[key[0..-4]][:starttime] ) < @bgantts[key][:duedate]
+						@bgantts[key[0..-4]][:starttime]  =   @bgantts[key][:duedate]   ###稼働日考慮今なし
+						@bgantts[key[0..-4]][:duedate] =  @bgantts[key[0..-4]][:starttime]  + @bgantts[key[0..-4]][:duration] *24*60*60
 					end
 				end
 			end
 		
 			@bgantts.sort.each  do|key,value|  ###topから再計算
 				if key.size > 3
-					if  (@bgantts[key[0..-4]][:starttime]  ) > @bgantts[key][:endtime]  			   
-						@bgantts[key][:endtime]  =   @bgantts[key[0..-4]][:starttime]    ###稼働日考慮今なし
-						@bgantts[key][:starttime] =  @bgantts[key][:endtime]  - value[:duration] *24*60*60
+					if  (@bgantts[key[0..-4]][:starttime]  ) > @bgantts[key][:duedate]  			   
+						@bgantts[key][:duedate]  =   @bgantts[key[0..-4]][:starttime]    ###稼働日考慮今なし
+						@bgantts[key][:starttime] =  @bgantts[key][:duedate]  - value[:duration] *24*60*60
 					end					  
 				end
 			end

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="2870" uniqueCount="467"><si><t>screenfield_id</t></si><si><t>pobject_code_scr</t></si><si><t>pobject_code_sfd</t></si><si><t>表示順</t></si><si><t>選択有無</t></si><si><t>表示無</t></si><si><t>必須項目</t></si><si><t>フォーム表示　修正可否</t></si><si><t>縦の位置</t></si><si><t>横の位置</t></si><si><t>screenfield_type</t></si><si><t>selectの時の選択値リスト</t></si><si><t>screenfield_formatter</t></si><si><t>検索項目</t></si><si><t>screenfield_width</t></si><si><t>textarea幅</t></si><si><t>textarea高さ</t></si><si><t>screenfield_minvalue</t></si><si><t>screenfield_maxvalue</t></si><si><t>screenfield_edoptsize</t></si><si><t>screenfield_dataprecision</t></si><si><t>screenfield_datascale</t></si><si><t>screenfield_edoptmaxlength</t></si><si><t>screenfield_subindisp</t></si><si><t>screenfield_crtfield</t></si><si><t>screenfield_sumkey</t></si><si><t>screenfield_contents</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>tblfield_contents</t></si><si><t>fieldcode_contents</t></si><si><t>screenfield_remark</t></si><si><t>screenfield_expiredate</t></si><si><t>person_name_upd</t></si><si><t>screenfield_created_at</t></si><si><t>pobject_objecttype_sfd</t></si><si><t>screenfield_update_ip</t></si><si><t>screenfield_updated_at</t></si><si><t>person_code_upd</t></si><si><t>pobject_code_view</t></si><si><t>scrlv_code</t></si><si><t>r_purinsts</t></si><si><t>itm_id</t></si><si><t>number</t></si><si><t>itms</t></si><si><t>id</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>auto_crt</t></si><si><t>2099/12/31</t></si><si><t>system</t></si><si><t>2015/12/13 18:11</t></si><si><t>view_field</t></si><si><t xml:space="preserve">0	</t></si><si><t>itm_material</t></si><si><t>varchar2</t></si><si><t>material</t></si><si><t>itm_datascale</t></si><si><t>datascale</t></si><si><t>発注、製造指示、棚卸時の小数点以下の単位</t></si><si><t>itm_design</t></si><si><t>design</t></si><si><t>itm_weight</t></si><si><t>weight</t></si><si><t>undefined</t></si><si><t>itm_length</t></si><si><t>length</t></si><si><t>itm_deth</t></si><si><t>deth</t></si><si><t>itm_name</t></si><si><t>name</t></si><si><t>codeに対応する名称として登録される</t></si><si><t>2015/07/28 23:43</t></si><si><t>127.0.0.1</t></si><si><t>2016/10/27 23:34</t></si><si><t>itm_wide</t></si><si><t>wide</t></si><si><t>横</t></si><si><t>itm_model</t></si><si><t>model</t></si><si><t>itm_expiredate</t></si><si><t>date</t></si><si><t>expiredate</t></si><si><t>有効日</t></si><si><t>2016/07/02 21:10</t></si><si><t>itm_std</t></si><si><t>std</t></si><si><t>itm_code</t></si><si><t>code</t></si><si><t>品目コード、品目、品番
+ganttでcopy_itemcodeに使用するときはcodeでユニークにしないと内容が保証されない。又はganttに該当keyを追加する。</t></si><si><t>ユニークkeyの一部であること。</t></si><si><t>2016/10/27 23:33</t></si><si><t>loca_id</t></si><si><t>locas</t></si><si><t>loca_id_to</t></si><si><t>loca_id_sect</t></si><si><t>loca_id_shelfno</t></si><si><t>2016/10/21 22:09</t></si><si><t>loca_addr2</t></si><si><t>addr2</t></si><si><t>loca_addr2_to</t></si><si><t>loca_addr2_sect</t></si><si><t>loca_addr2_shelfno</t></si><si><t>loca_fax</t></si><si><t>fax</t></si><si><t>loca_fax_to</t></si><si><t>loca_fax_shelfno</t></si><si><t>loca_zip</t></si><si><t>zip</t></si><si><t>loca_zip_to</t></si><si><t>loca_zip_sect</t></si><si><t>loca_zip_shelfno</t></si><si><t>loca_addr1</t></si><si><t>addr1</t></si><si><t>loca_addr1_to</t></si><si><t>loca_addr1_sect</t></si><si><t>loca_addr1_shelfno</t></si><si><t>loca_mail</t></si><si><t>mail</t></si><si><t>loca_mail_to</t></si><si><t>loca_mail_shelfno</t></si><si><t>loca_name</t></si><si><t>loca_name_sect</t></si><si><t>loca_name_to</t></si><si><t>loca_name_shelfno</t></si><si><t>loca_country</t></si><si><t>country</t></si><si><t>loca_country_to</t></si><si><t>loca_country_sect</t></si><si><t>loca_country_shelfno</t></si><si><t>loca_tel</t></si><si><t>tel</t></si><si><t>loca_tel_to</t></si><si><t>loca_tel_shelfno</t></si><si><t>loca_prfct</t></si><si><t>prfct</t></si><si><t>県名</t></si><si><t>loca_prfct_to</t></si><si><t>loca_prfct_sect</t></si><si><t>loca_prfct_shelfno</t></si><si><t>loca_abbr</t></si><si><t>abbr</t></si><si><t>loca_abbr_to</t></si><si><t>loca_abbr_sect</t></si><si><t>loca_abbr_shelfno</t></si><si><t>loca_expiredate</t></si><si><t>loca_expiredate_to</t></si><si><t>2016/06/17 23:19</t></si><si><t>loca_expiredate_shelfno</t></si><si><t>loca_code</t></si><si><t>部署、得意先、仕入先、倉庫等すべてを包括する、場所コード</t></si><si><t>loca_code_sect</t></si><si><t>loca_code_to</t></si><si><t>loca_code_shelfno</t></si><si><t>opeitm_shelfno_id</t></si><si><t>opeitms</t></si><si><t>shelfnos_id</t></si><si><t>locas_idは在庫保管部署(asswhs)、作業場所、業者(dealers)であること。）
+
+locas_idまでkeyにする。(11/15)</t></si><si><t>opeitm_qty_pur</t></si><si><t>qty_pur</t></si><si><t>購入単位
+ひと箱　１０瓶　一瓶　500ｍｌ
+packqty 500
+qty_pur 10</t></si><si><t>購入箱、ひと箱に入っている、瓶リールの数</t></si><si><t>opeitm_units_lttime</t></si><si><t>char</t></si><si><t>units_lttime</t></si><si><t xml:space="preserve">durationの単位
+</t></si><si><t>opeitmsのltの単位
+day hour</t></si><si><t>opeitm_autoact_p</t></si><si><t>autoact_p</t></si><si><t>instからautoを自動作成する期間</t></si><si><t>opeitm_prjalloc_flg</t></si><si><t>prjalloc_flg</t></si><si><t>0:prj_code dummyも引当て対象とする。
+1:同一prjnos_idのみ引当ている。
+2:同一親のprjnos_idで引き当てる。親が無いときは1と同じ</t></si><si><t>opeitm_packno_flg</t></si><si><t>packno_flg</t></si><si><t>nil,0: "dummy"
+ 1:受入時units_id_case毎に在庫を管理する。
+　 packnoを01,02,・・・・と順番に採番する。</t></si><si><t>2016/05/29 10:02</t></si><si><t>opeitm_autoord_p</t></si><si><t>autoord_p</t></si><si><t>既定値</t></si><si><t>ordsを作成するときの、対象範囲期間　単位は日で固定</t></si><si><t>opeitm_opt_fix_flg</t></si><si><t>opt_fix_flg</t></si><si><t>nil,D 日単位のまとめ
+W 週単位のまとめ 
+M 　月単位の纏め m 該当オーダの先頭開始
+P　纏めない。</t></si><si><t>nil,D 日単位のまとめ
+W      週単位のまとめ
+M      　月単位の纏め
+m     該当オーダの先頭開始日開始日をもとに月単位に纏め
+P 　親毎にまとめる。</t></si><si><t>opeitm_boxe_id</t></si><si><t>boxes_id</t></si><si><t>boxの単位</t></si><si><t>opeitm_consumauto</t></si><si><t>consumauto</t></si><si><t>M:手動で消費 又は装置で使用後戻し(手動)
+A:自動で消費　又は装置で使用後戻し(自動)</t></si><si><t>opeitm_mold</t></si><si><t>mold</t></si><si><t>自身で作成することもあるのでitmsでなくopeitmsに項目をセット</t></si><si><t>1:金型　特殊道具等をイメージ</t></si><si><t>opeitm_chkinst</t></si><si><t>chkinst</t></si><si><t>chkinst:"1"  発注数以上の受入は不可</t></si><si><t>opeitm_esttosch</t></si><si><t>esttosch</t></si><si><t>null は999と同じ</t></si><si><t xml:space="preserve">開始日を基準にxxxestsからxxxschsに変換するまでの日数
+-1 直ぐ
+例　7 七日後　（稼働日考慮なし）　--&gt;稼働日考慮に修正予定
+999　変換しない。 </t></si><si><t>opeitm_stktaking_f</t></si><si><t>stktaking_f</t></si><si><t>在庫データ作成の有無
+工場内では、補助材料・副資材を想定。
+　shpxxxsを自動作成、自動消費されることを想定。
+受注では、サービス、運賃等を想定。
+　shpxxxsは作成しない事を想定。</t></si><si><t xml:space="preserve">1:棚卸対象
+</t></si><si><t>opeitm_rule_price</t></si><si><t>rule_price</t></si><si><t>0:単価入力不可　 マスタの単価のみを使用する。
+1:単価入力可
+C : custs テーブルに従う D:dealersテーブルに従う
+E:ERROR  販売、購入不可</t></si><si><t xml:space="preserve">単価入力時のルール
+0:単価入力不可　 マスタの単価のみを使用する。
+</t></si><si><t>opeitm_chkord_prc</t></si><si><t>chkord_prc</t></si><si><t>chkord 1,2,3の時　の許容値　% null,100 は無条件の許可　0%は0と同じ</t></si><si><t>opeitm_chkord</t></si><si><t>chkord</t></si><si><t>発注条件、回答条件、受け入れ条件の項目追加時には
+sql_alloc_search
+の修正が必要</t></si><si><t>autocreate_inst
+0:Σinst qty != ord qty なら　エラーとして　instsに取り込まない。ord分割の時
+1:Σinst qty  =&lt; ord qty なら取り込み　ord qty はΣinst qtyとする。
+2:Σinst qty  =&gt; ord qty なら取り込み　ord qty はΣinst qtyとする。
+3:ord qty はΣinst qtyとする。
+5:inst qty = Σord qty とする。　　ordをまとめて指示の時</t></si><si><t>opeitm_shuffle_loca</t></si><si><t>shuffle_loca</t></si><si><t>1:場所違い(!= locas_id)でも、出庫オーダを作成して引き当てる。</t></si><si><t>opeitm_shuffle_flg</t></si><si><t>shuffle_flg</t></si><si><t>schs,ords,instsを作成するときの既定値　x9はopeitmには指定しない。</t></si><si><t>0:シャッフルしない 　一度引き当てたら引当て変更は自動ではしない。初期は登録順に引き当てる。1:登録順にシャッフル　2:納期順にシャッフル　3:回答納期順にシャッフル　　5:登録順にシャッフルするが納期が遅くなる時は納期範囲内であること。納期遅れをだし遅くなる時はそのまま。6:納期順にシャッフルするが納期が遅くなる時は納期範囲内であること。納期遅れをだし遅くなる時はそのまま。 9:出庫指示を最優先で引き当てる。ただし　0のデータは除く。　5,6のルールは無視される。</t></si><si><t>opeitm_autocreate_act</t></si><si><t>autocreate_act</t></si><si><t>指示と同時に実績を作成</t></si><si><t>0:チェックなし
+1:マイナス在庫は警告
+2:マイナス在庫はエラー
+3:マイナス在庫は基本エラーだが、入庫指示数でマイナス在庫が補えればエラーにしない。</t></si><si><t>opeitm_unit_id_case</t></si><si><t>units_id_case</t></si><si><t>、出庫時の単位　在庫管理の単位</t></si><si><t>入れ物の単位　瓶　缶　リール　巻</t></si><si><t>opeitm_unit_id_case_pur</t></si><si><t>units_id_case_pur</t></si><si><t>購入の単位</t></si><si><t>入れ物の単位　瓶　缶　リール　巻 購入時</t></si><si><t>opeitm_operation</t></si><si><t>operation</t></si><si><t>shp:delivered_goods  納品
+shp:feepayment　有償支給
+shp:shipment 出庫</t></si><si><t>opeitm_maxqty</t></si><si><t>maxqty</t></si><si><t>packqtyの整数倍であること
+0は9999999999と同じ</t></si><si><t>opeitm_opt_fixoterm</t></si><si><t>opt_fixoterm</t></si><si><t>0,nullは365日とみなす。
+ただし、365以上の前倒しは、-1としている。
+処理メソッド　vproc_mkord_create_ord</t></si><si><t xml:space="preserve">まとめ期間(発注、作業指示をまとめる期間)　 </t></si><si><t>opeitm_autocreate_inst</t></si><si><t>autocreate_inst</t></si><si><t>オーダと同時に指示を作成
+prdords,purordsの時有効</t></si><si><t>　ORDS --&gt;INSTS への分割まとめ
+0:手動又は外部からのデータ取り込みでinsts作成
+　　まとめと分解あり。
+1:　ordsのCONFIRM=1の時　オーダと同時に作成
+A:開始日がXX以内でordからinstsを作成
+a:在庫にあり、XX以内なら作成。
+　XX:autoinst_p
+
+instsは外からので他の取り込みを、つまり
+回答納期、現場での作業予定を取り込むケースと
+自動出庫指示のケース等を想定。</t></si><si><t>opeitm_autocreate_ord</t></si><si><t>autocreate_ord</t></si><si><t>自動実行、エラーチェックの時使用。
+警告の時は、リスト出力時対応。autocreate_ordには、エラーチェックフラグはセットしない。</t></si><si><t>xxxSCHSからxxxORDSを作成
+0:手動   xxxxx_shpordsで作成　基本r_shpordsを想定
+1：一括作成　confirm=1 r_ moordsでordを一括作成
+2:仮のxxxORDSを一括作成 confirm=0
+・データ作成後、外部へ送信して初めて確定となるケースを想定。 テーブルmkordsをベースに作成。
+・印刷し注文(作業指示)するケースを想定
+
+以下、消費又は出庫対応。mkordsを定期的に実行することを想定。
+a:子部品がすべてそろったら（在庫になったら）オーダ作成
+     日付の範囲はmkordで指定するかautoord_pで指定。。以下同様
+b:子部品と設備がすべてそろったらオーダ作成
+c:自身の在庫がそろったら、出荷または出庫
+
+A:子部品の予定がすべてそろったら（在庫又はオーダ発行済になったら）オーダ作成
+     日付の範囲はmkordで指定する。以下同様
+B:子部品と設備の予定がすべてそろったらオーダ作成
+
+9:親のオーダ発行と同時に子の在庫を抑えるか、オーダーを発行する。</t></si><si><t>opeitm_loca_id</t></si><si><t>locas_id</t></si><si><t>opeitm_contents</t></si><si><t>textarea</t></si><si><t>contents</t></si><si><t>opeitm_id</t></si><si><t>opeitm_prdpurshp</t></si><si><t>prdpurshp</t></si><si><t xml:space="preserve">[:prd,"作業"],[:pur,"購入"],[:shp,"出庫"],[:shp,"梱包出荷"]
+必須項目
+</t></si><si><t>作業内容
+ファントムを追加予定
+prd 製造　社内作業　 locas_idで作業して次工程へ自動移動
+pur 購入　locas_idで購入して、業者が次工程へ納品。社外加工　組立
+shp 出庫　一旦locas_idに受入、保管し作業場所へ出庫
+dlv 出荷　opeitms  には　shpとして登録
+inp:検査
+stk  :在庫　alloctblsで使用
+ocp:装置使用中
+
+　副産物作成 はnditmsに定義する。</t></si><si><t>opeitm_itm_id</t></si><si><t>itms_id</t></si><si><t>itms_id+proceeeseq+priorityでユニークkey</t></si><si><t>opeitm_packqty</t></si><si><t>packqty</t></si><si><t xml:space="preserve">受入の時packqty毎に在庫を分けて管理する。発注時の単位
+出庫するときの、単位
+allocではqtyを利用する。
+</t></si><si><t>opeitm_duration</t></si><si><t>duration</t></si><si><t>期間　リードタイム</t></si><si><t>opeitm_safestkqty</t></si><si><t>safestkqty</t></si><si><t>opeitm_processseq</t></si><si><t>processseq</t></si><si><t>同一item_codeに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>opeitm_consumtype</t></si><si><t>consumtype</t></si><si><t>子部品の時　nditms
+前工程の時opeitms
+のconsumtypeを使用</t></si><si><t>con:出庫、消費時制限なし
+ORD:親のオーダのための在庫は必須
+ACT:親の完成・受入のための在庫は必須
+BYP:副産物
+DEV:装置
+MET:金型
+nil:対象外　conを速成しない。</t></si><si><t>2016/07/28 00:54</t></si><si><t>opeitm_expiredate</t></si><si><t>opeitm_chilnum</t></si><si><t>chilnum</t></si><si><t>通常は1
+歩留まりで利用予定</t></si><si><t>opeitm_parenum</t></si><si><t>parenum</t></si><si><t>通常は1</t></si><si><t>opeitm_priority</t></si><si><t>priority</t></si><si><t>opeitm_minqty</t></si><si><t>minqty</t></si><si><t>使用中止
+null又は0又はpackqtyがnullでなければpackqtyの整数倍であること</t></si><si><t>unit_contents</t></si><si><t>units</t></si><si><t>test</t></si><si><t>unit_contents_box</t></si><si><t>unit_contents_outbox</t></si><si><t>unit_contents_case</t></si><si><t>unit_contents_case_pur</t></si><si><t>unit_id</t></si><si><t>unit_id_case</t></si><si><t>unit_id_case_pur</t></si><si><t>unit_id_box</t></si><si><t>unit_id_outbox</t></si><si><t>unit_name</t></si><si><t>unit_name_case</t></si><si><t>unit_name_case_pur</t></si><si><t>unit_name_box</t></si><si><t>unit_name_outbox</t></si><si><t>unit_expiredate_box</t></si><si><t>unit_expiredate_outbox</t></si><si><t>unit_expiredate_case</t></si><si><t>unit_expiredate_case_pur</t></si><si><t>unit_code</t></si><si><t>unit_code_case</t></si><si><t>unit_code_case_pur</t></si><si><t>unit_code_box</t></si><si><t>unit_code_outbox</t></si><si><t>person_id_chrg</t></si><si><t>persons</t></si><si><t>person_id_upd</t></si><si><t>person_email_chrg</t></si><si><t>email</t></si><si><t>itm_unit_id</t></si><si><t>created_at</t></si><si><t>2015/08/26 12:36</t></si><si><t>person_sect_id</t></si><si><t>person_name_chrg</t></si><si><t>person_expiredate_chrg</t></si><si><t>person_code_chrg</t></si><si><t>prjno_code_chil</t></si><si><t>prjnos</t></si><si><t>code_chil</t></si><si><t>2016/06/11 21:44</t></si><si><t>prjno_id</t></si><si><t>prjno_name</t></si><si><t>prjno_expiredate</t></si><si><t>prjno_code</t></si><si><t>purinst_itm_code_client</t></si><si><t>purinsts</t></si><si><t>itm_code_client</t></si><si><t>業者の品目コードを印刷、送信することを想定している。</t></si><si><t>業者、得意先の品目コード
+itm_codeと同じときはdummyでもよい。</t></si><si><t>purinst_gno_lineno</t></si><si><t>gno_lineno</t></si><si><t>purinst_gno</t></si><si><t>gno</t></si><si><t>注文単位別key  ユニーク性は保証されない。 
+一枚の注文書に複数の品目がある時、その注文書の識別key</t></si><si><t>purinst_chrg_id</t></si><si><t>chrgs_id</t></si><si><t>purinst_commencement_f</t></si><si><t>commencement_f</t></si><si><t>作業開始フラグ　1:開始済</t></si><si><t>purinst_commencementdate</t></si><si><t>timestamp(6)</t></si><si><t>commencementdate</t></si><si><t>作業開始日</t></si><si><t>purinst_contract_price</t></si><si><t>contract_price</t></si><si><t>画面から入力された時　"Z"をセット
+rule_price="1"(画面からの入力可)が条件</t></si><si><t>単価契約フラグ
+1:発注日ベース　2:納期ベース　3:受入日ベース   4:出荷日ベース　5:検収ベース  
+7:出荷日までに決定する単価　8:受入日までに決定する単価　
+9:単価決定=検収日
+X:社内単価未定</t></si><si><t>purinst_cno</t></si><si><t>cno</t></si><si><t>回答納期でまとめるとき(gno)を使用するとき、cnoにはsnoをセットすることを、想定している。</t></si><si><t>得意先、業者、又は作業現場からのｋｅｙ
+必須項目</t></si><si><t>purinst_qty_case</t></si><si><t>qty_case</t></si><si><t>瓶、リールの数
+整数であること。</t></si><si><t>purinst_processseq_pare</t></si><si><t>processseq_pare</t></si><si><t>購入後受け入れ先のproceeeseq</t></si><si><t>同一item_coseに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>purinst_starttime</t></si><si><t>starttime</t></si><si><t>この日までに、注文書を発行すれば納期までに間に合う日</t></si><si><t>purinst_person_id_upd</t></si><si><t>persons_id_upd</t></si><si><t>purinst_tax</t></si><si><t>tax</t></si><si><t>purinst_id</t></si><si><t>purinst_amt</t></si><si><t>amt</t></si><si><t>2015/08/16 19:46</t></si><si><t>purinst_duedate</t></si><si><t>duedate</t></si><si><t>納期</t></si><si><t>2015/08/16 19:45</t></si><si><t>purinst_update_ip</t></si><si><t>update_ip</t></si><si><t>purinst_created_at</t></si><si><t>purinst_remark</t></si><si><t>remark</t></si><si><t>システムがセットする備考</t></si><si><t>purinst_price</t></si><si><t>price</t></si><si><t>purinst_loca_id_to</t></si><si><t>locas_id_to</t></si><si><t>purinst_sno</t></si><si><t>sno</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>2015/06/02 21:49</t></si><si><t>2016/10/27 23:32</t></si><si><t>purinst_sno_ord</t></si><si><t>purinst_qty</t></si><si><t>qty</t></si><si><t>2015/08/16 19:44</t></si><si><t>purinst_updated_at</t></si><si><t>updated_at</t></si><si><t>purinst_expiredate</t></si><si><t>purinst_opeitm_id</t></si><si><t>opeitms_id</t></si><si><t>purinst_prjno_id</t></si><si><t>prjnos_id</t></si><si><t>発注等まとめる単位</t></si><si><t>purinst_isudate</t></si><si><t>isudate</t></si><si><t>発行日</t></si><si><t>sect_id</t></si><si><t>sects</t></si><si><t>shelfno_loca_id_shelfno</t></si><si><t>shelfnos</t></si><si><t>locas_id_shelfno</t></si><si><t>shelfno_contents</t></si><si><t>shelfno_id</t></si><si><t>shelfno_name</t></si><si><t>shelfno_expiredate</t></si><si><t>shelfno_code</t></si><si><t>chrg_person_id</t></si><si><t>chrgs</t></si><si><t>persons_id</t></si><si><t>chrg_id</t></si><si><t>chrg_expiredate</t></si><si><t>usrgrp_name_chrg</t></si><si><t>usrgrps</t></si><si><t>usrgrp_code_chrg</t></si><si><t>boxe_unit_id_outbox</t></si><si><t>boxes</t></si><si><t>units_id_outbox</t></si><si><t>外観boxの単位</t></si><si><t>boxe_unit_id_box</t></si><si><t>units_id_box</t></si><si><t>boxe_outheight</t></si><si><t>outheight</t></si><si><t>外寸高さ</t></si><si><t>boxe_outwide</t></si><si><t>outwide</t></si><si><t>外寸横</t></si><si><t>boxe_outdepth</t></si><si><t>outdepth</t></si><si><t>外寸縦</t></si><si><t>boxe_depth</t></si><si><t>depth</t></si><si><t>縦</t></si><si><t>boxe_boxtype</t></si><si><t>boxtype</t></si><si><t>箱タイプ　例　ミカン箱</t></si><si><t>boxe_contents</t></si><si><t>boxe_id</t></si><si><t>boxe_name</t></si><si><t>boxe_wide</t></si><si><t>boxe_height</t></si><si><t>height</t></si><si><t>高さ</t></si><si><t>boxe_expiredate</t></si><si><t>boxe_code</t></si></sst>

@@ -15,6 +15,7 @@ class ScreenController < ListController
 		else
           @master = true 
 	  end
+		render :layout =>'screen'
     end  ##index
     def disp   ##  jqgrid返り
         params[:page] ||= 1 
@@ -124,23 +125,9 @@ class ScreenController < ListController
 				sw = vproc_get_contents_frm_cno
 			else  ###codeの時は複数の項目でkeyになることがある。
 				keyfields = {}
-				if params[:chgname] =~ /^mk/
-					mktblname,tblnamechop,field,delm = params[:chgname].split("_",4)
-					if mktblname =~ /mksch|mkord|mkinst|mkact|mktrngantts/
-					else
-						return
-					end
-				else
-					tblnamechop,field,delm = params[:chgname].split("_",3)
-				end
+				tblnamechop,field,delm = proc_tblname_field_delm(params[:chgname])
+				return if tblnamechop.nil?
 				@errmsg = ""
-				if respond_to?("proc_view_field_#{params[:chgname]}_chk")
-					__send__("proc_view_field_#{params[:chgname]}_chk",params)  ###バッチで処理することもあるのであえてparamsを引数にしている。
-					if @errmsg != ""
-						@getname[params[:chgname].to_sym] = @errmsg
-						render :json => @getname and return
-					end
-				end
 				if @errmsg == ""
 					case tblnamechop
 						when @screen_code.split("_",2)[1].chop  ###同一テーブル新規のときのチェック		        
@@ -170,26 +157,12 @@ class ScreenController < ListController
 		end
 	end
 	def get_ary_find_field field   ###excel importでも使用 そのためscreen_code等が引数になっている。
-		#strwhere = "select * from r_screenfields where pobject_code_sfd = '#{field}' and screenfield_paragraph is not null  "    ##検索元のテーブルを求める。
-		#strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
-		#v = ActiveRecord::Base.connection.select_one(strwhere)
-		#scrname =  rec = delm = nil
-		#akeyfs = []
-		#if   v then   ###グループを求める。
-		#	scrname,delm =  v["screenfield_paragraph"].split(":_")
-		#	strwhere = "select * from r_screenfields where screenfield_paragraph = '#{v["screenfield_paragraph"]}' "
-		#	strwhere  << " and pobject_code_scr = '#{@screen_code}' AND screenfield_expiredate > current_date" 
-		#	keyfs = ActiveRecord::Base.connection.select_all(strwhere)
-		#	keyfs.each do |rec|
-		#		akeyfs << rec["pobject_code_sfd"] 
-		#	end
-		#end
 		akeyfs = []
 		v = nil
 		@show_data[:paragraph].each do |paragraph|
-			v = paragraph[:screenfield_paragraph] if paragraph[:pobject_code_sfd] == field 
+			v = paragraph[:screenfield_paragraph] if paragraph[:pobject_code_sfd] == field
 		end
-		@show_data[:paragraph].each do |paragraph| 
+		@show_data[:paragraph].each do |paragraph|
 			akeyfs <<  paragraph[:pobject_code_sfd] if paragraph[:screenfield_paragraph] == v 
 		end
 		scrname,delm =  v.split(":_")
@@ -358,6 +331,11 @@ class ScreenController < ListController
 				else
 					@getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal").to_sym] = bal_qty / sno_rec["opeitm_packqty"]
 				end
+				if @screen_code =~ /input/
+					sym_qty = (@screen_code.split("_",2)[1].chop + "_qty").to_sym 
+					@getname[sym_qty] = bal_qty
+					@getname[sym_qty.to_s.sub("_qty","_qty_case").to_sym] = @getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal").to_sym] 
+				end
 			else
 		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
             end   
@@ -369,35 +347,41 @@ class ScreenController < ListController
 	def proc_get_bal_qty tblname,sno_rec
 		case tblname
 			when /ords$/
-				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
-					group by srctblname "
+				strsql = "select sum(bal_qty) bal_qty from( select sum(qty) bal_qty from alloctbls 
+							where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0 and allocfree in('alloc','free')
+							group by srctblname
+						 union
+						 select sum(qty_bal)*-1 bal_qty from #{tblname.sub("ords","")}replyinputs 
+							where  result_f = '0'  and  sno_ord = '#{sno_rec[tblname.chop+"_sno"]}') "
 				bal_qty_ord = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty_ord ||= 0
-				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname.sub(/ords$/,"insts")}'
-													and destblid in (select id from #{tblname.sub(/ords$/,"insts")} where sno_ord in(select  sno from #{tblname} where id = #{sno_rec["id"]}))
-							group by srctblname"
-				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
-				bal_qty_inst ||= 0		
+				##strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname.sub(/ords$/,"insts")}'
+				##			and destblid in (select id from #{tblname.sub(/ords$/,"insts")} where sno_ord in(select  sno from #{tblname} where id = #{sno_rec["id"]}))
+				##			group by srctblname"
+				##bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
+				##bal_qty_inst ||= 0		
 				if bal_qty_ord > 0
 					if  sno_rec[@screen_code.split("_")[1]+"_confirm"]  != "1"   ###エラーの表示ができてない。
 						@getname[(@screen_code.split("_")[1].chop+"_message_code").to_sym] = " not confirm "
 					end
 				end
 			when /insts$/
-				strsql = "select sum(qty) bal_qty from alloctbls where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
-					group by srctblname , destblname, destblid "
+				strsql = "select sum(bal_qty) bal_qty from( 
+							select sum(qty) bal_qty from alloctbls 
+							where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
+							and allocfree in('alloc','free')
+							group by srctblname , destblname, destblid 
+						 union
+						 select sum(qty_bal)*-1 bal_qty from #{tblname.sub("insts","")}rsltinputs 
+							where  result_f = '0' and  sno_inst = '#{sno_rec[tblname.chop+"_sno"]}') "
 				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty_inst ||= 0
 				bal_qty_ord = 0
 		end
 		case @screen_code
-			when /ord$/
-				return bal_qty_ord + bal_qty_inst
-			when /insts$/
-				return bal_qty_inst
-			when /reply/
-				return bal_qty_ord
-			when /rslt/
+			when /ord$|reply/
+				return bal_qty_ord 
+			when /insts$|rslt/
 				return bal_qty_inst
 		end
 	end
@@ -481,8 +465,6 @@ class ScreenController < ListController
     def blk_print
         render :nothing=> true
     end  
-    def befor_chk_update
-    end
     def proc_updatechk_add command_c,add_edit   ### view blk_constraintsは初期セットしていること
 		## addのとき
 		## ukeyの重複はエラー
@@ -543,7 +525,7 @@ class ScreenController < ListController
     def updatechk_foreignkey command_c   ## xxx_idの確認		
 		constr =
 			ActiveRecord::Base.uncached() do
-				case Db_adapter 
+				case ActiveRecord::Base.configurations[Rails.env]['adapter']
 					when /post/
 						ActiveRecord::Base.connection.select_values("SELECT xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")  ##post
 					when /oracle/

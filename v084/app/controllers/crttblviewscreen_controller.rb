@@ -48,7 +48,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			Rails.cache.clear(nil)
 			create_screenfields "r_"+pobject_code_tbl
 			proc_set_search_code_of_screen        "r_"+pobject_code_tbl
-			chk_index  pobject_code_tbl,columns if columns
+			####chk_index  pobject_code_tbl,columns if columns
 		rescue
 			ActiveRecord::Base.connection.rollback_db_transaction()
 			@errmsg << $!.to_s

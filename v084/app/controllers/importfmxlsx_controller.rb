@@ -1,3 +1,4 @@
+# coding: UTF-8
 class ImportfmxlsxController < ScreenController
   before_filter :authenticate_user!  
   ####  roo:char exlel数字だと 1.0になる。
@@ -64,22 +65,43 @@ class ImportfmxlsxController < ScreenController
                     next  if  ws[iws][count].nil?
                     next  if  ws[iws][count][0].nil?  ###RubyXL仕様？ nilが安定しない。
                     @inxrow0.each do |key,cnt|
-                        if  ws[iws][count][cnt] then command_c[key] = ws[iws][count][cnt].value  else command_c[key] = nil end
+                        if  ws[iws][count][cnt] 
+							command_c[key] = ws[iws][count][cnt].value  
+							if ws[iws][count][cnt].value  
+								case @show_data[:alltypes][key]
+								when /number/
+									if float_string?(command_c[key])
+									else
+										@errmsg << ":type error. expect number field:#{key.to_s} val:#{command_c[key]} " 
+										next
+									end
+								when /date|time/
+									if date_string?(command_c[key])
+									else
+										@errmsg << ":type error. expect time field:#{key.to_s} val:#{command_c[key]} " 
+										next
+									end
+								end
+							end
+						else 
+							command_c[key] = nil
+						end
 	                end  ##column
-					get_id_from_code keys,command_c
 					command_c[:sio_recordcount] = command_c[:sio_session_id] = count
                     case ws[iws].sheet_name.upcase
 	                    when /^ADD/ then
+                            command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_add_"
+							get_id_from_code keys,command_c   ###get_id_from_codeでsio_classnameを使用
 							proc_updatechk_add command_c ,"add" ###同一レコード内での重複チェックができてない。
 			                updatechk_foreignkey command_c  if  @errmsg == ""
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
                             if  @errmsg == "" then
-                                command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_add_"
 								command_c[:id] =  proc_get_nextval(command_c[:sio_viewname].split("_")[1] + "_seq")
                                 command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                             end 
                         when  /^EDIT/ then
                             command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_edit_"
+							get_id_from_code keys,command_c   ###get_id_from_codeでsio_classnameを使用
                             command_c[:id] = command_c[tblidsym]
 					        proc_updatechk_edit command_c
 							command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
@@ -87,6 +109,7 @@ class ImportfmxlsxController < ScreenController
 							proc_updatechk_add command_c ,"edit" if  @errmsg == ""
 	                    when /^DELETE/ then
                            command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_delete_"
+							get_id_from_code keys,command_c   ###get_id_from_codeでsio_classnameを使用
                            command_c[:id] = command_c[tblidsym]
 						   updatechk_del command_c
         	            when nil then
@@ -120,46 +143,45 @@ class ImportfmxlsxController < ScreenController
 		render :index
     end
     def dupchk  sheet_name
-      @fields = {}
-      @rfields = {}
-      @errmsg = ""
-      @nfields = []   ## 更新項目
-      @indispfs = []   ## 項須項目
-      @keyfs = []   ## key項須項目
-      show_cache_key =  "show " + @screen_code +  sub_blkget_grpcode
-      show_data = get_show_data @screen_code
-      tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
-      show_data[:gridcolumns].each do |i|
-	   @fields[i[:label].to_sym] = i[:field] if i[:hidden] == false  and  i[:label]
-	   @rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false and  i[:label]
-	   if  i[:editable] == true   ###更新可能項目
-	       @nfields << i[:field].to_sym 
-               @indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
-           end
-      end
-      if  sheet_name.downcase == "edit" or  sheet_name.downcase == "delete" then
-           @fields[tblidsym] = @rfields[tblidsym] = tblidsym.to_s
-           @nfields << tblidsym
-           @indispfs << tblidsym
-      end
+		@fields = {}
+		@rfields = {}
+		@errmsg = ""
+		@nfields = []   ## 更新項目
+		@indispfs = []   ## 必須項目
+		@keyfs = []   ## key項目
+		###show_cache_key =  "show " + @screen_code +  grp_code
+		###show_data = get_show_data @screen_code
+		tblidsym = (@screen_code.split("_")[1].chop+"_id").to_sym
+		@show_data[:gridcolumns].each do |i|
+			@fields[i[:label].to_sym] = i[:field] if i[:hidden] == false  and  i[:label]
+			@rfields[i[:field].to_sym] = i[:label] if i[:hidden] == false and  i[:label]
+			if  i[:editable] == true   ###更新可能項目
+				@nfields << i[:field].to_sym 
+				@indispfs <<  i[:field].to_sym  if i[:editrules][:required]  == true
+			end
+		end
+		if  sheet_name.downcase == "edit" or  sheet_name.downcase == "delete" then
+			@fields[tblidsym] = @rfields[tblidsym] = tblidsym.to_s
+			@nfields << tblidsym
+			@indispfs << tblidsym
+		end
     end
     def nchk spt
-      errfield  = []
-      @row0 = []
-      @inxrow0 = {}
-      for cellcnt in 0..(@fields.size-1)   ##一行目は項目
-	   ##p cell
-           if  spt[cellcnt] and @fields[spt[cellcnt].value.encode("utf-8").to_sym] then
-              row0sym =  @fields[spt[cellcnt].value.encode("utf-8").to_sym].to_sym
-              @row0 << row0sym
-              @inxrow0[row0sym] = cellcnt 
-           end
-      end
-      @indispfs.each do |i|
-	   ##errfield << "項須項目な項".encode("utf-8")  + i  + ":" + @rfields[i].encode("utf-8") if @row0.index(i).nil? 
-	   errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
-      end
-      @errmsg = "#{errfield.join(',')}" unless errfield == []
+		errfield  = []
+		@row0 = []
+		@inxrow0 = {}
+		for cellcnt in 0..(@fields.size-1)   ##一行目は項目
+		##p cell
+			if  spt[cellcnt] and @fields[spt[cellcnt].value.encode("utf-8").to_sym] then
+				row0sym =  @fields[spt[cellcnt].value.encode("utf-8").to_sym].to_sym
+				@row0 << row0sym
+				@inxrow0[row0sym] = cellcnt 
+			end
+		end		
+		@indispfs.each do |i| 
+			errfield << " #{i.to_s}  :  #{@rfields[i.to_sym]}" if @row0.index(i).nil? 
+		end
+		@errmsg = "#{errfield.join(',')}" unless errfield == []
 
     end
 	def set_keys_get_id_from_code command_c
@@ -169,19 +191,27 @@ class ImportfmxlsxController < ScreenController
 		  keys = {}
 		  tmpkeys.each do |rec|
 		    keys[rec["screenfield_paragraph"]] = [] if keys[rec["screenfield_paragraph"]].nil?
-			keys[rec["screenfield_paragraph"]] << rec["pobject_code_sfd"] 
+			keys[rec["screenfield_paragraph"]] << rec["pobject_code_sfd"]
 		  end
 		  return keys
 	end
 	def get_id_from_code keys,command_c
 	    keys.each do |key,vals|
-		    strwhere = " select id from  #{key.split(":_")[0]} where "
-			tblnamechop,delm = key.split(":")
-			tblnamechop = tblnamechop.split("_")[1].chop
-			delm ||= ""
+			##tblnamechop = key.to_s.split("_")[1].chop
+			##field = delm = nil
+			##tblnamechop,delm = key.split(":")
+			##tblnamechop,delm = key.split(":")
+			viewname,delm = key.split(":")
+			tblnamechop = viewname.split("_")[1].chop
+			delm ||= "\s" ### delm = ""  だと一文字づつ分解してしまう
+			strwhere = ""
 			vals.each do |val|
-			    strwhere << " #{val.sub(delm,"")} = '#{command_c[val.to_sym]}'   and "
+				##tblnamechop,field,delm = proc_tblname_field_delm(val)
+				##return if tblnamechop.nil?
+				##delm ||= ""
+			    strwhere << " #{val.split(delm)[0]} = '#{command_c[val]}'    and "
 			end
+			strwhere = " select id from  #{viewname} where " + strwhere
 			if command_c[:sio_classname] =~ /_add_/
 				strwhere << %Q%  #{tblnamechop + "_expiredate" } > current_date %
 			else
@@ -192,11 +222,15 @@ class ImportfmxlsxController < ScreenController
 			if get_id 
 				command_c[sym_key] = get_id 
 			else 
-				command_c[sym_key] = -1 
-				@errmsg << "record not found sql :#{strwhere} " 
+				if command_c[:sio_classname] =~ /_add_|_edit_/
+					if @screen_code =~ /mkord/
+					else
+						command_c[sym_key] = -1 
+						@errmsg << "record not found sql :#{strwhere} " 
+					end
+				end
 			end
 		end
-		##debugger if command_c[:tblinkfld_seqno] == 3
 		return
 	end	
 	def vproc_price_chk_set(command_c)  ###excelからの取り込み

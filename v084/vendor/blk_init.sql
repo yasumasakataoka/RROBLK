@@ -2869,3 +2869,46 @@ where
   and tblink.id = tblinkfld.tblinks_id
 ;
 
+  CREATE TABLE "RAILS"."SHELFNOS" 
+   (	"CONTENTS" VARCHAR2(4000 BYTE), 
+	"REMARK" VARCHAR2(4000 CHAR), 
+	"EXPIREDATE" DATE, 
+	"PERSONS_ID_UPD" NUMBER(38,0), 
+	"CREATED_AT" TIMESTAMP (6), 
+	"UPDATED_AT" TIMESTAMP (6), 
+	"CODE" VARCHAR2(50 BYTE), 
+	"ID" NUMBER(38,0), 
+	"LOCAS_ID_SHELFNO" NUMBER(38,0), 
+	"NAME" VARCHAR2(100 CHAR), 
+	"UPDATE_IP" VARCHAR2(40 BYTE), 
+	 CONSTRAINT "SHELFNOS_ID_PK" PRIMARY KEY ("ID")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE, 
+	 CONSTRAINT "SHELFNO_LOCAS_ID_SHELFNO" FOREIGN KEY ("LOCAS_ID_SHELFNO")
+	  REFERENCES "RAILS"."LOCAS" ("ID") ENABLE, 
+	 CONSTRAINT "SHELFNO_PERSONS_ID_UPD" FOREIGN KEY ("PERSONS_ID_UPD")
+	  REFERENCES "RAILS"."PERSONS" ("ID") ENABLE
+   ) SEGMENT CREATION IMMEDIATE 
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" ;
+
+  
+  CREATE OR REPLACE FORCE VIEW "RAILS"."R_SHELFNOS" ("SHELFNO_CODE", "SHELFNO_EXPIREDATE", "SHELFNO_UPDATED_AT", "SHELFNO_NAME", "SHELFNO_REMARK", "SHELFNO_CREATED_AT", "SHELFNO_UPDATE_IP", "ID", "SHELFNO_ID", "SHELFNO_PERSON_ID_UPD", "PERSON_ID_UPD", "PERSON_CODE_UPD", "PERSON_NAME_UPD", "SHELFNO_CONTENTS", "SHELFNO_LOCA_ID_SHELFNO", "LOCA_ID_SHELFNO", "LOCA_EXPIREDATE_SHELFNO", "LOCA_CODE_SHELFNO", "LOCA_NAME_SHELFNO", "LOCA_ABBR_SHELFNO", "LOCA_ZIP_SHELFNO", "LOCA_COUNTRY_SHELFNO", "LOCA_PRFCT_SHELFNO", "LOCA_ADDR1_SHELFNO", "LOCA_ADDR2_SHELFNO", "LOCA_TEL_SHELFNO", "LOCA_FAX_SHELFNO", "LOCA_MAIL_SHELFNO") AS 
+  select shelfno.code shelfno_code ,shelfno.expiredate shelfno_expiredate ,shelfno.updated_at shelfno_updated_at ,shelfno.name shelfno_name ,shelfno.remark shelfno_remark ,shelfno.created_at shelfno_created_at ,shelfno.update_ip shelfno_update_ip ,shelfno.id id,shelfno.id shelfno_id ,shelfno.persons_id_upd shelfno_person_id_upd , person_upd.person_id_upd person_id_upd, person_upd.person_code_upd person_code_upd, person_upd.person_name_upd person_name_upd,shelfno.contents shelfno_contents ,shelfno.locas_id_shelfno shelfno_loca_id_shelfno , loca_shelfno.loca_id loca_id_shelfno, loca_shelfno.loca_expiredate loca_expiredate_shelfno, loca_shelfno.loca_code loca_code_shelfno, loca_shelfno.loca_name loca_name_shelfno, loca_shelfno.loca_abbr loca_abbr_shelfno, loca_shelfno.loca_zip loca_zip_shelfno, loca_shelfno.loca_country loca_country_shelfno, loca_shelfno.loca_prfct loca_prfct_shelfno, loca_shelfno.loca_addr1 loca_addr1_shelfno, loca_shelfno.loca_addr2 loca_addr2_shelfno, loca_shelfno.loca_tel loca_tel_shelfno, loca_shelfno.loca_fax loca_fax_shelfno, loca_shelfno.loca_mail loca_mail_shelfno
+ from shelfnos shelfno ,upd_persons  person_upd,r_locas  loca_shelfno
+ where  person_upd.id = shelfno.persons_id_upd and  loca_shelfno.id = shelfno.locas_id_shelfno;
+ 
+ 
+drop sequence shelfnos_seq
+;  
+create sequence shelfnos_seq
+;
+insert into  shelfnos(id,code,name, Expiredate,Persons_id_Upd)
+values(0,'0','none','2099/12/31',0)
+; 
+ 
+ 

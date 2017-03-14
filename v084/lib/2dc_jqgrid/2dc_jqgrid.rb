@@ -93,10 +93,10 @@ include  JqgridFilter
 	 ##@show_data = set_detail(@screen_code ) if @show_data.nil?  ## set gridcolumns
      ##logger.debug "line #{__LINE__} create screen_code  '#{@screen_code}'" if @show_data.nil? 
      @gridcolumns = @show_data[:gridcolumns]
-     id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
+     id_cache_key =  "id_javascript" + @screen_code +  grp_code
      id_data_javascript = Rails.cache.read(id_cache_key)
 	 if id_data_javascript
-        id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
+        id_cache_key =  "id_html" + @screen_code +  grp_code
 	    id_data_html = Rails.cache.read(id_cache_key)
 	   else	
         id_data_javascript,id_data_html = create_screen_field(options)
@@ -242,18 +242,18 @@ include  JqgridFilter
 		end
 		@gridcolumns.each do |tcolm|  ###検索keyが変化したときはサーバーへ 
 			case scrfield
-				when /_code/
-					if  secgridc.index(tcolm[:field].sub(delm,"").sub(mktblname,"").to_sym)  and  tcolm[:editable] == true
+				when /_sno|_cno/
+					##tblchop = scrfield.split("_")[0]
+					##notblchop = pscreen_code.split("_")[1].chop
+					### snoのテーブルの内容と　残数　qty_bal
+					###if (secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) or secgridc.index(tcolm[:field].sub(tblchop,notblchop).sub(delm,"").to_sym) or tcolm[:field] =~ /_bal/) and tcolm[:editable] == true 
+					if tcolm[:editable] == true  ###r_purreplyinputsでloca_nameが表示されなかったので修正
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
 					end
-				when /_sno|_cno/
-					tblchop = scrfield.split("_")[0]
-					notblchop = pscreen_code.split("_")[1].chop
-					### snoのテーブルの内容と　残数　qty_bal
-					###if (secgridc.index(tcolm[:field].sub(tblchop,notblchop).to_sym) or secgridc.index(tcolm[:field].sub(tblchop,notblchop).sub(delm,"").to_sym) or tcolm[:field] =~ /_bal/) and tcolm[:editable] == true 
-					if tcolm[:editable] == true  ###r_purreplyinputsでloca_nameが表示されなかったので修正
+				else   ###tcolm[:editable]== true  form画面への表示項目
+					if  secgridc.index(tcolm[:field].sub(delm,"").sub(mktblname,"").to_sym)  and  tcolm[:editable] == true
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
@@ -541,9 +541,9 @@ include  JqgridFilter
             <p id="#{@jqgrid_id}_select_button">  #{extbutton} </p>
             #{extdiv_id}%
         ###screen_javascript.gsub!(/\s+/," ")
-        id_cache_key =  "id_javascript" + @screen_code +  sub_blkget_grpcode
+        id_cache_key =  "id_javascript" + @screen_code +  grp_code
         Rails.cache.write(id_cache_key,screen_javascript)
-        id_cache_key =  "id_html" + @screen_code +  sub_blkget_grpcode
+        id_cache_key =  "id_html" + @screen_code +  grp_code
         Rails.cache.write(id_cache_key,screen_html)
         return screen_javascript,screen_html
     end

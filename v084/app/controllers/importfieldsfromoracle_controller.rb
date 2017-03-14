@@ -34,7 +34,7 @@ class ImportfieldsfromoracleController < ApplicationController
              @errmsg = " id not found"
          end
       end
-     if ActiveRecord::Base.connection.table_exists?(pobject_code_tbl.to_sym)
+    if ActiveRecord::Base.connection.table_exists?(pobject_code_tbl.to_sym)
          columns = ActiveRecord::Base.connection.columns(pobject_code_tbl)
          ###子コードのチェック
          chk_chil_tbls = ActiveRecord::Base.connection.select_all(%Q%select c.table_name,c.COLUMN_NAME from user_constraints a, user_constraints b, user_cons_columns c
@@ -51,18 +51,19 @@ class ImportfieldsfromoracleController < ApplicationController
          end
          proc_tbl_delete_arel("tblfields"," blktbs_id = #{tbl_id}  and  expiredate > current_date")
 		prv_import_columns tbl_id,columns
-         if  @errmsg.size < 1 then 
-             chk_index(pobject_code_tbl,columns) if columns
-             if  @errmsg.size > 1 then 
-                     raise
-             end
-           else
-                 raise
-         end
-       else
-          @errmsg << " table #{pobject_code_tbl} not exists"
-         raise
-      end
+        if  @errmsg.size < 1 then 
+            chk_index(pobject_code_tbl,columns) if columns
+            if  @errmsg.size > 1 then 
+                raise
+            end
+        else
+            raise
+        end
+    else
+        @errmsg << " table #{pobject_code_tbl} not exists"
+		logger.debug " table #{pobject_code_tbl} not exists"
+        raise
+    end
    rescue
      ActiveRecord::Base.connection.rollback_db_transaction()
      @errmsg << @tsqlstr
@@ -339,13 +340,13 @@ class ImportfieldsfromoracleController < ApplicationController
 				screenfields[:tblfields_id] = @sfd_code_id[sr_name]
 				if screenfields[:tblfields_id].nil?
 				   logger.debug " missing sr_name :#{sr_name} "
-				   raise
+				   @errmsg =  " missing sr_name :#{sr_name} "
 				end
 				proc_tbl_add_arel("screenfields",screenfields)
 			end
 		else
+			logger.debug  " viewname not exists or expiredate < Today    viewname: #{viewname}"
 			@errmsg = " viewname not exists or expiredate < Today    viewname: #{viewname}"
-			raise
 		end
     end ##setscreenfields  
     def sub_indisp  column_name,viewname   ##孫のテーブルのidは不要　edit addの時必須にしない
@@ -449,9 +450,9 @@ class ImportfieldsfromoracleController < ApplicationController
 					i -= 1
 				end
 				if ii.nil?
-				debugger
 					logger.debug "line : #{__LINE__} -->sio_fields error field: #{sr.name} not find  viewname: #{viewname} "
-					raise
+					@errmsg||= ""
+					@errmsg <<  "line : #{__LINE__} -->sio_fields error field: #{sr.name} not find  viewname: #{viewname} "
 				end
 			end
 			setscreenfields sr.name,ii,viewname,row_cnt   ## iiの中はscreens_id 「s」がつくよ
@@ -513,7 +514,7 @@ class ImportfieldsfromoracleController < ApplicationController
 		end    ## i
 	end  #end crt_chil_screen 
 	def prv_create_index_pk tblname
-		case Db_adapter 
+		case ActiveRecord::Base.configurations[Rails.env]['adapter']
 			when /oracle/
 				seq = ActiveRecord::Base.connection.select_one("select sequence_name from user_sequences where sequence_name = '#{tblname.upcase}_SEQ'")
 				### BLK_CONSTRAINTSは独自に作成したview  table_name, constraint_name, constraint_type, position, column_name
