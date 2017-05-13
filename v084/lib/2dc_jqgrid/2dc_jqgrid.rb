@@ -236,7 +236,7 @@ include  JqgridFilter
 		delm  ||= ""
 		mktblname = if scrfield.split("_")[0] =~ /^mk/ then (scrfield.split("_")[0] + "_") else "" end
 		begin
-	        secgridc = get_show_data(pscreen_code)[:allfields]
+	        ####secgridc = get_show_data(pscreen_code)[:allfields]
 		rescue  ###検索項目に指定しているviewがない。  ###画面でチェックすること　未実施
 		   	raise  "shoud be seach_screen_code invalid ;screen_code is:#{pscreen_code} "   
 		end
@@ -253,7 +253,7 @@ include  JqgridFilter
 						tmp_val  << "}"   
 					end
 				else   ###tcolm[:editable]== true  form画面への表示項目
-					if  secgridc.index(tcolm[:field].sub(delm,"").sub(mktblname,"").to_sym)  and  tcolm[:editable] == true
+					if  get_show_data(pscreen_code)[:allfields].index(tcolm[:field].sub(delm,"").sub(mktblname,"").to_sym)  and  tcolm[:editable] == true
 						tmp_val  << "if(data.#{tcolm[:field]}){"   
 						tmp_val  << %Q%jQuery("##{tcolm[:field]}",formid).val(data.#{tcolm[:field]});%
 						tmp_val  << "}"   
@@ -371,20 +371,20 @@ include  JqgridFilter
 		##
 		javascript_edit << "}"
 	end
-	def set_onInitializeForm addorcopy   ###_dflt_screenを実行
+	def set_onInitializeForm addorcopy   ###init_screenを実行
 		require_fields =  "function(formid) {"
 		@gridcolumns.each do |tcolm|
 	        if (tcolm[:field].split("_")[0] == @screen_code.split("_")[1] and tcolm[:editable] == true ) or  (tcolm[:required] == true )
                require_fields << %Q% jQuery("##{tcolm[:field]}",formid).removeAttr("disabled");%
 			end
 			if addorcopy =~ /add/
-				if respond_to?("proc_view_field_#{tcolm[:field]}_dflt_screen")
-					dflt_val =  __send__("proc_view_field_#{tcolm[:field]}_dflt_screen",addorcopy)
-					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");% 
+				if respond_to?("proc_view_field_#{tcolm[:field]}_init_screen")
+					init_val =  __send__("proc_view_field_#{tcolm[:field]}_init_screen",addorcopy)
+					require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{init_val}");% 
 				else 
-					if respond_to?("proc_field_#{tcolm[:field].split('_',2)[1]}_dflt_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
-						dflt_val = __send__("proc_field_#{tcolm[:field].split('_',2)[1]}_dflt_screen",addorcopy)
-						require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{dflt_val}");%
+					if respond_to?("proc_field_#{tcolm[:field].split('_',2)[1]}_init_screen")   ###tbl_field_xxxx_dfflt テーブル登録時
+						init_val = __send__("proc_field_#{tcolm[:field].split('_',2)[1]}_init_screen",addorcopy)
+						require_fields << %Q% jQuery("##{tcolm[:field]}",formid).val("#{init_val}");%
 					end
 				end
 			end

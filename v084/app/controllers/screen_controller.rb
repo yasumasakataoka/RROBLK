@@ -141,13 +141,30 @@ class ScreenController < ListController
 		end
 		if sw == "ON" or sw == "MISSING"
 			if sw == "ON" 
-				if respond_to?("proc_view_field_#{params[:chgname]}_init")
-					__send__("proc_view_field_#{params[:chgname]}_init",params)
+			##	if respond_to?("proc_view_field_#{params[:chgname]}_init")
+			##		__send__("proc_view_field_#{params[:chgname]}_init",params)
 					##tbs,screen,field,の時は　pobjectへの登録もしている。
-				else	  
-					fld_key = params[:chgname].split("_",2)[1]
-					if respond_to?("proc_field_#{fld_key}_init")
-						__send__("proc_field_#{fld_key}_init",params) 
+			##	else	  
+			##		fld_key = params[:chgname].split("_",2)[1]
+			##		if respond_to?("proc_field_#{fld_key}_init")
+			##			__send__("proc_field_#{fld_key}_init",params) 
+			##		end
+			##	end
+			##end
+				params.each do |key,val|
+					if @getname[key].nil?
+						if val == ""
+			###debugger if key.to_s =~/shelf/
+							if respond_to?("proc_view_field_#{key.to_s}_dflt_screen")
+								@getname[key] = __send__("proc_view_field_#{key.to_s}_dflt_screen",params)
+							else
+								if respond_to?("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen")
+									@getname[key] = __send__("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen",params)
+								end
+							end
+						else
+							@getname[key] = val if @getname[key].nil?
+						end
 					end
 				end
 			end
@@ -187,7 +204,7 @@ class ScreenController < ListController
 				if  nkey != "id" then  @getname[nkey] = rec[key] end  ### 
 			end
           else
-			@getname[params[:chgname].to_sym] = "???"  if sw == "ON" ### ""だとスペースにならない。
+			@getname[params[:chgname]] = "???"  if sw == "ON" ### ""だとスペースにならない。
 		end
 		return sw
     end
@@ -217,13 +234,13 @@ class ScreenController < ListController
 		rec = nil
 		rec = get_tblfieldval_from_code keyfields,"r_"+tblnamechop+"s",nil,nil  if sw == "ON" 
 		@getname ={}
-		if rec then
+		if rec
             rec.each do |key,val|
                 if  key != "id" then  @getname[key] = rec[key] end  ### 
             end
              @getname[:errmsg] = " #{keyfields.values.join(',')}.....already exists"
         else
-             @getname.delete(params[:chgname].to_sym)
+             @getname.delete(params[:chgname])
         end
         return sw
     end
@@ -236,7 +253,7 @@ class ScreenController < ListController
            strwhere << nkey + " = '" + val  + "'    and "
       end
       strwhere << "#{tblname}_expiredate > current_date order by #{tblname}_expiredate "
-      rec = ActiveRecord::Base.connection.select_one("select * from #{viewname} #{strwhere}")
+      ActiveRecord::Base.connection.select_one("select * from #{viewname} #{strwhere}")
    end
    def   get_view_code_frm_screen_tblname params
       akeyfs,scrname,delm,mktblname =  get_ary_find_field params[:chgname]
@@ -259,7 +276,7 @@ class ScreenController < ListController
 		    key = "vf" + mytbl + "_" + prgf["pobject_code_fld"]
 		    if akeyfs.index(key)
                tblarray = eval(prgf["tblfield_viewflmk"])
-               newkeyfields[tblarray[params[tblnamekey].to_sym].to_sym] = params[key.to_sym]			   
+               newkeyfields[tblarray[params[tblnamekey].to_sym].to_sym] = params[key]			   
 			end
 		 end
          rec = get_tblfieldval_from_code newkeyfields,scrname,nil, nil  #### delm = mktblname = nil 
@@ -268,10 +285,10 @@ class ScreenController < ListController
              prgfs.each do |keys|
 				     tblarray = eval(keys["tblfield_viewflmk"])
                      orgkey = tblarray[params[tblnamekey].to_sym]	
-			         @getname[("vf"+mytbl+"_"+keys["pobject_code_fld"]).to_sym] = rec[orgkey]
+			         @getname[("vf"+mytbl+"_"+keys["pobject_code_fld"])] = rec[orgkey]
              end
            else
-		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
+		      @getname[params[:chgname]] = "???"  ### ""だとスペースにならない。
          end
 	  end
       return sw
@@ -288,12 +305,12 @@ class ScreenController < ListController
 			if sno_rec
 				bal_qty = proc_get_bal_qty(sno_tblnamechop+"s",sno_rec)
 				##proc_opeitm_instance(sno_rec)
-				screen_show_data = get_show_data(@screen_code)[:allfields]
+				###screen_show_data = get_show_data(@screen_code)[:allfields]
 				###flds_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:allfields]
 				type_sno_show_data = get_show_data("r_#{sno_tblnamechop}s")[:alltypes]
-				screen_show_data.each do |scrf|
+				get_show_data(@screen_code)[:allfields].each do |scrf|
 					###if params[scrf]   == "" ###xxx_yyyy でテーブル名xxxが異なっていても項目yyyyが同じならデータを引く継
-						if  sno_rec[scrf.to_s]
+					if  sno_rec[scrf.to_s]
 							case type_sno_show_data[scrf]
 								when /date/
 									@getname[scrf] = sno_rec[scrf.to_s].strftime("%Y/%m/%d")
@@ -302,51 +319,56 @@ class ScreenController < ListController
 								else
 									@getname[scrf] = sno_rec[scrf.to_s] ## if k_to_s != "id" @getname
 							end
-						else
-							if scrf.to_s.split("_")[0] == @screen_code.split("_")[1].chop	
-								fld = scrf.to_s.sub(scrf.to_s.split("_")[0],sno_tblnamechop)
-								if scrf.to_s.split("_",3)[2] and screenfield_paragraph.split(":")[1]
-									if scrf.to_s.split("_",3)[2] == screenfield_paragraph.split(":_")[1]
-										fld.sub!("_"+screenfield_paragraph.split(":_")[1],"")
-									end
+					else
+						if scrf.to_s.split("_")[0] == @screen_code.split("_")[1].chop	
+							fld = scrf.to_s.sub(scrf.to_s.split("_")[0],sno_tblnamechop)
+							if scrf.to_s.split("_",3)[2] and screenfield_paragraph.split(":")[1]
+								if scrf.to_s.split("_",3)[2] == screenfield_paragraph.split(":_")[1]
+									fld.sub!("_"+screenfield_paragraph.split(":_")[1],"")
 								end
-								if sno_rec[fld]
-									case type_sno_show_data[fld.to_sym]
-										when /date/
-											@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d")
-										when /time/
-											@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d %H:%M")
-										else
-											@getname[scrf] = sno_rec[fld] ## if k_to_s != "id" @getname
-									end
-								end
-							end	
+							end
+						end	
+						###検索項目のdelmと等しい項目は検索viewの項目とみなす。
+						if scrf.to_s.split("_")[2] ==  screenfield_paragraph.split(":_")[1]
+							fld = screenfield_paragraph.split("_")[1][0..-3]+"_"+scrf.to_s.split("_")[1]
+						end	
+						if sno_rec[fld]
+							case type_sno_show_data[fld.to_sym]
+									when /date/
+										@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d")
+									when /time/
+										@getname[scrf] = sno_rec[fld].strftime("%Y/%m/%d %H:%M")
+									else
+										@getname[scrf] = sno_rec[fld] ## if k_to_s != "id" @getname
+							end
 						end
+						##end	
+					end
 					###end
 				end
-				sym_balqty = (@screen_code.split("_",2)[1].chop + "_qty_bal").to_sym 
+				sym_balqty = (@screen_code.split("_",2)[1].chop + "_qty_bal")
 				@getname[sym_balqty] = bal_qty
 				if (sno_rec["opeitm_packqty"]||=0) == 0
-					@getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal").to_sym] = bal_qty
+					@getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal")] = bal_qty
 				else
-					@getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal").to_sym] = bal_qty / sno_rec["opeitm_packqty"]
+					@getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal")] = bal_qty / sno_rec["opeitm_packqty"]
 				end
 				if @screen_code =~ /input/
-					sym_qty = (@screen_code.split("_",2)[1].chop + "_qty").to_sym 
+					sym_qty = (@screen_code.split("_",2)[1].chop + "_qty")
 					@getname[sym_qty] = bal_qty
-					@getname[sym_qty.to_s.sub("_qty","_qty_case").to_sym] = @getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal").to_sym] 
+					@getname[sym_qty.to_s.sub("_qty","_qty_case")] = @getname[sym_balqty.to_s.sub("_qty_bal","_qty_case_bal")] 
 				end
 			else
-		      @getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
+		      @getname[params[:chgname]] = "???"  ### ""だとスペースにならない。
             end   
 		else
-		      @getname[params[:chgname].to_sym] = " paragraph set error "  ### 画面登録時にチェックしている　チェック漏れがない限り発生しない。
+		      @getname[params[:chgname]] = " paragraph set error "  ### 画面登録時にチェックしている　チェック漏れがない限り発生しない。
         end
 		return sw
     end
 	def proc_get_bal_qty tblname,sno_rec
 		case tblname
-			when /ords$/
+			when /purords|prdords|shpords|dlvords/
 				strsql = "select sum(bal_qty) bal_qty from( select sum(qty) bal_qty from alloctbls 
 							where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0 and allocfree in('alloc','free')
 							group by srctblname
@@ -360,12 +382,22 @@ class ScreenController < ListController
 				##			group by srctblname"
 				##bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
 				##bal_qty_inst ||= 0		
-				if bal_qty_ord > 0
-					if  sno_rec[@screen_code.split("_")[1]+"_confirm"]  != "1"   ###エラーの表示ができてない。
-						@getname[(@screen_code.split("_")[1].chop+"_message_code").to_sym] = " not confirm "
-					end
-				end
-			when /insts$/
+				##if bal_qty_ord > 0
+				##	if  sno_rec[tblname.chop+"_confirm"]  != "1"   ###エラーの表示ができてない。
+				##		@getname[(@screen_code.split("_")[1].chop+"_message_code")] = " not confirm "
+				##	end
+				##end
+			when /picords/
+				strsql = "select sum(bal_qty) bal_qty from (select qty_stk bal_qty from picords where sno  = '#{sno_rec[tblname.chop+"_sno"]}'
+						 union
+						  select (qty_stk * -1)  bal_qty from picinsts where sno_ord  = '#{sno_rec[tblname.chop+"_sno"]}'
+						 union
+						  select sum(qty_bal)*-1 bal_qty from #{tblname.sub("ords","")}replyinputs 
+							where  result_f = '0' and  sno_ord = '#{sno_rec[tblname.chop+"_sno"]}' 
+							                           )"
+				bal_qty_ord = ActiveRecord::Base.connection.select_value(strsql)
+				bal_qty_ord ||= 0
+			when /purinsts|prdinsts|shpinsts|dlvinsts/
 				strsql = "select sum(bal_qty) bal_qty from( 
 							select sum(qty) bal_qty from alloctbls 
 							where srctblname = 'trngantts' and destblname = '#{tblname}' and destblid = #{sno_rec["id"]} and qty > 0
@@ -374,6 +406,17 @@ class ScreenController < ListController
 						 union
 						 select sum(qty_bal)*-1 bal_qty from #{tblname.sub("insts","")}rsltinputs 
 							where  result_f = '0' and  sno_inst = '#{sno_rec[tblname.chop+"_sno"]}') "
+				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
+				bal_qty_inst ||= 0
+				bal_qty_ord = 0
+			when /picinsts/
+				strsql = "select sum(bal_qty) bal_qty from (select qty_stk bal_qty from picinsts where sno  = '#{sno_rec[tblname.chop+"_sno"]}'
+						 union
+						  select (qty_stk * -1)  bal_qty from picacts where sno_inst  = '#{sno_rec[tblname.chop+"_sno"]}'
+						 union
+						  select sum(qty_bal)*-1 bal_qty from #{tblname.sub("insts","")}rsltinputs 
+							where  result_f = '0' and  sno_inst = '#{sno_rec[tblname.chop+"_sno"]}'
+                                                   ) "
 				bal_qty_inst = ActiveRecord::Base.connection.select_value(strsql)
 				bal_qty_inst ||= 0
 				bal_qty_ord = 0
@@ -427,11 +470,11 @@ class ScreenController < ListController
 					end
 				end
 			else
-				@getname[params[:chgname].to_sym] = "???"  ### ""だとスペースにならない。
+				@getname[params[:chgname]] = "???"  ### ""だとスペースにならない。
 				sw = "MISSing"
             end   
 		else
-			@getname[params[:chgname].to_sym] = " paragraph set error "  ### 画面登録時にチェックしている　チェック漏れがない限り発生しない。
+			@getname[params[:chgname]] = " paragraph set error "  ### 画面登録時にチェックしている　チェック漏れがない限り発生しない。
 			sw = "MISSing"
         end
 		return sw
@@ -486,7 +529,7 @@ class ScreenController < ListController
 			end
 			rec_id = ActiveRecord::Base.connection.select_value(%Q& select id from #{command_c[:sio_viewname].split("_")[1]} #{strwhere[0..-5]} &)
 			@errmsg << "err:duplicate #{strwhere[6..-5]} " if rec_id and add_edit == "add"
-			@errmsg << "err:id ummatch  #{strwhere[6..-5]} id:#{command_r[:id]} ,rec_id:#{rec_id} " if rec_id and rec_id != command_c[:id] and add_edit == "edit"
+			@errmsg << "err:id ummatch  #{strwhere[6..-5]} id:#{command_c[:id]} ,rec_id:#{rec_id} " if rec_id and rec_id != command_c[:id] and add_edit == "edit"
 		end
 	end
 	def proc_updatechk_edit command_c   ###全面修正か廃止 code-->^code xxxs_idとして使用されているかどうか

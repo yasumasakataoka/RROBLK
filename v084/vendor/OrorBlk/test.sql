@@ -156,3 +156,5 @@ truncate table picschs;
 truncate table picords;
 truncate table picinsts;
 truncate table picacts;
+trncate table sio_r_picreplyinputs;
+trncate table picreplyinputs;

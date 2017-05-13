@@ -15,8 +15,8 @@ before_filter :authenticate_user!
 			testlinks 
 			###crt_def_all
 			Rails.cache.clear
-			crtcachelist
 		end
+		crtcachelist
 		render :layout =>'list'
     end	
 	#### code index　チッェクを入れる。
@@ -24,9 +24,8 @@ before_filter :authenticate_user!
           ##debugger # breakpoint
         if   Rails.cache.exist?("listindex" + grp_code) 
              @cate_list,@max_cnt = Rails.cache.read("listindex" + grp_code)   ##@max_cnt 横のレンジ　viewで使用
-	         Rails.cache.delete("listindex" + grp_code) if @cate_list.nil?
-	       else ##
-	         @cate_list = []
+	    else
+			@cate_list = []
              @max_cnt = chk_cnt =  1
 			 strsql = "select * from r_screens where substr(screen_grpcodename,1,1) != '#' and screen_expiredate >current_date order by screen_grpcodename"
 	         ActiveRecord::Base.connection.select_all(strsql).each do |i|
@@ -45,11 +44,11 @@ before_filter :authenticate_user!
              ### 画面の種類にかかわらずscreen_codeユニークであること。
              # 将来はグループ分けが必要
              end 
-	         Rails.cache.write("listindex" + grp_code, [@cate_list,@max_cnt]) if  @cate_list
+			Rails.cache.write("listindex" + grp_code, [@cate_list,@max_cnt]) if  @cate_list.size > 0
 			 ##sub_define_default_methods
              ##debugger # breakpoint
-         end
-     render :text => "no screen data "  and return   if @cate_list.nil?
+		 end
+		render :text => "no screen data "  and return   if @cate_list.size == 0
      ####   if Rails.env == 'development' 開発環境の時のみ　rubycodeの変更は可能
     end
 	def testlinks	###開発環境のみで動く
@@ -82,5 +81,22 @@ before_filter :authenticate_user!
 			strwhere = " id in (select id  from r_tblinkflds  a where not exists(select 1 from tblfields b where a.tblinkfld_tblfield_id = b.id "
 			strwhere << " and tblink_blktb_id_dest = b.blktbs_id and b.expiredate > current_date))"
 			proc_tbl_delete_arel("tblinkflds",strwhere)
+	end
+	def rubycompile
+		def_rubycoding
+		##render :partial=>"errmsg" 
+        @cate_list,@max_cnt = Rails.cache.read("listindex" + grp_code)   ##@max_cnt 横のレンジ　viewで使用
+		crtcachelist if @cate_list.nil?
+		render :index,:layout=>"list"
+	end
+	def screen_clear
+        @cate_list,@max_cnt = Rails.cache.read("listindex" + grp_code)   ##@max_cnt 横のレンジ　viewで使用
+	    Rails.cache.delete("listindex" + grp_code) if @cate_list
+	    Rails.cache.delete("id_javascript" + params[:screen_clear][:screen_name] +  grp_code)
+	    Rails.cache.delete("id_html" + params[:screen_clear][:screen_name] +  grp_code)
+		crtcachelist
+		##debugger
+		Rails.cache.delete("show#{params[:screen_clear][:screen_name]}#{grp_code}")
+		render :index,:layout=>"list"
 	end
 end

@@ -70,11 +70,11 @@ class  AddupddelController < ScreenController
 	end  ## add_upd_del
     def befor_chk_update
 		@show_data[:gridcolumns].each do |fld|
-			if fld[:editable] == true
+			###if fld[:editable] == true
 				if respond_to?("proc_view_field_#{fld[:field]}_chk")
 					__send__("proc_view_field_#{fld[:field]}_chk",params)  ###バッチで処理することもあるのであえてparamsを引数にしている。
 				end
-			end
+			###end
 		end
     end
 end

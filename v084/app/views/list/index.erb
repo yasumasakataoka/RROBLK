@@ -24,5 +24,14 @@
 <% end %>
 </table>
 </div>
+<div align=center>
+     <%= form_for :comple, :url=>{:controller=>"list",:action=>"rubycompile"}, :html => { :multipart => true } do |f| -%>
+		<p>ruby complie	<%= submit_tag 'Submit' -%> </p>
+	<% end -%>
+     <%= form_for :screen_clear, :url=>{:controller=>"list",:action=>"screen_clear"}, :html => { :multipart => true } do |f| -%>
+		<p>screen name	<%= f.text_field :screen_name  -%> <%= submit_tag 'screen cash clear ' -%> </p>
+	<% end -%>
+ </div>
+
 
 

@@ -1,6 +1,7 @@
 <h1> IMPORT from xlsx </h1>
 <br><p>
 </p></br>
+<table>
 <%= form_for :dump, :url=>{:controller=>"importfmxlsx",:action=>"import"}, :html => { :multipart => true } do |f| -%>
 Select an Excel File :
 <%= f.file_field :excel_file -%>

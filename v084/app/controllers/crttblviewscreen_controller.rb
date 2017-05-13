@@ -46,6 +46,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			end   ##if allrecs
 			create_or_replace_view   rec_id,pobject_code_tbl
 			Rails.cache.clear(nil)
+			prv_create_index_pk pobject_code_tbl
 			create_screenfields "r_"+pobject_code_tbl
 			proc_set_search_code_of_screen        "r_"+pobject_code_tbl
 			####chk_index  pobject_code_tbl,columns if columns

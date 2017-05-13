@@ -120,7 +120,7 @@
 			logger.debug"error class LINE #{__LINE__}   $!: #{$!} " 	
 			tbl[:result_f] = "9"	
 			tbl[:remark] = "error class #{self}   #{Time.now}$@: #{$@} "[0..3999]
-			tbl[:message_code] = "error class LINE #{__LINE__}   $!: #{$!} "[0..255] 
+			tbl[:message_code] = "error class LINE #{__LINE__}   $!: #{$!} "[0..200] 
 			proc_tbl_edit_arel "mkbttables", tbl, " id = #{rec["id"]}"   ###insertはtblinks updateはここ　何とかならないか
 			ActiveRecord::Base.connection.commit_db_transaction()
 			break if err_cnt >= 10
@@ -132,7 +132,7 @@
 		logger.debug"error class LINE #{__LINE__}   $!: #{$!} " 	
 		tbl[:result_f] = "9"	
 		tbl[:remark] = "error class #{self}   #{Time.now}$@: #{$@} "[0..3999]
-		tbl[:message_code] = "error class LINE #{__LINE__}   $!: #{$!} "[0..255] 
+		tbl[:message_code] = "error class LINE #{__LINE__}   $!: #{$!} "[0..200] 
 		proc_tbl_edit_arel "mkbttables", tbl, " id = #{rec["id"]}"   ###insertはtblinks updateはここ　何とかならないか
 		ActiveRecord::Base.connection.commit_db_transaction()
 	end
@@ -512,11 +512,14 @@
 							next
 						end	
 					when /A|B|C|D/  ##親の作業指示・発注と同時に出庫指示のため対象外
+						if rec["tblname_pare"] and (rec["sno_pare"] or rec["cno_pare"])
+						else
 							@skipcnt += 1
 							@skipqty += sch["alloctbl_qty"]
 							@skipamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))	
 							proc_mkord_err sch,proc_blkgetpobj("親の作業指示・発注と同時に出庫指示のため対象外","msg") 
 							next
+						end
 					else
 				end
 				### no check
@@ -649,7 +652,7 @@
 			inputs.each do |input|			###回納期が゛セットされているテーブル
 				err ={}			
 				@incnt += 1 
-				@inqty += input["qty"]
+				@inqty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
 				if sno_ord != input["sno_ord"] 
 					if sno_ord != "" 
 						if sum_rply_qty != bal_qty and ord["opeitm_chkord"] == "0"   ###opeitm_chkord 分割回答時で数量不一致は不可--->rubycodesに登録
@@ -660,8 +663,13 @@
 							@skipqty += sum_rply_qty
 						end
 					end			
-					strsql = "select #{prdpurshp}ord_sno,#{prdpurshp}ord_qty ord_qty,opeitm_chkord
+					if prdpurshp =~ /dlv|pic/ 
+						strsql = "select #{prdpurshp}ord_sno,#{prdpurshp}ord_qty_stk ord_qty,'0' opeitm_chkord,'1' #{prdpurshp}ord_confirm
 							from r_#{prdpurshp}ords  where #{prdpurshp}ord_sno = '#{input["sno_ord"]}' "
+					else
+						strsql = "select #{prdpurshp}ord_sno,#{prdpurshp}ord_qty ord_qty,opeitm_chkord,#{prdpurshp}ord_confirm
+							from r_#{prdpurshp}ords  where #{prdpurshp}ord_sno = '#{input["sno_ord"]}' "
+					end
 					ord = ActiveRecord::Base.connection.select_one(strsql)	
 					if ord.nil?
 						err[:remark] = " not found sno =  #{input["sno_ord"]} "
@@ -670,41 +678,23 @@
 						proc_tbl_edit_arel  reply["tblname"],err," sno_ord = #{input["sno_ord"]} and result_f  =  '0' "
 						next
 					end
-					case ord["#{prdpurshp}ord_confirm"] 
-						when "0"
-							err[:remark] = " unconfirm #{TIme.now} :: " 
-							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
-							@skipqty += input["qty"]
-							next
-						when "5"
-							err[:remark] = " waiting for sending order  #{TIme.now} :: " 
-							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
-							@skipqty += input["qty"]
-							next
-						when "T"
-							err[:remark] = " test date  #{TIme.now} :: " 
-							err[:result_f] = "8"
-							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
-							@skipqty += input["qty"]
-							next
-				end
 					bal_qty =  	ord["ord_qty"]
-					strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
-					act = ActiveRecord::Base.connection.select_one(strsql)
-					strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
+					##strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
+					##act = ActiveRecord::Base.connection.select_one(strsql)
+					strsql = "select sno_ord,sum(qty) act_qty from #{prdpurshp}insts  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
 					inst = ActiveRecord::Base.connection.select_one(strsql)
 					##strsql = "select sno_ord,sum(qty) ret_qty from #{prdpurshp}rets  where sno_ord = '#{input["sno_ord"]}' group by sno_ord "
 					##ret = ActiveRecord::Base.connection.select_one(strsql)
-					bal_qty -= if act then act["qty"] else 0 end
+					##bal_qty -= if act then act["qty"] else 0 end
 					bal_qty -= if inst then inst["qty"] else 0 end
 					##bal_qty += if ret then ret["qty"] else 0 end　  #####dummyの時があるので外した。
 					sno_ord = input["sno_ord"]				
 					cno = input["cno"]
 					sum_rply_qty = 0
 				end
-				sum_rply_qty += input["qty"]
+				sum_rply_qty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
 			end		
-			if sum_rply_qty != bal_qty and ord["opeitm_chkord"] == "0"
+			if sum_rply_qty != bal_qty and ord["opeitm_chkord"] == "0"   ### rubycodeに移行する。
 				err ={}
 				err[:remark] = "unmatch Σreply_qty != ord_balacle_qty ; Σreply_qty = #{sum_rply_qty.to_s} ,ord_balance_qty = #{bal_qty} "
 				err[:message_code] = "error_xxxx "
@@ -723,6 +713,24 @@
 			sno_ord = ""
 			inputs.each do |input|
 			begin
+				case ord["#{prdpurshp}ord_confirm"] 
+					when "0"  ##原則画面でチェック
+							err[:remark] = " unconfirm #{Time.now} :: " 
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
+							next
+					when "5"
+							err[:remark] = " waiting for sending order  #{Time.now} :: " 
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
+							next
+					when "T"
+							err[:remark] = " test date  #{Time.now} :: " 
+							err[:result_f] = "8"
+							@skipcnt += proc_tbl_edit_arel(reply["tblname"],err," id = #{input["id"]} ") 
+							@skipqty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
+							next
+				end
 				if sno_ord != input["sno_ord"]  ###既にinstsで登録済ならいったんXXXXINSTSを削除
 					strsql = %Q& select * from r_#{prdpurshp}ords  where #{prdpurshp}ord_sno = '#{input["sno_ord"]}' &
 					ord = ActiveRecord::Base.connection.select_one(strsql)
@@ -747,12 +755,17 @@
 				@sio_classname = "replies_add_"
 				strsql = %Q& select * from r_#{prdpurshp}ords where  #{prdpurshp}ord_sno = '#{input["sno_ord"]}' &	
 				ord = ActiveRecord::Base.connection.select_one(strsql)  ###view
-				strsql = %Q& select * from alloctbls where  srctblname = 'trngantts' 
+				if prdpurshp =~ /dlv|pic/
+					strsql = %Q& select * from alloctbls where  srctblname = 'trngantts' 
+				             and destblname = '#{prdpurshp}ords' and destblid = #{ord["id"]} and qty_stk > 0 &
+				else
+					strsql = %Q& select * from alloctbls where  srctblname = 'trngantts' 
 				             and destblname = '#{prdpurshp}ords' and destblid = #{ord["id"]} and qty > 0 &
+				end
 				alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
 				proc_command_instance_variable ord
 				##proc_opeitm_instance(ord)
-				@reply_qty = input["qty"]   ###回答から引き継げる項目は、数量、納期、cno,gnoコメントのみ
+				@reply_qty = if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end  ###回答から引き継げる項目は、数量、納期、cno,gnoコメントのみ
 				@reply_qty_case = input["qty_case"]   
 				@reply_duedate = input["duedate"] ###
 				@reply_starttime = if  prdpurshp == "shp" then  input["depdate"] else  input["starttime"] end
@@ -771,7 +784,7 @@
 				##ctblname.where(:id =>input["id"]).update_all(data)
 				proc_tbl_edit_arel(reply["tblname"],data," id = #{input["id"]} ")
 				@outcnt += 1
-				@outqty += input["qty"]
+				@outqty += if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
 				ActiveRecord::Base.connection.commit_db_transaction()
 				ActiveRecord::Base.connection.begin_db_transaction()
 			rescue
@@ -779,11 +792,11 @@
 				logger.debug"error class #{self} #{Time.now}: $@: #{$@} " 
 				logger.debug"error class #{self} : $!: #{$!} "
 				@skipcnt += 1
-				@skipqty = input["qty"]
+				@skipqty = if prdpurshp =~ /dlv|pic/ then input["qty_stk"] else  input["qty"] end
 				data[:result_f] = "9"
 				data[:updated_at] = Time.now
 				data[:remark] = "class #{self} #{Time.now}: $@: #{$@} "[0..3999]
-				data[:message_code] = (@errmsg||=" $!:#{$!}"[0..255])
+				data[:message_code] = (@errmsg||=" $!:#{$!}"[0..200])
 				proc_tbl_edit_arel(reply["tblname"],data," id = #{input["id"]} ")
 				ActiveRecord::Base.connection.commit_db_transaction()		
 				ActiveRecord::Base.connection.begin_db_transaction()	
@@ -814,7 +827,7 @@
 				data[:result_f] = "9"
 				data[:updated_at] = Time.now
 				data[:remark] = "class #{self} #{Time.now}: $@: #{$@} "[0..3999]
-				data[:message_code] = "class #{self} : $!: #{$!} "[0..255]
+				data[:message_code] = "class #{self} : $!: #{$!} "[0..200]
 				proc_tbl_edit_arel(tbl,data," id = #{reply["id"]}")
 				ActiveRecord::Base.connection.commit_db_transaction()
 		end
@@ -841,12 +854,13 @@
 		@incnt = @skipcnt = @outcnt = 0
 		@inqty = @outqty = @skipqty = 0
 		###ctblname = result["tblname"].singularize.capitalize.constantize  ### persons_id_upd  --->resultgnoに変更予定
-		strsql = "select * from #{result["tblname"]} where result_f in('0') and persons_id_upd = #{result["persons_id_upd"]} order by sno_ord FOR UPDATE "
+		strsql = "select * from #{result["tblname"]} where result_f in('0') and persons_id_upd = #{result["persons_id_upd"]} order by sno_inst FOR UPDATE "
 		inputs = ActiveRecord::Base.connection.select_all(strsql)
 		inputs.each do |input|	
-		begin				
+		begin			
+			@errmsg = ""
 			@incnt += 1 
-			@inqty += input["qty"]
+			@inqty += if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end
 			case 
 				when  (input["cno_inst"]||="dummy")  !~ /^dummy/
 						strsql = %Q& select *
@@ -891,20 +905,40 @@
 				err[:result_f] = "9"
 				proc_tbl_edit_arel(result["tblname"],err,"id = #{input["id"]} ")
 				@skipcnt += 1 
-				@skipqty += input["qty"]
+				@skipqty += if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end
 				ActiveRecord::Base.connection.commit_db_transaction()
 				ActiveRecord::Base.connection.begin_db_transaction()
 				next
 			end
-			strsql = "select qty from #{prdpurshp}ords  where sno = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' "
-			bal_qty = ActiveRecord::Base.connection.select_value(strsql)				
-			strsql = "select sum(qty) act_qty from #{prdpurshp}acts  where sno_ord = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' group by sno_ord "
-			act_qty = ActiveRecord::Base.connection.select_value(strsql)
-			bal_qty -= if act_qty then act_qty else 0 end
-			##bal_qty += if ret_qty then ret_qty else 0 end  ##返品はordsに紐付かないときもある。
-			if bal_qty < input["qty_bal"] and insts[0]["opeitm_chkinst"] == "1"  ###発注数以上の受入は不可
+			case prdpurshp
+			when   /^pr|^pur|^shp/
+				strsql = "select qty from #{prdpurshp}ords  where sno = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' "
+				bal_qty = ActiveRecord::Base.connection.select_value(strsql)				
+				strsql = "select sum(qty) act_qty from #{prdpurshp}acts  where sno_inst = '#{insts[0]["#{prdpurshp}inst_sno"]}' group by sno_inst "
+				act_qty = ActiveRecord::Base.connection.select_value(strsql)
+			when   /^dlv|^pic/
+				strsql = "select qty_stk from #{prdpurshp}ords  where sno = '#{insts[0]["#{prdpurshp}inst_sno_ord"]}' "
+				bal_qty = ActiveRecord::Base.connection.select_value(strsql)				
+				strsql = "select sum(qty_stk) act_qty from #{prdpurshp}acts  where sno = '#{insts[0]["#{prdpurshp}inst_sno"]}' group by sno_inst "
+				act_qty = ActiveRecord::Base.connection.select_value(strsql)
+			else 
 				err = {}
-				err[:remark] = " over  act_qty: #{input["qty_bal"]} > ord_qty: #{bal_qty} "
+				err[:remark] = " logic error "
+				err[:message_code] = "error  prdpurshp: #{prdpurshp}"
+				err[:result_f] = "9"
+				err[:updated_at] = Time.now
+				proc_tbl_edit_arel(input["tblname"],err,"id = #{input["id"]} ")
+				@skipcnt += 1 
+				@skipqty += sum_rply_qty
+				ActiveRecord::Base.connection.commit_db_transaction()
+				ActiveRecord::Base.connection.begin_db_transaction()
+				next			    
+			end
+			bal_qty -= (act_qty||= 0)
+			##bal_qty += if ret_qty then ret_qty else 0 end  ##返品はordsに紐付かないときもある。
+			if bal_qty < (if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end) and insts[0]["opeitm_chkinst"] == "1"  ###発注数以上の受入は不可
+				err = {}
+				err[:remark] = " over  act_qty: #{if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end} > ord_qty: #{bal_qty} "
 				err[:message_code] = "error_xxx2 "
 				err[:result_f] = "9"
 				err[:updated_at] = Time.now
@@ -920,17 +954,18 @@
 				@sio_classname = "results_add_"
 					strsql = %Q& select * from alloctbls where  srctblname = 'trngantts' 
 				             and destblname = '#{prdpurshp}insts' and destblid = #{inst["id"]} 
-							 and qty > 0 
+							 and (qty > 0 or qty_stk >0) 
 							  /* and allocfree = 'alloc' */
 							  for update &
 				alloctbls = ActiveRecord::Base.connection.select_all(strsql) 
 				if alloctbls.size > 0
 					proc_command_instance_variable inst
 					##proc_opeitm_instance(inst)
-					@result_qty = input["qty"]   ###
+					@result_qty = input["qty"] if prdpurshp =~ /^prd|^pur|^shp/   ###
+					@result_qty_stk =  input["qty_stk"] if prdpurshp =~ /^pic|^dlv/    ###
 					@result_qty_case = input["qty_case"]   
 					case prdpurshp
-						when "prd"
+						when /prd|pic|dlv/
 							@result_cmpldate = input["cmpldate"]
 						when "pur"
 							@result_rcptdate = input["rcptdate"]
@@ -951,7 +986,7 @@
 					data[:message_code] = nil
 					data[:result_f] = "1"
 					@outcnt += 1
-					@outqty += input["qty"]
+					@outqty += if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end
 				else
 					data[:remark] = "data not found  strsql = #{strsql} "
 					@skipcnt += 1 
@@ -967,11 +1002,11 @@
 			logger.debug"error class #{self} #{Time.now}: $@: #{$@} " 
 			logger.debug"error class #{self} : $!: #{$!} "
 			@skipcnt += 1
-			@skipqty += input["qty"]
+			@skipqty += if prdpurshp =~ /^prd|^pur|^shp/ then  input["qty"] else input["qty_stk"] end
 			data[:result_f] = "9"
 			data[:updated_at] = Time.now
 			data[:remark] = if @errmsg == "" then "class #{self} #{Time.now}: $@: #{$@} "[0..3999] else @errmsg end
-			data[:message_code] = "class #{self} : $!: #{$!} "[0..255]
+			data[:message_code] = "class #{self} : $!: #{$!} "[0..200]
 			proc_tbl_edit_arel(result["tblname"],data,"id = #{input["id"]} ")
 			ActiveRecord::Base.connection.commit_db_transaction()
 			ActiveRecord::Base.connection.begin_db_transaction()

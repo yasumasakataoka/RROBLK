@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="155" uniqueCount="62"><si><t>tblinkfld_id</t></si><si><t>tblink_codel</t></si><si><t>pobject_code_scr_src</t></si><si><t>pobject_code_tbl_dest</t></si><si><t>処理順序</t></si><si><t>pobject_code_fld</t></si><si><t>tblinkfld_rubycode</t></si><si><t>tblinkfld_contents</t></si><si><t>pobject_code_tbl</t></si><si><t>tblinkfld_remark</t></si><si><t>tblinkfld_expiredate</t></si><si><t>tblink_expiredate</t></si><si><t>tblink_seqno</t></si><si><t>tblink_beforeafter</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_contents</t></si><si><t>tblinkfld_updated_at</t></si><si><t>tblinkfld_created_at</t></si><si><t>person_name_upd</t></si><si><t>person_code_upd</t></si><si><t>tblinkfld_update_ip</t></si><si><t>result_f</t></si><si><t>"0"</t></si><si><t xml:space="preserve">auto created </t></si><si><t>2099/12/31</t></si><si><t>after</t></si><si><t>char</t></si><si><t xml:space="preserve"> 結果　フラグ　0:未処理 1:normal end  9:error</t></si><si><t>system</t></si><si><t>varchar2</t></si><si><t>persons_id_upd</t></si><si><t>number</t></si><si><t>timestamp(6)</t></si><si><t>expiredate</t></si><si><t>"2099/12/31".to_date</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>runtime</t></si><si><t>"-1".to_i</t></si><si><t>実行タイミング　-1すぐ実行　0から23。 0時から23時で毎日実行  clockworkによって  未処理データ(result_f= '0')が作成される。</t></si><si><t>isudate</t></si><si><t>Time.now</t></si><si><t>発行日</t></si><si><t>id</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>prdpurshp</t></si><si><t>"pic"</t></si><si><t>作業内容
+ファントムを追加予定
+prd 製造　社内作業　 locas_idで作業して次工程へ自動移動
+pur 購入　locas_idで購入して、業者が次工程へ納品。社外加工　組立
+shp 出庫　一旦locas_idに受入、保管し作業場所へ出庫
+dlv 出荷　opeitms  には　shpとして登録
+inp:検査
+stk  :在庫　alloctblsで使用
+ocp:装置使用中
+
+　副産物作成 はnditmsに定義する。</t></si><si><t>tblname</t></si><si><t>tblnameを持つテーブルを作成したテーブル</t></si><si><t>tblid</t></si><si><t>tblname が示すテーブルのid</t></si><si><t>proc_tblink_r_picrsltinputs_results_after10</t></si><si><t>r_picrsltinputs</t></si><si><t>results</t></si><si><t>2017/04/09 11:33</t></si><si><t>results</t><phoneticPr fontId="2"/></si><si><t xml:space="preserve">command_c[:id] = proc_get_nextval("results_seq") </t><phoneticPr fontId="2"/></si><si><t>r_picrsltinputs</t><phoneticPr fontId="2"/></si><si><t>(@picrsltinputs_person_id_upd)</t><phoneticPr fontId="2"/></si><si><t>(@picrsltinputs_id)</t><phoneticPr fontId="2"/></si><si><t>"picrsltinputs"</t><phoneticPr fontId="2"/></si></sst>
