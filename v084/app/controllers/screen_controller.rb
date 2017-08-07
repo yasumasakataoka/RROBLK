@@ -139,32 +139,31 @@ class ScreenController < ListController
 					end
 				end
 		end
+		##debugger	
 		if sw == "ON" or sw == "MISSING"
 			if sw == "ON" 
-			##	if respond_to?("proc_view_field_#{params[:chgname]}_init")
-			##		__send__("proc_view_field_#{params[:chgname]}_init",params)
+				if respond_to?("proc_view_field_#{params[:chgname]}_pre_create")
+					__send__("proc_view_field_#{params[:chgname]}_pre_create",params)
 					##tbs,screen,field,の時は　pobjectへの登録もしている。
-			##	else	  
-			##		fld_key = params[:chgname].split("_",2)[1]
-			##		if respond_to?("proc_field_#{fld_key}_init")
-			##			__send__("proc_field_#{fld_key}_init",params) 
-			##		end
-			##	end
-			##end
-				params.each do |key,val|
-					if @getname[key].nil?
-						if val == ""
-			###debugger if key.to_s =~/shelf/
-							if respond_to?("proc_view_field_#{key.to_s}_dflt_screen")
-								@getname[key] = __send__("proc_view_field_#{key.to_s}_dflt_screen",params)
-							else
-								if respond_to?("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen")
-									@getname[key] = __send__("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen",params)
-								end
-							end
+				else	  
+					fld_key = params[:chgname].split("_",2)[1]
+					if respond_to?("proc_field_#{fld_key}_pre_create")
+						__send__("proc_field_#{fld_key}_pre_create",params) 
+					end
+				end
+			end
+			params.each do |key,val|
+				if @getname[key].nil?
+					if val == ""
+						if respond_to?("proc_view_field_#{key.to_s}_dflt_screen")
+							@getname[key] = __send__("proc_view_field_#{key.to_s}_dflt_screen",params)
 						else
-							@getname[key] = val if @getname[key].nil?
+							if respond_to?("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen")
+								@getname[key] = __send__("proc_field_#{key.to_s.split("_",2)[1]}_dflt_screen",params)
+							end
 						end
+					else
+						@getname[key] = val if @getname[key].nil?
 					end
 				end
 			end

@@ -22,7 +22,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			when /screens/
 				if  rec = ActiveRecord::Base.connection.select_one("select * from r_screens where id = #{params[:jqgrid_id]}  ")
 					if rec["screen_expiredate"] > Time.now
-						tbl_rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where pobject_code_tbl = '#{rec["pobject_code_scr"].split("_")[1]}'  ")
+						tbl_rec = ActiveRecord::Base.connection.select_one("select * from r_blktbs where pobject_code_tbl = '#{rec["pobject_code_scr"].split("_",1)}'  ")
 						create_or_replace_view  tbl_rec["id"],tbl_rec["pobject_code_tbl"],params[:jqgrid_id]
 						##Rails.cache.clear(nil)
 					else
@@ -59,7 +59,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				@errmsg << "table #{pobject_code_tbl} missing or  tblfields not exists "
 				raise
 			end   ##if allrecs
-			create_or_replace_view   rec_id,pobject_code_tbl,nil ###screen_id = nil
+			create_or_replace_view   rec_id,pobject_code_tbl,nill  ###screen_id = nil
 			Rails.cache.clear(nil)
 			prv_create_index_pk pobject_code_tbl
 			create_screenfields "r_"+pobject_code_tbl
@@ -238,7 +238,12 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
   end
 
  	def create_or_replace_view  tblid,tblname,screen_id
-		strsql = "select * from r_tblfields where tblfield_blktb_id = #{tblid} and tblfield_expiredate >  current_date"
+		if screen_id
+			strsql = "select * from r_tblfields  a where tblfield_blktb_id = #{tblid} and tblfield_expiredate >  current_date
+			and exists (select 1 from screenfields  b where a.tblfield_id = b.tblfields_id and b.screens_id = #{screen_id} and selection = 1 )"
+		else   ###
+			strsql = "select * from r_tblfields where tblfield_blktb_id = #{tblid} and tblfield_expiredate >  current_date"
+		end
     subfields = ActiveRecord::Base.connection.select_all(strsql)
 		tmp_union_tbl = ActiveRecord::Base.connection.select_one("select * from blktbs  where id  = #{tblid} ")
 		union_tbls =  if tmp_union_tbl["seltbls"] and tmp_union_tbl["seltbls"] != "undefined" then eval(tmp_union_tbl["seltbls"])  else [""] end ##tblname対応
@@ -275,7 +280,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				    	selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
 							@sfd_code_id[tblname.chop + "_" +  js.sub("s_id","_id")] = rec["id"]
 			    	end
-            subtblcrt  join_rtbl,rtblname,screen_id do |k|   ###相手側の項目セット
+            subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
               selectstr << k
             end
           else ##not _id
@@ -286,19 +291,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 					 	end
 			   		case rec["tblfield_viewflmk"]
 				 		when nil
-							if screen_id
-								strsql = %Q%select pobject_code_sfd from r_screenfields where screenfield_selection = 1
-																												and screenfield_screen_id = #{screen_id}
-																												and pobject_code_sfd = '#{tblname.chop + "_" +  js }' %
-								fld = ActiveRecord::Base.connection.select_value(strsql)
-								if fld
-									selectstr << tblname.chop + "." +  js + " " + fld + " ,"
-								else
-									next
-								end
-							else
-			      		selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ,"
-							end
+			      	selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js + " ,"
 							@sfd_code_id[tblname.chop + "_" +  js] = rec["id"]
 				 		when /^tblnamefields/  ##vfield対応　union
 				    	tblnamefields = eval(rec["tblfield_viewflmk"])
@@ -319,7 +312,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
  	end  #end create_or_replace_view
 
 
-	def  subtblcrt  join_rtbl ,rtblname,screen_id   ## :view名,rtblname:join_rtbl + safix
+	def  subtblcrt  join_rtbl ,rtblname   ## :view名,rtblname:join_rtbl + safix
     k = ""
 	  unless ActiveRecord::Base.connection.table_exists?(join_rtbl)
            @errmsg << "create view #{ join_rtbl }"
@@ -333,13 +326,6 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|REMARK/ and  join_rtbl  !=  "upd_persons"
 			tmpfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end
 			sfd_code = xfield + tmpfld
-			if screen_id
-				strsql = %Q%select pobject_code_sfd from r_screenfields where screenfield_selection = 1
-																								and screenfield_screen_id = #{screen_id}
-																								and pobject_code_sfd = '#{sfd_code}' %
-				fld = ActiveRecord::Base.connection.select_value(strsql)
-				next if fld.nil?
-			end
       new_xfield = rtblname + "." + xfield + " " + sfd_code
       k <<  " " +  new_xfield   + ","
       lngerrfield = new_xfield.split(" ")[1]

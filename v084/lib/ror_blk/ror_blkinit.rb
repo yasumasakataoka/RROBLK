@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-  
 # RorBlkinit
 # 2099/12/31を修正する時は　2100/01/01の修正も
 ###		Blksdate = Date.today - 1  ##在庫基準日　sch,ord,instのこれ以前の納期は許さない。
