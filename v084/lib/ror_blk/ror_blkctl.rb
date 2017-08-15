@@ -433,34 +433,46 @@ module Ror_blkctl
         ### strsqlにコーディングしてないときは、viewをしよう
         ### strdql はupdate insertには使用できない。
         ### command_c[:sio_strsql] = (select  ・・・・) a
-        if  command_c[:sio_strsql]     ## 親からの情報があるときは対象外
-            tmp_sql =  if command_c[:sio_strsql].class.to_s == "Hash" then command_c[:sio_strsql]["strsql"] else command_c[:sio_strsql] end
-          else
-            tmp_str = ActiveRecord::Base.connection.select_one("select * from r_screens where pobject_code_scr = '#{screen_code}' and screen_Expiredate > current_date order by screen_expiredate ")
-            if  tmp_str and  command_c[:sio_search]  == "false" and command_c[:sio_sidx] == "" then
-                if tmp_str["screen_strselect"]  then tmp_sql = "(#{tmp_str["screen_strselect"]}" else tmp_sql =  command_c[:sio_viewname]  + " a " end
-				## tmp_sql << (tmp_str["screen_strselect"]||="")
-				tmp_sql << (" Where "+  tmp_str["screen_strwhere"] ) if tmp_str["screen_strwhere"] and  command_c[:sio_search]  == "false"
-				tmp_sql << (tmp_str["screen_strgrouporder"]||="")
-				tmp_sql << " ) a "  if tmp_str["screen_strselect"]
-            else
-                tmp_sql =  command_c[:sio_viewname]  + " a "
-            end
-        end
-        strsql = "SELECT id FROM " + tmp_sql
-        if command_c[:sio_search]  == "true"
-			tmp_sql << proc_strwhere(command_c)
-			(tmp_sql << (" and "+  tmp_str["screen_strwhere"] ) if tmp_str["screen_strwhere"]) if tmp_str
-		end
+				tmp_sql = ""
+        tmp_str = ActiveRecord::Base.connection.select_one("select * from r_screens where pobject_code_scr = '#{screen_code}' and screen_Expiredate > current_date order by screen_expiredate ")
+				tmp_str ||= {}   ###tmp_str screensにセットされている　抽出条件とsort　key
+				tmp_str["screen_strwhere"] ||= ""
+        if  command_c[:sio_strsql]     ## 親からの引き継ぎ検索ありの時
+            tmp_sql <<  if command_c[:sio_strsql].class.to_s == "Hash" then command_c[:sio_strsql]["strsql"] else command_c[:sio_strsql] end
+						tmp_sql << if tmp_str["screen_strwhere"] != "" then " and #{tmp_str["screen_strwhere"]}" else "" end
+				else
+						tmp_sql << if tmp_str["screen_strwhere"] != "" then tmp_str["screen_strwhere"] else "" end
+				end
+			  ###screen登録された　既定値の抽出条件
+        ##strsql = "SELECT id FROM " + tmp_sql
+        if command_c[:sio_search]  == "true"   ### proc_strwhere(command_c) 画論に入力された抽出条件
+				  if  command_c[:sio_strsql] ## 親からの引き継ぎ検索の時
+							tmp_sql = tmp_sql +  proc_strwhere(command_c)
+					else
+							tmp_sql =    (tmp_str["screen_strselect"]||=command_c[:sio_viewname]) + " a " +  proc_strwhere(command_c) + if tmp_str["screen_strwhere"] == "" then ""  else " and " end +  tmp_sql
+					end
+				else   ###画面からの抽出条件なし
+					if  command_c[:sio_strsql] ## 親からの引き継ぎ検索の時
+							tmp_sql =    tmp_sql
+					else
+							tmp_sql =   (tmp_str["screen_strselect"]||=command_c[:sio_viewname]) + if tmp_str["screen_strwhere"] == "" then " a "  else " a  where " end  +  tmp_str["screen_strwhere"]
+					end
+				end
+        ####cnt_strsql = "SELECT count(*) FROM " + tmp_sql
+        command_c[:sio_totalcount] =  ActiveRecord::Base.connection.select_value( "SELECT count(*) FROM " + tmp_sql)
+	    	all_sub_command_r = []
+				sort_tmp =  if tmp_str["screen_strorder"] then  " order by "  + tmp_str["screen_strorder"].sub(/order\s*by/,"") else "" end   ### sort 初期セット
         sort_sql = ""
-        unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == "" then
+        unless command_c[:sio_sidx].nil? or command_c[:sio_sidx] == ""  ###画面からsort keyを指定
 	        sort_sql = " ROW_NUMBER() over (order by " +  command_c[:sio_sidx] + " " +  command_c[:sio_sord]  + " ) "
+					sort_tmp  = ""
 	      else
-	        sort_sql = "rownum "
+					if sort_tmp == ""
+	        	sort_sql = "rownum "
+					else
+		        sort_sql = " ROW_NUMBER() over ( " +  sort_tmp  + " ) "  ### screensにsort keyがセットされているとき　sortの既定値
+					end
         end
-        cnt_strsql = "SELECT count(*) FROM " + tmp_sql
-        command_c[:sio_totalcount] =  ActiveRecord::Base.connection.select_value(cnt_strsql)
-	    all_sub_command_r = []
         case  command_c[:sio_totalcount]
             when nil,0   ## 該当データなし　　回答
 	            command_c[:sio_recordcount] = 0
@@ -506,80 +518,80 @@ module Ror_blkctl
 		strwhere = proc_search_key_strwhere params,strwhere,@show_data
 	end
 	def proc_search_key_strwhere search_key,strwhere,show_data   ###search key:"xxxx"   not sym   ## search_key 画面と db_cud(データ選択)で使用
-        search_key.each  do |i,j|  ##xparams gridの生
-            next if j == ""
-			tmpwhere = nil
-	        case show_data[:alltypes][i.to_sym]
+    search_key.each  do |i,j|  ##xparams gridの生
+        next if j == ""
+				tmpwhere = nil
+	      case show_data[:alltypes][i.to_sym]
 				when nil
 					next
-	            when /number/
+	      when /number/
                     tmpwhere = " #{i} = #{j}     AND "
 		            tmpwhere = " #{i}  #{j[0]}  #{j[1..-1]}      AND "   if j =~ /^</   or  j =~ /^>/
 		            tmpwhere = " #{i} #{j[0..1]} #{j[2..-1]}      AND "    if j =~ /^<=/  or j =~ /^>=/ or j =~ /^!=/
-	            when /^date|^timestamp/
+	      when /^date|^timestamp/
 		            case  j.size
-			            when 4
+			          when 4
 			                tmpwhere = " to_char( #{i},'yyyy') = '#{j}'       AND "
-			            when 5
+			          when 5
 			                tmpwhere = " to_char( #{i},'yyyy') #{j[0]} '#{j[1..-1]}'      AND "  if  ( j =~ /^</   or  j =~ /^>/ )
                         when 6
 			                tmpwhere = " to_char( #{i},'yyyy')  #{j[0..1]} '#{j[2..-1]}'      AND "  if   (j =~ /^<=/  or j =~ /^>=/ )
-			            when 7
+			          when 7
 			                tmpwhere = " to_char( #{i},'yyyy/mm') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,01)
-			            when 8
+			          when 8
 			                tmpwhere = " to_char( #{i},'yyyy/mm') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)  and ( j =~ /^</   or  j =~ /^>/ )
-                        when 9
+                when 9
 			                tmpwhere = " to_char( #{i},'yyyy/mm')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,01)   and (j =~ /^<=/  or j =~ /^>=/ )
-			            when 10
+			          when 10
 			                tmpwhere = " to_char( #{i},'yyyy/mm/dd') = '#{j}'       AND "  if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)
-			            when 11
+			          when 11
 			                tmpwhere = " to_char( #{i},'yyyy/mm/dd') #{j[0]} '#{j[1..-1]}'      AND "  if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)  and ( j =~ /^</   or  j =~ /^>/ )
-                        when 12
+                when 12
 			                tmpwhere = " to_char( #{i},'yyyy/mm/dd')  #{j[0..1]} '#{j[2..-1]}'      AND "  if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
-			            when 16
+			          when 16
 			                if Date.valid_date?(j.split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)
-								hh = j.split(" ")[1][0..1]
-								mi = j.split(" ")[1][3..4]
-								delm = j.split(" ")[1][2.2]
-								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
-									tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') = '#{j}'       AND "
-								end
-							end
-			            when 17
-							if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)  and ( j =~ /^</   or  j =~ /^>/ or  j =~ /^=/ )
-								hh = j.split(" ")[1][0..1]
-								mi = j.split(" ")[1][3..4]
-								delm = j.split(" ")[1][2.2]
-								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
-									tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') #{j[0]} '#{j[1..-1]}'      AND "
-								end
-							end
-                        when 18
+												hh = j.split(" ")[1][0..1]
+												mi = j.split(" ")[1][3..4]
+												delm = j.split(" ")[1][2.2]
+												if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
+													tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') = '#{j}'       AND "
+												end
+											end
+			          when 17
+									if Date.valid_date?(j[1..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)  and ( j =~ /^</   or  j =~ /^>/ or  j =~ /^=/ )
+										hh = j.split(" ")[1][0..1]
+										mi = j.split(" ")[1][3..4]
+										delm = j.split(" ")[1][2.2]
+										if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
+											tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi') #{j[0]} '#{j[1..-1]}'      AND "
+										end
+									end
+                when 18
 			                if Date.valid_date?(j[2..-1].split("/")[0].to_i,j.split("/")[1].to_i,j.split("/")[2][0..1].to_i)   and (j =~ /^<=/  or j =~ /^>=/ )
-								hh = j.split(" ")[1][0..1]
-								mi = j.split(" ")[1][3..4]
-								delm = j.split(" ")[1][2.2]
-								if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
-										tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi')  #{j[0..1]} '#{j[2..-1]}'      AND "
-								end
-							end
-                    end ## j.size
-	            when /char|text/
-                    tmpwhere = " #{i} = '#{j}'         AND "
+												hh = j.split(" ")[1][0..1]
+												mi = j.split(" ")[1][3..4]
+												delm = j.split(" ")[1][2.2]
+												if  Array(0..24).index(hh.to_i) and Array(0..60).index(mi.to_i) and delm ==":"
+													tmpwhere = " to_char( #{i},'yyyy/mm/dd hh24:mi')  #{j[0..1]} '#{j[2..-1]}'      AND "
+												end
+											end
+                end ## j.size
+	      when /char|text/
+                tmpwhere = " #{i} = '#{j}'         AND "
 		            tmpwhere = " #{i}  #{j[0]}  '#{j[1..-1]}'         AND "  if j =~ /^</   or  j =~ /^>/
 		            tmpwhere = " #{i} #{j[0..1]} '#{j[2..-1]}'       AND "    if j =~ /^<=/  or j =~ /^>=/
 		            tmpwhere = " #{i} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ )
 	                #when  "textarea"
                     #       tmpwhere = " #{i.to_s} like '#{j}'     AND " if (j =~ /^%/ or j =~ /%$/ )
-	            when "select"
+	      when "select"
                    tmpwhere = " #{i} = '#{j}'         AND "
-            end   ##show_data[:alltypes][i]
-                tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/
-	        strwhere << tmpwhere  if  tmpwhere
-        end ### command_c.each  do |i,j|###
-        return strwhere[0..-7]
-    end   ## proc_strwhere
-    def  proc_pdfwhere pdfscript,command_c
+        end   ##show_data[:alltypes][i]
+        tmpwhere = " #{i} #{j}    AND " if  j =~/is\s*null/ or j =~/is\s*not\s*null/
+	      strwhere << tmpwhere  if  tmpwhere
+    end ### command_c.each  do |i,j|###
+    return strwhere[0..-7]
+  end   ## proc_strwhere
+  def  proc_pdfwhere pdfscript,command_c
 	    reports_id = pdfscript[:id]
 	    viewname = command_c[:sio_viewname]
         tmpwhere = proc_strwhere command_c
@@ -589,7 +601,7 @@ module Ror_blkctl
 	            tmpwhere << "   not exists (select 1 from HisOfRprts x
                                    where lower(tblname) = '#{viewname}' and #{viewname.split('_')[1].chop}_id = recordid
 				                and reports_id = #{reports_id}) "
-		end
+	end
         case  params[:afterprnt]
             when  "1"  then
 	            tmpwhere <<  if tmpwhere.size > 1 then " and " else " where " end
@@ -612,7 +624,7 @@ module Ror_blkctl
         return tmpwhere
     end
 
-    def subpaging  command_c,screen_code
+  def subpaging  command_c,screen_code
         tbldata = []
         command_c[:sio_viewname]  = @show_data[:screen_code_view]
         proc_insert_sio_c command_c    ###ページング要求
@@ -622,26 +634,26 @@ module Ror_blkctl
         rcd.each do |j|
             tmp_data = {}
             @show_data[:allfields].each do |k|
-				if j[k]
-					case @show_data[:alltypes][k]
-						when /date/
-							tmp_data[k] = j[k].strftime("%Y/%m/%d")
-						when /time/
-							tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M")
-						else
-							tmp_data[k] = j[k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
-					end
-				end
+							if j[k]
+								case @show_data[:alltypes][k]
+								when /date/
+									tmp_data[k] = j[k].strftime("%Y/%m/%d")
+								when /time/
+									tmp_data[k] = j[k].strftime("%Y/%m/%d %H:%M")
+								else
+									tmp_data[k] = j[k] ## if k_to_s != "id"        ## 2dcのidを修正したほうがいいのかな
+								end
+							end
             end
-	        tbldata << tmp_data
+	        	tbldata << tmp_data
         end ## for
         return [tbldata,rcd[0][:sio_totalcount]]    ###[データの中身,レコード件数]
-    end  ##subpagi
-    def  sub_getfield
+  end  ##subpagi
+  def  sub_getfield
        @show_data[:allfields].join(",").to_s
-    end   ##  sub_getfield
+  end   ##  sub_getfield
 
-    def sub_set_chil_tbl_info next_screen_data
+  def sub_set_chil_tbl_info next_screen_data
       strwhere = "select ctlb_id from CTL#{next_screen_data[:sio_org_tblname]} where ptblid = #{next_screen_data[:sio_org_tblid]} and "
       strwhere << "ctblname = '#{next_screen_data[:sio_viewname].split("_")[1]}'  "
       ctbl_id = ActiveRecord::Base.connection.select_value(strwhere)
@@ -734,20 +746,10 @@ module Ror_blkctl
 			children.each do |chil|
 				proc_command_instance_variable(ActiveRecord::Base.connection.select_one(" select * from r_#{chil["calloc_destblname"]} where id = #{chil["calloc_destblid"]}"))
 				case chil["cgantt_consumtype"]
-				when /con|ORD|ACT|BYP/
+				when /con|BYP/
 					inout = {}
-					###inout[:inout_qty_alloc] = if chil["cgantt_consumtype"] == "BYP" then  chil["calloc_qty"] + chil["calloc_qty_stk"] else (chil["calloc_qty"] + chil["calloc_qty_stk"]) * -1 end
-					##inout = ActiveRecord::Base.connection.select_one("select * from inouts where alloctbls_id_inout = #{chil["alloc_id"]} and inoutflg = '#{chil["consumtype"]}' ")
-					###inout[:id] = proc_decision_id_by_key("inouts"," alloctbls_id_inout = #{alloc_id} and itms_id = #{chil["cgantt_itm_id"]} and inoutflg = 'con' ")["id"]
-					##inout[:id] = proc_decision_id_by_key("inouts",%Q% alloctbls_id_inout = #{chil["calloc_id"]} and inoutflg = 'con' %)["id"]
 					inout[:id] = proc_get_nextval("inouts_seq")
 					@sio_classname = "_add_proc_get_trngantt_cons_chil_inout_fm_alloc_id"
-					##if @inout_classname =~ /_edit_/
-						## 変更の時はproc_update_base_allocで処理をしている。  lotno packno毎に作成
-					##else
-						###proc_tbl_delete_arel("inouts",%Q& trngantts_id_inout = #{chil["trngantt_id"]} and locas_id = #{chil["pare_loca_id"]}   and inoutflg = '#{inoutflg}'
-						##end
-						### lotno packno毎に作成
 						inout[:inout_alloctbl_id_inout] = chil["calloc_id"]
 						###logger.debug "trace  '#{chil["calloc_id"]} "
 						inout[:inout_trngantt_id_inout] = chil["cgantt_id"]
@@ -789,7 +791,7 @@ module Ror_blkctl
 													 end
 						and calloc.srctblname = 'trngantts' and calloc.srctblid = cgantt.trngantt_id
 						and (calloc.qty + calloc.qty_stk) > 0 and calloc.allocfree = 'alloc' and 	palloc.allocfree = 'alloc'
-						/*and  cgantt.trngantt_consumtype  in('ACT','ORD','BYP','con')   */
+						/*and  cgantt.trngantt_consumtype  in('BYP','con')   */
 						and  (cgantt.trngantt_consumauto != 'M' or cgantt.TRNGANTT_CONSUMAUTO is null) &
 		children = ActiveRecord::Base.connection.select_all(strsql)
 		children.each do |child|
@@ -797,7 +799,7 @@ module Ror_blkctl
 		end
 		children.each do |chil|
 			case chil["consumtype"]
-			when /ACT|ORD|BYP|con/
+			when /BYP|con/
 				if chil["alloc_destblname"] == "lotstkhists"
 					rec = ActiveRecord::Base.connection.select_one(" select * from r_#{chil["alloc_destblname"]} where id = #{chil["alloc_destblid"]} ")
 					if chil["consumtype"] == "BYP"   ###副産物
@@ -996,13 +998,13 @@ module Ror_blkctl
 	def proc_sch_chil_get orgtblname,orgtblid	##
 		strsql = "select alloctbl.id alloctbl_id from trngantts trn ,alloctbls alloctbl where trn.orgtblname = '#{orgtblname}' and trn.orgtblid = #{orgtblid}
 						and alloctbl.srctblname = 'trngantts' and alloctbl.srctblid = trn.id
-						and (destblname like 'pur%' or destblname like 'prd%') order by trn.key "
+						and (destblname like 'pur%' or destblname like 'prd%' or destblname like 'dym%') order by trn.key "
 		alloc_ids = ActiveRecord::Base.connection.select_values(strsql)
 		alloc_ids.each do |alloc_id|
 			proc_get_trngantt_cons_chil_inout_fm_alloc_id(alloc_id)
 		end
 	end
-    def vproc_get_chil_itms(n0,duedate)  ###工程の始まり=前工程の終わり
+  def vproc_get_chil_itms(n0,duedate)  ###工程の始まり=前工程の終わり
 		rnditms = ActiveRecord::Base.connection.select_all("select * from nditms where opeitms_id = #{n0[:opeitms_id]} and Expiredate > current_date  ")
 		if rnditms.size > 0 then
 			ngantts = []  ###viewの内容なので　itm_id  loca_id
@@ -1014,10 +1016,8 @@ module Ror_blkctl
 				end
 				##if chil_ope and i["consumtype"]
 				if chil_ope
-					##i["processseq_nditm"] += 1 if chil_ope[:locas_id] != i["locas_id_nditm"]
-					##if i["locas_id_nditm"] != n0[:locas_id]
-					opeitm = proc_get_opeitms_rec(i["itms_id_nditm"], i["locas_id_nditm"],i["processseq_nditm"])
-						i["consumtype"] = "con"  if  i["consumtype"] =~ /con|ORD|ACT/
+					  opeitm = proc_get_opeitms_rec(i["itms_id_nditm"], i["locas_id_nditm"],i["processseq_nditm"])
+						i["consumtype"] = "con"  if  i["consumtype"] =~ /con/
 						ngantts << {:seq=>n0[:seq] + sprintf("%03d", cnt),:mlevel=>mlevel,:itms_id=>i["itms_id_nditm"],
 								##:prdpurshp=>"shp",
 								:prdpurshp=>opeitm["prdpurshp"],
@@ -1030,9 +1030,6 @@ module Ror_blkctl
 								:autocreate_ord=>chil_ope["autocreate_ord"],:autoord_p=>chil_ope["autoord"],
 								:autocreate_inst=>chil_ope["autocreate_inst"],:autocreate_act=>chil_ope["autocreate_act"],
 								:parenum=>i["parenum"],:chilnum=>i["chilnum"],:id=>"nditms_"+i["id"].to_s}  ###
-					##else
-					##	next
-					##end
 				else
 					item_code  = ActiveRecord::Base.connection.select_value("select code from itms where id = #{i["itms_id_nditm"]} ")
 					@errmsg = "missng opeitms ... item_code = #{item_code} processseq =  #{i["processseq_nditm"]}"
@@ -1040,12 +1037,27 @@ module Ror_blkctl
 				end
 			end
 		else
-			ngantts  = [{}]
+				ngantts  = [{}]
 		end
 		return ngantts
-    end
-
-    def vproc_get_pare_itms(n0,duedate)  ###
+  end
+	def vproc_set_dummy_process(n0,starttime)  ### 保管場所(pordessseq==999))しかマスターにない。仮の作業、発注先を作成
+		ngantts = []  ###viewの内容なので　itm_id  loca_id
+		mlevel = n0[:mlevel] + 1
+		ngantts << {:seq=>n0[:seq] + sprintf("%03d", 1),:mlevel=>mlevel,:itms_id=>n0[:itms_id],
+				:prdpurshp=>"dym",
+				:processseq=>0,
+				:locas_id=> 0,
+				:locas_id_to=>n0[:locas_id],
+				:opeitms_id =>0,
+				:priority=>0,
+				:duedate=>starttime,:duration=>1,
+				:consumtype=>nil,:consumauto=>nil,
+				:autocreate_ord=>nil,:autoord_p=>nil,
+				:autocreate_inst=>nil,:autocreate_act=>nil,
+				:parenum=>1,:chilnum=>1,:id=>"nditms_dym_" + n0[:opeitms_id].to_s + "1"}  ###
+	end
+  def vproc_get_pare_itms(n0,duedate)  ###
 		strsql = "select * from nditms where itms_id_nditm = #{n0[:itms_id]} and locas_id_nditm = #{n0[:locas_id]} and processseq_nditm = #{n0[:processseq]} and Expiredate > current_date  "
 		nditms = ActiveRecord::Base.connection.select_all(strsql)
 		if nditms.size > 0 then
@@ -1071,12 +1083,12 @@ module Ror_blkctl
 			ngantts  = [{}]
 		end
 		return ngantts
-    end
+  end
 	###def vproc_get_ope_id_priority(i,n0)
 	### 	strsql = "select id,priority,locas_id from opeitms where itms_id = #{i["itms_id_nditm"]} and locas_id = #{i["locas_id_nditm"]} and processseq = #{i["processseq_nditm"]} and priority = #{n0[:priority]} "
 	###		ActiveRecord::Base.connection.select_one(strsql)
 	###end
-    def vproc_get_prev_process(n0,starttime)  ###工程の始まり=前程の終わり
+  def vproc_get_prev_process(n0,starttime)  ###工程の始まり=前程の終わり
       rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{n0[:itms_id]} and Expiredate > current_date
 																			and Priority = #{n0[:priority]} and processseq < #{n0[:processseq]}  order by   processseq desc")
       if rec
@@ -1094,8 +1106,8 @@ module Ror_blkctl
           ngantts = [{}]
       end
       return ngantts
-    end
-    def vproc_get_after_process(n0,duedate)  ###工程の始まり=前程の終わり
+  end
+  def vproc_get_after_process(n0,duedate)  ###工程の始まり=前程の終わり
       rec = ActiveRecord::Base.connection.select_one("select * from opeitms where itms_id = #{n0[:itms_id]} and Expiredate > current_date
 																			and Priority = #{n0[:priority]} and processseq > #{n0[:processseq]}  order by   processseq ")
       if rec
@@ -1111,21 +1123,21 @@ module Ror_blkctl
       end
       return ngantts
     end
-    def sub_cal_date(locas_id,ops_loca_id,dueday)
+  def sub_cal_date(locas_id,ops_loca_id,dueday)
         dueday
-    end
+  end
 
-    def  sub_get_bilcode(locas_id_custs)
+  def  sub_get_bilcode(locas_id_custs)
          locas_id_custs
-    end
+  end
 
-    def  sub_get_pay_incomming_day(locas_id,dueday)
+  def  sub_get_pay_incomming_day(locas_id,dueday)
          dueday
-    end
-    def sub_get_to_locaid(custord_loca_id,itms_id)
+  end
+  def sub_get_to_locaid(custord_loca_id,itms_id)
         custord_loca_id
-    end
-    def sub_get_sects_id_fm_locas_id  locas_id
+  end
+  def sub_get_sects_id_fm_locas_id  locas_id
 	    sect_id = ActiveRecord::Base.connection.select_value("select id from sects where locas_id_sect = #{locas_id||=0} ")
 		if sect_id.nil?
 	       sect_id = ActiveRecord::Base.connection.select_value("select id from r_sects where loca_code_sect =  'dummy'")
@@ -1134,7 +1146,7 @@ module Ror_blkctl
 	    return sect_id
 	end
 
-    def sub_get_locas_id_fm_sects_id  sects_id
+  def sub_get_locas_id_fm_sects_id  sects_id
 	    locas_id = ActiveRecord::Base.connection.select_value("select locas_id_sect from sects where id = #{sects_id} ")
 		if locas_id.nil?
 	       p "err logic err?"
@@ -1142,7 +1154,7 @@ module Ror_blkctl
 	    end
 	    return locas_id
 	end
-    def proc_get_dealers_id_fm_locas_id  locas_id
+  def proc_get_dealers_id_fm_locas_id  locas_id
 	    locas_id ||= 0
 	    dealers_id = ActiveRecord::Base.connection.select_value("select id from dealers where locas_id_dealer = #{locas_id} ")
 		if dealers_id.nil?
@@ -1151,7 +1163,7 @@ module Ror_blkctl
 	    end
 	    return dealers_id
 	end
-    def sub_get_locas_id_fm_dealers_id  dealers_id
+  def sub_get_locas_id_fm_dealers_id  dealers_id
 	    locas_id = ActiveRecord::Base.connection.select_value("select locas_id_dealer from dealers where id = #{dealers_id} ")
 		if locas_id.nil?
 	       p "err logic err?  dealers_id:#{dealers_id}"
@@ -1160,7 +1172,7 @@ module Ror_blkctl
 	    return locas_id
 	end
 
-    def proc_get_opeitms_rec itms_id,locas_id,processseq = nil,priority = nil  ###
+  def proc_get_opeitms_rec itms_id,locas_id,processseq = nil,priority = nil  ###
 		strsql = %Q& select * from opeitms where itms_id = #{itms_id} #{if locas_id then " and locas_id = " + locas_id.to_s else "" end}
 		           and processseq = #{processseq ||= 999}
 				   #{if priority then " and priority = " + priority.to_s else "" end}
@@ -1173,44 +1185,52 @@ module Ror_blkctl
 					priority = = #{priority ||= 999} ,expiredate > #{Date.today}"
             raise
         end
-    end
-    def proc_get_chrgperson_fm_loca locas_id,prdpurshp
-        case prdpurshp
+  end
+  def proc_get_chrgperson_fm_loca locas_id,prdpurshp
+      case prdpurshp
 			when "pur"
 	           strsql = "select * from dealers where locas_id_dealer = #{locas_id} and expiredate > current_date"
 			else
 			   strsql = "select * from asstwhs where locas_id_asstwh = #{locas_id} and expiredate > current_date"
 	    end
-        chrgperson = ActiveRecord::Base.connection.select_one(strsql)
+      chrgperson = ActiveRecord::Base.connection.select_one(strsql)
 	    if chrgperson
-			chrgperson_id = chrgperson["chrgpersons_id_dflt"]
-		else
-			chrgperson = ActiveRecord::Base.connection.select_one("select * from r_chrgs where person_code =  'dummy'")
-			if chrgperson
-				chrgperson_id = chrgperson["id"]
+				chrgperson_id = chrgperson["chrgpersons_id_dflt"]
 			else
-				logger.debug " proc_get_chrgperson_fm_loca  chrgpersons dummy code missing "
-				raise
-			end
+				chrgperson = ActiveRecord::Base.connection.select_one("select * from r_chrgs where person_code =  'dummy'")
+				if chrgperson
+					chrgperson_id = chrgperson["id"]
+				else
+					logger.debug " proc_get_chrgperson_fm_loca  chrgpersons dummy code missing "
+					raise
+				end
 	    end
 	    return chrgperson_id
-    end
-    def proc_get_tree_pare_itms_locas ngantts,gantt_reverse ### bgantt 表示内容　ngantt treeスタック  itms_idは必須
-        n0 = ngantts.shift
+  end
+  def proc_get_tree_pare_itms_locas ngantts,gantt_reverse ### bgantt 表示内容　ngantt treeスタック  itms_idは必須
+      n0 = ngantts.shift
 	    if n0.size > 0  ###子部品がいなかったとき{}になる。
-			case gantt_reverse
+				case gantt_reverse
 				when /gantt/
 					starttime,duedate = proc_get_item_loca_contents(n0,gantt_reverse)
 					tmp = vproc_get_chil_itms(n0,starttime)
 					ngantts.concat(tmp) if tmp[0].size > 0
-					tmp = vproc_get_prev_process(n0,starttime)
+					tmpx = vproc_get_prev_process(n0,starttime)
+					if tmpx[0].size > 0
+							ngantts.concat(tmpx)
+					else
+							if tmp[0].size == 0 and n0[:processseq] == 999 and n0[:consumtype] == "con"
+								tmp = vproc_set_dummy_process(n0,starttime)
+								ngantts.concat(tmp)
+							end
+					end
 				when /reverse/
 					starttime,duedate = proc_get_item_loca_contents(n0,gantt_reverse)
 					tmp = vproc_get_pare_itms(n0,duedate)
 					ngantts.concat(tmp) if tmp[0].size > 0
 					tmp = vproc_get_after_process(n0,duedate)
-			end
-			ngantts.concat(tmp) if tmp[0].size > 0
+					ngantts.concat(tmp) if tmp[0].size > 0
+				end
 	    end
         return ngantts
     end  ##
@@ -2555,7 +2575,7 @@ module Ror_blkctl
 					:opeitms_id=>r0["id"]} ###,
 					###:subtblid=>"opeitms_"+r0["id"].to_s,:opeitms_id=>r0["id"]}
 		else
-            cnt += 1
+      cnt += 1
 			ngantts << {:seq=>"001",:mlevel=>1,
 					:itms_id=>@itm_id,
 					:locas_id=>@loca_id,
@@ -3014,7 +3034,8 @@ module Ror_blkctl
 					where aprev.srctblname = 'trngantts' and  aprev.srctblid = prev.trngantt_id
 					and ashp.srctblname = 'trngantts' and  ashp.srctblid = shp.trngantt_id
 					and prev.trngantt_orgtblname = shp.trngantt_orgtblname and prev.trngantt_orgtblid = shp.trngantt_orgtblid
-					and shp.trngantt_key = substr(prev.trngantt_key,1,(length(prev.trngantt_key)-3)) and prev.itm_id = shp.itm_id
+					and shp.trngantt_key =  case length(prev.trngantt_key) when 3 then to_char(prev.trngantt_key  - 	1,'000') else substr(prev.trngantt_key,1,(length(prev.trngantt_key)-3)) end
+					and prev.itm_id = shp.itm_id
 					and ashp.destblname = '#{trn[:tblname]}' and ashp.destblid = #{trn[:id]} and aprev.qty_stk >0 "
 		prevs =  ActiveRecord::Base.connection.select_all(strsql)
 		prevs.each do |prev|
@@ -3045,12 +3066,13 @@ module Ror_blkctl
 					where aprev.alloctbl_srctblname = 'trngantts' and  aprev.alloctbl_srctblid = prev.trngantt_id
 					and ashp.srctblname = 'trngantts' and  ashp.srctblid = shp.trngantt_id
 					and prev.trngantt_orgtblname = shp.trngantt_orgtblname and prev.trngantt_orgtblid = shp.trngantt_orgtblid
-					and shp.trngantt_key = substr(prev.trngantt_key,1,(length(prev.trngantt_key)-3)) and prev.itm_id = shp.itm_id
+					and shp.trngantt_key =  case length(prev.trngantt_key) when 3 then to_char(prev.trngantt_key  - 1,'000') else substr(prev.trngantt_key,1,(length(prev.trngantt_key)-3)) end
+					and prev.itm_id = shp.itm_id
 					and ashp.destblname = '#{trn[:tblname]}' and ashp.destblid = #{trn[:id]}
 					and #{sql_param}
 					and  aprev.alloctbl_allocfree = 'alloc' "
 	end
-	def proc_already_use_packno(prev,trn)
+	def proc_already_use_packno(prev,trn)  ###工事中
 		proc_alloc_to_sch(prev,0,0)
 		free_trn_strwhere = " and trngantt_itm_id = #{@lotstkhist_itm_id} and trngantt_processseq = #{@lotstkhist_processseq}
 						and alloctbl_destblname = 'lotstkhists'
@@ -3068,148 +3090,92 @@ module Ror_blkctl
 			true
 		else   ###一リールが複数に引きあたっているとき　空きがない。
 			strsql = "select * from alloctbls where srctblname = 'trngantts' and destblname = '#{trn[:tblname]}' and destblid = #{trn[:id]} "
-			rds = ActiveRecord::Base.connection.select_one(strsql)
-			ords.each do |ord|
-				proc_alloc_to_sch(ord,0,0)
-			end
+			alloc = ActiveRecord::Base.connection.select_one(strsql)
+			proc_alloc_to_sch(alloc,0,0)
+			prev[:destblname] = alloc[:destblname]
 			false
 		end
 	end
 	def proc_chng_lot_to_pic(trn)  ###trn :shpxxxs or dlvxxxs
 		lot_qty_stk = []
-		prevs =  ActiveRecord::Base.connection.select_all(sql_proc_chng_lot_to_pic(trn," aprev.alloctbl_qty_stk > 0 "))
+		prevs =  ActiveRecord::Base.connection.select_all(sql_proc_chng_lot_to_pic(trn,"( aprev.alloctbl_qty > 0 or aprev.alloctbl_qty_stk > 0 )"))
 		tmp_trn ={}
 		##realloc = {}
-		ary = []
-		save_tblname = ""
-		save_tblid = save_qty_stk = save_id = 0
+		##ary = []
 		alloc = {}
 		prevs.each do |prev|
-			strsql = %Q& select * from  r_lotstkhists  where id = #{prev["destblid"]} &
+			strsql = %Q& select * from  r_#{prev["destblname"]} where id = #{prev["destblid"]} &
 			proc_command_instance_variable(ActiveRecord::Base.connection.select_one(strsql))
 			###allocs = []
 			alloc = proc_alloc_copy_to_based_alloc(prev)
-			proc_decision_id_by_key("picords"," orgtblname = #{prev["shp_tblname"]} and  orgtblid = #{prev["shp_tblid"]} and
+			if  prev["qty"] > 0   ###在庫がなかった時
+					rec =  proc_decision_id_by_key("lotstkhists","  itms_id = #{@itm_id} and locas_id = #{prev["shp_loca_id"]}
+																					and lotno = '#{proc_flg_process_lotno_flg}' and
+										 											processseq = #{prev["shp_trngantt_processseq"]}  and prjnos_id = #{@prjno_id} and packno =  'dummy'")
+					add_fields = {}
+					add_fields[:id]  = rec["id"]
+					add_fields[:lotstkhist_qty_stk] =   prev["qty"]*-1 + (rec["qty_stk"]||=0)
+					__send__("proc_fld_r_#{prev["destblname"]}_lotstkhists_self60")   do ###alloctbl_destblname
+							add_fields
+					end ##
+					proc_decision_id_by_key("picords"," orgtblname = '#{prev["shp_tblname"]}' and  orgtblid = #{prev["shp_tblid"]} and
 												lotno = '#{@lotstkhist_lotno}' and packno =  '#{@lotstkhist_packno}'   and shelfnos_id = #{@lotstkhist_shelfno_id} ")
-			if save_tblname != alloc[:destblname] or save_tblid != alloc[:destblid]
-				if save_tblname != ""  ###lotstkhists:picords= 1:1
+					__send__("proc_tblink_alloctbls_#{prev["destblname"]}_picords_self10",prev)
+					proc_decision_id_by_key("trngantts","  orgtblname = 'lotstkhists' and orgtblid = #{@lotstkhist_id} and key = '000' ")
+					proc_fld_r_lotstkhists_trngantts_self10
+					proc_add_edit_lotstkhist_by_free(add_fields[:lotstkhist_qty_stk])
+					new_alloc =  proc_decision_id_by_key("alloctbls","srctblname = 'trngantts' and srctblid = #{prev["srctblid"]}
+														and destblname = 'picords' and destblid = #{@picord_id} ")
+					if @alloctbl_classname =~ /_add_/
+						new_alloc["qty"] = 0
+						new_alloc["qty_stk"] = prev["qty"]
+						new_alloc["destblname"] = "picords"
+						new_alloc["destblid"] = @picord_id
+					end
+					proc_update_pic_dummy_stk_alloc(add_fields,prev,new_alloc)
+			else   ###在庫の時
 					if  @lotstkhist_packno !~ /dummy/
-						if 	@lotstkhist_qty_stk == 0  ###他のallocで使用され、別の場所に移動された。
-							next if proc_already_use_packno(prev,trn) == false
-						end
-						alloc[:packqty] = @lotstkhist_qty_stk
-						__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
-								###{:picord_qty_stk=> @lotstkhist_qty_stk,:picord_packqty=> alloc[:packqty]} #
-								{:picord_qty_stk=> save_qty_stk,:picord_packqty=> ary[0][:packqty]} #
+						 proc_decision_id_by_key("lotstkhists","  itms_id = #{@itm_id} and locas_id = #{prev["shp_loca_id"]}
+																							and lotno = '#{proc_flg_process_lotno_flg}' and
+												 											processseq = #{prev["shp_trngantt_processseq"]}  and prjnos_id = #{@prjno_id} and packno =  '#{@lotstkhist_packno}'")
+						if prev[:destblid] == @lotstkhist_id
+								__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
+									###{:picord_qty_stk=> @lotstkhist_qty_stk,:picord_packqty=> alloc[:packqty]} #
+									{:picord_qty_stk=> prev[:qty_stk],:picord_packqty=>  @lotstkhist_qty_stk} #
+								end
+						else  ###別の場は所に移動された
+								if proc_already_use_packno(prev,trn)
+									__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
+											###{:picord_qty_stk=> @lotstkhist_qty_stk,:picord_packqty=> alloc[:packqty]} #
+											{:picord_qty_stk=> prev[:qty_stk],:picord_packqty=>  @lotstkhist_qty_stk} #
+									end
+								else
+									@lotstkhist_packno = "error "
+									__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
+											###{:picord_qty_stk=> @lotstkhist_qty_stk,:picord_packqty=> alloc[:packqty]} #
+											{:picord_qty_stk=> prev[:qty_stk],:picord_packqty=> 0,:remark=>"other packno useing "} #
+									end
+								end
 						end
 					else
 						__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
 							###{:picord_qty_stk=> prev["qty_stk"],:picord_packqty=> 0}
-							{:picord_qty_stk=> save_qty_stk ,:picord_packqty=> 0}
+							{:picord_qty_stk=> prev[:qty_stk] ,:picord_packqty=> 0}
 						end
 					end
-					proc_save_trn_of_opeitm(tmp_trn) do
+			end
+			proc_save_trn_of_opeitm(tmp_trn) do
 						tmp_trn[:tblname] = "picords"
-					end
-					proc_update_gantt_alloc_fm_trn tmp_trn,[alloc] ,nil
-					rec =  proc_decision_id_by_key("inouts","  alloctbls_id_inout = #{prev["id"]} and locas_id = #{@picord_loca_id} and
-												lotno = '#{@picord_lotno}' and
-												-----processseq = #{@picord_processseq}  and
-　　　　　　　　　　　　　packno =  '#{@picord_packno}'   and  inoutflg = 'out' ")
-					strsql = "select * from alloctbls where srctblname = 'trngantts' and destblname = 'picords' and destblid = #{@picord_id} and allocfree  in('alloc' ,'free') "
-					alloc = ActiveRecord::Base.connection.select_one(strsql)
-					proc_fld_r_picords_inouts_self10 do
-						{:id =>rec["id"],:inout_inoutflg=>"out",:inout_alloctbl_id_inout=>alloc["id"],:inout_trngantt_id_inout=>alloctbl["srctblid"]}
-					end
-				end
-				save_tblname = alloc[:destblname]
-				save_tblid = alloc[:destblid]
-				save_qty_stk = eval("@#{prev["destblname"].chop}_qty_stk")
-				ary =  [alloc]
-			else
-				ary << alloc
-				save_qty_stk += eval("@#{prev["destblname"].chop}_qty_stk")
 			end
-		end
-		if prevs.size > 0
-			if  eval("@#{save_tblname.chop}_packno") !~ /dummy/
-				if 	@lotstkhist_qty_stk == 0  ###他のallocで使用され、別の場所に移動された。
-					if proc_already_use_packno(prevs[-1],trn)
-						alloc[:packqty] = eval("@#{save_tblname.chop}_qty_stk")
-						__send__("proc_fld_alloctbls_#{alloc[:destblname]}_picords_self10") do
-							{:picord_qty_stk=> eval("@#{save_tblname.chop}_qty_stk"),:picord_packqty=> alloc[:packqty]} #
-						end
-					end
-				else
-					alloc[:packqty] = eval("@#{save_tblname.chop}_qty_stk")
-					__send__("proc_fld_alloctbls_#{alloc[:destblname]}_picords_self10") do
-							{:picord_qty_stk=> eval("@#{save_tblname.chop}_qty_stk"),:picord_packqty=> alloc[:packqty]} #
-					end
-				end
-			else
-				proc_save_trn_of_opeitm(tmp_trn) do
-					tmp_trn[:tblname] = "picords"
-				end
-				proc_update_gantt_alloc_fm_trn tmp_trn,ary,nil
-				rec =  proc_decision_id_by_key("inouts","  alloctbls_id_inout = #{prev["id"]} and  locas_id = #{@picord_loca_id} and
-												lotno = '#{@picord_lotno}' and
-												----- processseq = #{@picord_processseq}  and
-　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　packno =  '#{@picord_packno}'   and
-                                               inoutflg = 'out' ")
-			  strsql = "select * from alloctbls where srctblname = 'trngantts' and destblname = 'picords' and destblid = #{@picord_id} and allocfree  in('alloc' ,'free') "
-				alloc = ActiveRecord::Base.connection.select_one(strsql)
-				proc_fld_r_picords_inouts_self10 do
-					{:id =>rec["id"],:inout_inoutflg=>"out",:inout_alloctbl_id_inout=>alloc["id"],:inout_trngantt_id_inout=>alloc["srctblid"]}
-				end
+			proc_update_gantt_alloc_fm_trn tmp_trn,[alloc] ,nil
+			rec =  proc_decision_id_by_key("inouts","  alloctbls_id_inout = #{prev["id"]} and locas_id = #{@picord_loca_id} and
+												lotno = '#{@picord_lotno}' and　packno =  '#{@picord_packno}'   and  inoutflg = 'pic' ")
+			strsql = "select * from alloctbls where srctblname = 'trngantts' and destblname = 'picords' and destblid = #{@picord_id} and allocfree  in('alloc' ,'free') "
+			alloc = ActiveRecord::Base.connection.select_one(strsql)
+			proc_fld_r_picords_inouts_self10 do
+						{:id=>rec["id"],:inout_inoutflg=>"out",:inout_alloctbl_id_inout=>alloc["id"],:inout_trngantt_id_inout=>alloc["srctblid"]}
 			end
-			#proc_realloc_lotstkhists realloc
-			###在庫の時の処理終了
-		else
-			prevs =  ActiveRecord::Base.connection.select_all(sql_proc_chng_lot_to_pic(trn," aprev.alloctbl_qty > 0 "))
-			prevs.each do |prev|
-				add_fields = {}
-				strsql = %Q& select * from  r_#{prev["destblname"]} where id = #{prev["destblid"]} &
-				proc_command_instance_variable(ActiveRecord::Base.connection.select_one(strsql))
-				###在庫がないのに出庫のオーダ作成時は、マイナスのfree在庫を発生さす。　　lot指定　packno指定の時は、在庫になった時入った順序で自動消費される。在庫になるまで出庫オーダしないことを勧める。
-				rec =  proc_decision_id_by_key("lotstkhists","  itms_id = #{@itm_id} and locas_id = #{prev["shp_loca_id"]}
-					and lotno = '#{proc_flg_process_lotno_flg}' and
-                         processseq = #{prev["shp_trngantt_processseq"]}  and prjnos_id = #{@prjno_id} and packno =  'dummy'")
-			  add_fields[:id]  = rec["id"]
-				add_fields[:lotstkhist_qty_stk] =   prev["qty"]*-1 + (rec["qty_stk"]||=0)
-				__send__("proc_fld_r_#{prev["destblname"]}_lotstkhists_self60")   do ###alloctbl_destblname
-					add_fields
-				end ##
-				rec =  proc_decision_id_by_key("picords"," orgtblname = '#{prev["shp_tblname"]}' and  orgtblid = #{prev["shp_tblid"]} and
-												lotno = '#{@lotstkhist_lotno}' and packno =  '#{@lotstkhist_packno}'   and shelfnos_id = #{@lotstkhist_shelfno_id} ")
-				__send__("proc_tblink_alloctbls_#{prev["destblname"]}_picords_self10",prev)
-				### purords等のallocをpicordsに変更
-				new_alloc =  proc_decision_id_by_key("alloctbls","srctblname = 'trngantts' and srctblid = #{prev["srctblid"]}
-													and destblname = 'picords' and destblid = #{@picord_id} ")
-				if @alloctbl_classname =~ /_add_/
-					new_alloc["qty"] = 0
-					new_alloc["qty_stk"] = 0
-					new_alloc["destblname"] = "picords"
-					new_alloc["destblid"] = @picord_id
-				end
 				##proc_tblink_r_lotstkhists_trngantts_self10({:id=>add_fields[:id]})
-				proc_decision_id_by_key("trngantts","  orgtblname = 'lotstkhists' and orgtblid = #{@lotstkhist_id} and key = '000' ")
-				proc_fld_r_lotstkhists_trngantts_self10
-				proc_add_edit_lotstkhist_by_free(add_fields[:lotstkhist_qty_stk])
-				###  picords  ===>   元のtrnganntsのtblname tblidの構成の下に
-				###  pur,prd schs,ords,insts==>  lotstlhistsの構成の下に
-
-				proc_update_pic_dummy_stk_alloc(add_fields,prev,new_alloc)
-				##rec =  proc_decision_id_by_key("inouts","  alloctbls_id_inout = #{new_alloc["id"]} and  locas_id = #{@picord_loca_id} and
-				##									lotno = '#{@picord_lotno}' and
-				##									----- processseq = #{@picord_processseq}  and
-        ##　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　packno =  '#{@picord_packno}'   and
-      	##                                         inoutflg = 'out' ")
-				##strsql = "select * from alloctbls where srctblname = 'trngantts' and destblname = 'picords' and destblid = #{@picord_id} and allocfree  in('alloc' ,'free') "
-				##alloc = ActiveRecord::Base.connection.select_one(strsql)
-				##proc_fld_r_picords_inouts_self10 do
-				##	{:id =>rec["id"],:inout_inoutflg=>"out",:inout_alloctbl_id_inout=>alloc["id"],:inout_trngantt_id_inout=>alloc["srctblid"]}
-				##end
-			end
 		end
 		return
 	end
@@ -3353,6 +3319,7 @@ module Ror_blkctl
 		strsql = "select * from alloctbls where srctblname = 'trngantts' and srctblid = #{alloc["srctblid"]} and destblname like '%schs' "
 		schs =  ActiveRecord::Base.connection.select_all(strsql)
 		schs.each do   |sch|
+			alloc["destblname"] = sch["destblname"]
 			if sch["allocfree"] == "alloc"
 				proc_alloctbls_update("_edit_",{:qty =>new_qty ,:id =>sch["id"],:remark => "proc_alloc_to_sch 0"})
 			else

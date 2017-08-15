@@ -126,16 +126,16 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 			next if frec.nil?
 			tmpstrsql[frec["pobject_code_fld"].to_sym]= frec["pobject_code_fld"] + " " + frec["fieldcode_ftype"] +
                 case frec["fieldcode_ftype"]
-                    when /char/ then
+                when /char/
                         "(#{frec["fieldcode_fieldlength"]}) ,"
-                    when "number" then
+                when "number"
                         %Q%(#{if frec["fieldcode_dataprecision"] == 0  or frec["fieldcode_dataprecision"].nil? then "38),\n"
-								else frec["fieldcode_dataprecision"].to_s + "," + (frec["fieldcode_datascale"]||0).to_s + " ) ,\n" end }%
-					else
+																	else frec["fieldcode_dataprecision"].to_s + "," + (frec["fieldcode_datascale"]||0).to_s + " ) ,\n" end }%
+								else
                              ","
                  end
 			mandatory_field.delete( frec["pobject_code_fld"].to_sym)
-         end
+    end
 		rec0 = allrecs[0]
 		rec0["expiredate"]=Time.parse("2099/12/31")
 		rec0["created_at"] = Time.now

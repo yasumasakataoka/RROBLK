@@ -240,20 +240,20 @@ class ImportfieldsfromoracleController < ApplicationController
           :editable => nil
           }
 	end #
-	def create_screenfields viewname     ### viewname = "R_xxxxxxxS"   <==== R_xxxxxS_ID
+	def create_screenfields viewname     ### viewname = screen = "R_xxxxxxxS"   <==== R_xxxxxS_ID
 		case ActiveRecord::Base.configurations[Rails.env]['adapter']
 		when /oracle/
 			@tsqlstr = "select pobject_code_sfd from r_screenfields a where screenfield_screen_id  in ( select id from  screens "
 			@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
 			@tsqlstr << " and  not exists( select 1 from USER_TAB_COLUMNS  "
-			@tsqlstr << "  where upper(table_name) = upper(a.pobject_code_view) and upper(a.pobject_code_sfd) = upper(column_name)  )"  ###　oracle"
+			@tsqlstr << "  where upper(table_name) = upper(a.pobject_code_scr) and upper(a.pobject_code_sfd) = upper(column_name)  )"  ###　oracle"
 			@tsqlstr << " and ( exists (select 1 from r_blkukys x where a.screenfield_tblfield_id = 	x.blkuky_tblfield_id and x.pobject_code_tbl = '#{viewname.split("_")[1]}')"
 			@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id_ch)"
 			@tsqlstr << " or  exists (select 1 from  chilscreens where a.id  = 	screenfields_id) )"
 			chktb =  ActiveRecord::Base.connection.select_all(@tsqlstr)  ###子テーブルに該当データがあるとき
 			@errmsg  << "  blkukys or chilscreen_screenfields have records #{chktb.join(',')} " if chktb.size> 0
 			@tsqlstr = "delete from  screenfields a where screens_id  in ( select id from  screens "
-			@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'view') )"
+			@tsqlstr << " where Pobjects_id_view = (select id from pobjects where code = '#{viewname}'  and objecttype = 'screen') )"
 			@tsqlstr << " and  not exists( select 1 from USER_TAB_COLUMNS ,r_screenfields b "
 			@tsqlstr << "  where upper(table_name) = upper(b.pobject_code_view) and upper(b.pobject_code_sfd) = upper(column_name) and a.id = b.id )"  ###　oracle
 			@tsqlstr << " and not exists (select 1 from  r_blkukys x where a.tblfields_id = 	x.blkuky_tblfield_id and x.pobject_code_tbl = '#{viewname.split("_")[1]}')"
@@ -287,76 +287,76 @@ class ImportfieldsfromoracleController < ApplicationController
         code_pos = []
         indisp = 0
         if sr_name =~ /_code|_name|_gno|_cno|_sno/ and  sr_name !~ /_upd$/  and sr_name.split("_")[0] != viewname.split("_")[1].chop
-			indisp = sub_indisp(sr_name,viewname)
-		end
+					indisp = sub_indisp(sr_name,viewname)
+				end
         screenfields[:editable] =  indisp
         screenfields[:hideflg] = 0
-        screenfields[:id]  = proc_get_nextval("screenfields_seq")
-        screens_id = ActiveRecord::Base.connection.select_value("select id from r_screens where pobject_code_view = '#{viewname}' and screen_expiredate > current_date")
-		if screens_id
-			screenfields[:screens_id]   = screens_id
-			if  sr_name =~ /_code|_name|_gno|_cno|_sno|itm_/ then
-				screenfields[:hideflg] = 0
-				screenfields[:selection] = 1
-			else
-				if  viewname.split(/_/)[1].chop  == sr_name.split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
-					screenfields[:hideflg] = 0
-					screenfields[:selection] = 1
-				else
-					screenfields[:hideflg] = 1
+        screens_ids = ActiveRecord::Base.connection.select_values("select id from r_screens where pobject_code_view = '#{viewname}' and screen_expiredate > current_date")
+				screens_ids.each do |screens_id|
+        	screenfields[:id]  = proc_get_nextval("screenfields_seq")
+					screenfields[:screens_id]   = screens_id
+					if  sr_name =~ /_code|_name|_gno|_cno|_sno|itm_/ then
+						screenfields[:hideflg] = 0
+						screenfields[:selection] = 1
+					else
+						if  viewname.split(/_/)[1].chop  == sr_name.split(/_/)[0] then  ## テーブ目名の「s」はふくめない。
+								screenfields[:hideflg] = 0
+								screenfields[:selection] = 1
+						else
+								screenfields[:hideflg] = 1
+						end
+					end
+					screenfields[:hideflg]   = if sr_name =~ /_id/  or sr_name =="id" then 1 else 0 end
+					tid = ActiveRecord::Base.connection.select_value("select id from pobjects where code = '#{sr_name}' and objecttype ='view_field' and expiredate > current_date ")
+					if tid
+						screenfields[:pobjects_id_sfd]   = tid
+          else
+						tmp = prv_add_pobjects sr_name,"view_field"
+						screenfields[:pobjects_id_sfd] =  tmp[:id]
+					end
+					if ii["fieldcode_fieldlength"] > 400  then
+						screenfields[:type]   =  "textarea"
+						screenfields[:edoptrow]  = if (ii["fieldcode_fieldlength"] / 80).ceil > 5 then 5 else (ii["fieldcode_fieldlength"] / 80).ceil end
+						screenfields[:edoptcols] = 50
+					else
+						screenfields[:type]   =   ii["fieldcode_ftype"].downcase
+					end
+					screenfields[:edoptmaxlength]   =  ii["fieldcode_fieldlength"]
+					screenfields[:dataprecision]   =  (ii["fieldcode_dataprecision"]||=0)
+					screenfields[:datascale]   =  (ii["fieldcode_datascale"]||=0)
+					screenfields[:indisp]   =  indisp
+					screenfields[:width] =  if ii["fieldcode_fieldlength"] * 6 > 300 then 300  else (ii["fieldcode_fieldlength"] * 6 + 50) end
+					screenfields[:width] = if /_upd$/ =~ sr_name     or  /_ip$/ =~ sr_name then 85 else screenfields[:width] end
+						screenfields[:edoptsize]  =  if ii["fieldcode_fieldlength"] > 100 then 100 else ii["fieldcode_fieldlength"] end ## if ii["fieldcode_ftype"] == "date"  or  j[:data_type] =~ /timestamp/
+					screenfields[:width] =  if ii["fieldcode_ftype"] == "date" or  ii["fieldcode_ftype"] =~ /timestamp/ then 90 else screenfields[:width] end
+					if  viewname.split(/_/)[1].chop  == sr_name.split(/_/)[0] ##同一テーブルの項目のみ変更可
+						screenfields[:editable] =  1
+						screenfields[:editable] = if /_ip$|_id|at$/ =~ sr_name then   0  else   screenfields[:editable]  end ##  ## 更新者と更新時間
+					end
+					##   editform positon
+					screenfields[:seqno] = 9999
+					screenfields[:seqno] = 8888 if  screenfields[:editable] == 1
+					if screenfields[:editable] ==  1  then
+						screenfields[:rowpos] = row_cnt
+						screenfields[:colpos] = if sr_name =~ /_name/ then 2 else 1 end
+					end
+					strsql = "select pobject_code_sfd from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} "
+					chkfield = ActiveRecord::Base.connection.select_value(strsql)
+					if chkfield.nil?
+						screenfields[:tblfields_id] = @sfd_code_id[sr_name]
+						if screenfields[:tblfields_id].nil?
+				   		logger.debug " missing sr_name :#{sr_name} "
+				   		@errmsg =  " missing sr_name :#{sr_name} "
+						end
+						proc_tbl_add_arel("screenfields",screenfields)
+					end
 				end
-			end
-			screenfields[:hideflg]   = if sr_name =~ /_id/  or sr_name =="id" then 1 else 0 end
-			tid = ActiveRecord::Base.connection.select_value("select id from pobjects where code = '#{sr_name}' and objecttype ='view_field' and expiredate > current_date ")
-			if tid then
-				screenfields[:pobjects_id_sfd]   = tid
-            else
-				tmp = prv_add_pobjects sr_name,"view_field"
-				screenfields[:pobjects_id_sfd] =  tmp[:id]
-			end
-			if ii["fieldcode_fieldlength"] > 400  then
-				screenfields[:type]   =  "textarea"
-				screenfields[:edoptrow]  = if (ii["fieldcode_fieldlength"] / 80).ceil > 5 then 5 else (ii["fieldcode_fieldlength"] / 80).ceil end
-				screenfields[:edoptcols] = 50
-			else
-				screenfields[:type]   =   ii["fieldcode_ftype"].downcase
-			end
-			screenfields[:edoptmaxlength]   =  ii["fieldcode_fieldlength"]
-			screenfields[:dataprecision]   =  (ii["fieldcode_dataprecision"]||=0)
-			screenfields[:datascale]   =  (ii["fieldcode_datascale"]||=0)
-			screenfields[:indisp]   =  indisp
-			screenfields[:width] =  if ii["fieldcode_fieldlength"] * 6 > 300 then 300  else (ii["fieldcode_fieldlength"] * 6 + 50) end
-			screenfields[:width] = if /_upd$/ =~ sr_name     or  /_ip$/ =~ sr_name then 85 else screenfields[:width] end
-			screenfields[:edoptsize]  =  if ii["fieldcode_fieldlength"] > 100 then 100 else ii["fieldcode_fieldlength"] end ## if ii["fieldcode_ftype"] == "date"  or  j[:data_type] =~ /timestamp/
-			screenfields[:width] =  if ii["fieldcode_ftype"] == "date" or  ii["fieldcode_ftype"] =~ /timestamp/ then 90 else screenfields[:width] end
-			if  viewname.split(/_/)[1].chop  == sr_name.split(/_/)[0] ##同一テーブルの項目のみ変更可
-				screenfields[:editable] =  1
-				screenfields[:editable] = if /_ip$|_id|at$/ =~ sr_name then   0  else   screenfields[:editable]  end ##  ## 更新者と更新時間
-			end
-
-			##   editform positon
-			screenfields[:seqno] = 9999
-			screenfields[:seqno] = 8888 if  screenfields[:editable] == 1
-			if screenfields[:editable] ==  1  then
-				screenfields[:rowpos] = row_cnt
-				screenfields[:colpos] = if sr_name =~ /_name/ then 2 else 1 end
-			end
-			strsql = "select pobject_code_sfd from r_screenfields where screenfield_pobject_id_sfd = #{screenfields[:pobjects_id_sfd]} and screenfield_screen_id = #{screens_id} "
-			chkfield = ActiveRecord::Base.connection.select_value(strsql)
-			if chkfield.nil?
-				screenfields[:tblfields_id] = @sfd_code_id[sr_name]
-				if screenfields[:tblfields_id].nil?
-				   logger.debug " missing sr_name :#{sr_name} "
-				   @errmsg =  " missing sr_name :#{sr_name} "
-				end
-				proc_tbl_add_arel("screenfields",screenfields)
-			end
-		else
-			logger.debug  " viewname not exists or expiredate < Today    viewname: #{viewname}"
-			@errmsg = " viewname not exists or expiredate < Today    viewname: #{viewname}"
-		end
-    end ##setscreenfields
-    def sub_indisp  column_name,viewname   ##孫のテーブルのidは不要　edit addの時必須にしない
+				##else
+				##	logger.debug  " viewname not exists or expiredate < Today    viewname: #{viewname}"
+				##	@errmsg = " viewname not exists or expiredate < Today    viewname: #{viewname}"
+				##end
+  end ##setscreenfields
+  def sub_indisp  column_name,viewname   ##孫のテーブルのidは不要　edit addの時必須にしない
         xtblname = viewname.split(/_/)[1]
         ##chk_screen_id = "SELECT COLUMN_NAME    FROM USER_TAB_COLUMNS WHERE TABLE_NAME =  '#{xtblname}' "
         ##chk_screen_id << %Q| and COLUMN_NAME = '#{column_name.sub("_" + column_name.split(/_/)[1],"S_ID")}'|      ####CODE又はNAMEをID

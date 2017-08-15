@@ -1,0 +1,86 @@
+﻿https://msdn.microsoft.com/ja-jp/library/cc429716.aspx
+
+ExpandEnvironmentStrings
+
+環境変数文字列を展開し、その文字列を定義された値に置き換えます。
+
+DWORD ExpandEnvironmentStrings(
+  LPCTSTR lpSrc, // 環境変数を表す文字列へのポインタ
+  LPTSTR lpDst,  // 展開後の環境変数を表す文字列へのポインタ
+  DWORD nSize    // 展開後の文字列の最大文字数
+);
+
+パラメータ
+
+lpSrc
+    次に示す形式の環境変数文字列への参照が入っている、NULL で終わる文字列へのポインタを指定します。
+
+    %variableName%
+
+    このような参照のそれぞれについて、関数は %variableName% の部分をその環境変数の現在の値に置き換えます。
+
+    置換規則は、コマンドインタプリタが使うものと同じです。環境変数名の検索時、大文字小文字は無視されます。名前が見つからないとき、%variableName% の部分がそのまま残ります。 
+lpDst
+    環境変数名のすべての置換が終わった文字列を受け取るバッファへのポインタを指定します。
+nSize
+    lpDst が指すバッファに格納できる最大文字数（ 終端の NULL を含む）を指定します。
+
+戻り値
+----------------------------------------------------------------------------------------------
+https://github.com/nak1114/rbenv-win
+
+rbenv for Windows
+
+The rbenv is a great tool. I ported it to Windows. Some commands doesn't implemented, but wouldn't be a problem in basic use.
+Usage
+
+Show all implement commands.
+
+> rbenv commands
+```
+
+How to use the detailed command, please refer to the [original rbenv](https://github.com/rbenv/rbenv).
+
+
+## Installation
+
+Installer is [here](https://gist.github.com/7ea63204203883c5884d.git).  
+Install `rbenv for windows` to your `USERPROFILE` directory.
+
+1. Clone git repositry
+
+    ````
+    > git clone https://github.com/nak1114/rbenv-win.git %USERPROFILE%\.rbenv-win
+    ````
+
+2. Config path  
+    Add the `bin` & `shims` directory to your `PATH` environment variable for access to the rbenv command
+
+    ````
+    > for /f "skip=2 delims=" %a in ('reg query HKCU\Environment /v Path') do set orgpath=%a
+    > setx Path "%USERPROFILE%\.rbenv-win\bin;%USERPROFILE%\.rbenv-win\shims;%orgpath:~22%"
+    ````
+
+3. Restart your shell
+
+    ````
+    > exit
+    ````
+
+4. Run the following command after `rbenv` installation , to enable the `ruby`.
+
+    ````
+    > rbenv install 2.2.4
+    > rbenv global 2.2.4
+    > rbenv rehash
+    ````
+
+	
+------------------------------------------------------
+
+C:\Users\ruby>rbenv install 2.2.4
+download 2.2.4 ...
+サーバー名またはアドレスは解決されませんでした
+	
+	
+	

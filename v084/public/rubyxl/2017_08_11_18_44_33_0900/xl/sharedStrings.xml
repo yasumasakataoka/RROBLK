@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="231" uniqueCount="90"><si><t>tblfield_id</t></si><si><t>tblfield_seqno</t></si><si><t>pobject_code_tbl</t></si><si><t>pobject_code_fld</t></si><si><t>fieldcode_ftype</t></si><si><t>fieldcode_fieldlength</t></si><si><t>fieldcode_dataprecision</t></si><si><t>fieldcode_datascale</t></si><si><t>tblfield_contents</t></si><si><t>fieldcode_contents</t></si><si><t>tblfield_remark</t></si><si><t>tblfield_expiredate</t></si><si><t>tblfield_viewflmk</t></si><si><t>blktb_seltbls</t></si><si><t>tblfield_updated_at</t></si><si><t>person_name_upd</t></si><si><t>person_code_upd</t></si><si><t>tblfield_created_at</t></si><si><t>tblfield_update_ip</t></si><si><t>id</t></si><si><t>number</t></si><si><t>各テーブルのユニークkey
+各テーブルに必ず一つ必要
+viewのとき　テーブル名.chop_idとしも存在する。
+また　画面項目の"id"は必ず選択あり"1"にすること。
+　　テーブルの更新keyになっている。</t></si><si><t>2099/12/31</t></si><si><t>2014/07/26 11:53</t></si><si><t>system</t></si><si><t>2014/07/26 01:26</t></si><si><t>undefined</t></si><si><t>2015/09/27 16:43</t></si><si><t>2014/08/23 23:05</t></si><si><t>127.0.0.1</t></si><si><t>locas_id_to</t></si><si><t>2014/09/06 17:11</t></si><si><t>2014/08/14 15:51</t></si><si><t>processseq_pare</t></si><si><t>購入後受け入れ先のproceeeseq</t></si><si><t>同一item_coseに複数の作業工程がある時の順番
+stkhistsの工程毎の在庫場所を示すためのkey
+999が最終工程になる。</t></si><si><t>2014/09/13 11:00</t></si><si><t>2014/09/06 17:15</t></si><si><t>isudate</t></si><si><t>timestamp(6)</t></si><si><t>発行日</t></si><si><t>starttime</t></si><si><t>この日までに、注文書を発行すれば納期までに間に合う日</t></si><si><t>2016/05/29 09:46</t></si><si><t>duedate</t></si><si><t>納期</t></si><si><t>toduedate</t></si><si><t>qty</t></si><si><t>qty_case</t></si><si><t>xxxords,insts,actsと合わすために、ある項目。
+数字に意味はない。schsでは使用してはいけない。</t></si><si><t>瓶、リールの数
+整数であること。</t></si><si><t>2015/11/11 00:47</t></si><si><t>price</t></si><si><t>amt</t></si><si><t>contract_price</t></si><si><t>char</t></si><si><t>単価契約フラグ
+1:発注日ベース　2:納期ベース　3:受入日ベース   4:出荷日ベース　5:検収ベース  
+7:出荷日までに決定する単価　8:受入日までに決定する単価　
+9:単価決定=検収日
+X:社内単価未定</t></si><si><t>2015/04/22 20:14</t></si><si><t>tax</t></si><si><t>2014/07/26 09:56</t></si><si><t>sno</t></si><si><t>varchar2</t></si><si><t>テーブル毎にシステムでユニークにする番号
+id.to_sをsnoにすることを基本としている。
+テーブル項目の追加時には、自動的にindexを作製するが、削除は対応してない。
+必須項目</t></si><si><t>prjnos_id</t></si><si><t>発注等まとめる単位</t></si><si><t>2015/02/11 16:53</t></si><si><t>2014/12/28 09:21</t></si><si><t>tblname</t></si><si><t>trnganttsがセットされている。　trngantts:xxschs= 1:1
+1:1になるのはschの時だけ</t></si><si><t>tblnameを持つテーブルを作成したテーブル</t></si><si><t>2015/09/22 10:21</t></si><si><t>2015/06/06 18:24</t></si><si><t>tblid</t></si><si><t>trnganttsのidがセットされている。　trngantts:xxschs= 1:1</t></si><si><t>tblname が示すテーブルのid</t></si><si><t>2015/06/06 18:27</t></si><si><t>2015/06/06 18:25</t></si><si><t>expiredate</t></si><si><t>date</t></si><si><t>有効日</t></si><si><t>persons_id_upd</t></si><si><t>remark</t></si><si><t>システムがセットする備考</t></si><si><t>2014/12/06 21:45</t></si><si><t>update_ip</t></si><si><t>created_at</t></si><si><t>updated_at</t></si><si><t>dymschs</t><phoneticPr fontId="2"/></si><si><t>itms_id</t><phoneticPr fontId="2"/></si><si><t>locas_id</t><phoneticPr fontId="2"/></si></sst>

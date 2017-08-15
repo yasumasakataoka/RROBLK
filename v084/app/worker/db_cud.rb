@@ -495,8 +495,15 @@
 					when "a"
 						itms = ActiveRecord::Base.connection.select_values(vsql_chk_samle_level_status(sch,"A"))
 						if itms.size > 0
-							proc_mkord_err sch,(proc_blkgetpobj("子部品在庫不足","msg")+itms.join(","))[0.3999]   ###コーディングはまだ
-							next
+							###proc_mkord_err sch,(proc_blkgetpobj("子部品在庫不足","msg")+itms.join(","))[0.3999]   ###コーディングはまだ
+        			itms = ActiveRecord::Base.connection.select_values(vsql_chk_chil_status(sch))
+        			if itms.size > 0
+        				proc_mkord_err sch,"子部品在庫不足　#{itms.join(",")} "[0.3999]   ###
+      						@skipcnt += 1
+      						@skipqty += sch["alloctbl_qty"]
+      						@skipamt += (sch["alloctbl_qty"] * (sch[@schpricesym]||=0))
+        				next
+        			end
 						end
 					when /A|B|C|D/  ##親の作業指示・発注と同時に出庫指示のため対象外
 						if rec["tblname_pare"] and (rec["sno_pare"] or rec["cno_pare"])
@@ -510,11 +517,6 @@
 					else
 				end
 				### no check
-			end
-			itms = ActiveRecord::Base.connection.select_values(vsql_chk_chil_status(sch))
-			if itms.size > 0
-				proc_mkord_err sch,"子部品在庫不足　#{itms.join(",")} "[0.3999]   ###
-				next
 			end
       children = proc_get_pare_trngantts_by_chil_trngantt_id(sch["trngantt_id"])  ###子品目が違う時もまとめはしない。
 		  if aopeitms_id[0] != sch["trngantt_itm_id"] or
