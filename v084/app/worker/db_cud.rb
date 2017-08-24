@@ -23,7 +23,7 @@
 					  @sio_classname = i["sio_classname"]
 					  ###i[:sio_viewname] = i["sio_viewname"]
 					  ##i["person_id_upd"] = i[:person_id_upd] = @sio_user_code
-					  proc_update_table "rec",i.with_indifferent_access,r_cnt0 ### 本体
+					  proc_update_table  proc_insert_sio_c(i.with_indifferent_access),r_cnt0 ### 本体
 					  ##reset_show_data_screen if tblname =~ /screen|pobjgrps/   ###キャッシュを削除
 					  ##
 					  strsql = " update userproc#{@sio_user_ode.to_s}s set cnt_out = #{r_cnt0},status = 'normal end' ,updated_at = current_date
@@ -967,7 +967,7 @@
 					    @result_isudate = input["isudate"]
 					    @result_starttime = input["starttime"]
 					    @result_content = input["contents"]
-					    @result_shelfno_id = input["shelfnos_id_input"]
+					    @result_shelfno_id = input["shelfnos_id_in"]
 					    @result_transport_id = input["transports_id"]
 					    @result_person_id = result["persons_id_upd"]
 					    __send__("proc_tblink_#{prdpurshp}inst_results_#{prdpurshp}acts_self10",alloctbls) ###alloctbls:xxxinstsの引当て情報

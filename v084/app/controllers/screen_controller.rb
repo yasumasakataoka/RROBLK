@@ -139,7 +139,6 @@ class ScreenController < ListController
 					end
 				end
 		end
-		##debugger
 		if sw == "ON" or sw == "MISSING"
 			if sw == "ON"
 				if respond_to?("proc_view_field_#{params[:chgname]}_pre_create")
@@ -507,7 +506,7 @@ class ScreenController < ListController
     def blk_print
         render :nothing=> true
     end
-    def proc_updatechk_add command_c,add_edit   ### view blk_constraintsは初期セットしていること
+  def proc_updatechk_add command_c,add_edit   ### view blk_constraintsは初期セットしていること
 		## addのとき
 		## ukeyの重複はエラー
 		####strsql = %Q% where table_name = '#{command_c[:sio_viewname].split("_")[1].upcase}'  and  constraint_type = 'U' order by constraint_name %
@@ -577,13 +576,13 @@ class ScreenController < ListController
 	        key = command_c[:sio_viewname].split("_")[1].chop+"_"+ column_name.downcase.sub("s_id","_id")
 	        if  command_c[key.to_sym]
 					      ex = ActiveRecord::Base.connection.select_value(" select id from #{column_name.split("_")[0]} where id =  #{command_c[key.to_sym]}")
-					      @errmsg << " #{column_name.split("_")[0]}," if ex.nil?
+					      @errmsg << " #{column_name.split("_")[0]},id = #{command_c[key.to_sym]} " if ex.nil?
 			    else
-				        @errmsg << " #{column_name.split("_")[0]},"
+				        @errmsg << " #{column_name.split("_")[0]},#{key.to_s} = #{command_c[key.to_sym]} "
 		      end
 	    end
 	    if @errmsg.size> 1 and command_c[:sio_viewname] !~ /screenfields/
-           @errmsg = ("err:table #{@errmsg} can not find  or expiredate < #{Time.now} ").chop
+           @errmsg = ("err:table #{@errmsg} -->can not find  or expiredate < #{Time.now} ").chop
 	   else
 			@errmsg = ""
 	    end

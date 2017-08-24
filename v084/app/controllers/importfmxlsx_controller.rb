@@ -63,7 +63,7 @@ class ImportfmxlsxController < ScreenController
                   @inxrow0.each do |key,cnt|
                   if  ws[iws][count][cnt]
 							             command_c[key] = ws[iws][count][cnt].value
-							            if ws[iws][count][cnt].value
+							            if command_c[key]
 								            case @show_data[:alltypes][key]
 								            when /number/
 									                    if float_string?(command_c[key])
@@ -72,11 +72,14 @@ class ImportfmxlsxController < ScreenController
 										                    next
 									                    end
 								            when /date|time/
-									                    if date_string?(command_c[key])
-									                    else
-										                    @errmsg << ":type error. expect time field:#{key.to_s} val:#{command_c[key]} "
-										                    next
-									                    end
+                                      if command_c[key].class.to_s =~ /Time|Date/
+                                      else
+									                        if date_string?(command_c[key])
+									                        else
+										                           @errmsg << ":type error. expect time field:#{key.to_s} val:#{command_c[key]} "
+										                           next
+									                        end
+                                      end
 								            end
 							            end
 						      else
@@ -93,7 +96,7 @@ class ImportfmxlsxController < ScreenController
 							    command_c = vproc_price_chk_set(command_c)  if  @errmsg == ""
                   if  @errmsg == "" then
 								      command_c[:id] =  proc_get_nextval(command_c[:sio_viewname].split("_")[1] + "_seq")
-                                command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
+                      command_c[(command_c[:sio_viewname].split("_")[1].chop + "_id").to_sym] =  command_c[:id]
                   end
             when  /^EDIT/ then
                   command_c[:sio_classname] = "#{command_c[:sio_viewname].split("_",2)[1]}_blk_edit_"
@@ -181,8 +184,8 @@ class ImportfmxlsxController < ScreenController
 
     end
 	def set_keys_get_id_from_code command_c
-	      strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > current_date and "
-		  strsql << "screenfield_paragraph is not null group by screenfield_paragraph,pobject_code_sfd"
+	    strsql = "select screenfield_paragraph,pobject_code_sfd from r_screenfields where pobject_code_scr = '#{@screen_code}' and screenfield_expiredate > current_date and "
+		  strsql << "screenfield_paragraph is not null and screenfield_indisp = 1 group by screenfield_paragraph,pobject_code_sfd"
 	      tmpkeys = ActiveRecord::Base.connection.select_all(strsql)
 		  keys = {}
 		  tmpkeys.each do |rec|
@@ -192,44 +195,43 @@ class ImportfmxlsxController < ScreenController
 		  return keys
 	end
 	def get_id_from_code keys,command_c
-	    keys.each do |key,vals|
-			##tblnamechop = key.to_s.split("_")[1].chop
-			##field = delm = nil
-			##tblnamechop,delm = key.split(":")
-			##tblnamechop,delm = key.split(":")
-			viewname,delm = key.split(":")
-			tblnamechop = viewname.split("_")[1].chop
-			delm ||= "\s" ### delm = ""  だと一文字づつ分解してしまう
-			strwhere = ""
-			vals.each do |val|
-				##tblnamechop,field,delm = proc_tblname_field_delm(val)
-				##return if tblnamechop.nil?
-				##delm ||= ""
-        if @screen_code =~ /inputs/ and val.split(delm)[0].split("_")[0] == @screen_code.split("_")[1].chop
-			    strwhere << " #{tblnamechop}_#{val.split(delm)[0].split("_",2)[1]} = '#{command_c[val]}'    and "
-        else
-			    strwhere << " #{val.split(delm)[0]} = '#{command_c[val]}'    and "
-        end
-			end
-			strwhere = " select id from  #{viewname} where " + strwhere
-			if command_c[:sio_classname] =~ /_add_/
-				strwhere << %Q%  #{tblnamechop + "_expiredate" } > current_date %
-			else
-				strwhere = strwhere[0..-5]
-			end
-			get_id = ActiveRecord::Base.connection.select_value(strwhere)
-			sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.split(":_")[1] else "" end).to_sym
-			if get_id
-				command_c[sym_key] = get_id
-			else
-				if command_c[:sio_classname] =~ /_add_|_edit_/
-					if @screen_code =~ /mkord/
-					else
-						command_c[sym_key] = -1
-						@errmsg << "record not found sql :#{strwhere} "
-					end
-				end
-			end
+	  keys.each do |key,vals|
+			  viewname,delm = key.split(":")
+			  tblnamechop = viewname.split("_")[1].chop
+			  delm ||= "\s" ### delm = ""  だと一文字づつ分解してしまう
+			  strwhere = ""
+			  vals.each do |val|
+          if @screen_code =~ /inputs/ and val.split(delm)[0].split("_")[0] == @screen_code.split("_")[1].chop
+			      strwhere << " #{tblnamechop}_#{val.split(delm)[0].split("_",2)[1]} = '#{command_c[val]}'    and "
+          else
+			      strwhere << " #{val.split(delm)[0]} = '#{command_c[val]}'    and "
+          end
+			  end
+			  strwhere = " select * from  #{viewname} where " + strwhere
+			  if command_c[:sio_classname] =~ /_add_/
+				  strwhere << %Q%  #{tblnamechop + "_expiredate" } > current_date %
+			  else
+				  strwhere = strwhere[0..-5]
+			  end
+			  get_rec= ActiveRecord::Base.connection.select_one(strwhere)
+		 	  sym_key = (command_c[:sio_viewname].split("_")[1].chop+"_" + tblnamechop + "_id" + if key.to_s.split(":_")[1] then "_"+key.split(":_")[1] else "" end).to_sym
+			  if get_rec
+				  command_c[sym_key] = get_rec["id"]
+          get_rec.each do |k,v|
+            command_c[k.to_sym] = v if v and  command_c[k.to_sym].nil? and key != "id"
+            if k.split("_")[0] == viewname.split("_")[1].chop and k =~ /_id/ and command_c[:sio_viewname] =~ /input/
+                command_c[k.sub(viewname.split("_")[1].chop,command_c[:sio_viewname].split("_")[1].chop).to_sym] = v if v
+            end
+          end
+			  else
+				  if command_c[:sio_classname] =~ /_add_|_edit_/
+					  if @screen_code =~ /mkord/
+					  else
+						  command_c[sym_key] = -1
+						  @errmsg << "record not found sql :#{strwhere} "
+					  end
+				  end
+			  end
 		end
 		return
 	end

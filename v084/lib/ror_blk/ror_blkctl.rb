@@ -144,7 +144,7 @@ module Ror_blkctl
         end
         return proc_get_nextval(parescreen_cnt_usercode)
     end
-  def proc_update_table flg,command_r,r_cnt0  ##rec = command_c command_rとの混乱を避けるためrecにした。
+  def proc_update_table command_r,r_cnt0  ##rec = command_c command_rとの混乱を避けるためrecにした。
       begin
         tmp_key = {}
 				tblname = command_r[:sio_viewname].split("_")[1]
@@ -1514,7 +1514,7 @@ module Ror_blkctl
 	end
 	def proc_simple_sio_insert command_c
         ### @src_tbl作成はproc_update_tableで実施
-		proc_update_table "command",proc_insert_sio_c(command_c),1
+		proc_update_table proc_insert_sio_c(command_c),1
 		#####proc_command_c_to_instance command_c  ###@xxxx_yyyy作成
 	end
 	def str_sio_set tblchop
@@ -2265,7 +2265,7 @@ module Ror_blkctl
 		else
 			if	lottrn[:qty_stk] >=alloc["qty_stk"]
 				based_alloc[:qty_stk] = 0
-				qty_stk = alloc["qty_stk"]
+				qty_stk = alloc["qty_stk"] + alloc["qty"]
 			else
 				based_alloc[:qty_stk] =	alloc["qty_stk"] -  lottrn[:qty_stk]
 				qty_stk = lottrn[:qty_stk]
@@ -2273,10 +2273,10 @@ module Ror_blkctl
 			rec = proc_get_rec_fm_tblname_yield(alloc["destblname"]) do
 			       " id = #{alloc["destblid"]} "
 			end
-			if alloc["qty"] >0
+			if alloc["qty"] !=0
 				proc_tbl_edit_arel(alloc["destblname"],{:qty=>rec["qty"] - qty_stk}," id = #{alloc["destblid"]} ")
 			else
-				if alloc["qty_stk"] >0
+				if alloc["qty_stk"] != 0
 					proc_tbl_edit_arel(alloc["destblname"],{:qty_stk=>rec["qty_stk"] - qty_stk}," id = #{alloc["destblid"]} ")
 				else
 					logger.debug" error class #{self} #{Time.now}:  logic eror  line:#{__LINE__} alloc:#{alloc} lottrn:#{lottrn} new_alloc:#{new_alloc}  "
@@ -3135,9 +3135,11 @@ module Ror_blkctl
 					proc_update_pic_dummy_stk_alloc(add_fields,prev,new_alloc)
 			else   ###在庫の時
 					if  @lotstkhist_packno !~ /dummy/
-						 proc_decision_id_by_key("lotstkhists","  itms_id = #{@itm_id} and locas_id = #{prev["shp_loca_id"]}
+						proc_decision_id_by_key("lotstkhists","  itms_id = #{@itm_id} and locas_id = #{prev["shp_loca_id"]}
 																							and lotno = '#{proc_flg_process_lotno_flg}' and
 												 											processseq = #{prev["shp_trngantt_processseq"]}  and prjnos_id = #{@prjno_id} and packno =  '#{@lotstkhist_packno}'")
+						proc_decision_id_by_key("picords"," orgtblname = '#{prev["shp_tblname"]}' and  orgtblid = #{prev["shp_tblid"]} and
+																														lotno = '#{@lotstkhist_lotno}' and packno =  '#{@lotstkhist_packno}'   and shelfnos_id = #{@lotstkhist_shelfno_id} ")
 						if prev[:destblid] == @lotstkhist_id
 								__send__("proc_fld_alloctbls_lotstkhists_picords_self10") do
 									###{:picord_qty_stk=> @lotstkhist_qty_stk,:picord_packqty=> alloc[:packqty]} #
