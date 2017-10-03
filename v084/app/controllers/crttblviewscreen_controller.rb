@@ -59,7 +59,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				@errmsg << "table #{pobject_code_tbl} missing or  tblfields not exists "
 				raise
 			end   ##if allrecs
-			create_or_replace_view   rec_id,pobject_code_tbl,nil ###screen_id = nil
+			create_or_replace_view   rec_id,pobject_code_tbl,nil
 			Rails.cache.clear(nil)
 			prv_create_index_pk pobject_code_tbl
 			create_screenfields "r_"+pobject_code_tbl
@@ -77,7 +77,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 	end
 	def proc_set_search_code_of_screen   pobject_code_scr
 		### 以下　blkukysに変更して　全面コーディングし直した　2014/12/26
-		strsql = "select * from r_screenfields where pobject_code_scr = '#{pobject_code_scr}' "
+		strsql = "select * from r_screenfields where pobject_code_scr = '#{pobject_code_scr}' and  screenfield_selection = 1 "
 		screenfields = ActiveRecord::Base.connection.select_all(strsql)
 		screenfields.each do |key|
 			tgtblchop = key["pobject_code_sfd"].split("_")[0].chop
@@ -275,7 +275,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 				    	selectstr << tblname.chop + "." +  js + " " + tblname.chop + "_" +  js.sub("s_id","_id") + " ,"
 							@sfd_code_id[tblname.chop + "_" +  js.sub("s_id","_id")] = rec["id"]
 			    	end
-            subtblcrt  join_rtbl,rtblname,screen_id do |k|   ###相手側の項目セット
+            subtblcrt  join_rtbl,rtblname do |k|   ###相手側の項目セット
               selectstr << k
             end
           else ##not _id
@@ -286,7 +286,9 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
 					 	end
 			   		case rec["tblfield_viewflmk"]
 				 		when nil
-							if screen_id
+							strsql = "select id from r_screens where pobject_code_scr = '#{join_rtbl}'    and  screen_expiredate > current_date "
+							screen_id = ActiveRecord::Base.connection.select_value(strsql)
+							if screen_id and join_rtbl != "upd_persons"
 								strsql = %Q%select pobject_code_sfd from r_screenfields where screenfield_selection = 1
 																												and screenfield_screen_id = #{screen_id}
 																												and pobject_code_sfd = '#{tblname.chop + "_" +  js }' %
@@ -319,7 +321,7 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
  	end  #end create_or_replace_view
 
 
-	def  subtblcrt  join_rtbl ,rtblname,screen_id   ## :view名,rtblname:join_rtbl + safix
+	def  subtblcrt  join_rtbl ,rtblname   ## rtblname:join_rtbl(view名) + safix
     k = ""
 	  unless ActiveRecord::Base.connection.table_exists?(join_rtbl)
            @errmsg << "create view #{ join_rtbl }"
@@ -327,25 +329,24 @@ class CrttblviewscreenController < ImportfieldsfromoracleController
            ### create_or_replace_view  tblid,tblname
 	  end
 	  subfields = columns = ActiveRecord::Base.connection.columns(join_rtbl)
-      subfields.each do |j|
-      js = xfield = sfd_code =  j.name
-			next if js.upcase == "ID"
-			next if js.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|REMARK/ and  join_rtbl  !=  "upd_persons"
-			tmpfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end
-			sfd_code = xfield + tmpfld
-			if screen_id
+    subfields.each do |j|
+        xfield = sfd_code =  j.name
+			  next if xfield.upcase == "ID"
+			  next if xfield.upcase =~ /_UPD|UPDATED_AT|CREATED|UPDATE_IP|REMARK/ and  join_rtbl  !=  "upd_persons"
+			  sfxfld = if rtblname.split("_",2)[1] and join_rtbl != "upd_persons"  then  "_" + rtblname.split("_",2)[1] else "" end
+			  ##sfxfld = if rtblname.split("_",2)[1]   then  "_" + rtblname.split("_",2)[1] else "" end
+			  sfd_code = xfield + sfxfld
 				strsql = %Q%select pobject_code_sfd from r_screenfields where screenfield_selection = 1
-																								and screenfield_screen_id = #{screen_id}
-																								and pobject_code_sfd = '#{sfd_code}' %
+																								and pobject_code_scr = '#{join_rtbl}'
+																								and pobject_code_sfd = '#{xfield}' %
 				fld = ActiveRecord::Base.connection.select_value(strsql)
 				next if fld.nil?
-			end
-      new_xfield = rtblname + "." + xfield + " " + sfd_code
-      k <<  " " +  new_xfield   + ","
-      lngerrfield = new_xfield.split(" ")[1]
-      ##p " 127 #{xfield}"
-      if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
-			@sfd_code_id[sfd_code] = set_tblfield_id(join_rtbl ,sfd_code,tmpfld)
+        new_xfield = rtblname + "." + xfield + " " + sfd_code
+        k <<  " " +  new_xfield   + ","
+        lngerrfield = new_xfield.split(" ")[1]
+        ##p " 127 #{xfield}"
+        if ( lngerrfield.length) > 30 then  @errmsg << "sub table: #{join_rtbl}   field: #{lngerrfield}  length: #{(lngerrfield.length).to_s}"  end
+			  @sfd_code_id[sfd_code] = set_tblfield_id(join_rtbl ,sfd_code,sfxfld)
     end  ## subfields.each
     yield k
 	end

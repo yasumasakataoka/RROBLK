@@ -86,8 +86,8 @@ class   GanttController  <  ScreenController
 							sum(case  when b.alloctbl_destblname like 'cons%' then  b.alloctbl_qty   else 0 end) qty_alloc_cons,
 							a.trngantt_orgtblname,a.trngantt_orgtblid
                       from r_trngantts a
-					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_allocfree = 'alloc'
-					  and (b.alloctbl_qty > 0 or b.alloctbl_qty_stk > 0)
+					  left join r_alloctbls b on a.trngantt_id = b.alloctbl_srctblid and b.alloctbl_srctblname = 'trngantts' and b.alloctbl_allocfree in('alloc','free')
+					  and (b.alloctbl_qty != 0 or b.alloctbl_qty_stk !=  0 or b.alloctbl_destblname = 'lotstkhists' )
 					  where   a.trngantt_orgtblname = '#{trn_code}' and a.trngantt_orgtblid = #{id}
 					  group by a.trngantt_key,a.ITM_CODE,a.ITM_NAME,a.LOCA_CODE,a.loca_name,a.trngantt_orgtblname,a.trngantt_orgtblid,
 								alloctbl_destblname,alloctbl_destblid,a.trngantt_prdpurshp,a.itm_id,a.loca_id

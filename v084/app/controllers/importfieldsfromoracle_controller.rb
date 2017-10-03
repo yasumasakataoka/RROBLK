@@ -295,7 +295,7 @@ class ImportfieldsfromoracleController < ApplicationController
 				screens_ids.each do |screens_id|
         	screenfields[:id]  = proc_get_nextval("screenfields_seq")
 					screenfields[:screens_id]   = screens_id
-					if  sr_name =~ /_code|_name|_gno|_cno|_sno|itm_/ then
+					if  sr_name =~ /_code|_name|_gno|_cno|_sno/ then
 						screenfields[:hideflg] = 0
 						screenfields[:selection] = 1
 					else

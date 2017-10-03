@@ -66,13 +66,6 @@
 					inner join on alloctbs trngantt_id = srctblid
 					where trngantt_autocreate_ord in('a','b','c','A','B')
 					and  srctblname = 'trngantts' and destblname like '%schs' and alloctbls.qty > 0 "
-		###
-		#strsql = " select trngantt_prdpurshp,itm_code from r_trngantts
-		#			inner join alloctbls on trngantt_id = srctblid
-		#			where trngantt_autocreate_inst in('a','A')
-		#			and  srctblname = 'trngantts' and destblname like '%ords' and alloctbls.qty > 0 "
-		##debugger
-		##raise
 		insts = ActiveRecord::Base.connection.select_all(strsql)
 	end
   def perform_mkbttables tbl_mktbls
@@ -294,7 +287,7 @@
 						free["qty_stk"] = free_qty_stk
 						break if free_qty_stk  <= 0
 					else
-						free_qty = proc_update_base_alloc trn,c_alloc.with_indifferent_access,free.with_indifferent_access
+						free_qty = proc_free_chng_to_alloc trn,c_alloc.with_indifferent_access,free.with_indifferent_access
 						free["qty_stk"] = free_qty
 						break if free_qty  <= 0
 					end
@@ -1015,7 +1008,7 @@
 	end
     handle_asynchronously :perform_setresults
   class Free_qty_and_stk
-		def initialize itms_id,locas_id,prjno_id,duedate = nil
+		def initialize itms_id,locas_id,prjnos_id,duedate = nil
   		strsql =
   		%Q&	select 		alloc.id alloc_id,gantt.locas_id gantt.itms_id ,gantt.prjnos_id,gantt.duedate
         			alloc.qty free_qty,alloc.qty_stk free_qty_stk,
@@ -1036,13 +1029,14 @@
   		  #{if duedate then " and gantt.duedate  > '" + duedate.strftime("%Y/%m/%d") + "'"  else "" end }
         order by  gantt.prjnos_id,gantt.locas_id for update
         &
-        @all_free_qty = ActiveRecord::Base.connection.select_all(strsql)
+        @all_free_qty_and_stk = ActiveRecord::Base.connection.select_all(strsql)
     end
-    def all_qty_and_stk
-        @all_free_qty
+    def all_free_qty_and_stk
+        @all_free_qty_and_stk
     end
-    def qty_and_stk locas_id,prjnos_id
-        @all_free_qty.each do |free_qty|
+    def free_qty_and_stk locas_id,prjnos_id
+        qty = qty_stk = qty_sfl = qty_sfl_stk = 0
+        @all_free_qty_and_stk.each do |free_qty|
           if free_qty["locas_id"] == locas_id
             if free_qty["prjnos_id"] == prjnos_id
               qty += free_qty["qty"]
@@ -1053,6 +1047,242 @@
           end
         end
         {:qty=>qty,:qty_stk=>qty_stk,:qty_sfl=>qty_sfl,:qty_sfl_stk=>qty_sfl_stk}
+    end
+  end
+  class Req_create_ords
+    def initialize prdpurshp,org,pare,trn  ###prdpurshp,org,pare,trn  検索key
+        @prdpurshp = prdpurshp
+        @in_cnt = @out_cnt = @in_qty = @out_qty = @in_amt = @out_amt = @skip_cnt = @skip_qty = @slip_amt = 0
+        org_strwhere org
+        pare_strwhere pare
+        trn_strwhere trn
+        manual_issue_rec_omit
+        chk_chil_status
+    end
+    def org_strwhere org,"org"
+      strwhere org,"org"
+    end
+    def pare_strwhere pare,"pare"
+      strwhere pare,"pare"
+    end
+    def trn_strwhere trn,"trn"
+      strwhere trn,"trn"
+    end
+    def strwhere keys,patern  ###条件はandのみ
+      str = {}
+        if keys.class == Hash
+          if proc_chk_view_exist(keys[:view])
+            columns = proc_blk_columns(keys[:view])
+            case patern
+            when "org"
+              str[:from] =  ",#{keys[:view]} #{patern} "
+              str[:where] = " and trngantt.trngantt_orgtnlname = '#{keys[:view]}.split("_")[1]' "
+              str[:where] << " and trngantt.trngantt_orgtblid = org.id "
+            when "pare"
+              str[:from] =  ",#{keys[:view]} #{patern} ,trngantts pgnatt ,alloctbls palloc"
+                str[:where] = " and trngantt.trngantt_orgtnlname = pgantt.orgtnlname "
+                str[:where] << " and trngantt.trngantt_orgtblid = pgantt.orgtblid  "
+                str[:where] << " and case length(pgantt.key)
+              when 3  then  pgantt.key = (trngantt.trngantt_key - 1 )
+              else   pgantt.key = substr(trngantt.trngantt_key,1, length(pgantt.key)) end  "
+                str[:where] << " and palloc.srctblname = 'trngantts' and palloc.srctblid = pgantt.id"
+                str[:where] << " and palloc.destblname = '#{keys[:view]}.split("_")[1]'  and palloc.destblid = pare.id "
+            else
+                str[:from] =  ",#{keys[:view]} #{patern} "
+                str[:where] = ""
+            end
+            keys.each do |key,val|
+              if key != :view
+                if columns[key]
+                  str[:where] << " and #{key} = '#{val}' "
+                else
+                  3.times{logger.debug"error class Req_create_ords def strwhere : columns #{val} not detected"}
+                end
+              end
+            end
+          else
+            3.times{logger.debug"error class Req_create_ords def strwhere : view #{keys[:view]} not detected"}
+            raise
+          end
+        else
+          str[:from] =  str[:where] = ""
+        end
+        return str
+    end
+    def sql_req_create_ords
+      %Q&
+			select trngantt_id,trngantt_starttime,trngantt_orgtblname,trngantt_orgtblid,trngantt_key,
+			trngantt.itm_id trngantt_itm_id,trngantt.loca_id trngantt_loca_id,
+			trngantt.trngantt_prdpurshp trngantt_prdpurshp,trngantt.trngantt_processseq,trngantt_prjno_id,
+			trngantt.trngantt_autocreate_ord autocreate_ord,trngantt.trngantt_autoord_p autoord_p,trngantt.trngantt_starttime starttime,
+			alloctbl_id,alloctbl_srctblname,alloctbl_srctblid,alloctbl_destblname,alloctbl_destblid,alloctbl_qty,alloctbl_allocfree,
+			trn.#{@prdpurshp}sch_loca_id_to prdpurshpxxx_loca_id_to,trn.*
+		    from r_trngantts trngantt ,r_#{@prdpurshp+}sch trn ,r_alloctbls
+  		    #{org_strwhere[:from]}
+  		    #{pare_strwhere[:from]}
+		    where  alloctbl_srctblname = 'trngantts' and trngantt_id = alloctbl_srctblid
+			and alloctbl_qty > 0 and alloctbl_allocfree in('alloc','free')
+			and alloctbl_destblname = '#{@prdpurshp}schs'
+			and alloctbl_destblid = trn.id
+		    #{org_strwhere[:where]}
+		    #{pare_strwhere[:where]}
+		    #{trn_strwhere[:where]}
+			#{if sch_ord_inst_act == "acts"
+				"order by trn.id"
+		 	  else
+			  	"order by trngantt.itm_code,trngantt.loca_id,
+				trn.#{@prdpurshp}sch_loca_id_to,trngantt_processseq,
+				trngantt_itm_id,trngantt.trngantt_starttime"
+			  end}
+		      &
+    end
+    def manual_issue_rec_omit
+        @extractions = []
+        recs = ActiveRecord::Base.connection.select_all(sql_req_create_ords)
+        recs.each do |rec|
+          @in_cnt += 1
+          @in_qty += rec["#{@prdpurshp}sch_qty"]
+          @in_amt += rec["#{@prdpurshp}sch_amt"]
+          case rec["autocreate_ord"]
+          when  "0"  ###
+            proc_mkord_err sch,proc_blkgetpobj("#{Time.now} 手動のためskip","msg")
+            @skip_cnt += 1
+            @skip_qty += rec["#{@prdpurshp}sch_qty"]
+            @skip_amt += rec["#{@prdpurshp}sch_amt"]
+          when  /A|B|C|D ###
+            if pare_strwhere[:from] == ""
+              proc_mkord_err sch,proc_blkgetpobj("#{Time.now} 親の作業指示・発注と同時に出庫指示のため対象外","msg")
+              @skip_cnt += 1
+              @skip_qty += rec["#{@prdpurshp}sch_qty"]
+              @skip_amt += rec["#{@prdpurshp}sch_amt"]
+            end
+          else
+            if rec["autoord_p"] == 999
+                @extractions  << rec
+            else
+              if rec["starttime"] > Date.today + rec["autoord_p"].days
+                proc_mkord_err sch,proc_blkgetpobj("#{Time.now} オーダ発行範囲外　発行範囲#{rec["autoord_p"]}：","msg")
+                @skip_cnt += 1
+                @skip_qty += rec["#{@prdpurshp}sch_qty"]
+                @skip_amt += rec["#{@prdpurshp}sch_amt"]
+              else
+                  @extractions  << rec
+              end  ### starttime
+            end  ###autoord_p
+          end  ##case
+        end ##recs
+    end
+  	def sql_chk_chil_status rec  ### autocreate_ord = a,b,A,B
+  		%Q&
+  			select itm_code from r_trngantts chil,alloctbls alloc
+  			where trngantt_orgtblname = '#{rec["trngantt_orgtblname"]}' and trngantt_orgtblid = #{rec["trngantt_orgtblid"]}
+  			and trngantt_key like '#{rec["trngantt_key"]}%' and length(trngantt_key) = #{rec["trngantt_key"].size+3}
+  			and srctblname = 'trngantts' and srctblid = chil.id and alloc.allocfree = 'alloc'
+  			and ((trngantt_autocreate_ord = 'B' and alloc.qty > 0) or
+  					(trngantt_autocreate_ord = 'C' and alloc.qty > 0 and destblname like '%schs'))
+  		&
+  	end
+    def chk_chil_status
+        dindxs = []   ###削除用
+        @extractions.each_with_index do |ext,idx|
+          if idx == 0
+              @autocreate_ord = ext["autocreate_ord"]
+              @packqty = ext["packqty"]
+              @qty_pur =  ext["qty_pur"]
+              @opt_fixoterm  = ext["opt_fixoterm"]
+          end
+          if @autocreate_ord == "a"
+            recs = ActiveRecord::Base.connection.select_values(sql_chk_chil_status(ext))
+            if recs.size > 0
+              proc_mkord_err ext,proc_blkgetpobj("#{Time.now} 子部品在庫又はオーダ不足  品目:#{recs} ","msg")
+              @skip_cnt += 1
+              @skip_qty += rec["#{@prdpurshp}sch_qty"]
+              @skip_amt += rec["#{@prdpurshp}sch_amt"]
+              dindxs << idx
+            end
+          end
+        end
+        dindxs.each do |idx|
+          @extractions.delete_at(idx)
+        end
+    end
+    def extractions
+        @extractions
+    end
+    def autocreate_ord
+        @autocreate_ord
+    end
+    def   packqty
+          @packqty
+    end
+    def qty_pur
+         @qty_pur
+    end
+    def opt_fixoterm
+        @opt_fixoterm
+    end
+    def summary_by_packqty
+        bal_qty = 0
+        tmp_qty = 0
+        sum_ext = []
+        extractions.each do |ext|
+          if bal_qty == 0
+            tmp_ext = ext.dup
+            tmp_ext["add_ext"] = if tmp_qty == 0 then [] else  [add_tmp_ext] end
+            tmp_qty += ext["qty"]
+            bal_qty = tmp_ext["qty"] =   roundup(tmp_qty  / packqty) * packqty * qty_pur
+            bal_qty -= ext["qty"]
+            sum_ext <<  tmp_ext
+          else
+            if bal_qty >  ext["qty"]
+                bal_qty -=  ext["qty"]
+                add_tmp_ext = ext.dup
+                tmp_ext["add_ext"] << add_tmp_ext
+            else
+                tmp_qty = ext["qty"] - bal_qty
+                add_tmp_ext = ext.dup
+                add_tml_ext["qty"] = tmp_qty
+                bal_qty = 0
+            end
+          end
+        end
+    end
+    def summary_by_opt_fixoterm exts
+        idx = 0
+        cnt = 1
+        @sum_exts = []
+        until idx >= exts.size do
+            sum_exts << exts[idx]
+            until cnt > exts.size  or  exts[idx]["starttime"].to_date + opt_fixoterm.days > exts[cnt]["starttime"].to_date do
+                @sum_exts[idx]["qty"] += exts[cnt]["qty"]
+                if exts[idx]["add_ext"]
+                  exts[idx]["add_ext"] <<   exts[idx]
+                else
+                  exts[idx]["add_ext"] = []
+                  exts[idx]["add_ext"] <<   exts[idx]
+                end
+                cnt += 1
+            end
+            idx = cnt
+            cnt += 1
+        end
+    end
+    def dtl_allocs
+        dtl_allocs = []
+        @sum_exts.each do |ext|
+          tmp = {}.with_indifferent_access
+          tmp[:id] = ext["add_ext"]["alloctbl_id"]
+          tmp[:srctblname] = ext["add_ext"]["alloctbl_srctblname"]
+          tmp[:srctblid] = ext["add_ext"]["alloctbl_srctblid"]
+          tmp[:destblname] = ext["add_ext"]["alloctbl_destblname"]
+          tmp[:destblid] = ext["add_ext"]["alloctbl_destblid"]
+          tmp[:qty] = ext["add_ext"]["alloctbl_qty"]
+          tmp[:allocfree] = ext["add_ext"]["alloctbl_allocfree"]
+          tmp[:qty_stk] = 0
+          tmp[:allocfreeid] = 0
+          dtl_allocs << tmp
+        end
+
     end
   end
 end
