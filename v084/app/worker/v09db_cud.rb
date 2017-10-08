@@ -1041,7 +1041,7 @@
             if free_qty["prjnos_id"] == prjnos_id
               qty += free_qty["qty"]
               qty_stk += free_qty["qty_stk"]
-              qty_sfl += free_qty["qty_sfl"]
+              qty_sfl += free_qty["qty_sfl"]  ###シャッフル可能な数
               qty_sfl_stk += free_qty["qty_sfl_stk"]
             end
           end
@@ -1282,7 +1282,7 @@
           tmp[:allocfreeid] = 0
           dtl_allocs << tmp
         end
-
+      dtl_allocs
     end
   end
 end
